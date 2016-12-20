@@ -73,15 +73,15 @@
     如果是成员方法，xLua支持扩展方法，你可以添加一个扩展方法来实例化泛化方法。该扩展方法使用起来就和普通成员方法一样。
 
 ```csharp
+    // C#
     public static Button GetButton(this GameObject go)
     {
         return go.GetComponent<Button>();
     }
 ```
 
-    然后你就可以在lua那这么用
-
 ```lua
+    -- lua
     local go = CS.UnityEngine.GameObject.Find("button")
     go:GetButton().onClick:AddListener(function()
         print('onClick')
