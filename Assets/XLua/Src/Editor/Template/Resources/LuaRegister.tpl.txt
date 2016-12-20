@@ -1,0 +1,78 @@
+#if USE_UNI_LUA
+using LuaAPI = UniLua.Lua;
+using RealStatePtr = UniLua.ILuaState;
+using LuaCSFunction = UniLua.CSharpFunctionDelegate;
+#else
+using LuaAPI = LuaDLL.Lua;
+using RealStatePtr = System.IntPtr;
+using LuaCSFunction = LuaDLL.lua_CSFunction;
+#endif
+
+using System;
+using System.Collections.Generic;
+using System.Reflection;
+<%
+require "TemplateCommon"
+%>
+
+namespace CSObjectWrap
+{
+    public class XLua_Gen_Initer_Register__
+	{
+	    static XLua_Gen_Initer_Register__()
+        {
+		    XLua.LuaEnv.AddIniter((luaenv, translator) => {
+			    <%ForEachCsList(wraps, function(wrap)%>
+				translator.DelayWrapLoader(typeof(<%=CsFullTypeName(wrap)%>), <%=CSVariableName(wrap)%>Wrap.__Register);
+				<%end)%>
+				<%ForEachCsList(itf_bridges, function(itf_bridge)%>
+				translator.AddInterfaceBridgeCreator(typeof(<%=CsFullTypeName(itf_bridge)%>), <%=CSVariableName(itf_bridge)%>Bridge.__Create);
+				<%end)%>
+			});
+		}
+		
+		
+	}
+	
+}
+namespace XLua
+{
+	public partial class ObjectTranslator
+	{
+		static CSObjectWrap.XLua_Gen_Initer_Register__ s_gen_reg_dumb_obj = new CSObjectWrap.XLua_Gen_Initer_Register__();
+		static CSObjectWrap.XLua_Gen_Initer_Register__ gen_reg_dumb_obj {get{return s_gen_reg_dumb_obj;}}
+	}
+	
+	public static partial class Utils
+    {
+	    <%
+		local type_to_methods = {}
+		local seq_tbl = {}
+		ForEachCsList(extension_methods, function(extension_method, idx)
+		    local parameters = extension_method:GetParameters()
+			local type = parameters[0].ParameterType
+			if not type_to_methods[type] then
+				type_to_methods[type] = {type = type}
+				table.insert(seq_tbl, type_to_methods[type])
+			end
+			table.insert(type_to_methods[type], {method = extension_method, index = idx})
+		%>
+		delegate <%=CsFullTypeName(extension_method.ReturnType)%> __GEN_DELEGATE<%=idx%>(<%ForEachCsList(parameters, function(parameter, pi)
+		%><%if pi ~= 0 then%>, <%end%><%if parameter.IsOut then %>out <% elseif parameter.ParameterType.IsByRef then %>ref <% end %> <%=CsFullTypeName(parameter.ParameterType)%> <%=parameter.Name%><%
+		end)%>);
+		<%end)%>
+	    static Utils()
+		{
+		    extension_method_map = new Dictionary<Type, IEnumerable<MethodInfo>>()
+			{
+			    <%for _, methods_info in ipairs(seq_tbl) do%>
+				{typeof(<%=CsFullTypeName(methods_info.type)%>), new List<MethodInfo>(){
+				<%  for _, method_info in ipairs(methods_info) do%>
+				  new __GEN_DELEGATE<%=method_info.index%>(<%=CsFullTypeName(method_info.method.DeclaringType)%>.<%=method_info.method.Name%>).Method,
+				<%  end%>
+				}},
+				<%end%>
+			};
+		}
+	}
+}

@@ -1,0 +1,13 @@
+<%
+require "TemplateCommon"
+%>
+
+<linker>
+<%ForEachCsList(assembly_infos, function(assembly_info)%>
+	<assembly fullname="<%=assembly_info.FullName%>">
+	    <%ForEachCsList(assembly_info.Types, function(type)
+		%><type fullname="<%=type:ToString()%>" preserve="all"/>
+		<%end)%>
+	</assembly>
+<%end)%>
+</linker>

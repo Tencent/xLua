@@ -1,0 +1,210 @@
+v2.1.5 2016年12月13日
+新增特性
+1、新增更简便的配置方式，具体参见XLua\Doc下《XLua的配置.doc》；
+2、多虚拟机实例时的自动Dispose；
+3、内存优化：减少匿名闭包到delegate映射的内存占用；减少LuaFunction以及LuaTable内存占用；减少lua table映射C#interface的gc；
+4、生成代码速度优化；
+5、支持直接在lua侧clone C#结构体；
+6、LuaFunction新增无gc调用api；
+
+变更
+1、delegate必须都加[CSharpCallLua]才支持C#到lua的回调（以前参数和返回值都相同的delegate只要其中一个加了就可以）；
+
+bug修复
+1、枚举不生成代码时，第一次使用会产生两个不同的userdata；
+2、数组和System.Type的相互引用导致System.Type生成代码无法加载；
+
+
+v2.1.4 2016年11月29日
+新增特性
+1、加了ReflectionUse会自动生成到link.xml，可以防止il2cpp下因stripping导致的反射不可用；
+2、开放生成引擎，可二次开发自己生成插件，生成所需的代码或配置；
+3、GetInPath和SetInPath无C# gc优化；
+4、一个lua table自动转换为带GCOptimize标签的复杂类型以及该复杂类型的一维数组不使用反射，如果这复杂类型是纯值类型，无c# gc；
+
+变更
+1、基于一致性以及性能的考虑，不支持数字和字符串到枚举的静默转换，须主动调用起类下的__CastFrom；
+2、名字空间从LuaInterface改为XLua；
+3、LuaTable的几个可能导致gc的api标注为Obsolete；
+4、在不指明返回类型的情况下，如果一个number是整数会优先转换成整数；
+
+bug修复
+1、含能隐式转换int，long，decimal的类型传到lua变成decimal；
+2、反射的重载判断，如果可变参数的位置上是一个不匹配的参数，也会判断为匹配成功；
+3、可变参数+重载的话，可变部分不传会报无效参数；
+4、加了LuaCallCSharp的Extension method，在Editor下不生成代码不可用；
+
+v2.1.3 2016年11月09日
+新增特性
+1、LuaTable新增Get<TKey, TValue>和Set<TKey, TValue>接口，table操作支持值类型无gc；
+2、支持decimal，不丢失精度而且传递到lua无gc；
+3、增加LuaEnv.LoadString<T>接口，用于指定返回的delegate类型；
+4、例子刷新：新增Helloworld，无GC调用，Lua面向对象，协程例子；
+5、enum优化：传递到lua无gc，从int或者string到枚举转换无gc；
+6、event的+/-优化：性能提升一倍，而且无gc；
+7、生成代码简化；
+
+变更
+1、uint在lua53映射到lua_Integer；
+2、StreamingAssets加载改为优先级最低；
+
+bug修复
+1、生成代码下，如果LuaTable或者LuaFunction参数为null会抛异常；
+2、lua5.3下，浮点到枚举的静默转换失败；
+3、反射下struct类型参数带默认值抛异常；
+4、lua53下Length返回浮点；
+
+v2.1.2 2016年10月08日
+新增特性
+1、支持lua5.3，进而支持苹果bitcode，原生64位整数，位运算，utf8等特性；
+2、CMake编译，更方便加入第三方插件
+3、数组性能优化，包括访问性能以及gc
+4、C#调用lua函数减少一次lua gc；
+5、优化启动时间；
+6、减少类型加载的gc；
+7、优化ObjectPool的内存占用；
+8、优化小字符串传入lua的gc；
+9、LuaTable添加Cast接口，用于LuaTable到其它类型的转换，比如interface；
+10、LuaFunction添加Cast接口，用于LuaFunction到delegate的转换；
+
+变更
+1、lua内部只有带符号的64整数类型，并增加无符号数库
+2、如果不想对Extension Method生成代码，又希望在反射下用，需要添加ReflectionUse；
+
+bug修复
+1、对ObjectPool已经Destroy的UnityEngine.Object的引用自动解除功能的内存泄漏问题；
+2、规避某些版本（已知是5.3.3）的Unity的bug导致的内存泄漏问题；
+3、LuaTable或者LuaFunction做返回值的delegate生成代码可能报错；
+
+v2.1.1 2016年08月29日
+新增特性
+1、支持编辑器下不用生成代码能运行；
+2、新增IntPtr的支持
+3、增加对ObjectPool已经Destroy的UnityEngine.Object的引用自动解除；
+4、在LuaEnv添加对lua_gc一些封装；
+
+bug修复
+1、生成代码传送一个LuaFunction、LuaTable到lua和反射版本不一致，生成代码传送过去是一个C#对象，而反射是Lua函数、table对象，反射的处理更合适；
+2、修复同名的静态以及成员方法冲突的问题；
+3、修复对interface生成CSharpCallLua代码时，interface含indexer时的报错；
+4、修复Editor在运行后会new一个xlua实例的bug；
+5、修复通过生成代码调用同时含可变参数和默认值的函数，如果不传参数，将会出错的bug；
+6、修复调试时，找不到socket库的bug；
+
+
+变更
+1、反射不做重载方法顺序调整，顺序改为固定且生成代码保持一致；
+2、i64加上fade_id，参数传递时更安全；
+3、重新加入tdr的from_file的支持；
+
+v2.1.0 2016年08月08日
+新增特性
+1、满足条件struct传递到lua无gc，struct需要满足什么条件才能被优化呢？
+a. struct允许嵌套其它struct，但它以及它嵌套的struct只能包含这几种基本类型：byte、sbyte、short、ushort、int、uint、long、ulong、float、double；
+b. struct本身以及使用到该struct的地方需要加LuaCallCSharp，并且加了GCOptimize设置；
+2、全新实现的反射机制，更容易和生成代码配合使用
+a. 支持extension methods，Enum.__CastFrom；
+b. ios下支持反射使用event；
+c. 对类型映射、可变参数调用调整为和生成代码一致；
+d. 性能更好，gc更少；
+3、生成代码菜单简化，并增加“Generate Minimum”选项；
+4、支持生成代码配置文件放Editor目录；
+
+变更
+1、luajit统一升级成2.1.0b2；
+2、luasocket库改为按需加载；
+3、重载的string，byte[]参数检查允许为nil；
+4、子类访问不触发父类加载；
+5、struct的ref参数的修改会修改lua测该参数的值；
+6、生成代码加载改为静态（原来是反射）；
+7、菜单改为更简洁；
+8、tdr改为默认不加载；
+9、StreamingAssets加载lua改为废弃特性；
+
+bug修复
+1、参数或者返回值是泛型类的数组，或者是二维数组，生成代码报编译错误；
+2、抽象类生成代码报编译错误；
+3、消除Clear生成代码的warning；
+4、profiler、i64库不支持多实例；
+
+v2.0.5 2016年05月18日
+新增特性
+1、util.async_to_sync，可以更好的利用lua的协程实现同步编程、异步执行；或者异步等待www等；
+2、生成代码的规范度调整，消除一些工具的告警；
+bug修复
+1、解决在lua gc移除weak table和调用__gc的时间窗内push同一对象，会生成指向同一C#对象的不同userdata的问题；
+2、上版本的的lua内存工具并未打包；
+3、修正嵌套类型不能生成代码的问题；
+
+v2.0.4 2016年05月04日
+新增特性
+1、新增函数调用时长报告功能；
+2、新增lua内存泄漏定位工具；
+3、lua测加入对64位无符号数的支持；
+变更
+1、支持多种delegate绑定到一个clousre。调整之前一个clousre只能对应一种delegate；
+bug修复
+1、tdr处理长度为1的数组的错误（本来解包应该是{[1] = {a = 1}}的，却是{{a=1}}）；
+2、tdr数值处理错误（int的-1会解成一个很大的正数）
+
+v2.0.3 2016年04月13日
+新功能
+1、添加“Advanced Gen”功能，用户可以自定义生成代码的范围；
+2、支持对库生成Static pusher；
+变更
+1、LuaTable以及InterfaceBirdage改为触发metatable；
+2、Extension Methods不自动加到被扩展类，需要加入生成列表；
+3、移除特殊ValueType优化；
+bug修复
+1、Extension Methods为私有时，生成代码语法错误；
+2、重载函数含ulong时，生成代码语法错误；
+3、反射调用时的默认值处理错误；
+4、C#向lua传中文字符的长度处理错误；
+
+v2.0.2 2016年04月06日
+变更
+1、库的生成代码配置支持多份，方便项目的模块化；
+2、enum的生成代码合并到一个文件里头；
+3、优化异常处理；
+4、发布包把库和教程、例子分离，更干净；
+5、小bug修改；
+
+升级指引
+由于文件有点变动，直接覆盖原有lib会报错，需要：
+1、删除原来的XLua目录；
+2、解压xlua_v2.0.2.zip到Assets下；
+3、重新执行代码生成；
+
+v2.0.1 2016年03月24日
+1、支持C# 的extension methods；
+2、lua调试方面的支持；
+3、android下require一个不存在的lua文件可能成功的bug；
+4、TDR 4 Lua库的更新；
+5、多机型的兼容性测试；
+
+v2.0.0 2016年03月08日
+1、性能优化，性能对比报告请看主页；
+2、加入官方lua版本的tdr；
+3、支持64位整数；
+4、修正lua中对C#异常pcall引发的不稳定；
+5、易用性的优化；
+6、其它一些bug的修改。
+
+1.0.2 2015年12月09日
+1、解决新版本（已知5.2版本）下，streamAssetsPath不允许在构造函数访问导致的bug；
+2、新增windows x64版本的支持；
+3、对web版本才用到的代码加入条件编译，减少对手机版发布包的影响；
+4、生成代码文件名去掉“+”号；
+5、删除4.6的生成代码，以免在新版本报引用过时api的错；
+
+v1.0.1 2015年11月30日
+1、支持pcall捕捉C#异常；
+2、新增cast方法，支持这种场景：实现类是internal声明，只提供interface；
+3、解决interface下如果有event，生成代码编译报错的bug；
+4、解决interface下有Obsolete的方法，字段，生成代码编译报错的bug；
+5、解决含private的默认geter/setter生成代码编译报错的bug；
+6、修正类在全局空间下生成代码不可用的bug；
+7、修正bridge代码返回值处理错误。
+
+v1.0.0 2015年03月30日
+第一个版本

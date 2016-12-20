@@ -1,0 +1,78 @@
+#if USE_UNI_LUA
+using LuaAPI = UniLua.Lua;
+using RealStatePtr = UniLua.ILuaState;
+using LuaCSFunction = UniLua.CSharpFunctionDelegate;
+#else
+using LuaAPI = LuaDLL.Lua;
+using RealStatePtr = System.IntPtr;
+using LuaCSFunction = LuaDLL.lua_CSFunction;
+#endif
+
+using XLua;
+using System.Collections.Generic;
+<%
+require "TemplateCommon"
+%>
+
+namespace CSObjectWrap
+{
+    <%ForEachCsList(types, function(type)
+	local fields = type:GetFields()
+	%>
+    public class <%=CSVariableName(type)%>Wrap
+    {
+		public static void __Register(RealStatePtr L)
+        {
+		    ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
+		    Utils.BeginObjectRegister(typeof(<%=CsFullTypeName(type)%>), L, translator, 0, 0, 0, 0);
+			Utils.EndObjectRegister(typeof(<%=CsFullTypeName(type)%>), L, translator, null, null, null, null, null);
+			
+			Utils.BeginClassRegister(typeof(<%=CsFullTypeName(type)%>), L, null, <%=fields.Length + 1%>, 0, 0);
+            <% ForEachCsList(fields, function(field) 
+			if field.Name == "value__" then return end
+			%>
+            Utils.RegisterObject(L, translator, Utils.CLS_IDX, "<%=field.Name%>", <%=CsFullTypeName(type)%>.<%=field.Name%>);
+            <%end)%>
+            Utils.RegisterObject(L, translator, Utils.CLS_IDX, "UnderlyingSystemType", typeof(<%=CsFullTypeName(type)%>));
+			Utils.RegisterFunc(L, Utils.CLS_IDX, "__CastFrom", __CastFrom);
+            
+            Utils.EndClassRegister(typeof(<%=CsFullTypeName(type)%>), L, translator);
+        }
+		
+		[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+        static int __CastFrom(RealStatePtr L)
+		{
+			ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
+			LuaTypes lua_type = LuaAPI.lua_type(L, 1);
+            if (lua_type == LuaTypes.LUA_TNUMBER)
+            {
+                translator.Push<%=CSVariableName(type)%>(L, (<%=CsFullTypeName(type)%>)LuaAPI.xlua_tointeger(L, 1));
+            }
+            else if(lua_type == LuaTypes.LUA_TSTRING)
+            {
+			    <%
+                local is_first = true
+				ForEachCsList(fields, function(field, i) 
+			        if field.Name == "value__" then return end
+			    %><%=(is_first and "" or "else ")%>if (LuaAPI.xlua_is_eq_str(L, 1, "<%=field.Name%>"))
+                {
+                    translator.Push<%=CSVariableName(type)%>(L, <%=CsFullTypeName(type)%>.<%=field.Name%>);
+                }
+				<%
+				is_first = false
+				end)
+                %>else
+                {
+                    return LuaAPI.luaL_error(L, "invalid string for <%=CsFullTypeName(type)%>!");
+                }
+            }
+            else
+            {
+                return LuaAPI.luaL_error(L, "invalid lua type for <%=CsFullTypeName(type)%>! Expect number or string, got + " + lua_type);
+            }
+
+            return 1;
+		}
+	}
+    <%end)%>
+}

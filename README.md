@@ -1,0 +1,86 @@
+![](Assets/XLua/Doc/xLua.png)
+
+![](https://img.shields.io/badge/release-v2.1.5-blue.png)
+
+## Unity3D下Lua编程支持
+
+为Unity3D增加Lua脚本编程的能力，进而提供代码逻辑增量更新的可能。当然不仅仅如此，在coco2dx上的实践告诉我们，以Lua为主打语言的游戏客户端编程是可行的。
+
+* C#和Lua可以相互调用对方任意API，访问对方任意数据结构；
+* 编辑器下无需生成代码，开发更轻量；
+* 同时支持Lua5.3和Luajit2.1；
+* Lua函数到C# delegate，Lua table到C# interface的智能适配；
+* 所有基本值类型，所有枚举，以及字段是值类型的struct，在Lua和C#间传递无C# gc alloc；
+* 支持Lua table赋值到C#复杂类型；
+* 反射方式下自动抗代码剪裁；
+* 采用Lazyload技术；
+* 可不修改代码加入第三方Lua扩展；
+* 支持生成引擎二次开发；
+* 内置Lua代码profiler；
+* 支持真机调试；
+
+更详细的特性介绍请看[这里](Assets/XLua/Doc/features.md)。
+
+## 安装
+
+直接解压到Assets下可用。第一次使用建议把例子包也安装，运行看看效果。
+
+如果希望安装到其它目录，请看[FAQ](Assets/XLua/Doc/faq.md)相关介绍。
+
+## 快速入门
+
+一个完整的例子仅需3行代码：
+
+下载xLua后解压到Unity工程Assets目录下，建一个MonoBehaviour拖到场景，在Start加入如下代码：
+
+```csharp
+Lua.LuaEnv luaenv = new XLua.LuaEnv();
+luaenv.DoString("CS.UnityEngine.Debug.Log('hello world')");
+luaenv.Dispose();
+```
+
+1、DoString参数为string，可输入任意合法的Lua代码，本示例在lua里调用C#的UnityEngine.Debug.Log打印了个日志。
+
+2、一个LuaEnv实例对应Lua虚拟机，处于开销的考虑，建议全局唯一。
+
+C#主动调用lua也很简单，比如要调用lua的系统函数，推荐方式是：
+
+* 声明
+
+```csharp
+[XLua.CSharpCallLua]
+public delegate double LuaMax(double a, double b);
+```
+
+* 绑定
+
+```csharp
+var max = luaenv.Global.GetInPath<LuaMax>("math.max");
+```
+
+* 调用
+
+```csharp
+Debug.Log("max:" + max(32, 12));
+```
+
+建议绑定一次，重复使用。生成了代码的话，调用max是不产生gc alloc的。
+
+## 更多示例:
+
+* [01_Helloworld](Assets/XLua/Examples/01_Helloworld/): 快速入门的例子。
+* [02_U3DScripting](Assets/XLua/Examples/02_U3DScripting/): 展示怎么用lua来写MonoBehaviour。
+* [03_UIEvent](Assets/XLua/Examples/03_UIEvent/): 展示怎么用lua来写UI逻辑。
+* [04_LuaObjectOrented](Assets/XLua/Examples/04_LuaObjectOrented/): 展示lua面向对象和C#的配合。
+* [05_NoGc](Assets/XLua/Examples/05_NoGc/): 展示怎么去避免值类型的GC。
+* [06_Coroutine](Assets/XLua/Examples/06_Coroutine/): 展示lua协程怎么和Unity协程相配合。
+* [07_AsyncTest](Assets/XLua/Examples/07_AsyncTest/): 展示怎么用lua协程来把异步逻辑同步化。
+ 
+## 文档
+
+* [XLua介绍.ppt](Assets/XLua/Doc/XLua介绍.ppt)：总体介绍文档。
+* [XLua教程.doc](Assets/XLua/Doc/XLua教程.doc)：教程，其配套代码[这里](Assets/XLua/Tutorial/)。
+* [XLua的配置.doc](Assets/XLua/Doc/XLua的配置.doc)：介绍如何配置xLua。
+* [XLua增加删除第三方lua库.doc](Assets/XLua/Doc/XLua增加删除第三方lua库.doc)：如何增删第三方lua扩展库。
+* [XLua API.doc](Assets/XLua/Doc/XLua_API.doc)：API文档。
+

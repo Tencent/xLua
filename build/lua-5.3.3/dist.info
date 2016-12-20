@@ -1,0 +1,11 @@
+--- This file is part of LuaDist project
+
+name = "lua"
+version = "5.3.2"
+
+desc = "Lua is a powerful, fast, light-weight, embeddable scripting language."
+author = "Roberto Ierusalimschy, Waldemar Celes, Luiz Henrique de Figueiredo"
+license = "MIT/X11"
+url = "http://www.lua.org"
+maintainer = "Peter Drahoš"
+
