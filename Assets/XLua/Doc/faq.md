@@ -1,97 +1,97 @@
 # FAQ
 
-1. xLua·¢²¼°üÔõÃ´ÓÃ£¿
+1. xLuaå‘å¸ƒåŒ…æ€Žä¹ˆç”¨ï¼Ÿ
 
-   xLuaÄ¿Ç°ÒÔzip°üÐÎÊ½·¢²¼£¬ÔÚAssetsÄ¿Â¼ÏÂ½âÑ¹¼´¿É¡£
+   xLuaç›®å‰ä»¥zipåŒ…å½¢å¼å‘å¸ƒï¼Œåœ¨Assetsç›®å½•ä¸‹è§£åŽ‹å³å¯ã€‚
 
-2. xLua¿ÉÒÔ·Å±ðµÄÄ¿Â¼Âð£¿
+2. xLuaå¯ä»¥æ”¾åˆ«çš„ç›®å½•å—ï¼Ÿ
 
-   ¿ÉÒÔ£¬µ«Éú³É´úÂëÄ¿Â¼ÐèÒªÅäÖÃÒ»ÏÂ£¨Ä¬ÈÏ·ÅAssets\XLua\GenÄ¿Â¼£©£¬¾ßÌå¿ÉÒÔ¿´¡¶XLuaµÄÅäÖÃ.doc¡·µÄGenPathÅäÖÃ½éÉÜ¡£
+   å¯ä»¥ï¼Œä½†ç”Ÿæˆä»£ç ç›®å½•éœ€è¦é…ç½®ä¸€ä¸‹ï¼ˆé»˜è®¤æ”¾Assets\XLua\Genç›®å½•ï¼‰ï¼Œå…·ä½“å¯ä»¥çœ‹ã€ŠXLuaçš„é…ç½®.docã€‹çš„GenPathé…ç½®ä»‹ç»ã€‚
 
-3. ±¨¡°This delegate/interface must add to CSharpCallLua : XXX¡±Òì³£ÔõÃ´½â¾ö£¿
+3. æŠ¥â€œThis delegate/interface must add to CSharpCallLua : XXXâ€å¼‚å¸¸æ€Žä¹ˆè§£å†³ï¼Ÿ
 
-   ÔÚ±à¼­Æ÷ÏÂxLua²»Éú³É´úÂë¶¼¿ÉÒÔÔËÐÐ£¬³öÏÖÕâÖÖÌáÊ¾£¬ÒªÃ´ÊÇ¸ÃÀàÐÍÃ»¼ÓCSharpCallLua£¬ÒªÃ´ÊÇ¼ÓÖ®Ç°Éú³É¹ý´úÂë£¬Ã»ÖØÐÂÖ´ÐÐÉú³É¡£
+   åœ¨ç¼–è¾‘å™¨ä¸‹xLuaä¸ç”Ÿæˆä»£ç éƒ½å¯ä»¥è¿è¡Œï¼Œå‡ºçŽ°è¿™ç§æç¤ºï¼Œè¦ä¹ˆæ˜¯è¯¥ç±»åž‹æ²¡åŠ CSharpCallLuaï¼Œè¦ä¹ˆæ˜¯åŠ ä¹‹å‰ç”Ÿæˆè¿‡ä»£ç ï¼Œæ²¡é‡æ–°æ‰§è¡Œç”Ÿæˆã€‚
 
-   ½â¾ö°ì·¨£¬È·ÈÏXXX£¨ÀàÐÍÃû£©¼ÓÉÏCSharpCallLuaºó£¬Çå³ý´úÂëºóÔËÐÐ¡£
+   è§£å†³åŠžæ³•ï¼Œç¡®è®¤XXXï¼ˆç±»åž‹åï¼‰åŠ ä¸ŠCSharpCallLuaåŽï¼Œæ¸…é™¤ä»£ç åŽè¿è¡Œã€‚
 
-4. Ê²Ã´ÊÇÉú³É´úÂë£¿
+4. ä»€ä¹ˆæ˜¯ç”Ÿæˆä»£ç ï¼Ÿ
 
-   xLuaÖ§³ÖµÄluaºÍC#¼ä½»»¥¼¼ÊõÖ®Ò»£¬ÕâÖÖ¼¼ÊõÍ¨¹ýÉú³ÉÁ½Õß¼äµÄÊÊÅä´úÂëÀ´ÊµÏÖ½»»¥£¬ÐÔÄÜ½ÏºÃ£¬ÊÇÍÆ¼öµÄ·½Ê½¡£
+   xLuaæ”¯æŒçš„luaå’ŒC#é—´äº¤äº’æŠ€æœ¯ä¹‹ä¸€ï¼Œè¿™ç§æŠ€æœ¯é€šè¿‡ç”Ÿæˆä¸¤è€…é—´çš„é€‚é…ä»£ç æ¥å®žçŽ°äº¤äº’ï¼Œæ€§èƒ½è¾ƒå¥½ï¼Œæ˜¯æŽ¨èçš„æ–¹å¼ã€‚
 
-   ÁíÒ»ÖÖ½»»¥¼¼ÊõÊÇ·´Éä£¬ÕâÖÖ·½Ê½¶Ô°²×°°üµÄÓ°Ïì¸üÉÙ£¬¿ÉÒÔÔÚÐÔÄÜÒªÇó²»¸ß»òÕß¶Ô°²×°°ü´óÐ¡ºÜÃô¸ÐµÄ³¡¾°ÏÂÊ¹ÓÃ¡£
+   å¦ä¸€ç§äº¤äº’æŠ€æœ¯æ˜¯åå°„ï¼Œè¿™ç§æ–¹å¼å¯¹å®‰è£…åŒ…çš„å½±å“æ›´å°‘ï¼Œå¯ä»¥åœ¨æ€§èƒ½è¦æ±‚ä¸é«˜æˆ–è€…å¯¹å®‰è£…åŒ…å¤§å°å¾ˆæ•æ„Ÿçš„åœºæ™¯ä¸‹ä½¿ç”¨ã€‚
 
-5. ¸ÄÁË½Ó¿Úºó£¬Ö®Ç°Éú³ÉµÄ´úÂë³öÏÖ´íÎóÔõÃ´°ì£¿
+5. æ”¹äº†æŽ¥å£åŽï¼Œä¹‹å‰ç”Ÿæˆçš„ä»£ç å‡ºçŽ°é”™è¯¯æ€Žä¹ˆåŠžï¼Ÿ
 
-   Çå³ýµôÉú³É´úÂë£¨Ö´ÐÐ¡°Clear Generated Code¡±²Ëµ¥£¬Èç¹ûÄãÖØÆô¹ý£¬»áÕÒ²»µ½Õâ¸ö²Ëµ¥£¬ÕâÊ±Äã¿ÉÒÔÊÖ¶¯É¾³ýÕû¸öÉú³É´úÂëÄ¿Â¼£©£¬µÈ±àÒëÍê³ÉºóÖØÐÂÉú³É¡£
+   æ¸…é™¤æŽ‰ç”Ÿæˆä»£ç ï¼ˆæ‰§è¡Œâ€œClear Generated Codeâ€èœå•ï¼Œå¦‚æžœä½ é‡å¯è¿‡ï¼Œä¼šæ‰¾ä¸åˆ°è¿™ä¸ªèœå•ï¼Œè¿™æ—¶ä½ å¯ä»¥æ‰‹åŠ¨åˆ é™¤æ•´ä¸ªç”Ÿæˆä»£ç ç›®å½•ï¼‰ï¼Œç­‰ç¼–è¯‘å®ŒæˆåŽé‡æ–°ç”Ÿæˆã€‚
 
-6. Ó¦¸ÃÊ²Ã´Ê±ºòÉú³É´úÂë£¿
+6. åº”è¯¥ä»€ä¹ˆæ—¶å€™ç”Ÿæˆä»£ç ï¼Ÿ
 
-   ¿ª·¢ÆÚ²»½¨ÒéÉú³É´úÂë£¬¿ÉÒÔ±ÜÃâºÜ¶àÓÉÓÚ²»Ò»ÖÂµ¼ÖÂµÄ±àÒëÊ§°Ü£¬ÒÔ¼°Éú³É´úÂë±¾ÉíµÄ±àÒëµÈ´ý¡£
+   å¼€å‘æœŸä¸å»ºè®®ç”Ÿæˆä»£ç ï¼Œå¯ä»¥é¿å…å¾ˆå¤šç”±äºŽä¸ä¸€è‡´å¯¼è‡´çš„ç¼–è¯‘å¤±è´¥ï¼Œä»¥åŠç”Ÿæˆä»£ç æœ¬èº«çš„ç¼–è¯‘ç­‰å¾…ã€‚
 
-   buildÊÖ»ú°æ±¾Ç°±ØÐëÖ´ÐÐÉú³É´úÂë£¬½¨Òé×ö³É×Ô¶¯»¯µÄ¡£
+   buildæ‰‹æœºç‰ˆæœ¬å‰å¿…é¡»æ‰§è¡Œç”Ÿæˆä»£ç ï¼Œå»ºè®®åšæˆè‡ªåŠ¨åŒ–çš„ã€‚
 
-   ×öÐÔÄÜµ÷ÓÅ£¬ÐÔÄÜ²âÊÔÇ°±ØÐëÖ´ÐÐÉú³É´úÂë£¬ÒòÎªÉú³ÉºÍ²»Éú³ÉÐÔÄÜµÄÇø±ð»¹ÊÇºÜ´óµÄ¡£
+   åšæ€§èƒ½è°ƒä¼˜ï¼Œæ€§èƒ½æµ‹è¯•å‰å¿…é¡»æ‰§è¡Œç”Ÿæˆä»£ç ï¼Œå› ä¸ºç”Ÿæˆå’Œä¸ç”Ÿæˆæ€§èƒ½çš„åŒºåˆ«è¿˜æ˜¯å¾ˆå¤§çš„ã€‚
 
-7. CSÃû×Ö¿Õ¼äÏÂÓÐËùÓÐC# APIÊÇ²»ÊÇºÜÕ¼ÄÚ´æ£¿
+7. CSåå­—ç©ºé—´ä¸‹æœ‰æ‰€æœ‰C# APIæ˜¯ä¸æ˜¯å¾ˆå å†…å­˜ï¼Ÿ
 
-   ÓÉÓÚÓÃÁËlazyload£¬Õâ¸ö¡°ÓÐ¡±Ö»ÊÇ¸öÐéÄâµÄ¸ÅÄî£¬±ÈÈçUnityEngine.GameObject£¬ÊÇ·ÃÎÊµÚÒ»´ÎCS.UnityEngine.GameObject»òÕßµÚÒ»¸öÊµÀýÍùlua´«ËÍ²Å¼ÓÔØ¸ÃÀàÐÍ·½·¨£¬ÊôÐÔµÈ¡£
+   ç”±äºŽç”¨äº†lazyloadï¼Œè¿™ä¸ªâ€œæœ‰â€åªæ˜¯ä¸ªè™šæ‹Ÿçš„æ¦‚å¿µï¼Œæ¯”å¦‚UnityEngine.GameObjectï¼Œæ˜¯è®¿é—®ç¬¬ä¸€æ¬¡CS.UnityEngine.GameObjectæˆ–è€…ç¬¬ä¸€ä¸ªå®žä¾‹å¾€luaä¼ é€æ‰åŠ è½½è¯¥ç±»åž‹æ–¹æ³•ï¼Œå±žæ€§ç­‰ã€‚
 
-8. LuaCallSharpÒÔ¼°CSharpCallLuaÁ½ÖÖÉú³É¸÷ÔÚÊ²Ã´³¡¾°ÏÂÓÃ£¿
+8. LuaCallSharpä»¥åŠCSharpCallLuaä¸¤ç§ç”Ÿæˆå„åœ¨ä»€ä¹ˆåœºæ™¯ä¸‹ç”¨ï¼Ÿ
 
-   ¿´µ÷ÓÃÕßºÍ±»µ÷ÓÃÕß£¬±ÈÈçÒªÔÚluaµ÷ÓÃC#µÄGameObject.Findº¯Êý£¬»òÕßµ÷ÓÃgameobjectµÄÊµÀý·½·¨£¬ÊôÐÔµÈ£¬GameObjectÀàÒª¼ÓLuaCallSharp£¬¶øÏë°ÑÒ»¸öluaº¯Êý¹Òµ½UI»Øµ÷£¬ÕâÊÇµ÷ÓÃÕßÊÇC#£¬±»µ÷ÓÃµÄÊÇÒ»¸öluaº¯Êý£¬ËùÒÔ»Øµ÷ÉùÃ÷µÄdelegateÒª¼ÓCSharpCallLua¡£
+   çœ‹è°ƒç”¨è€…å’Œè¢«è°ƒç”¨è€…ï¼Œæ¯”å¦‚è¦åœ¨luaè°ƒç”¨C#çš„GameObject.Findå‡½æ•°ï¼Œæˆ–è€…è°ƒç”¨gameobjectçš„å®žä¾‹æ–¹æ³•ï¼Œå±žæ€§ç­‰ï¼ŒGameObjectç±»è¦åŠ LuaCallSharpï¼Œè€Œæƒ³æŠŠä¸€ä¸ªluaå‡½æ•°æŒ‚åˆ°UIå›žè°ƒï¼Œè¿™æ˜¯è°ƒç”¨è€…æ˜¯C#ï¼Œè¢«è°ƒç”¨çš„æ˜¯ä¸€ä¸ªluaå‡½æ•°ï¼Œæ‰€ä»¥å›žè°ƒå£°æ˜Žçš„delegateè¦åŠ CSharpCallLuaã€‚
 
-   ÓÐÊ±»á±È½ÏÃÔ»óÈË£¬±ÈÈçList<int>.Find(Predicate<int> match)µÄµ÷ÓÃ£¬List<int>µ±È»ÊÇ¼ÓLuaCallSharp£¬¶øPredicate<int>È´Òª¼ÓCSharpCallLua£¬ÒòÎªmatchµÄµ÷ÓÃÕßÔÚC#£¬±»µ÷ÓÃµÄÊÇÒ»¸öluaº¯Êý¡£
+   æœ‰æ—¶ä¼šæ¯”è¾ƒè¿·æƒ‘äººï¼Œæ¯”å¦‚List<int>.Find(Predicate<int> match)çš„è°ƒç”¨ï¼ŒList<int>å½“ç„¶æ˜¯åŠ LuaCallSharpï¼Œè€ŒPredicate<int>å´è¦åŠ CSharpCallLuaï¼Œå› ä¸ºmatchçš„è°ƒç”¨è€…åœ¨C#ï¼Œè¢«è°ƒç”¨çš„æ˜¯ä¸€ä¸ªluaå‡½æ•°ã€‚
 
-   ¸üÎÞÄÔÒ»µãµÄ·½Ê½ÊÇ¿´µ½¡°This delegate/interface must add to CSharpCallLua : XXX¡±£¬¾Í°ÑXXX¼Óµ½CSharpCallLua¼´¿É¡£
+   æ›´æ— è„‘ä¸€ç‚¹çš„æ–¹å¼æ˜¯çœ‹åˆ°â€œThis delegate/interface must add to CSharpCallLua : XXXâ€ï¼Œå°±æŠŠXXXåŠ åˆ°CSharpCallLuaå³å¯ã€‚
 
-9. ÖµÀàÐÍ´«µÝ»áÓÐgc allocÃ´£¿
+9. å€¼ç±»åž‹ä¼ é€’ä¼šæœ‰gc allocä¹ˆï¼Ÿ
 
-   Èç¹ûÄãÊ¹ÓÃµÄÊÇdelegateµ÷ÓÃluaº¯Êý£¬»òÕßÓÃLuaTable¡¢LuaFunctionµÄÎÞgc½Ó¿Ú£¬»òÕßÊý×éµÄ»°£¬ÒÔÏÂÖµÀàÐÍ¶¼ÊÇÃ»gcµÄ£º
+   å¦‚æžœä½ ä½¿ç”¨çš„æ˜¯delegateè°ƒç”¨luaå‡½æ•°ï¼Œæˆ–è€…ç”¨LuaTableã€LuaFunctionçš„æ— gcæŽ¥å£ï¼Œæˆ–è€…æ•°ç»„çš„è¯ï¼Œä»¥ä¸‹å€¼ç±»åž‹éƒ½æ˜¯æ²¡gcçš„ï¼š
 
-   1¡¢ËùÓÐµÄ»ù±¾ÖµÀàÐÍ£¨ËùÓÐÕûÊý£¬ËùÓÐ¸¡µãÊý£¬decimal£©£»
+   1ã€æ‰€æœ‰çš„åŸºæœ¬å€¼ç±»åž‹ï¼ˆæ‰€æœ‰æ•´æ•°ï¼Œæ‰€æœ‰æµ®ç‚¹æ•°ï¼Œdecimalï¼‰ï¼›
 
-   2¡¢ËùÓÐµÄÃ¶¾ÙÀàÐÍ£»
+   2ã€æ‰€æœ‰çš„æžšä¸¾ç±»åž‹ï¼›
 
-   3¡¢×Ö¶ÎÖ»°üº¬ÖµÀàÐÍµÄstruct£¬¿ÉÇ¶Ì×ÆäËüÖ»°üº¬ÖµÀàÐÍstruct£»
+   3ã€å­—æ®µåªåŒ…å«å€¼ç±»åž‹çš„structï¼Œå¯åµŒå¥—å…¶å®ƒåªåŒ…å«å€¼ç±»åž‹structï¼›
 
-   ÆäÖÐ2¡¢3ÐèÒª°Ñ¸ÃÀàÐÍ¼Óµ½GCOptimize¡£
+   å…¶ä¸­2ã€3éœ€è¦æŠŠè¯¥ç±»åž‹åŠ åˆ°GCOptimizeã€‚
 
-10. ·´ÉäÔÚiosÏÂ¿ÉÓÃÂð£¿
+10. åå°„åœ¨iosä¸‹å¯ç”¨å—ï¼Ÿ
 
-    iosÏÂµÄÏÞÖÆÓÐÁ½¸ö£º1¡¢Ã»ÓÐjit£»2¡¢´úÂë¼ô²Ã£¨stripping£©£»
+    iosä¸‹çš„é™åˆ¶æœ‰ä¸¤ä¸ªï¼š1ã€æ²¡æœ‰jitï¼›2ã€ä»£ç å‰ªè£ï¼ˆstrippingï¼‰ï¼›
 
-    ¶ÔÓÚC#Í¨¹ýdelegate»òÕßinterfaceµ÷ÓÃlua£¬Èç¹û²»Éú³É´úÂëÊÇÓÃ·´ÉäµÄemit£¬ÕâÒÀÀµjit£¬ËùÒÔÕâÄ¿Ç°Ö»ÔÚ±à¼­Æ÷¿ÉÓÃ¡£
+    å¯¹äºŽC#é€šè¿‡delegateæˆ–è€…interfaceè°ƒç”¨luaï¼Œå¦‚æžœä¸ç”Ÿæˆä»£ç æ˜¯ç”¨åå°„çš„emitï¼Œè¿™ä¾èµ–jitï¼Œæ‰€ä»¥è¿™ç›®å‰åªåœ¨ç¼–è¾‘å™¨å¯ç”¨ã€‚
 
-    ¶ÔÓÚluaµ÷ÓÃC#£¬Ö÷Òª»á±»´úÂë¼ô²ÃÓ°Ïì£¬ÕâÊ±Äã¿ÉÒÔÅäÖÃReflectionUse£¨²»ÒªÅäLuaCallSharp£©£¬Ö´ÐÐ¡°Generate Code¡±£¬ÕâÊ±²»»á¶Ô¸ÃÀàÉú³É·â×°´úÂë£¬¶øÊÇÉú³Élink.xml°Ñ¸ÃÀàÅäÖÃÎª²»¼ô²Ã¡£
+    å¯¹äºŽluaè°ƒç”¨C#ï¼Œä¸»è¦ä¼šè¢«ä»£ç å‰ªè£å½±å“ï¼Œè¿™æ—¶ä½ å¯ä»¥é…ç½®ReflectionUseï¼ˆä¸è¦é…LuaCallSharpï¼‰ï¼Œæ‰§è¡Œâ€œGenerate Codeâ€ï¼Œè¿™æ—¶ä¸ä¼šå¯¹è¯¥ç±»ç”Ÿæˆå°è£…ä»£ç ï¼Œè€Œæ˜¯ç”Ÿæˆlink.xmlæŠŠè¯¥ç±»é…ç½®ä¸ºä¸å‰ªè£ã€‚
 
-    ¼ò¶øÑÔÖ®£¬³ýÁËCSharpCallLuaÊÇ±ØÐëµÄ£¨ÕâÀàÉú³É´úÂëÍùÍù²»¶à£©£¬LuaCallSharpÉú³É¶¼¿ÉÒÔ¸ÄÎªÓÃ·´Éä¡£
+    ç®€è€Œè¨€ä¹‹ï¼Œé™¤äº†CSharpCallLuaæ˜¯å¿…é¡»çš„ï¼ˆè¿™ç±»ç”Ÿæˆä»£ç å¾€å¾€ä¸å¤šï¼‰ï¼ŒLuaCallSharpç”Ÿæˆéƒ½å¯ä»¥æ”¹ä¸ºç”¨åå°„ã€‚
 
-11. Ö§³Ö·º»¯·½·¨µÄµ÷ÓÃÃ´£¿
+11. æ”¯æŒæ³›åŒ–æ–¹æ³•çš„è°ƒç”¨ä¹ˆï¼Ÿ
 
-    ²»Ö±½ÓÖ§³Ö£¬µ«ÄÜµ÷ÓÃµ½¡£Èç¹ûÊÇ¾²Ì¬·½·¨£¬¿ÉÒÔ×Ô¼ºÐ´¸ö·â×°À´ÊµÀý»¯·º»¯·½·¨¡£
+    ä¸ç›´æŽ¥æ”¯æŒï¼Œä½†èƒ½è°ƒç”¨åˆ°ã€‚å¦‚æžœæ˜¯é™æ€æ–¹æ³•ï¼Œå¯ä»¥è‡ªå·±å†™ä¸ªå°è£…æ¥å®žä¾‹åŒ–æ³›åŒ–æ–¹æ³•ã€‚
 
-	Èç¹ûÊÇ³ÉÔ±·½·¨£¬xLuaÖ§³ÖÀ©Õ¹·½·¨£¬Äã¿ÉÒÔÌí¼ÓÒ»¸öÀ©Õ¹·½·¨À´ÊµÀý»¯·º»¯·½·¨¡£¸ÃÀ©Õ¹·½·¨Ê¹ÓÃÆðÀ´¾ÍºÍÆÕÍ¨³ÉÔ±·½·¨Ò»Ñù¡£
+    å¦‚æžœæ˜¯æˆå‘˜æ–¹æ³•ï¼ŒxLuaæ”¯æŒæ‰©å±•æ–¹æ³•ï¼Œä½ å¯ä»¥æ·»åŠ ä¸€ä¸ªæ‰©å±•æ–¹æ³•æ¥å®žä¾‹åŒ–æ³›åŒ–æ–¹æ³•ã€‚è¯¥æ‰©å±•æ–¹æ³•ä½¿ç”¨èµ·æ¥å°±å’Œæ™®é€šæˆå‘˜æ–¹æ³•ä¸€æ ·ã€‚
 
 ```csharp
-public static Button GetButton(this GameObject go)
-{
-	return go.GetComponent<Button>();
-}
+    public static Button GetButton(this GameObject go)
+    {
+        return go.GetComponent<Button>();
+    }
 ```
 
-È»ºóÄã¾Í¿ÉÒÔÔÚluaÄÇÕâÃ´ÓÃ
+    ç„¶åŽä½ å°±å¯ä»¥åœ¨luaé‚£è¿™ä¹ˆç”¨
 
 ```lua
-local go = CS.UnityEngine.GameObject.Find("button")
-go:GetButton().onClick:AddListener(function()
-    print('onClick')
-end)
+    local go = CS.UnityEngine.GameObject.Find("button")
+    go:GetButton().onClick:AddListener(function()
+        print('onClick')
+    end)
 ```
 
-12. Ö§³Öluaµ÷ÓÃC#ÖØÔØº¯ÊýÂð£¿
+12. æ”¯æŒluaè°ƒç”¨C#é‡è½½å‡½æ•°å—ï¼Ÿ
 
-    Ö§³Ö£¬µ«Ã»ÓÐC#¶ËÖ§³ÖµÄÄÇÃ´ÍêÉÆ£¬±ÈÈçÖØÔØ·½·¨void Foo(int a)ºÍvoid Foo(short a)£¬ÓÉÓÚintºÍshort¶¼¶ÔÓ¦luaµÄnumber£¬ÊÇÃ»·¨¸ù¾Ý²ÎÊýÅÐ¶Ïµ÷ÓÃµÄÊÇÄÄ¸öÖØÔØ¡£ÕâÊ±Äã¿ÉÒÔ½èÖúÀ©Õ¹·½·¨À´ÎªÆäÖÐÒ»¸öÆðÒ»¸ö±ðÃû¡£
+    æ”¯æŒï¼Œä½†æ²¡æœ‰C#ç«¯æ”¯æŒçš„é‚£ä¹ˆå®Œå–„ï¼Œæ¯”å¦‚é‡è½½æ–¹æ³•void Foo(int a)å’Œvoid Foo(short a)ï¼Œç”±äºŽintå’Œshortéƒ½å¯¹åº”luaçš„numberï¼Œæ˜¯æ²¡æ³•æ ¹æ®å‚æ•°åˆ¤æ–­è°ƒç”¨çš„æ˜¯å“ªä¸ªé‡è½½ã€‚è¿™æ—¶ä½ å¯ä»¥å€ŸåŠ©æ‰©å±•æ–¹æ³•æ¥ä¸ºå…¶ä¸­ä¸€ä¸ªèµ·ä¸€ä¸ªåˆ«åã€‚
 
-13. ±à¼­Æ÷ÏÂÔËÐÐÕý³££¬´ò°üµÄÊ±ºòÉú³É´úÂë±¨¡°Ã»ÓÐÄ³·½·¨/ÊôÐÔ/×Ö¶Î¶¨Òå¡±ÔõÃ´°ì£¿
+13. ç¼–è¾‘å™¨ä¸‹è¿è¡Œæ­£å¸¸ï¼Œæ‰“åŒ…çš„æ—¶å€™ç”Ÿæˆä»£ç æŠ¥â€œæ²¡æœ‰æŸæ–¹æ³•/å±žæ€§/å­—æ®µå®šä¹‰â€æ€Žä¹ˆåŠžï¼Ÿ
 
-	ÍùÍùÊÇÓÉÓÚ¸Ã·½·¨/ÊôÐÔ/×Ö¶ÎÊÇÀ©ÔÚÌõ¼þ±àÒëÀïÍ·£¬Ö»ÔÚUNITY_EDITORÏÂÓÐÐ§£¬ÕâÊÇ¿ÉÒÔÍ¨¹ý°ÑÕâ·½·¨/ÊôÐÔ/×Ö¶Î¼Óµ½ºÚÃûµ¥À´½â¾ö£¬¼ÓÁËÖ®ºóÒªµÈ±àÒëÍê³ÉºóÖØÐÂÖ´ÐÐ´úÂëÉú³É¡£
+	å¾€å¾€æ˜¯ç”±äºŽè¯¥æ–¹æ³•/å±žæ€§/å­—æ®µæ˜¯æ‰©åœ¨æ¡ä»¶ç¼–è¯‘é‡Œå¤´ï¼Œåªåœ¨UNITY_EDITORä¸‹æœ‰æ•ˆï¼Œè¿™æ˜¯å¯ä»¥é€šè¿‡æŠŠè¿™æ–¹æ³•/å±žæ€§/å­—æ®µåŠ åˆ°é»‘åå•æ¥è§£å†³ï¼ŒåŠ äº†ä¹‹åŽè¦ç­‰ç¼–è¯‘å®ŒæˆåŽé‡æ–°æ‰§è¡Œä»£ç ç”Ÿæˆã€‚
