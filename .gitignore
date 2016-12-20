@@ -9,3 +9,16 @@
 /build/build*
 UnityVS
 /Assets/UnityVS.meta
+.DS_Store
+build/luajit-2.1.0b2/src/host/buildvm_arch.h
+build/luajit-2.1.0b2/src/jit/vmdef.lua
+build/luajit-2.1.0b2/src/lj_bcdef.h
+build/luajit-2.1.0b2/src/lj_ffdef.h
+build/luajit-2.1.0b2/src/lj_folddef.h
+build/luajit-2.1.0b2/src/lj_libdef.h
+build/luajit-2.1.0b2/src/lj_recdef.h
+build/luajit-2.1.0b2/src/lua51.lib
+build/luajit-2.1.0b2/src/luajit.exe
+build/luajit-2.1.0b2/src/luajit.exp
+build/luajit-2.1.0b2/src/luajit.lib
+
