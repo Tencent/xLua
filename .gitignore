@@ -10,6 +10,13 @@
 UnityVS
 /Assets/UnityVS.meta
 .DS_Store
+*.o
+*.a
+luajit
+buildvm
+minilua
+libluajit.so
+lj_vm.S
 build/luajit-2.1.0b2/src/host/buildvm_arch.h
 build/luajit-2.1.0b2/src/jit/vmdef.lua
 build/luajit-2.1.0b2/src/lj_bcdef.h
