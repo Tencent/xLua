@@ -1,0 +1,11 @@
+.vs
+/Library
+/ProjectSettings
+/Temp
+/Assets/XLua/Gen
+/Assets/XLua/Gen.meta
+/*.csproj
+/*.sln
+/build/build*
+UnityVS
+/Assets/UnityVS.meta
