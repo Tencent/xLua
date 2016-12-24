@@ -1,5 +1,0 @@
-xlua.hotfix(CS.Rotate, 'Update', function(self)
-	self.transform:Rotate(CS.UnityEngine.Vector3.up * CS.UnityEngine.Time.deltaTime * -20)
-    --self.transform:Rotate(CS.UnityEngine.Vector3.forward * CS.UnityEngine.Time.deltaTime * 10)
-    --self.transform:Rotate(CS.UnityEngine.Vector3.left * CS.UnityEngine.Time.deltaTime * 100)
-end)
