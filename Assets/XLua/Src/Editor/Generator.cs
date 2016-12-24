@@ -84,6 +84,22 @@ namespace CSObjectWrapEditor
     {
         static LuaEnv luaenv = new LuaEnv();
         static List<string> OpMethodNames = new List<string>() { "op_Addition", "op_Subtraction", "op_Multiply", "op_Division", "op_Equality", "op_UnaryNegation", "op_LessThan", "op_LessThanOrEqual", "op_Modulus" };
+        static TemplateRef templateRef = ScriptableObject.CreateInstance<TemplateRef>();
+
+        static Generator()
+        {
+            luaenv.AddLoader((ref string filepath) =>
+            {
+                if (filepath == "TemplateCommon")
+                {
+                    return templateRef.TemplateCommon.bytes;
+                }
+                else
+                {
+                    return null;
+                }
+            });
+        }
 
         static int OverloadCosting(MethodBase mi)
         {
@@ -344,14 +360,14 @@ namespace CSObjectWrapEditor
         }
 
         static Dictionary<string, LuaFunction> templateCache = new Dictionary<string, LuaFunction>();
-        static void GenOne(Type type, Action<Type, LuaTable> type_info_getter, string template_name, StreamWriter textWriter)
+        static void GenOne(Type type, Action<Type, LuaTable> type_info_getter, TextAsset templateAsset, StreamWriter textWriter)
         {
             if (isObsolete(type)) return;
             LuaFunction template;
-            if (!templateCache.TryGetValue(template_name, out template))
+            if (!templateCache.TryGetValue(templateAsset.name, out template))
             {
-                template = TemplateEngine.LuaTemplate.Compile(luaenv, Resources.Load<UnityEngine.TextAsset>(template_name).text);
-                templateCache[template_name] = template;
+                template = TemplateEngine.LuaTemplate.Compile(luaenv, templateAsset.text);
+                templateCache[templateAsset.name] = template;
             }
 
             LuaTable type_info = luaenv.NewTable();
@@ -383,11 +399,11 @@ namespace CSObjectWrapEditor
         {
             string filePath = save_path + "EnumWrap.cs";
             StreamWriter textWriter = new StreamWriter(filePath, false, Encoding.UTF8);
-
+            
             GenOne(null, (type, type_info) =>
             {
                 type_info.Set("types", types.ToList());
-            }, "LuaEnumWrap.tpl", textWriter);
+            }, templateRef.LuaEnumWrap, textWriter);
 
             textWriter.Close();
         }
@@ -404,7 +420,7 @@ namespace CSObjectWrapEditor
                 GenOne(wrap_type, (type, type_info) =>
                 {
                     getInterfaceInfo(type, type_info);
-                }, "LuaInterfaceBridge.tpl", textWriter);
+                }, templateRef.LuaInterfaceBridge, textWriter);
                 textWriter.Close();
             }
         }
@@ -418,7 +434,7 @@ namespace CSObjectWrapEditor
                 type_info.Set("delegates", types.Distinct(new DelegateByMethodDecComparer())
                     .Select(wrap_type => wrap_type.GetMethod("Invoke")).ToList());
                 type_info.Set("types", types.ToList());
-            }, "LuaDelegateBridge.tpl", textWriter);
+            }, templateRef.LuaDelegateBridge, textWriter);
             textWriter.Close();
         }
 
@@ -434,7 +450,7 @@ namespace CSObjectWrapEditor
                 type_info.Set("tableoptimzetypes", types.Where(t => !t.IsEnum && SizeOf(t) == -1)
                      .Select(t => new { Type = t, Fields = t.GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly) })
                      .ToList());
-            }, "LuaWrapPusher.tpl", textWriter);
+            }, templateRef.LuaWrapPusher, textWriter);
             textWriter.Close();
         }
 
@@ -460,7 +476,7 @@ namespace CSObjectWrapEditor
                         type_info.Set("fields", type.GetFields(BindingFlags.GetField | BindingFlags.Public | BindingFlags.Static)
                             .Where(field => !isObsolete(field))
                             .ToList());
-                    }, "LuaEnumWrap.tpl", textWriter);
+                    }, templateRef.LuaEnumWrap, textWriter);
                 }
                 else if (typeof(Delegate).IsAssignableFrom(wrap_type))
                 {
@@ -470,7 +486,7 @@ namespace CSObjectWrapEditor
                     {
                         type_info.Set("type", type);
                         type_info.Set("delegate", type.GetMethod("Invoke"));
-                    }, "LuaDelegateWrap.tpl", textWriter);
+                    }, templateRef.LuaDelegateWrap, textWriter);
 
                 }
                 else
@@ -482,7 +498,7 @@ namespace CSObjectWrapEditor
                             type_info.Set("base", type.BaseType);
                         }
                         getClassInfo(type, type_info);
-                    }, "LuaClassWrap.tpl", textWriter);
+                    }, templateRef.LuaClassWrap, textWriter);
                 }
                 textWriter.Close();
             }
@@ -554,7 +570,7 @@ namespace CSObjectWrapEditor
                 type_info.Set("wraps", wraps.ToList());
                 type_info.Set("itf_bridges", itf_bridges.ToList());
                 type_info.Set("extension_methods", extension_methods.ToList());
-            }, "LuaRegister.tpl", textWriter);
+            }, templateRef.LuaRegister, textWriter);
             textWriter.Close();
         }
 
@@ -647,24 +663,24 @@ namespace CSObjectWrapEditor
                     }
                     return new { Type = t, FieldInfos = fs.ToList(), FieldGroup = grouped_field, IsRoot = set.ContainsKey(t) };
                 }).ToList());
-            }, "PackUnpack.tpl", textWriter);
+            }, templateRef.PackUnpack, textWriter);
             textWriter.Close();
         }
 
         //lua中要使用到C#库的配置，比如C#标准库，或者Unity API，第三方库等。
-        static List<Type> LuaCallCSharp = null;
+        public static List<Type> LuaCallCSharp = null;
 
         //C#静态调用Lua的配置（包括事件的原型），仅可以配delegate，interface
-        static List<Type> CSharpCallLua = null;
+        public static List<Type> CSharpCallLua = null;
 
         //黑名单
-        static List<List<string>> BlackList = null;
+        public static List<List<string>> BlackList = null;
 
-        static List<Type> GCOptimizeList = null;
+        public static List<Type> GCOptimizeList = null;
 
-        static Dictionary<Type, List<string>> AdditionalProperties = null;
+        public static Dictionary<Type, List<string>> AdditionalProperties = null;
 
-        static List<Type> ReflectionUse = null;
+        public static List<Type> ReflectionUse = null;
 
         static void AddToList(List<Type> list, Func<object> get)
         {
@@ -918,12 +934,12 @@ namespace CSObjectWrapEditor
 
         public delegate IEnumerable<CustomGenTask> GetTasks(LuaEnv lua_env, UserConfig user_cfg);
 
-        public static void CustomGen(string template_name, GetTasks get_tasks)
+        public static void CustomGen(string template_src, GetTasks get_tasks)
         {
             GetGenConfig();
 
-            LuaFunction template = TemplateEngine.LuaTemplate.Compile(luaenv, 
-                Resources.Load<UnityEngine.TextAsset>(template_name).text);
+            LuaFunction template = TemplateEngine.LuaTemplate.Compile(luaenv,
+                template_src);
             foreach (var gen_task in get_tasks(luaenv, new UserConfig() {
                 LuaCallCSharp = LuaCallCSharp,
                 CSharpCallLua = CSharpCallLua,
@@ -943,7 +959,7 @@ namespace CSObjectWrapEditor
                 }
                 catch (Exception e)
                 {
-                    Debug.LogError("gen file fail! template=" + template_name + ", err=" + e.Message + ", stack=" + e.StackTrace);
+                    Debug.LogError("gen file fail! template=" + template_src + ", err=" + e.Message + ", stack=" + e.StackTrace);
                 }
             }
         }

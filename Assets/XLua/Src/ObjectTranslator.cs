@@ -479,6 +479,9 @@ namespace XLua
             LuaAPI.xlua_pushasciistring(L, "load_assembly");
 			LuaAPI.lua_pushstdcallcfunction(L,loadAssemblyFunction);
             LuaAPI.lua_rawset(L, -3);
+            LuaAPI.xlua_pushasciistring(L, "access");
+            LuaAPI.lua_pushstdcallcfunction(L, StaticLuaCallbacks.XLuaAccess);
+            LuaAPI.lua_rawset(L, -3);
             LuaAPI.lua_pop(L, 1);
 
             LuaAPI.lua_createtable(L, 1, 4); // 4 for __gc, __tostring, __index, __newindex

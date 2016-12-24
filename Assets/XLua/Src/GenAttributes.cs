@@ -63,6 +63,30 @@ namespace XLua
 
     }
 
+    public enum HotfixFlag
+    {
+        Stateless = 0,
+        stateful = 1,
+    }
+
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct)]
+    public class HotfixAttribute : Attribute
+    {
+        HotfixFlag flag;
+        public HotfixFlag Flag
+        {
+            get
+            {
+                return flag;
+            }
+        }
+
+        public HotfixAttribute(HotfixFlag e = HotfixFlag.Stateless)
+        {
+            flag = e;
+        }
+    }
+
     public static class SysGenConfig
     {
         [GCOptimize]

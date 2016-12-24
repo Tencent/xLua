@@ -1,15 +1,15 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 using XLua;
-using System;
 using System.IO;
 using System.Text;
 using System.Linq;
 using CSObjectWrapEditor;
-using UnityEditor;
 
-public class LinkXmlGen
+public class LinkXmlGen : ScriptableObject
 {
+    public TextAsset Template;
+
     public static IEnumerable<CustomGenTask> GetTasks(LuaEnv lua_env, UserConfig user_cfg)
     {
         LuaTable data = lua_env.NewTable();
@@ -29,6 +29,6 @@ public class LinkXmlGen
     [GenCodeMenu]//加到Generate Code菜单里头
     public static void GenLinkXml()
     {
-        Generator.CustomGen("LinkXmlGen.tpl", GetTasks);
+        Generator.CustomGen(ScriptableObject.CreateInstance<LinkXmlGen>().Template.text, GetTasks);
     }
 }

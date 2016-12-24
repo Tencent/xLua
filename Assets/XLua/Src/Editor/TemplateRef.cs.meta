@@ -1,0 +1,22 @@
+fileFormatVersion: 2
+guid: 4898604144dd928468ddca1af81d58ae
+timeCreated: 1482481123
+licenseType: Pro
+MonoImporter:
+  serializedVersion: 2
+  defaultReferences:
+  - LuaClassWrap: {fileID: 4900000, guid: 8503038eabbabe44dac0f5f749d4411a, type: 3}
+  - LuaDelegateBridge: {fileID: 4900000, guid: 3d992756e2469044484be75f78e4e556, type: 3}
+  - LuaDelegateWrap: {fileID: 4900000, guid: 33b33e1cd617f794b8c801a32f3b2539, type: 3}
+  - LuaEnumWrap: {fileID: 4900000, guid: ae16c73aad9a21a44aef65decb7e4928, type: 3}
+  - LuaInterfaceBridge: {fileID: 4900000, guid: 7165d08e91378494dadeb10e5338accb,
+      type: 3}
+  - LuaRegister: {fileID: 4900000, guid: e416b82ec9fe340458f97cf1e3468ef7, type: 3}
+  - LuaWrapPusher: {fileID: 4900000, guid: d1a916469d261d447972d287b6c5b7a0, type: 3}
+  - PackUnpack: {fileID: 4900000, guid: c9ef7e8f2a3b37744aad49b99370c16b, type: 3}
+  - TemplateCommon: {fileID: 4900000, guid: cb41d53afe75a9443b182e284298feeb, type: 3}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

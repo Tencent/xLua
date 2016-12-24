@@ -399,6 +399,18 @@ namespace XLua
                   end
                 end
             end
+
+            xlua.hotfix = function(cs, field, func)
+                local tbl = (type(field) == 'table') and field or {[field] = func}
+                for k, v in pairs(tbl) do
+                    xlua.access(cs, '__Hitfix0_'..k, v) -- at least one
+                    pcall(function()
+                        for i = 1, 99 do
+                            xlua.access(cs, '__Hitfix'..i..'_'..k, v)
+                        end
+                    end)
+                end
+            end
             ";
 
         public delegate byte[] CustomLoader(ref string filepath);
