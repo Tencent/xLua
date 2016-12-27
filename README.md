@@ -2,36 +2,31 @@
 
 ![](https://img.shields.io/badge/release-v2.1.5-blue.png)
 
-## Unity3D��Lua���֧��
+## Unity3D下Lua编程支持
 
-ΪUnity3D����Lua�ű���̵������������ṩ�����߼��������µĿ��ܡ���Ȼ��������ˣ���coco2dx�ϵ�ʵ���������ǣ���LuaΪ�������Ե���Ϸ�ͻ��˱���ǿ��еġ�
+xLua为Unity3D增加Lua脚本编程的能力，进而提供代码逻辑增量更新的可能。当然不仅仅如此，在coco2dx上的实践告诉我们，以Lua为主打语言的游戏客户端编程是可行的。
 
-* C#��Lua�����໥���öԷ�����API�����ʶԷ��������ݽṹ��
-* �༭�����������ɴ��룬������������
-* ͬʱ֧��Lua5.3��Luajit2.1��
-* Lua������C# delegate��Lua table��C# interface���������䣻
-* ���л���ֵ���ͣ�����ö�٣��Լ��ֶ���ֵ���͵�struct����Lua��C#�䴫����C# gc alloc��
-* ֧��Lua table��ֵ��C#�������ͣ�
-* ���䷽ʽ���Զ���������ã�
-* ����Lazyload������
-* �ɲ��޸Ĵ�����������Lua��չ��
-* ֧������������ο�����
-* ����Lua����profiler��
-* ֧��������ԣ�
+## xLua的突破
 
-����ϸ�����Խ����뿴[����](Assets/XLua/Doc/features.md)��
+xLua在易用性、功能、性能都有不少突破，这几方面分别最具代表性的突破是：
 
-## ��װ
+* 编辑器下无需生成代码，开发更轻量；
+* 热补丁技术支持在线把一个C#（整个类，或者单个方法，操作符，属性，事件，构造函数）实现替换成lua实现；
+* 所有基本值类型，所有枚举，以及字段是值类型的struct（含自定义struct），在Lua和C#间传递无C# gc alloc；
 
-ֱ�ӽ�ѹ��Assets�¿��á���һ��ʹ�ý�������Ӱ�Ҳ��װ�����п���Ч����
+更详细的特性、平台支持介绍请看[这里](Assets/XLua/Doc/features.md)。
 
-���ϣ����װ������Ŀ¼���뿴[FAQ](Assets/XLua/Doc/faq.md)��ؽ��ܡ�
+## 安装
 
-## ��������
+直接解压到Assets下可用。第一次使用建议把例子包也安装，运行看看效果。
 
-һ�����������ӽ���3�д��룺
+如果希望安装到其它目录，请看[FAQ](Assets/XLua/Doc/faq.md)相关介绍。
 
-����xLua���ѹ��Unity����AssetsĿ¼�£���һ��MonoBehaviour�ϵ���������Start�������´��룺
+## 快速入门
+
+一个完整的例子仅需3行代码：
+
+下载xLua后解压到Unity工程Assets目录下，建一个MonoBehaviour拖到场景，在Start加入如下代码：
 
 ```csharp
 Lua.LuaEnv luaenv = new XLua.LuaEnv();
@@ -39,48 +34,59 @@ luaenv.DoString("CS.UnityEngine.Debug.Log('hello world')");
 luaenv.Dispose();
 ```
 
-1��DoString����Ϊstring������������Ϸ���Lua���룬��ʾ����lua�����C#��UnityEngine.Debug.Log��ӡ�˸���־��
+1、DoString参数为string，可输入任意合法的Lua代码，本示例在lua里调用C#的UnityEngine.Debug.Log打印了个日志。
 
-2��һ��LuaEnvʵ����ӦLua����������ڿ����Ŀ��ǣ�����ȫ��Ψһ��
+2、一个LuaEnv实例对应Lua虚拟机，处于开销的考虑，建议全局唯一。
 
-C#��������luaҲ�ܼ򵥣�����Ҫ����lua��ϵͳ�������Ƽ���ʽ�ǣ�
+C#主动调用lua也很简单，比如要调用lua的系统函数，推荐方式是：
 
-* ����
+* 声明
 
 ```csharp
 [XLua.CSharpCallLua]
 public delegate double LuaMax(double a, double b);
 ```
 
-* ��
+* 绑定
 
 ```csharp
 var max = luaenv.Global.GetInPath<LuaMax>("math.max");
 ```
 
-* ����
+* 调用
 
 ```csharp
 Debug.Log("max:" + max(32, 12));
 ```
 
-�����һ�Σ��ظ�ʹ�á������˴���Ļ�������max�ǲ�����gc alloc�ġ�
+建议绑定一次，重复使用。生成了代码的话，调用max是不产生gc alloc的。
 
-## ����ʾ��:
+## 热补丁
 
-* [01_Helloworld](Assets/XLua/Examples/01_Helloworld/): �������ŵ����ӡ�
-* [02_U3DScripting](Assets/XLua/Examples/02_U3DScripting/): չʾ��ô��lua��дMonoBehaviour��
-* [03_UIEvent](Assets/XLua/Examples/03_UIEvent/): չʾ��ô��lua��дUI�߼���
-* [04_LuaObjectOrented](Assets/XLua/Examples/04_LuaObjectOrented/): չʾlua��������C#����ϡ�
-* [05_NoGc](Assets/XLua/Examples/05_NoGc/): չʾ��ôȥ����ֵ���͵�GC��
-* [06_Coroutine](Assets/XLua/Examples/06_Coroutine/): չʾluaЭ����ô��UnityЭ������ϡ�
-* [07_AsyncTest](Assets/XLua/Examples/07_AsyncTest/): չʾ��ô��luaЭ�������첽�߼�ͬ������
+xLua支持热补丁，这意味着你可以：
+
+* 1、开发只用C#；
+* 2、运行也是C#，性能可以秒杀lua；
+* 3、出问题了才用Lua来改掉C#出问题的部位，下次整体更新时换回正确的C#；甚至能做到用户不重启程序fix bug；
+
+如果你仅仅希望用热更新来fix bug，这是强烈建议的做法。[这里](Assets/XLua/Doc/hotfix.md)是使用指南。
+
+## 更多示例
+
+* [01_Helloworld](Assets/XLua/Examples/01_Helloworld/): 快速入门的例子。
+* [02_U3DScripting](Assets/XLua/Examples/02_U3DScripting/): 展示怎么用lua来写MonoBehaviour。
+* [03_UIEvent](Assets/XLua/Examples/03_UIEvent/): 展示怎么用lua来写UI逻辑。
+* [04_LuaObjectOrented](Assets/XLua/Examples/04_LuaObjectOrented/): 展示lua面向对象和C#的配合。
+* [05_NoGc](Assets/XLua/Examples/05_NoGc/): 展示怎么去避免值类型的GC。
+* [06_Coroutine](Assets/XLua/Examples/06_Coroutine/): 展示lua协程怎么和Unity协程相配合。
+* [07_AsyncTest](Assets/XLua/Examples/07_AsyncTest/): 展示怎么用lua协程来把异步逻辑同步化。
+* [08_Hotfix](Assets/XLua/Examples/08_Hotfix/): 热补丁的实例。
  
-## �ĵ�
+## 文档
 
-* [XLua����.ppt](Assets/XLua/Doc/XLua����.ppt)����������ĵ���
-* [XLua�̳�.doc](Assets/XLua/Doc/XLua�̳�.doc)���̳̣������״���[����](Assets/XLua/Tutorial/)��
-* [XLua������.doc](Assets/XLua/Doc/XLua������.doc)�������������xLua��
-* [XLua����ɾ��������lua��.doc](Assets/XLua/Doc/XLua����ɾ��������lua��.doc)�������ɾ������lua��չ�⡣
-* [XLua API.doc](Assets/XLua/Doc/XLua_API.doc)��API�ĵ���
+* [XLua介绍.ppt](Assets/XLua/Doc/XLua介绍.ppt)：总体介绍文档。
+* [XLua教程.doc](Assets/XLua/Doc/XLua教程.doc)：教程，其配套代码[这里](Assets/XLua/Tutorial/)。
+* [XLua的配置.doc](Assets/XLua/Doc/XLua的配置.doc)：介绍如何配置xLua。
+* [XLua增加删除第三方lua库.doc](Assets/XLua/Doc/XLua增加删除第三方lua库.doc)：如何增删第三方lua扩展库。
+* [XLua API.doc](Assets/XLua/Doc/XLua_API.doc)：API文档。
 
