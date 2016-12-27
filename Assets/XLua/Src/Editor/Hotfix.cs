@@ -171,6 +171,10 @@ namespace XLua
                     FieldDefinition stateTable = null;
                     if (hotfixType == 1)
                     {
+                        if (type.IsAbstract && type.IsSealed)
+                        {
+                            throw new InvalidOperationException(type.FullName + " is static, can not be mark as Stateful!");
+                        }
                         stateTable = new FieldDefinition("__Hitfix_xluaStateTable", Mono.Cecil.FieldAttributes.Private, luaTableType);
                         type.Fields.Add(stateTable );
                     }
@@ -383,13 +387,13 @@ namespace XLua
             List<Type> genericParams = new List<Type>();
             if (!method.IsStatic)
             {
-                genericParams.Add((hotfixType == HotfixFlag.stateful && !method.IsConstructor) ? typeof(LuaTable) : genericType(method.DeclaringType));
+                genericParams.Add((hotfixType == HotfixFlag.Stateful && !method.IsConstructor) ? typeof(LuaTable) : genericType(method.DeclaringType));
             }
             foreach (var param in method.GetParameters())
             {
                 genericParams.Add(genericType(param.ParameterType));
             }
-            bool statefulConstructor = (hotfixType == HotfixFlag.stateful) && method.IsConstructor;
+            bool statefulConstructor = (hotfixType == HotfixFlag.Stateful) && method.IsConstructor;
             if (!is_void || statefulConstructor)
             {
                 genericParams.Add(statefulConstructor? typeof(LuaTable) : (method as MethodInfo).ReturnType);

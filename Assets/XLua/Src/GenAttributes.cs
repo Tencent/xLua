@@ -66,7 +66,7 @@ namespace XLua
     public enum HotfixFlag
     {
         Stateless = 0,
-        stateful = 1,
+        Stateful = 1,
     }
 
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct)]
