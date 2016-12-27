@@ -36,5 +36,10 @@ public class StatefullTest {
     static public void StaticFunc(string a, int b, int c)
     {
     }
+
+    ~StatefullTest()
+    {
+        Debug.Log("Finalize will not be injected!");
+    }
 }
 

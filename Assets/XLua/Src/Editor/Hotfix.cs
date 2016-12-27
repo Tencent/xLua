@@ -180,7 +180,7 @@ namespace XLua
                     }
                     foreach (var method in type.Methods)
                     {
-                        if (method.Name != ".cctor")
+                        if (method.Name != ".cctor" && method.Name != "Finalize")
                         {
                             InjectCode(assembly, method, hotfixType, stateTable);
                         }
