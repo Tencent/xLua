@@ -14,6 +14,8 @@ namespace XLua
 {
     public class ObjectPool
     {
+        const int LIST_END = -1;
+        const int ALLOCED = -2;
         struct Slot
         {
             public int next;
@@ -27,7 +29,7 @@ namespace XLua
         }
 
         private Slot[] list = new Slot[512];
-        private int head = -1;
+        private int freelist = LIST_END;
         private int count = 0;
 
         public object this[int i]
@@ -45,7 +47,7 @@ namespace XLua
 
         public void Clear()
         {
-            head = -1;
+            freelist = LIST_END;
             count = 0;
             list = new Slot[512];
         }
@@ -62,14 +64,14 @@ namespace XLua
 
         public int Add(object obj)
         {
-            int index = -1;
+            int index = LIST_END;
 
-            if (head != -1)
+            if (freelist != LIST_END)
             {
-                index = head;
+                index = freelist;
                 list[index].obj = obj;
-                head = list[index].next;
-                list[index].next = -2;
+                freelist = list[index].next;
+                list[index].next = ALLOCED;
             }
             else
             {
@@ -78,8 +80,7 @@ namespace XLua
                     extend_capacity();
                 }
                 index = count;
-                list[index].next = -2;
-                list[index].obj = obj;
+                list[index] = new Slot(ALLOCED, obj);
                 count = index + 1;
             }
 
@@ -88,7 +89,7 @@ namespace XLua
 
         public bool TryGetValue(int index, out object obj)
         {
-            if (index >= 0 && index < count && list[index].obj != null)
+            if (index >= 0 && index < count && list[index].next == ALLOCED)
             {
                 obj = list[index].obj;
                 return true;
@@ -109,12 +110,12 @@ namespace XLua
 
         public object Remove(int index)
         {
-            if (index >= 0 && index < count)
+            if (index >= 0 && index < count && list[index].next == ALLOCED)
             {
                 object o = list[index].obj;
                 list[index].obj = null;
-                list[index].next = head;
-                head = index;
+                list[index].next = freelist;
+                freelist = index;
                 return o;
             }
 
@@ -142,7 +143,7 @@ namespace XLua
             for (int i = 0; i < Math.Min(max_check, count); ++i)
             {
                 check_pos %= count;
-                if (list[check_pos].next == -2 && !Object.ReferenceEquals(list[check_pos].obj, null))
+                if (list[check_pos].next == ALLOCED && !Object.ReferenceEquals(list[check_pos].obj, null))
                 {
                     if (!checker(list[check_pos].obj))
                     {

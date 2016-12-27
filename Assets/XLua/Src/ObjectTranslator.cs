@@ -541,19 +541,23 @@ namespace XLua
 			if (objects.TryGetValue(obj_index_to_collect, out o))
 			{
 				objects.Remove(obj_index_to_collect);
-                int obj_index;
-                //lua gc是先把weak table移除后再调用__gc，这期间同一个对象可能再次push到lua，关联到新的index
-                bool is_enum = o.GetType().IsEnum;
-                if ((is_enum ? enumMap.TryGetValue(o, out obj_index) : reverseMap.TryGetValue(o, out obj_index))
-                    && obj_index == obj_index_to_collect)
+                
+                if (o != null)
                 {
-                    if (is_enum)
+                    int obj_index;
+                    //lua gc是先把weak table移除后再调用__gc，这期间同一个对象可能再次push到lua，关联到新的index
+                    bool is_enum = o.GetType().IsEnum;
+                    if ((is_enum ? enumMap.TryGetValue(o, out obj_index) : reverseMap.TryGetValue(o, out obj_index))
+                        && obj_index == obj_index_to_collect)
                     {
-                        enumMap.Remove(o);
-                    }
-                    else
-                    {
-                        reverseMap.Remove(o);
+                        if (is_enum)
+                        {
+                            enumMap.Remove(o);
+                        }
+                        else
+                        {
+                            reverseMap.Remove(o);
+                        }
                     }
                 }
 			}
