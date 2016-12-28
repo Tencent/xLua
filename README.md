@@ -10,7 +10,7 @@ xLua为Unity3D增加Lua脚本编程的能力，进而提供代码逻辑增量更
 
 xLua在功能、性能、易用性都有不少突破，这几方面分别最具代表性的突破是：
 
-* Unity3D全平台热补丁技术，可以运行时把C#实现（整个类，或者单个方法，操作符，属性，事件，构造函数）替换成lua实现；
+* Unity3D全平台热补丁技术，可以运行时把C#实现（整个类，或者单个方法，操作符，属性，事件，构造函数，析构函数）替换成lua实现；
 * 自定义struct，枚举在Lua和C#间传递无C# gc alloc；
 * 编辑器下无需生成代码，开发更轻量；
 
@@ -67,7 +67,7 @@ xLua支持热补丁，这意味着你可以：
 
 * 1、开发只用C#；
 * 2、运行也是C#，性能可以秒杀lua；
-* 3、出问题了才用Lua来改掉C#出问题的部位，下次整体更新时换回正确的C#；甚至能做到用户不重启程序fix bug；
+* 3、出问题了才用Lua来改掉C#出问题的部位，下次整体更新时换回正确的C#；能做到用户不重启程序fix bug；
 
 如果你仅仅希望用热更新来fix bug，这是强烈建议的做法。[这里](Assets/XLua/Doc/hotfix.md)是使用指南。
 
@@ -80,7 +80,7 @@ xLua支持热补丁，这意味着你可以：
 * [05_NoGc](Assets/XLua/Examples/05_NoGc/): 展示怎么去避免值类型的GC。
 * [06_Coroutine](Assets/XLua/Examples/06_Coroutine/): 展示lua协程怎么和Unity协程相配合。
 * [07_AsyncTest](Assets/XLua/Examples/07_AsyncTest/): 展示怎么用lua协程来把异步逻辑同步化。
-* [08_Hotfix](Assets/XLua/Examples/08_Hotfix/): 热补丁的实例。
+* [08_Hotfix](Assets/XLua/Examples/08_Hotfix/): 热补丁的示例（需要开启热补丁特性，如何开启请看[指南](Assets/XLua/Doc/hotfix.md)）。
  
 ## 文档
 
