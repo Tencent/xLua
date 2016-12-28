@@ -107,25 +107,29 @@ method_name是"Finalize"，传一个self参数。
 ```lua
 
 xlua.hotfix(CS.StatefullTest, {
-    XLuaConstructor = function(csobj)
+    ['.ctor'] = function(csobj)
         return {evt = {}, start = 0}
     end;
     set_AProp = function(self, v)
+        print('set_AProp', v)
         self.AProp = v
     end;
     get_AProp = function(self)
         return self.AProp
     end;
     get_Item = function(self, k)
-        return self[k]
+        print('get_Item', k)
+        return 1024
     end;
     set_Item = function(self, k, v)
-        self[k] = v
+        print('set_Item', k, v)
     end;
     add_AEvent = function(self, cb)
+        print('add_AEvent', cb)
         table.insert(self.evt, cb)
     end;
     remove_AEvent = function(self, cb)
+       print('remove_AEvent', cb)
        for i, v in ipairs(self.evt) do
            if v == cb then
                table.remove(self.evt, i)
@@ -134,6 +138,7 @@ xlua.hotfix(CS.StatefullTest, {
        end
     end;
     Start = function(self)
+        print('Start')
         for _, cb in ipairs(self.evt) do
             cb(self.start, 2)
         end
@@ -141,6 +146,9 @@ xlua.hotfix(CS.StatefullTest, {
     end;
     StaticFunc = function(a, b, c)
        print(a, b, c)
+    end;
+    Finalize = function(self)
+       print('Finalize', self)
     end
 })
 
