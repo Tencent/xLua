@@ -4,11 +4,9 @@
 
 热更特性依赖Cecil，添加HOTFIX_ENABLE宏之后，可能会报找不到Cecil。这时你需要到Unity安装目录下找到Mono.Cecil.dll，拷贝到项目里头。
 
-目前不支持静态构造函数以及对象的析构函数的替换。
+不支持静态构造函数。
 
-目前只支持Assets下的代码的热补丁，不支持引擎，c#系统库的热补丁。
-
-由于lua本身不是线程安全的，目前xLua也没做互斥，需要用户保证被调用的lua实现同一时刻只有一个线程调用。
+目前只支持Assets下代码的热补丁，不支持引擎，c#系统库的热补丁。
 
 ## API
 xlua.hotfix(class, [method_name], fix)
