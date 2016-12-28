@@ -403,7 +403,12 @@ namespace XLua
             xlua.hotfix = function(cs, field, func)
                 local tbl = (type(field) == 'table') and field or {[field] = func}
                 for k, v in pairs(tbl) do
-                    xlua.access(cs, '__Hitfix0_'..k, v) -- at least one
+                    local cflag = ''
+                    if k == '.ctor' then
+                        cflag = '_c'
+                        k = 'ctor'
+                    end
+                    xlua.access(cs, cflag .. '__Hitfix0_'..k, v) -- at least one
                     pcall(function()
                         for i = 1, 99 do
                             xlua.access(cs, '__Hitfix'..i..'_'..k, v)

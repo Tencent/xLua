@@ -87,12 +87,13 @@ public class HotfixTest2 : MonoBehaviour {
         ret = calc.TestOut(100, out num, ref str);
         Debug.Log("ret = " + ret + ", num = " + num + ", str = " + str);
 
-        Debug.Log("----------------------stateful------------------------");
         Debug.Log("----------------------before------------------------");
         TestStateful();
+        System.GC.Collect();
+        System.GC.WaitForPendingFinalizers();
         luaenv.DoString(@"
             xlua.hotfix(CS.StatefullTest, {
-                XLuaConstructor = function(csobj)
+                ['.ctor'] = function(csobj)
                     return {evt = {}, start = 0}
                 end;
                 set_AProp = function(self, v)
@@ -131,11 +132,17 @@ public class HotfixTest2 : MonoBehaviour {
                 end;
                 StaticFunc = function(a, b, c)
                    print(a, b, c)
+                end;
+                Finalize = function(self)
+                   print('Finalize', self)
                 end
            })
         ");
         Debug.Log("----------------------after------------------------");
         TestStateful();
+        luaenv.FullGc();
+        System.GC.Collect();
+        System.GC.WaitForPendingFinalizers();
     }
 
     void TestStateful()

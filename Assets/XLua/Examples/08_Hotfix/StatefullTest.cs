@@ -39,7 +39,7 @@ public class StatefullTest {
 
     ~StatefullTest()
     {
-        Debug.Log("Finalize will not be injected!");
+        Debug.Log("~StatefullTest");
     }
 }
 

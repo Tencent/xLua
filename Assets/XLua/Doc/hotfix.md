@@ -1,6 +1,6 @@
 ## 约束
 
-为了不影响开发，这个特性默认是不打开的，需要添加HOTFIX_ENABLE宏。
+为了不影响开发，这个特性默认是不打开的，需要添加HOTFIX_ENABLE宏。打开后由于il和源代码已经对应不上，所以（双击Unity3D日志）代码会定位到错误的地方，调试功能工作也不正常。
 
 热更特性依赖Cecil，添加HOTFIX_ENABLE宏之后，可能会报找不到Cecil。这时你需要到Unity安装目录下找到Mono.Cecil.dll，拷贝到项目里头。
 
@@ -76,7 +76,7 @@ end)
 
 * 构造函数
 
-构造函数对应的method_name是"XLuaConstructor"。
+构造函数对应的method_name是".ctor"。
 
 如果是Stateful方式，你可以返回一个table作为这个对象的状态。
 
@@ -95,6 +95,10 @@ C#的操作符都有一套内部表示，比如+号的操作符函数名是op_Ad
 * 事件
 
 比如对于事件“AEvent”，+=操作符是add_AEvent，-=对应的是remove_AEvent。这两个函数均是第一个参数是self，第二个参数是操作符后面跟的delegate。
+
+* 析构函数
+
+method_name是"Finalize"，传一个self参数。
 
 * 整个类
 

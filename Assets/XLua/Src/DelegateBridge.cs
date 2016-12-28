@@ -85,6 +85,8 @@ namespace XLua
 
     public partial class DelegateBridge : DelegateBridgeBase
     {
+        public static object DelegateBridgeLock = new object();
+
         internal static bool Gen_Flag = false;
 
         public DelegateBridge(int reference, LuaEnv luaenv) : base(reference, luaenv)
