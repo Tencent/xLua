@@ -24,19 +24,12 @@ namespace XLua
 
         static TypeReference objType = null;
         static TypeReference luaTableType = null;
-        static MethodReference enter = null;
-        static MethodReference exit = null;
-        static FieldReference lockRef = null;
 
         static void init(AssemblyDefinition assembly)
         {
             objType = assembly.MainModule.Import(typeof(object));
 
             luaTableType = assembly.MainModule.Types.Single(t => t.FullName == "XLua.LuaTable");
-
-            enter = assembly.MainModule.Import(typeof(System.Threading.Monitor).GetMethod("Enter", new Type[] { typeof(object)}));
-            exit = assembly.MainModule.Import(typeof(System.Threading.Monitor).GetMethod("Exit", new Type[] { typeof(object) }));
-            lockRef = assembly.MainModule.Types.Single(t => t.FullName == "XLua.DelegateBridge").Fields.Single(f => f.Name == "DelegateBridgeLock");
         }
 
         static List<TypeDefinition> hotfix_delegates = null;
@@ -203,7 +196,7 @@ namespace XLua
 
             if (!findHotfixDelegate(assembly, method, out delegateType, out invoke, hotfixType))
             {
-                Debug.LogWarning("can not find delegate for " + method.DeclaringType + "." + method.Name + "!");
+                Debug.LogWarning("can not find delegate for " + method.DeclaringType + "." + method.Name + "! try re-genertate code.");
                 return false;
             }
 
@@ -219,40 +212,17 @@ namespace XLua
 
             
             var firstIns = method.Body.Instructions[0];
-            var lastIns = method.Body.Instructions[method.Body.Instructions.Count - 1];
             var processor = method.Body.GetILProcessor();
-            var localLock = new VariableDefinition("__xlua_gen_lock", objType);
-            method.Body.Variables.Add(localLock);
-            VariableDefinition localRet = null;
-            bool isVoid = method.ReturnType.ToString() == "System.Void";
-            if (!isVoid)
-            {
-                localRet = new VariableDefinition("__xlua_gen_ret", method.ReturnType);
-                method.Body.Variables.Add(localRet);
-            }
 
             processor.InsertBefore(firstIns, processor.Create(OpCodes.Ldsfld, fieldDefinition));
             processor.InsertBefore(firstIns, processor.Create(OpCodes.Brfalse, firstIns));
 
-            processor.InsertBefore(firstIns, processor.Create(OpCodes.Ldsfld, lockRef));
-            processor.InsertBefore(firstIns, processor.Create(OpCodes.Stloc, localLock));
-            processor.InsertBefore(firstIns, processor.Create(OpCodes.Ldloc, localLock));
-            processor.InsertBefore(firstIns, processor.Create(OpCodes.Call, enter));
-
-            Instruction tryStart = null;
-
             if (statefulConstructor)
             {
-                tryStart = processor.Create(OpCodes.Ldarg_0);
-                processor.InsertBefore(firstIns, tryStart);
-                processor.InsertBefore(firstIns, processor.Create(OpCodes.Ldsfld, fieldDefinition));
+                processor.InsertBefore(firstIns, processor.Create(OpCodes.Ldarg_0));
             }
-            else
-            {
-                tryStart = processor.Create(OpCodes.Ldsfld, fieldDefinition);
-                processor.InsertBefore(firstIns, tryStart);
-            }
-            for(int i = 0; i < param_count; i++)
+            processor.InsertBefore(firstIns, processor.Create(OpCodes.Ldsfld, fieldDefinition));
+            for (int i = 0; i < param_count; i++)
             {
                 if (i < ldargs.Length)
                 {
@@ -260,7 +230,7 @@ namespace XLua
                 }
                 else
                 {
-                    processor.InsertBefore(firstIns, processor.Create(OpCodes.Ldarg, (short) i));
+                    processor.InsertBefore(firstIns, processor.Create(OpCodes.Ldarg, (short)i));
                 }
                 if (i == 0 && hotfixType == 1 && !method.IsStatic && !method.IsConstructor)
                 {
@@ -273,42 +243,7 @@ namespace XLua
             {
                 processor.InsertBefore(firstIns, processor.Create(OpCodes.Stfld, stateTable));
             }
-
-            if (!isVoid)
-            {
-                processor.InsertBefore(firstIns, processor.Create(OpCodes.Stloc, localRet));
-            }
-
-            Instruction leaveTo = null;
-            if (isVoid)
-            {
-                leaveTo = processor.Create(OpCodes.Ret);
-                processor.InsertAfter(lastIns, leaveTo);
-            }
-            else
-            {
-                leaveTo = processor.Create(OpCodes.Ldloc, localRet);
-                processor.InsertAfter(lastIns, leaveTo);
-                processor.InsertAfter(leaveTo, processor.Create(OpCodes.Ret));
-            }
-
-            processor.InsertBefore(firstIns, processor.Create(OpCodes.Leave, leaveTo));
-            processor.InsertBefore(firstIns, processor.Create(OpCodes.Leave, firstIns));
-
-            var finallyStart = processor.Create(OpCodes.Ldloc, localLock);
-            processor.InsertBefore(firstIns, finallyStart);
-            processor.InsertBefore(firstIns, processor.Create(OpCodes.Call, exit));
-            processor.InsertBefore(firstIns, processor.Create(OpCodes.Endfinally));
-
-            var handler = new ExceptionHandler(ExceptionHandlerType.Finally)
-            {
-                TryStart = tryStart,
-                TryEnd = finallyStart,
-                HandlerStart = finallyStart,
-                HandlerEnd = firstIns
-            };
-            method.Body.ExceptionHandlers.Add(handler);
-            method.Body.InitLocals = true;
+            processor.InsertBefore(firstIns, processor.Create(OpCodes.Ret));
 
             return true;
         }

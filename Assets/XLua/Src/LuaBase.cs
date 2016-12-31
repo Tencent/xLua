@@ -48,22 +48,29 @@ namespace XLua
             Dispose(true);
             GC.SuppressFinalize(this);
         }
-        
+
         public virtual void Dispose(bool disposeManagedResources)
         {
             if (!disposed)
             {
                 if (luaReference != 0)
                 {
-                    bool is_delegate = this is DelegateBridgeBase;
-                    if (disposeManagedResources)
+#if THREAD_SAFT || HOTFIX_ENABLE
+                    lock (luaEnv.luaEnvLock)
                     {
-                        luaEnv.translator.ReleaseLuaBase(luaEnv.L, luaReference, is_delegate);
+#endif
+                        bool is_delegate = this is DelegateBridgeBase;
+                        if (disposeManagedResources)
+                        {
+                            luaEnv.translator.ReleaseLuaBase(luaEnv.L, luaReference, is_delegate);
+                        }
+                        else //will dispse by LuaEnv.GC
+                        {
+                            luaEnv.equeueGCAction(new LuaEnv.GCAction { Reference = luaReference, IsDelegate = is_delegate });
+                        }
+#if THREAD_SAFT || HOTFIX_ENABLE
                     }
-                    else //will dispse by LuaEnv.GC
-                    {
-                        luaEnv.equeueGCAction(new LuaEnv.GCAction { Reference = luaReference, IsDelegate = is_delegate });
-                    }
+#endif
                 }
                 luaEnv = null;
                 disposed = true;
@@ -74,14 +81,21 @@ namespace XLua
         {
             if (this.GetType() == o.GetType())
             {
-                LuaBase rhs = (LuaBase)o;
-                var L = luaEnv.L;
-                int top = LuaAPI.lua_gettop(L);
-                LuaAPI.lua_getref(L, rhs.luaReference);
-                LuaAPI.lua_getref(L, luaReference);
-                int equal = LuaAPI.lua_rawequal(L, -1, -2);
-                LuaAPI.lua_settop(L, top);
-                return (equal != 0);
+#if THREAD_SAFT || HOTFIX_ENABLE
+                lock (luaEnv.luaEnvLock)
+                {
+#endif
+                    LuaBase rhs = (LuaBase)o;
+                    var L = luaEnv.L;
+                    int top = LuaAPI.lua_gettop(L);
+                    LuaAPI.lua_getref(L, rhs.luaReference);
+                    LuaAPI.lua_getref(L, luaReference);
+                    int equal = LuaAPI.lua_rawequal(L, -1, -2);
+                    LuaAPI.lua_settop(L, top);
+                    return (equal != 0);
+#if THREAD_SAFT || HOTFIX_ENABLE
+                }
+#endif
             }
             else return false;
         }

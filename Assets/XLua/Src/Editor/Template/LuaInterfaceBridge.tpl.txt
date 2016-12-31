@@ -51,43 +51,50 @@ namespace CSObjectWrap
 			%><%=CsFullTypeName(parameter.ParameterType)%> <%=parameter.Name%><% 
 		end) %>)
 		{
-			RealStatePtr L = luaEnv.L;
-			int err_func = LuaAPI.load_error_func(L, luaEnv.errorFuncRef);
-			<%if CallNeedTranslator(method, "") then %>ObjectTranslator translator = luaEnv.translator;<%end%>
-			
-			LuaAPI.lua_getref(L, luaReference);
-			LuaAPI.xlua_pushasciistring(L, "<%=method.Name%>");
-			if (0 != LuaAPI.xlua_pgettable(L, -2))
+#if THREAD_SAFT || HOTFIX_ENABLE
+            lock (luaEnv.luaEnvLock)
             {
-				luaEnv.ThrowExceptionFromError(err_func - 1);
-			}
-            if(!LuaAPI.lua_isfunction(L, -1))
-            {
-                LuaAPI.xlua_pushasciistring(L, "no such function <%=method.Name%>");
-                luaEnv.ThrowExceptionFromError(err_func - 1);
+#endif
+				RealStatePtr L = luaEnv.L;
+				int err_func = LuaAPI.load_error_func(L, luaEnv.errorFuncRef);
+				<%if CallNeedTranslator(method, "") then %>ObjectTranslator translator = luaEnv.translator;<%end%>
+				
+				LuaAPI.lua_getref(L, luaReference);
+				LuaAPI.xlua_pushasciistring(L, "<%=method.Name%>");
+				if (0 != LuaAPI.xlua_pgettable(L, -2))
+				{
+					luaEnv.ThrowExceptionFromError(err_func - 1);
+				}
+				if(!LuaAPI.lua_isfunction(L, -1))
+				{
+					LuaAPI.xlua_pushasciistring(L, "no such function <%=method.Name%>");
+					luaEnv.ThrowExceptionFromError(err_func - 1);
+				}
+				LuaAPI.lua_pushvalue(L, -2);
+				LuaAPI.lua_remove(L, -3);
+				<%ForEachCsList(parameters, function(parameter) 
+					if parameter.IsIn or not parameter.IsOut then 
+						%><%=GetPushStatement(parameter.ParameterType, parameter.Name)%>;
+				<% 
+					end
+				end) %>
+				int __gen_error = LuaAPI.lua_pcall(L, <%=in_num + 1%>, <%=out_num%>, err_func);
+				if (__gen_error != 0)
+					luaEnv.ThrowExceptionFromError(err_func - 1);
+				
+				<%ForEachCsList(parameters, function(parameter) 
+					if parameter.IsOut or parameter.ParameterType.IsByRef then 
+						%><%=GetCasterStatement(parameter.ParameterType, "err_func" .. (" + "..out_idx), parameter.Name)%>;
+				<%
+					out_idx = out_idx + 1
+					end
+				end) %>
+				<%if has_return then %><%=GetCasterStatement(method.ReturnType, "err_func + 1", "__gen_ret", true)%>;<% end%>
+				LuaAPI.lua_settop(L, err_func - 1);
+				<%if has_return then %>return  __gen_ret;<% end%>
+#if THREAD_SAFT || HOTFIX_ENABLE
             }
-            LuaAPI.lua_pushvalue(L, -2);
-            LuaAPI.lua_remove(L, -3);
-			<%ForEachCsList(parameters, function(parameter) 
-				if parameter.IsIn or not parameter.IsOut then 
-					%><%=GetPushStatement(parameter.ParameterType, parameter.Name)%>;
-			<% 
-				end
-			end) %>
-			int __gen_error = LuaAPI.lua_pcall(L, <%=in_num + 1%>, <%=out_num%>, err_func);
-            if (__gen_error != 0)
-                luaEnv.ThrowExceptionFromError(err_func - 1);
-			
-			<%ForEachCsList(parameters, function(parameter) 
-				if parameter.IsOut or parameter.ParameterType.IsByRef then 
-					%><%=GetCasterStatement(parameter.ParameterType, "err_func" .. (" + "..out_idx), parameter.Name)%>;
-			<%
-				out_idx = out_idx + 1
-				end
-			end) %>
-			<%if has_return then %><%=GetCasterStatement(method.ReturnType, "err_func + 1", "__gen_ret", true)%>;<% end%>
-			LuaAPI.lua_settop(L, err_func - 1);
-			<%if has_return then %>return  __gen_ret;<% end%>
+#endif
 		}
         <%end)%>
 
@@ -99,34 +106,48 @@ namespace CSObjectWrap
             <%if property.CanRead then%>
             get 
             {
-                RealStatePtr L = luaEnv.L;
-				int oldTop = LuaAPI.lua_gettop(L);
-                <%if not JustLuaType(property.PropertyType) then %>ObjectTranslator translator = luaEnv.translator;<%end%>
-                LuaAPI.lua_getref(L, luaReference);
-				LuaAPI.xlua_pushasciistring(L, "<%=property.Name%>");
-                if (0 != LuaAPI.xlua_pgettable(L, -2))
-				{
-					luaEnv.ThrowExceptionFromError(oldTop);
-				}
-                <%=GetCasterStatement(property.PropertyType, "-1", "__gen_ret", true)%>;
-                LuaAPI.lua_pop(L, 2);
-                return __gen_ret;
+#if THREAD_SAFT || HOTFIX_ENABLE
+                lock (luaEnv.luaEnvLock)
+                {
+#endif
+					RealStatePtr L = luaEnv.L;
+					int oldTop = LuaAPI.lua_gettop(L);
+					<%if not JustLuaType(property.PropertyType) then %>ObjectTranslator translator = luaEnv.translator;<%end%>
+					LuaAPI.lua_getref(L, luaReference);
+					LuaAPI.xlua_pushasciistring(L, "<%=property.Name%>");
+					if (0 != LuaAPI.xlua_pgettable(L, -2))
+					{
+						luaEnv.ThrowExceptionFromError(oldTop);
+					}
+					<%=GetCasterStatement(property.PropertyType, "-1", "__gen_ret", true)%>;
+					LuaAPI.lua_pop(L, 2);
+					return __gen_ret;
+#if THREAD_SAFT || HOTFIX_ENABLE
+                }
+#endif
             }
             <%end%>
             <%if property.CanWrite then%>
             set
             {
-                RealStatePtr L = luaEnv.L;
-				int oldTop = LuaAPI.lua_gettop(L);
-                <%if not JustLuaType(property.PropertyType) then %>ObjectTranslator translator = luaEnv.translator;<%end%>
-                LuaAPI.lua_getref(L, luaReference);
-				LuaAPI.xlua_pushasciistring(L, "<%=property.Name%>");
-                <%=GetPushStatement(property.PropertyType, "value")%>;
-                if (0 != LuaAPI.xlua_psettable(L, -3))
-				{
-					luaEnv.ThrowExceptionFromError(oldTop);
-				}
-                LuaAPI.lua_pop(L, 1);
+#if THREAD_SAFT || HOTFIX_ENABLE
+                lock (luaEnv.luaEnvLock)
+                {
+#endif
+					RealStatePtr L = luaEnv.L;
+					int oldTop = LuaAPI.lua_gettop(L);
+					<%if not JustLuaType(property.PropertyType) then %>ObjectTranslator translator = luaEnv.translator;<%end%>
+					LuaAPI.lua_getref(L, luaReference);
+					LuaAPI.xlua_pushasciistring(L, "<%=property.Name%>");
+					<%=GetPushStatement(property.PropertyType, "value")%>;
+					if (0 != LuaAPI.xlua_psettable(L, -3))
+					{
+						luaEnv.ThrowExceptionFromError(oldTop);
+					}
+					LuaAPI.lua_pop(L, 1);
+#if THREAD_SAFT || HOTFIX_ENABLE
+                }
+#endif
             }
             <%end%>
         }

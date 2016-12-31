@@ -24,6 +24,11 @@ public class HotfixCalc
         c = "wrong version";
         return a + 3;
     }
+
+    public int TestOut(int a, out double b, ref string c, GameObject go)
+    {
+        return TestOut(a, out b, ref c);
+    }
 }
 
 public class NoHotfixCalc
@@ -78,8 +83,9 @@ public class HotfixTest2 : MonoBehaviour {
         Debug.Log("ret = " + ret + ", num = " + num + ", str = " + str);
 
         luaenv.DoString(@"
-            xlua.hotfix(CS.HotfixCalc, 'TestOut', function(self, a, c)
-                    print('TestOut', self, a, c)
+            xlua.hotfix(CS.HotfixCalc, 'TestOut', function(self, a, c, go)
+                    print('TestOut', self, a, c, go)
+                    if go then error('test error') end
                     return a + 10, a + 20, 'right version'
                 end)
         ");
@@ -143,6 +149,8 @@ public class HotfixTest2 : MonoBehaviour {
         luaenv.FullGc();
         System.GC.Collect();
         System.GC.WaitForPendingFinalizers();
+
+        calc.TestOut(100, out num, ref str, gameObject);
     }
 
     void TestStateful()

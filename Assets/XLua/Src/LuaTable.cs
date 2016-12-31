@@ -32,103 +32,131 @@ namespace XLua
         // no boxing version get
         public void Get<TKey, TValue>(TKey key, out TValue value)
         {
-            var L = luaEnv.L;
-            var translator = luaEnv.translator;
-            int oldTop = LuaAPI.lua_gettop(L);
-            LuaAPI.lua_getref(L, luaReference);
-            translator.PushByType(L, key);
+#if THREAD_SAFT || HOTFIX_ENABLE
+            lock (luaEnv.luaEnvLock)
+            {
+#endif
+                var L = luaEnv.L;
+                var translator = luaEnv.translator;
+                int oldTop = LuaAPI.lua_gettop(L);
+                LuaAPI.lua_getref(L, luaReference);
+                translator.PushByType(L, key);
 
-            if (0 != LuaAPI.xlua_pgettable(L, -2))
-            {
-                string err = LuaAPI.lua_tostring(L, -1);
-                LuaAPI.lua_settop(L, oldTop);
-                throw new Exception("get field [" + key + "] error:" + err);
-            }
+                if (0 != LuaAPI.xlua_pgettable(L, -2))
+                {
+                    string err = LuaAPI.lua_tostring(L, -1);
+                    LuaAPI.lua_settop(L, oldTop);
+                    throw new Exception("get field [" + key + "] error:" + err);
+                }
 
-            LuaTypes lua_type = LuaAPI.lua_type(L, -1);
-            Type type_of_value = typeof(TValue);
-            if (lua_type == LuaTypes.LUA_TNIL && type_of_value.IsValueType)
-            {
-                throw new InvalidCastException("can not assign nil to " + type_of_value);
-            }
+                LuaTypes lua_type = LuaAPI.lua_type(L, -1);
+                Type type_of_value = typeof(TValue);
+                if (lua_type == LuaTypes.LUA_TNIL && type_of_value.IsValueType)
+                {
+                    throw new InvalidCastException("can not assign nil to " + type_of_value);
+                }
 
-            try
-            {
-                translator.Get(L, -1, out value);
+                try
+                {
+                    translator.Get(L, -1, out value);
+                }
+                catch (Exception e)
+                {
+                    throw e;
+                }
+                finally
+                {
+                    LuaAPI.lua_settop(L, oldTop);
+                }
+#if THREAD_SAFT || HOTFIX_ENABLE
             }
-            catch (Exception e)
-            {
-                throw e;
-            }
-            finally
-            {
-                LuaAPI.lua_settop(L, oldTop);
-            }
+#endif
         }
 
         //no boxing version set
         public void Set<TKey, TValue>(TKey key, TValue value)
         {
-            var L = luaEnv.L;
-            int oldTop = LuaAPI.lua_gettop(L);
-            var translator = luaEnv.translator;
-
-            LuaAPI.lua_getref(L, luaReference);
-            translator.PushByType(L, key);
-            translator.PushByType(L, value);
-
-            if (0 != LuaAPI.xlua_psettable(L, -3))
+#if THREAD_SAFT || HOTFIX_ENABLE
+            lock (luaEnv.luaEnvLock)
             {
-                luaEnv.ThrowExceptionFromError(oldTop);
+#endif
+                var L = luaEnv.L;
+                int oldTop = LuaAPI.lua_gettop(L);
+                var translator = luaEnv.translator;
+
+                LuaAPI.lua_getref(L, luaReference);
+                translator.PushByType(L, key);
+                translator.PushByType(L, value);
+
+                if (0 != LuaAPI.xlua_psettable(L, -3))
+                {
+                    luaEnv.ThrowExceptionFromError(oldTop);
+                }
+                LuaAPI.lua_settop(L, oldTop);
+#if THREAD_SAFT || HOTFIX_ENABLE
             }
-            LuaAPI.lua_settop(L, oldTop);
+#endif
         }
 
 
         public T GetInPath<T>(string path)
         {
-            var L = luaEnv.L;
-            var translator = luaEnv.translator;
-            int oldTop = LuaAPI.lua_gettop(L);
-            LuaAPI.lua_getref(L, luaReference);
-            if (0 != LuaAPI.xlua_pgettable_bypath(L, -1, path))
+#if THREAD_SAFT || HOTFIX_ENABLE
+            lock (luaEnv.luaEnvLock)
             {
-                luaEnv.ThrowExceptionFromError(oldTop);
-            }
-            LuaTypes lua_type = LuaAPI.lua_type(L, -1);
-            if (lua_type == LuaTypes.LUA_TNIL && typeof(T).IsValueType)
-            {
-                throw new InvalidCastException("can not assign nil to " + typeof(T));
-            }
+#endif
+                var L = luaEnv.L;
+                var translator = luaEnv.translator;
+                int oldTop = LuaAPI.lua_gettop(L);
+                LuaAPI.lua_getref(L, luaReference);
+                if (0 != LuaAPI.xlua_pgettable_bypath(L, -1, path))
+                {
+                    luaEnv.ThrowExceptionFromError(oldTop);
+                }
+                LuaTypes lua_type = LuaAPI.lua_type(L, -1);
+                if (lua_type == LuaTypes.LUA_TNIL && typeof(T).IsValueType)
+                {
+                    throw new InvalidCastException("can not assign nil to " + typeof(T));
+                }
 
-            T value;
-            try
-            {
-                translator.Get(L, -1, out value);
+                T value;
+                try
+                {
+                    translator.Get(L, -1, out value);
+                }
+                catch (Exception e)
+                {
+                    throw e;
+                }
+                finally
+                {
+                    LuaAPI.lua_settop(L, oldTop);
+                }
+                return value;
+#if THREAD_SAFT || HOTFIX_ENABLE
             }
-            catch (Exception e)
-            {
-                throw e;
-            }
-            finally
-            {
-                LuaAPI.lua_settop(L, oldTop);
-            }
-            return value;
+#endif
         }
 
         public void SetInPath<T>(string path, T val)
         {
-            var L = luaEnv.L;
-            int oldTop = LuaAPI.lua_gettop(L);
-            LuaAPI.lua_getref(L, luaReference);
-            luaEnv.translator.PushByType(L, val);
-            if (0 != LuaAPI.xlua_psettable_bypath(L, -2, path))
+#if THREAD_SAFT || HOTFIX_ENABLE
+            lock (luaEnv.luaEnvLock)
             {
-                luaEnv.ThrowExceptionFromError(oldTop);
-            }
+#endif
+                var L = luaEnv.L;
+                int oldTop = LuaAPI.lua_gettop(L);
+                LuaAPI.lua_getref(L, luaReference);
+                luaEnv.translator.PushByType(L, val);
+                if (0 != LuaAPI.xlua_psettable_bypath(L, -2, path))
+                {
+                    luaEnv.ThrowExceptionFromError(oldTop);
+                }
 
-            LuaAPI.lua_settop(L, oldTop);
+                LuaAPI.lua_settop(L, oldTop);
+#if THREAD_SAFT || HOTFIX_ENABLE
+            }
+#endif
         }
 
         [Obsolete("use no boxing version: GetInPath/SetInPath Get/Set instead!")]
@@ -157,7 +185,9 @@ namespace XLua
             }
         }
 
-        //deprecated
+#if THREAD_SAFT || HOTFIX_ENABLE
+        [Obsolete("not thread saft!", true)]
+#endif
         public IEnumerable GetKeys()
         {
             var L = luaEnv.L;
@@ -173,6 +203,9 @@ namespace XLua
             LuaAPI.lua_settop(L, oldTop);
         }
 
+#if THREAD_SAFT || HOTFIX_ENABLE
+        [Obsolete("not thread saft!", true)]
+#endif
         public IEnumerable<T> GetKeys<T>()
         {
             var L = luaEnv.L;
@@ -216,21 +249,35 @@ namespace XLua
         }
 
         public void SetMetaTable(LuaTable metaTable)
-		{
-			push(luaEnv.L);
-			metaTable.push(luaEnv.L);
-			LuaAPI.lua_setmetatable(luaEnv.L, -2);
-			LuaAPI.lua_pop(luaEnv.L, 1);
-		}
+        {
+#if THREAD_SAFT || HOTFIX_ENABLE
+            lock (luaEnv.luaEnvLock)
+            {
+#endif
+                push(luaEnv.L);
+                metaTable.push(luaEnv.L);
+                LuaAPI.lua_setmetatable(luaEnv.L, -2);
+                LuaAPI.lua_pop(luaEnv.L, 1);
+#if THREAD_SAFT || HOTFIX_ENABLE
+            }
+#endif
+        }
 
         public T Cast<T>()
         {
             var L = luaEnv.L;
             var translator = luaEnv.translator;
-            push(L);
-            T ret = (T)translator.GetObject(L, -1, typeof(T));
-            LuaAPI.lua_pop(luaEnv.L, 1);
-            return ret;
+#if THREAD_SAFT || HOTFIX_ENABLE
+            lock (luaEnv.luaEnvLock)
+            {
+#endif
+                push(L);
+                T ret = (T)translator.GetObject(L, -1, typeof(T));
+                LuaAPI.lua_pop(luaEnv.L, 1);
+                return ret;
+#if THREAD_SAFT || HOTFIX_ENABLE
+            }
+#endif
         }
 
         internal override void push(RealStatePtr L)

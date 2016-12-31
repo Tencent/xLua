@@ -40,35 +40,42 @@ namespace XLua
 			%><%=CsFullTypeName(parameter.ParameterType)%> <%=parameter.Name%><% 
 		end) %>)
 		{
-			RealStatePtr L = luaEnv.L;
-			int err_func =LuaAPI.load_error_func(L, errorFuncRef);
-			<%if CallNeedTranslator(delegate, "") then %>ObjectTranslator translator = luaEnv.translator;<%end%>
-			
-			LuaAPI.lua_getref(L, luaReference);
-			
-			<%
-			local param_count = parameters.Length
-			local has_v_params = param_count > 0 and parameters[param_count - 1].IsParamArray
-			ForEachCsList(parameters, function(parameter, pi) 
-				if parameter.IsIn or not parameter.IsOut then 
-					%><%=GetPushStatement(parameter.ParameterType, parameter.Name, has_v_params and pi == param_count - 1)%>;
-			<% 
-				end
-			end) %>
-			int __gen_error = LuaAPI.lua_pcall(L, <%=has_v_params and ((in_num - 1) .. " + " .. parameters[param_count - 1].Name .. ".Length" ) or in_num%>, <%=out_num%>, err_func);
-            if (__gen_error != 0)
-                luaEnv.ThrowExceptionFromError(err_func - 1);
-			
-			<%ForEachCsList(parameters, function(parameter) 
-				if parameter.IsOut or parameter.ParameterType.IsByRef then 
-					%><%=GetCasterStatement(parameter.ParameterType, "err_func" .. (" + "..out_idx), parameter.Name)%>;
-			<%
-				out_idx = out_idx + 1
-				end
-			end) %>
-			<%if has_return then %><%=GetCasterStatement(delegate.ReturnType, "err_func + 1", "__gen_ret", true)%>;<% end%>
-			LuaAPI.lua_settop(L, err_func - 1);
-			<%if has_return then %>return  __gen_ret;<% end%>
+#if THREAD_SAFT || HOTFIX_ENABLE
+            lock (luaEnv.luaEnvLock)
+            {
+#endif
+                RealStatePtr L = luaEnv.L;
+                int err_func =LuaAPI.load_error_func(L, errorFuncRef);
+                <%if CallNeedTranslator(delegate, "") then %>ObjectTranslator translator = luaEnv.translator;<%end%>
+                
+                LuaAPI.lua_getref(L, luaReference);
+                
+                <%
+                local param_count = parameters.Length
+                local has_v_params = param_count > 0 and parameters[param_count - 1].IsParamArray
+                ForEachCsList(parameters, function(parameter, pi) 
+                    if parameter.IsIn or not parameter.IsOut then 
+                        %><%=GetPushStatement(parameter.ParameterType, parameter.Name, has_v_params and pi == param_count - 1)%>;
+                <% 
+                    end
+                end) %>
+                int __gen_error = LuaAPI.lua_pcall(L, <%=has_v_params and ((in_num - 1) .. " + " .. parameters[param_count - 1].Name .. ".Length" ) or in_num%>, <%=out_num%>, err_func);
+                if (__gen_error != 0)
+                    luaEnv.ThrowExceptionFromError(err_func - 1);
+                
+                <%ForEachCsList(parameters, function(parameter) 
+                    if parameter.IsOut or parameter.ParameterType.IsByRef then 
+                        %><%=GetCasterStatement(parameter.ParameterType, "err_func" .. (" + "..out_idx), parameter.Name)%>;
+                <%
+                    out_idx = out_idx + 1
+                    end
+                end) %>
+                <%if has_return then %><%=GetCasterStatement(delegate.ReturnType, "err_func + 1", "__gen_ret", true)%>;<% end%>
+                LuaAPI.lua_settop(L, err_func - 1);
+                <%if has_return then %>return  __gen_ret;<% end%>
+#if THREAD_SAFT || HOTFIX_ENABLE
+            }
+#endif
 		}
         <%end)%>
         
