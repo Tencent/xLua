@@ -425,15 +425,178 @@ namespace CSObjectWrapEditor
             }
         }
 
+        class ParameterInfoSimulation
+        {
+            public string Name;
+            public bool IsOut;
+            public bool IsIn;
+            public Type ParameterType;
+            public bool IsParamArray;
+        }
+
+        class MethodInfoSimulation
+        {
+            public Type ReturnType;
+            public ParameterInfoSimulation[] ParameterInfos;
+
+            public int HashCode;
+
+            public ParameterInfoSimulation[]  GetParameters()
+            {
+                return ParameterInfos;
+            }
+        }
+
+        static MethodInfoSimulation makeMethodInfoSimulation(MethodInfo method)
+        {
+            int hashCode = method.ReturnType.GetHashCode();
+
+            List<ParameterInfoSimulation> paramsExpect = new List<ParameterInfoSimulation>();
+
+            foreach (var param in method.GetParameters())
+            {
+                if (param.IsOut)
+                {
+                    hashCode++;
+                }
+                hashCode += param.ParameterType.GetHashCode();
+                paramsExpect.Add(new ParameterInfoSimulation()
+                {
+                    Name = param.Name,
+                    IsOut = param.IsOut,
+                    IsIn = param.IsIn,
+                    ParameterType = param.ParameterType,
+                    IsParamArray = param.IsDefined(typeof(System.ParamArrayAttribute), false)
+                });
+            }
+
+            return new MethodInfoSimulation()
+            {
+                ReturnType = method.ReturnType,
+                HashCode = hashCode,
+                ParameterInfos = paramsExpect.ToArray()
+            };
+        }
+
+        static MethodInfoSimulation makeHotfixMethodInfoSimulation(MethodBase hotfixMethod, HotfixFlag hotfixType)
+        {
+            Type retTypeExpect = (hotfixType == HotfixFlag.Stateful && hotfixMethod.IsConstructor && !hotfixMethod.IsStatic)
+                    ? typeof(LuaTable) : (hotfixMethod.IsConstructor ? typeof(void) : (hotfixMethod as MethodInfo).ReturnType);
+            int hashCode = retTypeExpect.GetHashCode();
+            List<ParameterInfoSimulation> paramsExpect = new List<ParameterInfoSimulation>();
+            if (!hotfixMethod.IsStatic) // add self
+            {
+                if (hotfixType == HotfixFlag.Stateful && !hotfixMethod.IsConstructor)
+                {
+                    paramsExpect.Add(new ParameterInfoSimulation()
+                    {
+                        Name = "self",
+                        IsOut = false,
+                        IsIn = true,
+                        ParameterType = typeof(LuaTable),
+                        IsParamArray = false
+                    });
+    
+                }
+                else
+                {
+                    paramsExpect.Add(new ParameterInfoSimulation()
+                    {
+                        Name = "self",
+                        IsOut = false,
+                        IsIn = true,
+                        ParameterType = hotfixMethod.DeclaringType.IsValueType ? hotfixMethod.DeclaringType : typeof(object),
+                        IsParamArray = false
+                    });
+                }
+                hashCode += paramsExpect[0].ParameterType.GetHashCode();
+            }
+
+            foreach (var param in hotfixMethod.GetParameters())
+            {
+                var paramExpect = new ParameterInfoSimulation()
+                {
+                    Name = param.Name,
+                    IsOut = param.IsOut,
+                    IsIn = param.IsIn,
+                    ParameterType = (param.ParameterType.IsByRef || param.ParameterType.IsValueType) ? param.ParameterType : typeof(object),
+                    IsParamArray = param.IsDefined(typeof(System.ParamArrayAttribute), false)
+                };
+                if (param.IsOut)
+                {
+                    hashCode++;
+                }
+                hashCode += paramExpect.ParameterType.GetHashCode();
+                paramsExpect.Add(paramExpect);
+            }
+
+            return new MethodInfoSimulation()
+            {
+                HashCode = hashCode,
+                ReturnType = retTypeExpect,
+                ParameterInfos = paramsExpect.ToArray()
+            };
+        }
+
+        class MethodInfoSimulationComparer : IEqualityComparer<MethodInfoSimulation>
+        {
+            public bool Equals(MethodInfoSimulation x, MethodInfoSimulation y)
+            {
+                if (object.ReferenceEquals(x, y)) return true;
+                if (x == null || y == null)
+                {
+                    return false;
+                }
+                if (x.ReturnType != y.ReturnType)
+                {
+                    return false;
+                }
+                var xParams = x.GetParameters();
+                var yParams = y.GetParameters();
+                if (xParams.Length != yParams.Length)
+                {
+                    return false;
+                }
+
+                for (int i = 0; i < xParams.Length; i++)
+                {
+                    if (xParams[i].ParameterType != yParams[i].ParameterType || xParams[i].IsOut != yParams[i].IsOut)
+                    {
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+            public int GetHashCode(MethodInfoSimulation obj)
+            {
+                return obj.HashCode;
+            }
+        }
+        
         static void GenDelegateBridge(IEnumerable<Type> types, string save_path)
         {
             string filePath = save_path + "DelegatesGensBridge.cs";
             StreamWriter textWriter = new StreamWriter(filePath, false, Encoding.UTF8);
+            var delegates = types.Select(wrap_type => makeMethodInfoSimulation(wrap_type.GetMethod("Invoke")));
+            var hotfxDelegates = new List<MethodInfoSimulation>();
+            foreach (var type in (from type in Utils.GetAllTypes() where type.IsDefined(typeof(HotfixAttribute), false) select type))
+            {
+                var hotfixType = ((type.GetCustomAttributes(typeof(HotfixAttribute), false)[0]) as HotfixAttribute).Flag;
+                hotfxDelegates.AddRange(type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly | BindingFlags.NonPublic)
+                    .Cast<MethodBase>()
+                    .Concat(type.GetConstructors(BindingFlags.Instance | BindingFlags.Public).Cast<MethodBase>())
+                    .Where(method => !method.ContainsGenericParameters).Select(method => makeHotfixMethodInfoSimulation(method, hotfixType)));
+            }
+            hotfxDelegates = hotfxDelegates.Distinct(new MethodInfoSimulationComparer()).ToList();
             GenOne(typeof(DelegateBridge), (type, type_info) =>
             {
-                type_info.Set("delegates", types.Distinct(new DelegateByMethodDecComparer())
-                    .Select(wrap_type => wrap_type.GetMethod("Invoke")).ToList());
+                type_info.Set("delegates", delegates
+                    .Concat(hotfxDelegates)
+                    .Distinct(new MethodInfoSimulationComparer())
+                    .ToList());
                 type_info.Set("types", types.ToList());
+                type_info.Set("hotfx_delegates", hotfxDelegates);
             }, templateRef.LuaDelegateBridge, textWriter);
             textWriter.Close();
         }

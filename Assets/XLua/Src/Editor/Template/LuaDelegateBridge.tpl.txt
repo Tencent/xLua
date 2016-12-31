@@ -48,7 +48,7 @@ namespace XLua
 			
 			<%
 			local param_count = parameters.Length
-			local has_v_params = param_count > 0 and IsParams(parameters[param_count - 1])
+			local has_v_params = param_count > 0 and parameters[param_count - 1].IsParamArray
 			ForEachCsList(parameters, function(parameter, pi) 
 				if parameter.IsIn or not parameter.IsOut then 
 					%><%=GetPushStatement(parameter.ParameterType, parameter.Name, has_v_params and pi == param_count - 1)%>;
@@ -85,7 +85,21 @@ namespace XLua
 			    return new <%=CsFullTypeName(type)%>(<%=CSVariableName(type:GetMethod("Invoke").ReturnType)%>);
 			}
 		<%end)%>
+        <%ForEachCsList(hotfx_delegates, function(hotfx_delegate, idx)%>
+            if (type == typeof(__Gen_Hotfix_Delegate<%=idx%>))
+			{
+                return new __Gen_Hotfix_Delegate<%=idx%>(<%=CSVariableName(hotfx_delegate.ReturnType)%>);
+            }
+        <%end)%>
 		    throw new InvalidCastException("This delegate must add to CSharpCallLua: " + type);
 		}
 	}
+    
+    <%ForEachCsList(hotfx_delegates, function(hotfx_delegate, idx)
+    local parameters = hotfx_delegate:GetParameters()
+    %>
+    [HotfixDelegate]
+    public delegate <%=CsFullTypeName(hotfx_delegate.ReturnType)%> __Gen_Hotfix_Delegate<%=idx%>(<%ForEachCsList(parameters, function(parameter, pi)
+        %><%if pi ~= 0 then%>, <%end%><%=(parameter.IsOut and "out " or (parameter.ParameterType.IsByRef and "ref " or ""))%><%=CsFullTypeName(parameter.ParameterType)%> p<%=pi%><%end)%>);
+    <%end)%>
 }

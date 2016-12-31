@@ -87,6 +87,11 @@ namespace XLua
         }
     }
 
+    [AttributeUsage(AttributeTargets.Delegate)]
+    internal class HotfixDelegateAttribute : Attribute
+    {
+    }
+
     public static class SysGenConfig
     {
         [GCOptimize]

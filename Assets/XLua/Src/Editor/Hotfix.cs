@@ -22,8 +22,6 @@ namespace XLua
     {
         static readonly string INTERCEPT_ASSEMBLY_PATH = "./Library/ScriptAssemblies/Assembly-CSharp.dll";
 
-        static TypeReference[] actions = null;
-        static TypeReference[] funcs = null;
         static TypeReference objType = null;
         static TypeReference luaTableType = null;
         static MethodReference enter = null;
@@ -32,14 +30,6 @@ namespace XLua
 
         static void init(AssemblyDefinition assembly)
         {
-            actions = new Type[] { typeof(Action), typeof(Action<>), typeof(Action<,>), typeof(Action<,,>), typeof(Action<,,,>) }
-              .Select(type => assembly.MainModule.Import(type))
-              .ToArray();
-
-            funcs = new Type[] { typeof(Func<>), typeof(Func<,>), typeof(Func<,,>), typeof(Func<,,,>), typeof(Func<,,,,>) }
-              .Select(type => assembly.MainModule.Import(type))
-              .ToArray();
-
             objType = assembly.MainModule.Import(typeof(object));
 
             luaTableType = assembly.MainModule.Types.Single(t => t.FullName == "XLua.LuaTable");
@@ -49,101 +39,69 @@ namespace XLua
             lockRef = assembly.MainModule.Types.Single(t => t.FullName == "XLua.DelegateBridge").Fields.Single(f => f.Name == "DelegateBridgeLock");
         }
 
-        static List<Type> cs_call_lua_delegate = null;
+        static List<TypeDefinition> hotfix_delegates = null;
 
-        static Type toSystemType(TypeReference tr)
+        static bool isSameType(TypeReference left, TypeReference right)
         {
-            foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
-            {
-                Type type = assembly.GetType(tr.FullName, false);
-                if (type != null)
-                {
-                    return type;
-                }
-            }
-            return null;
-        }
-        static bool isSameType(TypeReference left, Type right)
-        {
-            return toSystemType(left) == right;
+            return left.FullName == right.FullName
+                && left.Module.Assembly.FullName == right.Module.Assembly.FullName
+                && left.Module.FullyQualifiedName == right.Module.FullyQualifiedName;
         }
 
-        static bool isAssignableFrom(Type left, TypeReference right)
+        static bool findHotfixDelegate(AssemblyDefinition assembly, MethodDefinition method, out TypeReference delegateType, out MethodReference invoke, int hotfixType)
         {
-            Type right_type = toSystemType(right);
-            if (right_type == null)
+            for(int i = 0; i < hotfix_delegates.Count; i++)
             {
-                return false;
-            }
-            else
-            {
-                return left.IsAssignableFrom(right_type);
-            }
-        }
-        static bool findGenDelegate(AssemblyDefinition assembly, MethodDefinition method, out TypeReference delegateType, out MethodReference invoke, int hotfixType)
-        {
-            for (int i = 0; i < cs_call_lua_delegate.Count; i++)
-            {
-                MethodInfo delegate_invoke = cs_call_lua_delegate[i].GetMethod("Invoke");
+                MethodDefinition delegate_invoke = hotfix_delegates[i].Methods.Single(m => m.Name == "Invoke");
                 var returnType = (hotfixType == 1 && method.IsConstructor && !method.IsStatic) ? luaTableType : method.ReturnType;
                 if (isSameType(returnType, delegate_invoke.ReturnType))
                 {
-                    var parametersOfDelegate = delegate_invoke.GetParameters();
+                    var parametersOfDelegate = delegate_invoke.Parameters;
                     int compareOffset = 0;
                     if (!method.IsStatic)
                     {
-                        if (parametersOfDelegate.Length == 0)
-                        {
-                            continue;
-                        }
-                        if(hotfixType == 1 && !method.IsConstructor)
-                        {
-                            if (parametersOfDelegate[0].ParameterType != typeof(LuaTable))
-                            {
-                                continue;
-                            }
-                        }
-                        else if (parametersOfDelegate[0].ParameterType.IsByRef || !isAssignableFrom(parametersOfDelegate[0].ParameterType, method.DeclaringType))
-                        {
-                            continue;
-                        }
-                        compareOffset = 1;
-                    }
-                    if (method.Parameters.Count != (parametersOfDelegate.Length - compareOffset))
-                    {
-                        continue;
-                    }
-                    for(int j = 0; j < method.Parameters.Count; j++)
-                    {
-                        var param_left = method.Parameters[j];
-                        var param_right = parametersOfDelegate[compareOffset];
-                        if (param_left.IsOut != param_right.IsOut
-                            || param_left.ParameterType.IsByReference != param_right.ParameterType.IsByRef)
-                        {
-                            continue;
-                        }
-                        if ((param_left.ParameterType.IsByReference || param_left.ParameterType.IsValueType) ? 
-                            !isSameType(param_left.ParameterType, param_right.ParameterType)
-                            : !isAssignableFrom(param_right.ParameterType, param_left.ParameterType))
+                        var typeOfSelf = (hotfixType == 1 && !method.IsConstructor) ? luaTableType :
+                            (method.DeclaringType.IsValueType ? method.DeclaringType : objType);
+                        if ((parametersOfDelegate.Count == 0) || parametersOfDelegate[0].ParameterType.IsByReference || !isSameType(typeOfSelf, parametersOfDelegate[0].ParameterType))
                         {
                             continue;
                         }
                         compareOffset++;
                     }
-
-
-                    var type = cs_call_lua_delegate[i];
-                    if (type.Module.Assembly.FullName == assembly.FullName &&
-                        type.Module.FullyQualifiedName == assembly.MainModule.FullyQualifiedName)
+                    if (method.Parameters.Count != (parametersOfDelegate.Count - compareOffset))
                     {
-                        delegateType = assembly.MainModule.Types.Single(t => t.FullName == type.FullName);
-                        invoke = delegateType.Resolve().Methods.Single(m => m.Name == "Invoke");
+                        continue;
                     }
-                    else
+                    bool paramMatch = true;
+                    for (int j = 0; j < method.Parameters.Count; j++)
                     {
-                        delegateType = assembly.MainModule.Import(type);
-                        invoke = assembly.MainModule.Import(delegate_invoke);
+                        var param_left = method.Parameters[j];
+                        var param_right = parametersOfDelegate[compareOffset++];
+                        if (param_left.IsOut != param_right.IsOut
+                            || param_left.ParameterType.IsByReference != param_right.ParameterType.IsByReference)
+                        {
+                            paramMatch = false;
+                            break;
+                        }
+                        if (param_left.ParameterType.IsValueType != param_right.ParameterType.IsValueType)
+                        {
+                            paramMatch = false;
+                            break;
+                        }
+                        var type_left = (param_left.ParameterType.IsByReference || param_left.ParameterType.IsValueType) ? param_left.ParameterType : objType;
+                        if (!isSameType(type_left, param_right.ParameterType))
+                        {
+                            paramMatch = false;
+                            break;
+                        }
                     }
+
+                    if (!paramMatch)
+                    {
+                        continue;
+                    }
+                    delegateType = hotfix_delegates[i];
+                    invoke = delegate_invoke;
                     return true;
                 }
             }
@@ -165,10 +123,13 @@ namespace XLua
             assembly.MainModule.Types.Add(new TypeDefinition("__XLUA_GEN", "__XLUA_GEN_FLAG", Mono.Cecil.TypeAttributes.Class,
                 objType));
 
-            CSObjectWrapEditor.Generator.GetGenConfig();// load config
-            cs_call_lua_delegate = CSObjectWrapEditor.Generator.CSharpCallLua.Where(type => typeof(Delegate).IsAssignableFrom(type)).ToList();
+            var hotfixDelegateAttributeType = assembly.MainModule.Types.Single(t => t.FullName == "XLua.HotfixDelegateAttribute");
+            hotfix_delegates = (from module in assembly.Modules
+                                from type in module.Types
+                                where type.CustomAttributes.Any(ca => ca.AttributeType == hotfixDelegateAttributeType)
+                                select type).ToList();
 
-            var hotfixAttributeType = assembly.MainModule.Types.Single(t => t.Name == "HotfixAttribute");
+            var hotfixAttributeType = assembly.MainModule.Types.Single(t => t.FullName == "XLua.HotfixAttribute");
             foreach (var type in (from module in assembly.Modules from type in module.Types select type))
             {
                 CustomAttribute hotfixAttr = type.CustomAttributes.FirstOrDefault(ca => ca.AttributeType == hotfixAttributeType);
@@ -189,7 +150,10 @@ namespace XLua
                     {
                         if (method.Name != ".cctor")
                         {
-                            InjectCode(assembly, method, hotfixType, stateTable);
+                            if (!InjectCode(assembly, method, hotfixType, stateTable))
+                            {
+                                return;
+                            }
                         }
                     }
                 }
@@ -199,91 +163,12 @@ namespace XLua
 
             Debug.Log("hotfix inject finish!");
         }
-
-        static TypeReference getParamType(TypeReference type)
-        {
-            return type.IsValueType ? type : objType;
-        }
-
-        static MethodReference makeInvokeInstance( MethodReference invoke, TypeReference delegateType)
-        {
-            var ret = new MethodReference(
-                invoke.Name,
-                invoke.ReturnType,
-                delegateType)
-            {
-                HasThis = invoke.HasThis,
-                ExplicitThis = invoke.ExplicitThis,
-                CallingConvention = invoke.CallingConvention
-            };
-
-            foreach (var parameter in invoke.Parameters)
-            {
-                ret.Parameters.Add(new ParameterDefinition(parameter.ParameterType));
-            }
-
-            foreach (var genericParam in invoke.GenericParameters)
-            {
-                ret.GenericParameters.Add(new GenericParameter(genericParam.Name, ret));
-            }
-
-            return ret;
-        }
-
-        static void genDelegateType(AssemblyDefinition assembly, MethodDefinition method, out TypeReference delegateType, out MethodReference invoke, int hotfixType)
-        {
-            List<TypeReference> paramTypes = new List<TypeReference>();
-
-            if (!method.IsStatic) paramTypes.Add((hotfixType == 1 && !method.IsConstructor) ? luaTableType : getParamType(method.DeclaringType));
-            paramTypes.AddRange(method.Parameters.Select(p => getParamType(p.ParameterType)));
-
-            bool statefulConstructor = (hotfixType == 1) && method.IsConstructor && !method.IsStatic;
-            if (!statefulConstructor && method.ReturnType.ToString() == "System.Void")
-            {
-                if (paramTypes.Count == 0)
-                {
-                    delegateType = actions[0];
-                    invoke = assembly.MainModule.Import(delegateType.Resolve().Methods.Single(m => m.Name == "Invoke"));
-                }
-                else
-                {
-                    GenericInstanceType gtype = new GenericInstanceType(actions[paramTypes.Count]);
-
-                    foreach (var paramType in paramTypes)
-                    {
-                        gtype.GenericArguments.Add(paramType);
-                    }
-                    delegateType = assembly.MainModule.Import(gtype);
-                    invoke = assembly.MainModule.Import(makeInvokeInstance(delegateType.Resolve().Methods.Single(m => m.Name == "Invoke"), delegateType));
-                }
-            }
-            else
-            {
-                GenericInstanceType gtype = new GenericInstanceType(funcs[paramTypes.Count]);
-
-                foreach (var paramType in paramTypes)
-                {
-                    gtype.GenericArguments.Add(paramType);
-                }
-                if (statefulConstructor)
-                {
-                    gtype.GenericArguments.Add(luaTableType);
-                }
-                else
-                {
-                    gtype.GenericArguments.Add(method.ReturnType);
-                }
-
-                delegateType = assembly.MainModule.Import(gtype);
-                invoke = assembly.MainModule.Import(makeInvokeInstance(delegateType.Resolve().Methods.Single(m => m.Name == "Invoke"), delegateType));
-            }
-        }
-
+        
         static OpCode[] ldargs = new OpCode[] { OpCodes.Ldarg_0, OpCodes.Ldarg_1, OpCodes.Ldarg_2, OpCodes.Ldarg_3 };
 
         static readonly int MAX_OVERLOAD = 100;
 
-        static void InjectCode(AssemblyDefinition assembly, MethodDefinition method, int hotfixType, FieldDefinition stateTable)
+        static bool InjectCode(AssemblyDefinition assembly, MethodDefinition method, int hotfixType, FieldDefinition stateTable)
         {
             string fieldName = method.Name;
             if (fieldName.StartsWith("."))
@@ -304,42 +189,24 @@ namespace XLua
             }
             if (luaDelegateName == null)
             {
-                throw new Exception("too many overload!");
+                Debug.LogError("too many overload!");
+                return false;
             }
             if (method.HasGenericParameters)
             {
-                Debug.LogWarning(method.Name + " has generic parameter! skiped");
-                return;
+                return true;
             }
             TypeReference delegateType = null;
             MethodReference invoke = null;
 
             int param_count = method.Parameters.Count + (method.IsStatic ? 0 : 1);
-            if (param_count > 4)
+
+            if (!findHotfixDelegate(assembly, method, out delegateType, out invoke, hotfixType))
             {
-                Debug.LogWarning("you must declare delegate for " + method.DeclaringType + "." + method.Name + " and mark as CSharpCallLua");
-                return;
-            }
-            foreach(var param in method.Parameters)
-            {
-                if (param.ParameterType.IsByReference)
-                {
-                    if (!findGenDelegate(assembly, method, out delegateType, out invoke, hotfixType))
-                    {
-                        Debug.LogWarning("you must declare delegate for " + method.DeclaringType + "." + method.Name + " and mark as CSharpCallLua");
-                        return;
-                    }
-                    else
-                    {
-                        break;
-                    }
-                }
+                Debug.LogWarning("can not find delegate for " + method.DeclaringType + "." + method.Name + "!");
+                return false;
             }
 
-            if (delegateType == null && invoke == null)
-            {
-                genDelegateType(assembly, method, out delegateType, out invoke, hotfixType);
-            }
             if (delegateType == null || invoke == null)
             {
                 throw new Exception("unknow exception!");
@@ -387,7 +254,14 @@ namespace XLua
             }
             for(int i = 0; i < param_count; i++)
             {
-                processor.InsertBefore(firstIns, processor.Create(ldargs[i]));
+                if (i < ldargs.Length)
+                {
+                    processor.InsertBefore(firstIns, processor.Create(ldargs[i]));
+                }
+                else
+                {
+                    processor.InsertBefore(firstIns, processor.Create(OpCodes.Ldarg, (short) i));
+                }
                 if (i == 0 && hotfixType == 1 && !method.IsStatic && !method.IsConstructor)
                 {
                     processor.InsertBefore(firstIns, processor.Create(OpCodes.Ldfld, stateTable));
@@ -435,59 +309,8 @@ namespace XLua
             };
             method.Body.ExceptionHandlers.Add(handler);
             method.Body.InitLocals = true;
-        }
 
-        static Type[] action_types = new Type[] { typeof(Action), typeof(Action<>), typeof(Action<,>), typeof(Action<,,>), typeof(Action<,,,>) };
-        static Type[] func_types = new Type[] { typeof(Func<>), typeof(Func<,>), typeof(Func<,,>), typeof(Func<,,,>), typeof(Func<,,,,>) };
-
-        static Type genericType(Type type)
-        {
-            return type.IsValueType ? type : typeof(object);
-        }
-
-        static Type delegateType(MethodBase method)
-        {
-            var hotfixType = ((method.DeclaringType.GetCustomAttributes(typeof(HotfixAttribute), false)[0]) as HotfixAttribute).Flag;
-            int param_count = method.GetParameters().Length + (method.IsStatic ? 0 : 1);
-            bool is_void = method.IsConstructor || ((method as MethodInfo).ReturnType == typeof(void));
-            if (is_void && param_count == 0)
-            {
-                return action_types[0];
-            }
-
-            List<Type> genericParams = new List<Type>();
-            if (!method.IsStatic)
-            {
-                genericParams.Add((hotfixType == HotfixFlag.Stateful && !method.IsConstructor) ? typeof(LuaTable) : genericType(method.DeclaringType));
-            }
-            foreach (var param in method.GetParameters())
-            {
-                genericParams.Add(genericType(param.ParameterType));
-            }
-            bool statefulConstructor = (hotfixType == HotfixFlag.Stateful) && method.IsConstructor && !method.IsStatic;
-            if (!is_void || statefulConstructor)
-            {
-                genericParams.Add(statefulConstructor? typeof(LuaTable) : (method as MethodInfo).ReturnType);
-                return func_types[param_count].MakeGenericType(genericParams.ToArray());
-            }
-            else
-            {
-                return action_types[param_count].MakeGenericType(genericParams.ToArray());
-            }
-        }
-
-        [CSharpCallLua]
-        static IEnumerable<Type> HotfixDelegate
-        {
-            get
-            {
-                var need_gen_types = (from type in Utils.GetAllTypes() where type.IsDefined(typeof(HotfixAttribute), false) select type)
-                    .SelectMany(type => type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly | BindingFlags.NonPublic).Cast<MethodBase>().Concat(type.GetConstructors(BindingFlags.Instance | BindingFlags.Public).Cast<MethodBase>()))
-                    .Where(method => !method.ContainsGenericParameters && method.GetParameters().Length <= (method.IsStatic ? 4 : 3) && !method.GetParameters().Any(p => p.ParameterType.IsByRef))
-                    .Select(method => delegateType(method)).Distinct().ToList();
-                need_gen_types.Sort((t1, t2) => t1.Name.CompareTo(t2.Name));
-                return need_gen_types;
-            }
+            return true;
         }
     }
 }
