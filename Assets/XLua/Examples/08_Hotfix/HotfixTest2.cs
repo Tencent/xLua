@@ -1,5 +1,5 @@
 ﻿using UnityEngine;
-using System.Collections;
+using System.Collections.Generic;
 using XLua;
 
 [CSharpCallLua]
@@ -28,6 +28,31 @@ public class HotfixCalc
     public int TestOut(int a, out double b, ref string c, GameObject go)
     {
         return TestOut(a, out b, ref c);
+    }
+
+    public T Test1<T>()
+    {
+        return default(T);
+    }
+
+    public T1 Test2<T1, T2, T3>(T1 a, out T2 b, ref T3 c)
+    {
+        b = default(T2);
+        return a;
+    }
+
+    public static int Test3<T>(T a)
+    {
+        return 0;
+    }
+
+    public static void Test4<T>(T a)
+    { 
+    }
+
+    public void Test5<T>(int a, params T[] arg)
+    {
+
     }
 }
 
@@ -93,6 +118,47 @@ public class HotfixTest2 : MonoBehaviour {
         ret = calc.TestOut(100, out num, ref str);
         Debug.Log("ret = " + ret + ", num = " + num + ", str = " + str);
 
+        luaenv.DoString(@"
+            xlua.hotfix(CS.HotfixCalc, {
+                 Test1 = function(self)
+                    print('Test1', self)
+                    return 1
+                 end;
+                 Test2 = function(self, a, b)
+                     print('Test1', self, a, b)
+                     return a + 10, 1024, b
+                 end;
+                 Test3 = function(a)
+                    print(a)
+                    return 10
+                 end;
+                 Test4 = function(a)
+                    print(a)
+                 end;
+                 Test5 = function(self, a, ...)
+                    print('Test4', self, a, ...)
+                 end
+            })
+        ");
+
+        int r1 = calc.Test1<int>();
+        double r2 = calc.Test1<double>();
+
+        Debug.Log("r1:" + r1 + ",r2:" + r2);
+
+        string ss = "heihei";
+        int r3 = calc.Test2(r1, out r2, ref ss);
+        Debug.Log("r1:" + r1 + ",r2:" + r2 + ",r3:" + r3 + ",ss:" + ss);
+
+        r3 = HotfixCalc.Test3("test3");
+        r3 = HotfixCalc.Test3(2);
+        r3 = HotfixCalc.Test3(this);
+        Debug.Log("r3:" + r3);
+        HotfixCalc.Test4(this);
+        HotfixCalc.Test4(2);
+        calc.Test5(10, "a", "b", "c");
+        calc.Test5(10, 1, 3, 5);
+
         Debug.Log("----------------------before------------------------");
         TestStateful();
         System.GC.Collect();
@@ -139,6 +205,9 @@ public class HotfixTest2 : MonoBehaviour {
                 StaticFunc = function(a, b, c)
                    print(a, b, c)
                 end;
+                GenericTest = function(self, a)
+                   print(self, a)
+                end;
                 Finalize = function(self)
                    print('Finalize', self)
                 end
@@ -171,6 +240,8 @@ public class HotfixTest2 : MonoBehaviour {
         sft.Start();
         StatefullTest.StaticFunc(1, 2);
         StatefullTest.StaticFunc("e", 3, 4);
+        sft.GenericTest(1);
+        sft.GenericTest("hehe");
     }
 	
 	// Update is called once per frame

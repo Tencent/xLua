@@ -25,11 +25,30 @@ namespace XLua
         static TypeReference objType = null;
         static TypeReference luaTableType = null;
 
+        static TypeDefinition luaFunctionType = null;
+        static MethodDefinition invokeSessionStart = null;
+        static MethodDefinition functionInvoke = null;
+        static MethodDefinition invokeSessionEnd = null;
+        static MethodDefinition invokeSessionEndWithResult = null;
+        static MethodDefinition inParam = null;
+        static MethodDefinition inParams = null;
+        static MethodDefinition outParam = null;
+
+
         static void init(AssemblyDefinition assembly)
         {
             objType = assembly.MainModule.Import(typeof(object));
 
             luaTableType = assembly.MainModule.Types.Single(t => t.FullName == "XLua.LuaTable");
+
+            luaFunctionType = assembly.MainModule.Types.Single(t => t.FullName == "XLua.LuaFunction");
+            invokeSessionStart = luaFunctionType.Methods.Single(m => m.Name == "InvokeSessionStart");
+            functionInvoke = luaFunctionType.Methods.Single(m => m.Name == "Invoke");
+            invokeSessionEnd = luaFunctionType.Methods.Single(m => m.Name == "InvokeSessionEnd");
+            invokeSessionEndWithResult = luaFunctionType.Methods.Single(m => m.Name == "InvokeSessionEndWithResult");
+            inParam = luaFunctionType.Methods.Single(m => m.Name == "InParam");
+            inParams = luaFunctionType.Methods.Single(m => m.Name == "InParams");
+            outParam = luaFunctionType.Methods.Single(m => m.Name == "OutParam");
         }
 
         static List<TypeDefinition> hotfix_delegates = null;
@@ -143,7 +162,8 @@ namespace XLua
                     {
                         if (method.Name != ".cctor")
                         {
-                            if (!InjectCode(assembly, method, hotfixType, stateTable))
+                            if (method.HasGenericParameters ? ! InjectGenericMethod(assembly, method, hotfixType, stateTable) : 
+                                !InjectMethod(assembly, method, hotfixType, stateTable))
                             {
                                 return;
                             }
@@ -161,7 +181,7 @@ namespace XLua
 
         static readonly int MAX_OVERLOAD = 100;
 
-        static bool InjectCode(AssemblyDefinition assembly, MethodDefinition method, int hotfixType, FieldDefinition stateTable)
+        static bool InjectMethod(AssemblyDefinition assembly, MethodDefinition method, int hotfixType, FieldDefinition stateTable)
         {
             string fieldName = method.Name;
             if (fieldName.StartsWith("."))
@@ -243,6 +263,166 @@ namespace XLua
             {
                 processor.InsertBefore(firstIns, processor.Create(OpCodes.Stfld, stateTable));
             }
+            processor.InsertBefore(firstIns, processor.Create(OpCodes.Ret));
+
+            return true;
+        }
+
+        static MethodReference MakeGenericMethod(this MethodReference self, params TypeReference[] arguments)
+        {
+            if (self.GenericParameters.Count != arguments.Length)
+                throw new ArgumentException();
+
+            var instance = new GenericInstanceMethod(self);
+            foreach (var argument in arguments)
+                instance.GenericArguments.Add(argument);
+
+            return instance;
+        }
+
+        static bool InjectGenericMethod(AssemblyDefinition assembly, MethodDefinition method, int hotfixType, FieldDefinition stateTable)
+        {
+            string fieldName = method.Name;
+            if (fieldName.StartsWith("."))
+            {
+                fieldName = fieldName.Substring(1);
+            }
+            string luaDelegateName = null;
+            var type = method.DeclaringType;
+            for (int i = 0; i < MAX_OVERLOAD; i++)
+            {
+                string tmp = "__Hitfix" + i + "_" + fieldName;
+                if (!type.Fields.Any(f => f.Name == tmp)) // injected
+                {
+                    luaDelegateName = tmp;
+                    break;
+                }
+            }
+            if (luaDelegateName == null)
+            {
+                Debug.LogError("too many overload!");
+                return false;
+            }
+
+            FieldDefinition fieldDefinition = new FieldDefinition(luaDelegateName, Mono.Cecil.FieldAttributes.Static | Mono.Cecil.FieldAttributes.Private,
+                luaFunctionType);
+            type.Fields.Add(fieldDefinition);
+
+            int param_start = method.IsStatic ? 0 : 1;
+            int param_count = method.Parameters.Count + param_start;
+            var firstIns = method.Body.Instructions[0];
+            var processor = method.Body.GetILProcessor();
+
+            processor.InsertBefore(firstIns, processor.Create(OpCodes.Ldsfld, fieldDefinition));
+            processor.InsertBefore(firstIns, processor.Create(OpCodes.Brfalse, firstIns));
+
+            processor.InsertBefore(firstIns, processor.Create(OpCodes.Ldsfld, fieldDefinition));
+            processor.InsertBefore(firstIns, processor.Create(OpCodes.Callvirt, invokeSessionStart));
+
+            bool isVoid = method.ReturnType.FullName == "System.Void";
+
+            int outCout = 0;
+
+            for (int i = 0; i < param_count; i++)
+            {
+                if (i == 0 && !method.IsStatic)
+                {
+                    processor.InsertBefore(firstIns, processor.Create(OpCodes.Ldsfld, fieldDefinition));
+                    processor.InsertBefore(firstIns, processor.Create(OpCodes.Ldarg_0));
+                    if (hotfixType == 1)
+                    {
+                        processor.InsertBefore(firstIns, processor.Create(OpCodes.Ldfld, stateTable));
+                        processor.InsertBefore(firstIns, processor.Create(OpCodes.Callvirt, MakeGenericMethod(inParam, luaTableType)));
+                    }
+                    else
+                    {
+                        processor.InsertBefore(firstIns, processor.Create(OpCodes.Callvirt, MakeGenericMethod(inParam, method.DeclaringType)));
+                    }
+                }
+                else
+                {
+                    var param = method.Parameters[i - param_start];
+                    if (param.ParameterType.IsByReference)
+                    {
+                        outCout++;
+                    }
+                    if (!param.IsOut)
+                    {
+                        processor.InsertBefore(firstIns, processor.Create(OpCodes.Ldsfld, fieldDefinition));
+
+                        if (i < ldargs.Length)
+                        {
+                            processor.InsertBefore(firstIns, processor.Create(ldargs[i]));
+                        }
+                        else
+                        {
+                            processor.InsertBefore(firstIns, processor.Create(OpCodes.Ldarg, (short)i));
+                        }
+
+                        var paramType = param.ParameterType;
+
+                        if (param.ParameterType.IsByReference)
+                        {
+                            paramType = ((ByReferenceType)paramType).ElementType;
+                            if (paramType.IsValueType || paramType.IsGenericParameter)
+                            {
+                                processor.InsertBefore(firstIns, processor.Create(OpCodes.Ldobj, paramType));
+                            }
+                            else
+                            {
+                                processor.InsertBefore(firstIns, processor.Create(OpCodes.Ldind_Ref));
+                            }
+                        }
+                        if (i == param_count - 1 && param.CustomAttributes.Any(ca => ca.AttributeType.FullName == "System.ParamArrayAttribute"))
+                        {
+                            processor.InsertBefore(firstIns, processor.Create(OpCodes.Callvirt, MakeGenericMethod(inParams, ((ArrayType)paramType).ElementType)));
+                        }
+                        else
+                        {
+                            processor.InsertBefore(firstIns, processor.Create(OpCodes.Callvirt, MakeGenericMethod(inParam, paramType)));
+                        }
+                    }
+                }
+            }
+
+            int outStart = (isVoid ? 0 : 1);
+
+            processor.InsertBefore(firstIns, processor.Create(OpCodes.Ldsfld, fieldDefinition));
+            processor.InsertBefore(firstIns, processor.Create(OpCodes.Ldc_I4, outCout + outStart));
+            processor.InsertBefore(firstIns, processor.Create(OpCodes.Callvirt, functionInvoke));
+
+            int outPos = outStart;
+            for (int i = 0; i < method.Parameters.Count; i++)
+            {
+                if (method.Parameters[i].ParameterType.IsByReference)
+                {
+                    processor.InsertBefore(firstIns, processor.Create(OpCodes.Ldsfld, fieldDefinition));
+                    processor.InsertBefore(firstIns, processor.Create(OpCodes.Ldc_I4, outPos));
+                    int arg_pos = param_start + i;
+                    if (arg_pos < ldargs.Length)
+                    {
+                        processor.InsertBefore(firstIns, processor.Create(ldargs[arg_pos]));
+                    }
+                    else
+                    {
+                        processor.InsertBefore(firstIns, processor.Create(OpCodes.Ldarg, (short)arg_pos));
+                    }
+                    processor.InsertBefore(firstIns, processor.Create(OpCodes.Callvirt, MakeGenericMethod(outParam, 
+                        ((ByReferenceType)method.Parameters[i].ParameterType).ElementType)));
+                    outPos++;
+                }
+            }
+
+            processor.InsertBefore(firstIns, processor.Create(OpCodes.Ldsfld, fieldDefinition));
+            if (isVoid)
+            {
+                processor.InsertBefore(firstIns, processor.Create(OpCodes.Callvirt, invokeSessionEnd));
+            }
+            else
+            {
+                processor.InsertBefore(firstIns, processor.Create(OpCodes.Callvirt, MakeGenericMethod(invokeSessionEndWithResult, method.ReturnType)));
+            }
+
             processor.InsertBefore(firstIns, processor.Create(OpCodes.Ret));
 
             return true;

@@ -30,6 +30,11 @@ public class StatefullTest {
 	
 	}
 
+    public void GenericTest<T>(T a)
+    {
+
+    }
+
     static public void StaticFunc(int a, int b)
     {
     }
