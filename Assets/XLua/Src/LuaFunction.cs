@@ -238,59 +238,49 @@ namespace XLua
 
         public void InvokeSessionStart()
         {
-            lock (luaEnv.luaEnvLock)
-            {
-                var L = luaEnv.L;
-                _stack.Push(_oldTop);
-                _oldTop = LuaAPI.lua_gettop(L);
-                LuaAPI.load_error_func(L, luaEnv.errorFuncRef);
-                LuaAPI.lua_getref(L, luaReference);
-            }
+            System.Threading.Monitor.Enter(luaEnv.luaEnvLock);
+            var L = luaEnv.L;
+            _stack.Push(_oldTop);
+            _oldTop = LuaAPI.lua_gettop(L);
+            LuaAPI.load_error_func(L, luaEnv.errorFuncRef);
+            LuaAPI.lua_getref(L, luaReference);
         }
 
         public void Invoke(int nRet)
         {
-            lock (luaEnv.luaEnvLock)
+            int error = LuaAPI.lua_pcall(luaEnv.L, LuaAPI.lua_gettop(luaEnv.L) - _oldTop - 2, nRet, _oldTop + 1);
+            if (error != 0)
             {
-                int error = LuaAPI.lua_pcall(luaEnv.L, LuaAPI.lua_gettop(luaEnv.L) - _oldTop - 2, nRet, _oldTop + 1);
-                if (error != 0)
-                {
-                    var lastOldTop = _oldTop;
-                    InvokeSessionEnd();
-                    luaEnv.ThrowExceptionFromError(lastOldTop);
-                }
+                var lastOldTop = _oldTop;
+                InvokeSessionEnd();
+                luaEnv.ThrowExceptionFromError(lastOldTop);
             }
         }
 
         public void InvokeSessionEnd()
         {
-            lock (luaEnv.luaEnvLock)
-            {
-                LuaAPI.lua_settop(luaEnv.L, _oldTop);
-            }
+            LuaAPI.lua_settop(luaEnv.L, _oldTop);
             _oldTop = _stack.Pop();
+            System.Threading.Monitor.Exit(luaEnv.luaEnvLock);
         }
 
         public TResult InvokeSessionEndWithResult<TResult>()
         {
-            lock (luaEnv.luaEnvLock)
+            if (LuaAPI.lua_gettop(luaEnv.L) < _oldTop + 2)
             {
-                if (LuaAPI.lua_gettop(luaEnv.L) < _oldTop + 2)
-                {
-                    InvokeSessionEnd();
-                    throw new InvalidOperationException("no result!");
-                }
+                InvokeSessionEnd();
+                throw new InvalidOperationException("no result!");
+            }
 
-                try
-                {
-                    TResult ret;
-                    luaEnv.translator.Get(luaEnv.L, _oldTop + 2, out ret);
-                    return ret;
-                }
-                finally
-                {
-                    InvokeSessionEnd();
-                }
+            try
+            {
+                TResult ret;
+                luaEnv.translator.Get(luaEnv.L, _oldTop + 2, out ret);
+                return ret;
+            }
+            finally
+            {
+                InvokeSessionEnd();
             }
         }
 
@@ -298,10 +288,7 @@ namespace XLua
         {
             try
             {
-                lock (luaEnv.luaEnvLock)
-                {
-                    luaEnv.translator.PushByType(luaEnv.L, p);
-                }
+                luaEnv.translator.PushByType(luaEnv.L, p);
             }
             catch (Exception e)
             {
@@ -314,12 +301,9 @@ namespace XLua
         {
             try
             {
-                lock (luaEnv.luaEnvLock)
+                for (int i = 0; i < ps.Length; i++)
                 {
-                    for (int i = 0; i < ps.Length; i++)
-                    {
-                        luaEnv.translator.PushByType<T>(luaEnv.L, ps[i]);
-                    }
+                    luaEnv.translator.PushByType<T>(luaEnv.L, ps[i]);
                 }
             }
             catch (Exception e)
@@ -332,23 +316,20 @@ namespace XLua
         //pos start from 0
         public void OutParam<TResult>(int pos, out TResult ret)
         {
-            lock (luaEnv.luaEnvLock)
+            if (LuaAPI.lua_gettop(luaEnv.L) < _oldTop + 2 + pos)
             {
-                if (LuaAPI.lua_gettop(luaEnv.L) < _oldTop + 2 + pos)
-                {
-                    InvokeSessionEnd();
-                    throw new InvalidOperationException("no result in " + pos);
-                }
+                InvokeSessionEnd();
+                throw new InvalidOperationException("no result in " + pos);
+            }
 
-                try
-                {
-                    luaEnv.translator.Get(luaEnv.L, _oldTop + 2 + pos, out ret);
-                }
-                catch (Exception e)
-                {
-                    InvokeSessionEnd();
-                    throw e;
-                }
+            try
+            {
+                luaEnv.translator.Get(luaEnv.L, _oldTop + 2 + pos, out ret);
+            }
+            catch (Exception e)
+            {
+                InvokeSessionEnd();
+                throw e;
             }
         }
 #endif
