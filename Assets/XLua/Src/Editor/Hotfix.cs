@@ -229,7 +229,7 @@ namespace XLua
             bool statefulConstructor = (hotfixType == 1) && method.IsConstructor && !method.IsStatic;
 
             
-            var firstIns = method.IsConstructor ? method.Body.Instructions[2] : method.Body.Instructions[0];
+            var firstIns = method.Body.Instructions[0];
             var processor = method.Body.GetILProcessor();
 
             processor.InsertBefore(firstIns, processor.Create(OpCodes.Ldsfld, fieldReference));
@@ -341,7 +341,7 @@ namespace XLua
 
             int param_start = method.IsStatic ? 0 : 1;
             int param_count = method.Parameters.Count + param_start;
-            var firstIns = method.IsConstructor ? method.Body.Instructions[2] : method.Body.Instructions[0];
+            var firstIns = method.Body.Instructions[0];
             var processor = method.Body.GetILProcessor();
 
             processor.InsertBefore(firstIns, processor.Create(OpCodes.Ldsfld, fieldReference));
