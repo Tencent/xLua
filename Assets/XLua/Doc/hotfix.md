@@ -100,6 +100,39 @@ C#的操作符都有一套内部表示，比如+号的操作符函数名是op_Ad
 
 method_name是"Finalize"，传一个self参数。
 
+* 泛化类型
+
+其它规则一致，需要说明的是，每个泛化类型实例化后都是一个独立的类型，只能针对实例化后的类型分别打补丁。比如：
+
+```csharp
+public class GenericClass<T>
+{
+｝
+```
+
+你只能对GenericClass<double>，GenericClass<int>这些类，而不是对GenericClass打补丁。
+
+另外值得一提的是，要注意泛化类型的命名方式，比如GenericClass<double>的命名是GenericClass`1[System.Double]，具体可以看[MSDN](https://msdn.microsoft.com/en-us/library/w3f99sx1.aspx)。
+
+对GenericClass<double>打补丁的实例如下：
+
+```csharp
+luaenv.DoString(@"
+    xlua.hotfix(CS['GenericClass`1[System.Double]'], {
+        ['.ctor'] = function(obj, a)
+            print('GenericClass<double>', obj, a)
+        end;
+        Func1 = function(obj)
+            print('GenericClass<double>.Func1', obj)
+        end;
+        Func2 = function(obj)
+            print('GenericClass<double>.Func2', obj)
+            return 1314
+        end
+    })
+");
+```
+
 * 整个类
 
 如果要替换整个类，不需要一次次的调用xlua.hotfix去替换，可以整个一次完成。只要给一个table，按method_name = function组织即可

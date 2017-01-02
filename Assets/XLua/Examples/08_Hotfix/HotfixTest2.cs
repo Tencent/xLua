@@ -64,6 +64,26 @@ public class NoHotfixCalc
     }
 }
 
+[Hotfix]
+public class GenericClass<T>
+{
+    T a;
+
+    public GenericClass(T a)
+    {
+        this.a = a;
+    }
+
+    public void Func1()
+    {
+
+    }
+
+    public T Func2()
+    {
+        return default(T);
+    }
+}
 
 public class HotfixTest2 : MonoBehaviour {
 
@@ -218,6 +238,27 @@ public class HotfixTest2 : MonoBehaviour {
         luaenv.FullGc();
         System.GC.Collect();
         System.GC.WaitForPendingFinalizers();
+
+        var genericObj = new GenericClass<double>(1.1);
+        genericObj.Func1();
+        Debug.Log(genericObj.Func2());
+        luaenv.DoString(@"
+            xlua.hotfix(CS['GenericClass`1[System.Double]'], {
+                ['.ctor'] = function(obj, a)
+                    print('GenericClass<double>', obj, a)
+                end;
+                Func1 = function(obj)
+                    print('GenericClass<double>.Func1', obj)
+                end;
+                Func2 = function(obj)
+                    print('GenericClass<double>.Func2', obj)
+                    return 1314
+                end
+            })
+        ");
+        genericObj = new GenericClass<double>(1.1);
+        genericObj.Func1();
+        Debug.Log(genericObj.Func2());
 
         calc.TestOut(100, out num, ref str, gameObject);
     }
