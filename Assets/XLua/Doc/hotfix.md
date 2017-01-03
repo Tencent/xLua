@@ -129,7 +129,7 @@ public class GenericClass<T>
 ｝
 ```
 
-你只能对GenericClass<double>，GenericClass<int>这些类，而不是对GenericClass打补丁。
+你只能对GenericClass\<double\>，GenericClass\<int\>这些类，而不是对GenericClass打补丁。
 
 另外值得一提的是，要注意泛化类型的命名方式，比如GenericClass\<double\>的命名是GenericClass`1[System.Double]，具体可以看[MSDN](https://msdn.microsoft.com/en-us/library/w3f99sx1.aspx)。
 
