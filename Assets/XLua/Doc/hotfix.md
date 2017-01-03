@@ -8,7 +8,7 @@
 
 建议的做法是HOTFIX_ENABLE，HOTFIX_DEBUG_SYMBOLS在build手机版本的时候打开，平时编辑器下需要开发补丁的时候打开HOTFIX_ENABLE，开发补丁时需要调试的时候打开HOTFIX_DEBUG_SYMBOLS。
 
-热更特性依赖Cecil，添加HOTFIX_ENABLE宏之后，可能会报找不到Cecil。这时你需要到Unity安装目录下找到Mono.Cecil.dll，拷贝到项目里头。而HOTFIX_DEBUG_SYMBOLS则依赖Mono.Cecil.Pdb.dll，Mono.Cecil.mdb.dll。
+热更特性依赖Cecil，添加HOTFIX_ENABLE宏之后，可能会报找不到Cecil。这时你需要到Unity安装目录下找到Mono.Cecil.dll，拷贝到项目里头。而HOTFIX_DEBUG_SYMBOLS则依赖Mono.Cecil.Pdb.dll，Mono.Cecil.Mdb.dll。
 
 不支持静态构造函数。
 
