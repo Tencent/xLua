@@ -86,6 +86,8 @@ end)
 
 如果是Stateful方式，你可以返回一个table作为这个对象的状态。
 
+和普通函数不一样的是，构造函数的热补丁并不是替换，而是开头调用lua函数后继续原有逻辑。
+
 * 属性
 
 对于名为“AProp”的属性，会对应一个getter，method_name等于get_AProp，setter的method_name等于set_AProp。
@@ -105,6 +107,8 @@ C#的操作符都有一套内部表示，比如+号的操作符函数名是op_Ad
 * 析构函数
 
 method_name是"Finalize"，传一个self参数。
+
+和普通函数不一样的是，析构函数的热补丁并不是替换，而是开头调用lua函数后继续原有逻辑。
 
 * 泛化类型
 

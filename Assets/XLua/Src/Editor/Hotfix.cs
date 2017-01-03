@@ -153,15 +153,16 @@ namespace XLua
                 if (hotfixAttr != null)
                 {
                     int hotfixType = (int)hotfixAttr.ConstructorArguments[0].Value;
-                    FieldDefinition stateTable = null;
+                    FieldReference stateTable = null;
                     if (hotfixType == 1)
                     {
                         if (type.IsAbstract && type.IsSealed)
                         {
                             throw new InvalidOperationException(type.FullName + " is static, can not be mark as Stateful!");
                         }
-                        stateTable = new FieldDefinition("__Hitfix_xluaStateTable", Mono.Cecil.FieldAttributes.Private, luaTableType);
-                        type.Fields.Add(stateTable );
+                        var stateTableDefinition = new FieldDefinition("__Hitfix_xluaStateTable", Mono.Cecil.FieldAttributes.Private, luaTableType);
+                        type.Fields.Add(stateTableDefinition);
+                        stateTable = stateTableDefinition.GetGeneric();
                     }
                     foreach (var method in type.Methods)
                     {
@@ -190,7 +191,7 @@ namespace XLua
 
         static readonly int MAX_OVERLOAD = 100;
 
-        static bool InjectMethod(AssemblyDefinition assembly, MethodDefinition method, int hotfixType, FieldDefinition stateTable)
+        static string getDelegateName(MethodDefinition method)
         {
             string fieldName = method.Name;
             if (fieldName.StartsWith("."))
@@ -209,11 +210,20 @@ namespace XLua
                     break;
                 }
             }
+            return luaDelegateName;
+        }
+
+        static bool InjectMethod(AssemblyDefinition assembly, MethodDefinition method, int hotfixType, FieldReference stateTable)
+        {
+            var type = method.DeclaringType;
+            var luaDelegateName = getDelegateName(method);
             if (luaDelegateName == null)
             {
                 Debug.LogError("too many overload!");
                 return false;
             }
+
+            bool isFinalize = method.Name == "Finalize";
 
             TypeReference delegateType = null;
             MethodReference invoke = null;
@@ -270,7 +280,21 @@ namespace XLua
             {
                 processor.InsertBefore(firstIns, processor.Create(OpCodes.Stfld, stateTable));
             }
-            processor.InsertBefore(firstIns, processor.Create(OpCodes.Ret));
+            if (isFinalize && hotfixType == 1)
+            {
+                processor.InsertBefore(firstIns, processor.Create(OpCodes.Ldarg_0));
+                processor.InsertBefore(firstIns, processor.Create(OpCodes.Ldnull));
+                processor.InsertBefore(firstIns, processor.Create(OpCodes.Stfld, stateTable));
+            }
+            if (!method.IsConstructor && !isFinalize)
+            {
+                processor.InsertBefore(firstIns, processor.Create(OpCodes.Ret));
+            }
+
+            if (isFinalize)
+            {
+                method.Body.ExceptionHandlers[0].TryStart = method.Body.Instructions[0];
+            }
 
             return true;
         }
@@ -317,30 +341,17 @@ namespace XLua
             return definition;
         }
 
-        static bool InjectGenericMethod(AssemblyDefinition assembly, MethodDefinition method, int hotfixType, FieldDefinition stateTable)
+        static bool InjectGenericMethod(AssemblyDefinition assembly, MethodDefinition method, int hotfixType, FieldReference stateTable)
         {
-            string fieldName = method.Name;
-            if (fieldName.StartsWith("."))
-            {
-                fieldName = fieldName.Substring(1);
-            }
-            string ccFlag = method.IsConstructor ? "_c" : "";
-            string luaDelegateName = null;
             var type = method.DeclaringType;
-            for (int i = 0; i < MAX_OVERLOAD; i++)
-            {
-                string tmp = ccFlag + "__Hitfix" + i + "_" + fieldName;
-                if (!type.Fields.Any(f => f.Name == tmp)) // injected
-                {
-                    luaDelegateName = tmp;
-                    break;
-                }
-            }
+            var luaDelegateName = getDelegateName(method);
             if (luaDelegateName == null)
             {
                 Debug.LogError("too many overload!");
                 return false;
             }
+
+            bool isFinalize = method.Name == "Finalize";
 
             FieldDefinition fieldDefinition = new FieldDefinition(luaDelegateName, Mono.Cecil.FieldAttributes.Static | Mono.Cecil.FieldAttributes.Private,
                 luaFunctionType);
@@ -473,7 +484,21 @@ namespace XLua
             {
                 processor.InsertBefore(firstIns, processor.Create(OpCodes.Stfld, stateTable));
             }
-            processor.InsertBefore(firstIns, processor.Create(OpCodes.Ret));
+            if (isFinalize && hotfixType == 1)
+            {
+                processor.InsertBefore(firstIns, processor.Create(OpCodes.Ldarg_0));
+                processor.InsertBefore(firstIns, processor.Create(OpCodes.Ldnull));
+                processor.InsertBefore(firstIns, processor.Create(OpCodes.Stfld, stateTable));
+            }
+            if (!method.IsConstructor && !isFinalize)
+            {
+                processor.InsertBefore(firstIns, processor.Create(OpCodes.Ret));
+            }
+
+            if (isFinalize)
+            {
+                method.Body.ExceptionHandlers[0].TryStart = method.Body.Instructions[0];
+            }
 
             return true;
         }
