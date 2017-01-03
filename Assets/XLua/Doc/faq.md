@@ -8,6 +8,18 @@ xLua目前以zip包形式发布，在Assets目录下解压即可。
 
 可以，但生成代码目录需要配置一下（默认放Assets\XLua\Gen目录），具体可以看《XLua的配置.doc》的GenPath配置介绍。
 
+## Plugins源码在哪里可以找到，怎么使用？
+
+Plugins源码位于xLua_Project_Root/build下。
+
+源码编译依赖cmake，安装cmake后执行make_xxxx_yyyy.zz即可，xxxx代表平台，比如ios，android等，yyyy是要集成的虚拟机，有lua53和luajit两者，zz是后缀，windows下是bat，其它平台是sh。
+
+windows编译依赖Visual Studio 2015。
+
+android编译在linux下执行，依赖NDK，并且需要把脚本中ANDROID_NDK指向NDK的安装目录。
+
+ios和osx需要在mac下编译。
+
 ## 报“This delegate/interface must add to CSharpCallLua : XXX”异常怎么解决？
 
 在编辑器下xLua不生成代码都可以运行，出现这种提示，要么是该类型没加CSharpCallLua，要么是加之前生成过代码，没重新执行生成。
