@@ -334,7 +334,7 @@ namespace CSObjectWrap
                     %>__cl_gen_to_be_invoked.<%=overload.Name%><%
                     end%>( <%ForEachCsList(parameters, function(parameter, pi) 
                         if pi >= real_param_count then return end
-                        if pi ~= 0 then %>, <% end; if parameter.IsOut then %>out <% elseif parameter.ParameterType.IsByRef then %>ref <% end %><%=parameter.Name%><% end) %> );
+                        if pi ~= 0 then %>, <% end; if parameter.IsOut and parameter.ParameterType.IsByRef then %>out <% elseif parameter.ParameterType.IsByRef then %>ref <% end %><%=parameter.Name%><% end) %> );
                     <%
                     if has_return then
                     %>    <%=GetPushStatement(overload.ReturnType, "__cl_gen_ret")%>;
@@ -346,7 +346,7 @@ namespace CSObjectWrap
                         if parameter.IsIn or not parameter.IsOut then 
                             in_pos = in_pos + 1
                         end
-                        if parameter.IsOut or parameter.ParameterType.IsByRef then
+                        if parameter.ParameterType.IsByRef then
                         %><%=GetPushStatement(parameter.ParameterType:GetElementType(), parameter.Name)%>;
                         <%if not parameter.IsOut and parameter.ParameterType.IsByRef and NeedUpdate(parameter.ParameterType) then 
                   %><%=GetUpdateStatement(parameter.ParameterType:GetElementType(), in_pos+param_offset, parameter.Name)%>;
