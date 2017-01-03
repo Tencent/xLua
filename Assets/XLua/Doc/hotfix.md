@@ -14,6 +14,8 @@
 
 目前只支持Assets下代码的热补丁，不支持引擎，c#系统库的热补丁。
 
+注意：要等打印了hotfix inject finish!后才运行例子，否则会类似xlua.access, no field __Hitfix0_Update的错误
+
 ## API
 xlua.hotfix(class, [method_name], fix)
 

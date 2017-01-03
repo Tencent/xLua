@@ -20,6 +20,10 @@ android编译在linux下执行，依赖NDK，并且需要把脚本中ANDROID_NDK
 
 ios和osx需要在mac下编译。
 
+## 报类似“xlua.access, no field __Hitfix0_Update”的错误怎么解决？
+
+要等打印了hotfix inject finish!才点击运行
+
 ## 报“This delegate/interface must add to CSharpCallLua : XXX”异常怎么解决？
 
 在编辑器下xLua不生成代码都可以运行，出现这种提示，要么是该类型没加CSharpCallLua，要么是加之前生成过代码，没重新执行生成。
