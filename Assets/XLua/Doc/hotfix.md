@@ -1,6 +1,6 @@
 ## 约束
 
-为了不影响开发，这个特性默认是不打开的，需要添加HOTFIX_ENABLE宏。
+为了不影响开发，这个特性默认是不打开的，需要添加HOTFIX_ENABLE宏（在Unity3D的File->Build Setting->Scripting Define Symbols下添加）。
 
 打开HOTFIX_ENABLE后由于il和源代码已经对应不上，所以（双击Unity3D日志）代码会定位到错误的地方，调试功能工作也不正常。
 
