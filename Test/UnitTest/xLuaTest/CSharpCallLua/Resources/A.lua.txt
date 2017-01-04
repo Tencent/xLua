@@ -1,0 +1,44 @@
+bValue1 = false
+bValue2 = true
+strValueEmpty = ''
+strValueLong = string.rep('a', 2^10)
+strValueShort = 'boo123'
+strValueExp = '.* ? [ ] ^ $~`!@#$%^&()_-+=[];\',¡°¡°¡´¡µ¡¼¡¾¡æ ¡ç ¡è¡í ¡î ¡ï¡ö¢¨¢Ú¢è'
+strValue5 = '\r\na'
+strValue6 = [[
+<html>
+	<head>
+		<title>test</title>
+	</head>
+	<body>
+	this is just a test lua multi lines string
+	</body>
+</html>]]
+strValueChin = 'ÖÐÎÄ×Ö·û´®'
+strValueComp = '·±ów‡øê‘'
+strValueHoX = '…¿Ÿ“…ÐÙÖ‹qß@˜ÓŒH'
+sbyteValueMax = 127
+sbyteValueMin = -128
+byteValueMax = 255
+byteValueMin = 0
+shortValueMax = 32767
+shortValueMin= -32768
+ushortValueMax = 65535
+ushortValueMid = 32768
+intValueMax = 2147483647
+intValueMin = -2147483648
+uintValueMax = 4294967295
+uintValueMid = 2147483648
+longValue = 42949672960
+longValue2 = -42949672960
+ulongValueMax = 42949672960
+ulongValueMin = 0
+doubleValue = 3.14159265
+doubleValue2 = -3.14159265
+floatValue = 3.14159265
+floatValue2 = -3.14
+charValue = 97
+charValue2 = 65
+decValue = 12.3111111111
+decValue2 = -12.3111111111
+intZero= 0

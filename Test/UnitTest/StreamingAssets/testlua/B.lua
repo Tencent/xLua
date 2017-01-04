@@ -1,0 +1,30 @@
+tableValue1 = {
+key1 = 100000, key2 = 10, key3 = true,
+'red', 'yellow', 'green',
+sub = function(self, a, b) 
+			  print('tableValue1.sub called')
+			  return a - b 
+	  end,
+tableValueInclude = {
+1,2,3,4,5,6,7,8,9,0
+},
+tableVarInclude = {ikey1 = 10, ikey2 = 12}
+}
+
+tableValue2 = {
+kv1 = true, kv2 = 'monday', kv3 = 1
+}
+
+tableValue3 = {
+'apple', 'banana', 'orange', 'kiwi', 'grape', 'lemon', 'strawberry', 'pear'
+}
+
+tableValue4 = {
+k1= 1, k2= 10, k3 = 100, k4 = 1000, k5 = 10000
+}
+
+tableValue5 = {
+[100] =  100, [101] = 1000, [102] = 10000
+}
+
+tableValue6 = {1,2,3}
