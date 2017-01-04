@@ -122,6 +122,43 @@ namespace XLua
             return false;
         }
 
+        static bool hasGenericParameter(TypeReference type)
+        {
+            if (type.IsByReference)
+            {
+                return hasGenericParameter(((ByReferenceType)type).ElementType);
+            }
+            if (type.IsGenericInstance)
+            {
+                foreach (var typeArg in ((GenericInstanceType)type).GenericArguments)
+                {
+                    if (hasGenericParameter(typeArg))
+                    {
+                        return true;
+                    }
+                }
+                return false;
+            }
+            return type.IsGenericParameter;
+        }
+
+        static bool IsContainsGenericParameter(this MethodReference method)
+        {
+            if (hasGenericParameter(method.ReturnType))
+            {
+                return true;
+            }
+            var parameters = method.Parameters;
+            for (int i = 0; i < parameters.Count; i++)
+            {
+                if (hasGenericParameter(parameters[i].ParameterType))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         [DidReloadScripts]
         [PostProcessScene]
         //[UnityEditor.MenuItem("XLua/Hotfix Inject In Editor", false, 3)]
@@ -168,7 +205,7 @@ namespace XLua
                     {
                         if (method.Name != ".cctor")
                         {
-                            if ((method.HasGenericParameters || method.ContainsGenericParameter) ? ! InjectGenericMethod(assembly, method, hotfixType, stateTable) : 
+                            if ((method.HasGenericParameters || method.IsContainsGenericParameter()) ? ! InjectGenericMethod(assembly, method, hotfixType, stateTable) : 
                                 !InjectMethod(assembly, method, hotfixType, stateTable))
                             {
                                 return;
