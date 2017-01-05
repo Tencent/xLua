@@ -24,6 +24,10 @@ ios和osx需要在mac下编译。
 
 要等打印了hotfix inject finish!才点击运行
 
+## 打开热补丁后，调用栈和源码行号对应不上怎么办？
+
+添加HOTFIX_DEBUG_SYMBOLS可以解决这问题。但是，打开以后要注意下这点：如果你在编辑器里头点击了运行，你得重启下Unity再修改代码，因为运行过Unity编辑器会持有Assembly-CSharp.dll.mdb的句柄，而cecil写debug信息要覆盖这个文件，会报覆盖失败的错误。
+
 ## 报“This delegate/interface must add to CSharpCallLua : XXX”异常怎么解决？
 
 在编辑器下xLua不生成代码都可以运行，出现这种提示，要么是该类型没加CSharpCallLua，要么是加之前生成过代码，没重新执行生成。
