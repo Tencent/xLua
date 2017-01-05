@@ -128,6 +128,10 @@ namespace XLua
             {
                 return hasGenericParameter(((ByReferenceType)type).ElementType);
             }
+            if (type.IsArray)
+            {
+                return hasGenericParameter(((ArrayType)type).ElementType);
+            }
             if (type.IsGenericInstance)
             {
                 foreach (var typeArg in ((GenericInstanceType)type).GenericArguments)
@@ -142,16 +146,54 @@ namespace XLua
             return type.IsGenericParameter;
         }
 
-        static bool IsContainsGenericParameter(this MethodReference method)
+        static bool isNoPublic(AssemblyDefinition assembly, TypeReference type)
         {
-            if (hasGenericParameter(method.ReturnType))
+            if (type.IsByReference)
+            {
+                return isNoPublic(assembly, ((ByReferenceType)type).ElementType);
+            }
+            if (type.IsArray)
+            {
+                return isNoPublic(assembly, ((ArrayType)type).ElementType);
+            }
+            else
+            {
+                var scope = type.Scope;
+                if (type.Scope.MetadataScopeType == MetadataScopeType.AssemblyNameReference
+                    && ((AssemblyNameReference)scope).Name != assembly.MainModule.FullyQualifiedName) // other assembly must be public
+                {
+                    return false;
+                }
+                var resolveType = type.Resolve();
+                if ((!type.IsNested && !resolveType.IsPublic) || (type.IsNested && !resolveType.IsNestedPublic))
+                {
+                    return true;
+                }
+                if (type.IsGenericInstance)
+                {
+                    foreach (var typeArg in ((GenericInstanceType)type).GenericArguments)
+                    {
+                        if (isNoPublic(assembly, typeArg))
+                        {
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            }
+
+        }
+
+        static bool GenericInOut(AssemblyDefinition assembly, MethodReference method)
+        {
+            if (hasGenericParameter(method.ReturnType) || isNoPublic(assembly, method.ReturnType))
             {
                 return true;
             }
             var parameters = method.Parameters;
             for (int i = 0; i < parameters.Count; i++)
             {
-                if (hasGenericParameter(parameters[i].ParameterType))
+                if (hasGenericParameter(parameters[i].ParameterType) || isNoPublic(assembly, parameters[i].ParameterType))
                 {
                     return true;
                 }
@@ -203,9 +245,9 @@ namespace XLua
                     }
                     foreach (var method in type.Methods)
                     {
-                        if (method.Name != ".cctor")
+                        if (method.Name != ".cctor" && !method.IsAbstract)
                         {
-                            if ((method.HasGenericParameters || method.IsContainsGenericParameter()) ? ! InjectGenericMethod(assembly, method, hotfixType, stateTable) : 
+                            if ((method.HasGenericParameters || GenericInOut(assembly, method)) ? ! InjectGenericMethod(assembly, method, hotfixType, stateTable) : 
                                 !InjectMethod(assembly, method, hotfixType, stateTable))
                             {
                                 return;

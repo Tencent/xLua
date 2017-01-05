@@ -156,6 +156,9 @@ function CsFullTypeName(t)
 end
 
 function CSVariableName(t)
+    if t.IsArray then
+	    return CSVariableName(t:GetElementType()) .. '__'
+	end
     return t:ToString():gsub("&", ""):gsub("%+", ""):gsub("`", "_"):gsub("%.", ""):gsub("%[", ""):gsub("%]", ""):gsub(",", "")
 end
 

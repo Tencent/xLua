@@ -478,6 +478,32 @@ namespace CSObjectWrapEditor
             };
         }
 
+        static bool isNotPublic(Type type)
+        {
+            if (type.IsByRef || type.IsArray)
+            {
+                return isNotPublic(type.GetElementType());
+            }
+            else
+            {
+                if ((!type.IsNested && !type.IsPublic) || (type.IsNested && !type.IsNestedPublic))
+                {
+                    return true;
+                }
+                if (type.IsGenericType)
+                {
+                    foreach (var ga in type.GetGenericArguments())
+                    {
+                        if (isNotPublic(ga))
+                        {
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            }
+        }
+
         static MethodInfoSimulation makeHotfixMethodInfoSimulation(MethodBase hotfixMethod, HotfixFlag hotfixType)
         {
             Type retTypeExpect = (hotfixType == HotfixFlag.Stateful && hotfixMethod.IsConstructor && !hotfixMethod.IsStatic)
@@ -519,7 +545,8 @@ namespace CSObjectWrapEditor
                     Name = param.Name,
                     IsOut = param.IsOut,
                     IsIn = param.IsIn,
-                    ParameterType = (param.ParameterType.IsByRef || param.ParameterType.IsValueType) ? param.ParameterType : typeof(object),
+                    ParameterType = (param.ParameterType.IsByRef || param.ParameterType.IsValueType
+                      || param.IsDefined(typeof(System.ParamArrayAttribute), false)) ? param.ParameterType : typeof(object),
                     IsParamArray = param.IsDefined(typeof(System.ParamArrayAttribute), false)
                 };
                 if (param.IsOut)
@@ -573,6 +600,16 @@ namespace CSObjectWrapEditor
                 return obj.HashCode;
             }
         }
+
+        static bool hasNotPublicTypeRetOrParam(MethodInfo method)
+        {
+            if (isNotPublic(method.ReturnType)) return true;
+            foreach(var param in method.GetParameters())
+            {
+                if (isNotPublic(param.ParameterType)) return true;
+            }
+            return false;
+        }
         
         static void GenDelegateBridge(IEnumerable<Type> types, string save_path)
         {
@@ -584,6 +621,7 @@ namespace CSObjectWrapEditor
             {
                 var hotfixType = ((type.GetCustomAttributes(typeof(HotfixAttribute), false)[0]) as HotfixAttribute).Flag;
                 hotfxDelegates.AddRange(type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly | BindingFlags.NonPublic)
+                    .Where(method => !hasNotPublicTypeRetOrParam(method))
                     .Cast<MethodBase>()
                     .Concat(type.GetConstructors(BindingFlags.Instance | BindingFlags.Public).Cast<MethodBase>())
                     .Where(method => !method.ContainsGenericParameters).Select(method => makeHotfixMethodInfoSimulation(method, hotfixType)));
