@@ -291,7 +291,14 @@ public class HotfixTest2 : MonoBehaviour {
         ");
         itt.Foo();
 
-        calc.TestOut(100, out num, ref str, gameObject);
+        try
+        {
+            calc.TestOut(100, out num, ref str, gameObject);
+        }
+        catch(LuaException e)
+        {
+            Debug.Log("throw in lua an catch in c# ok, e.Message:" + e.Message);
+        }
     }
 
     void TestStateful()

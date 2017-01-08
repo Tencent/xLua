@@ -694,10 +694,24 @@ namespace XLua
                     translator.Get(L, 1, out tbl);
                     type = tbl.Get<Type>("UnderlyingSystemType");
                 }
-                else
+                else if (LuaAPI.lua_type(L, 1) == LuaTypes.LUA_TSTRING)
+                {
+                    string className = LuaAPI.lua_tostring(L, 1);
+                    type = translator.FindType(className);
+                }
+                else if (LuaAPI.lua_type(L, 1) == LuaTypes.LUA_TUSERDATA)
                 {
                     obj = translator.SafeGetCSObj(L, 1);
+                    if (obj == null)
+                    {
+                        return LuaAPI.luaL_error(L, "xlua.access, #1 parameter must a type or c# object");
+                    }
                     type = obj.GetType();
+                }
+
+                if (type == null)
+                {
+                    return LuaAPI.luaL_error(L, "xlua.access, can not find c# type");
                 }
 
                 string fieldName = LuaAPI.lua_tostring(L, 2);

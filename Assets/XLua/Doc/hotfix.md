@@ -26,7 +26,7 @@ Win命令行 copy UnityPath\Editor\Data\Managed\Mono.Cecil.* Project\Assets\XLua
 ## API
 xlua.hotfix(class, [method_name], fix)
 
-* class        ： C#类；
+* class        ： C#类，两种表示方法，CS.Namespace.TypeName或者字符串"Namespace.TypeName"，如果是内嵌类型（Nested Type）是非Public类型的话，只能用字符串方式表示"Namespace.TypeName+NestedTypeName"；
 * method_name  ： 方法名，可选；
 * fix          ： 如果传了method_name，fix将会是一个function，否则通过table提供一组函数。table的组织按key是method_name，value是function的方式。
 
