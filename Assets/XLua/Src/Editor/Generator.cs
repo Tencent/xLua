@@ -343,11 +343,15 @@ namespace CSObjectWrapEditor
                 if (mb.DeclaringType.FullName == exclude[0] && mb.Name == exclude[1])
                 {
                     var parameters = mb.GetParameters();
+                    if (parameters.Length != exclude.Count - 2)
+                    {
+                        continue;
+                    }
                     bool paramsMatch = true;
 
                     for (int i = 0; i < parameters.Length; i++)
                     {
-                        if (i + 2 >= exclude.Count || parameters[i].ParameterType.FullName != exclude[i + 2])
+                        if (parameters[i].ParameterType.FullName != exclude[i + 2])
                         {
                             paramsMatch = false;
                             break;
