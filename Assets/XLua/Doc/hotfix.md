@@ -8,7 +8,9 @@
 
 建议的做法是HOTFIX_ENABLE，HOTFIX_DEBUG_SYMBOLS在build手机版本的时候打开，平时编辑器下需要开发补丁的时候打开HOTFIX_ENABLE，开发补丁时需要调试的时候打开HOTFIX_DEBUG_SYMBOLS。
 
-热更特性依赖Cecil，添加HOTFIX_ENABLE宏之后，可能会报找不到Cecil。这时你需要到Unity安装目录下找到Mono.Cecil.dll，拷贝到项目里头。而HOTFIX_DEBUG_SYMBOLS则依赖Mono.Cecil.Pdb.dll，Mono.Cecil.Mdb.dll。
+热补丁特性依赖Cecil，添加HOTFIX_ENABLE宏之后，可能会报找不到Cecil。这时你需要到Unity安装目录下找到Mono.Cecil.dll，拷贝到项目里头。而HOTFIX_DEBUG_SYMBOLS则依赖Mono.Cecil.Pdb.dll，Mono.Cecil.Mdb.dll。
+
+热补丁需要执行XLua/Generate Code才能正常运行。
 
 参考命令（可能Unity版本不同会略有不同，把别的Unity版本带的拷贝过来试了也能用，比如有的老版本Unity是不带Mono.Cecil.Pdb.dll，Mono.Cecil.Mdb.dll的，这时可以把新版本带的整套拷贝过来）：
 
@@ -26,9 +28,15 @@ Win命令行 copy UnityPath\Editor\Data\Managed\Mono.Cecil.* Project\Assets\XLua
 ## API
 xlua.hotfix(class, [method_name], fix)
 
+* 描述         ： 注入lua补丁
 * class        ： C#类，两种表示方法，CS.Namespace.TypeName或者字符串方式"Namespace.TypeName"，字符串格式和C#的Type.GetType要求一致，如果是内嵌类型（Nested Type）是非Public类型的话，只能用字符串方式表示"Namespace.TypeName+NestedTypeName"；
 * method_name  ： 方法名，可选；
 * fix          ： 如果传了method_name，fix将会是一个function，否则通过table提供一组函数。table的组织按key是method_name，value是function的方式。
+
+xlua.private_accessible(class)
+
+* 描述          ： 让一个类的私有字段，属性，方法等可用
+* class         ： 同xlua.hotfix的class参数
 
 ## 标识要热更新的类型
 
@@ -205,3 +213,4 @@ xlua.hotfix(CS.StatefullTest, {
 })
 
 ```
+

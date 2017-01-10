@@ -34,6 +34,11 @@ namespace XLua.LuaDLL
         [DllImport(LUADLL, CallingConvention = CallingConvention.Cdecl)]
         public static extern int lua_gc(IntPtr L, LuaGCOptions what, int data);
 
+        [DllImport(LUADLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern IntPtr lua_getupvalue(IntPtr L, int funcindex, int n);
+
+        [DllImport(LUADLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern IntPtr lua_setupvalue(IntPtr L, int funcindex, int n);
 
         [DllImport(LUADLL, CallingConvention = CallingConvention.Cdecl)]
 		public static extern int lua_pushthread(IntPtr L);

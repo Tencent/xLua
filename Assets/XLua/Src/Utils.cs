@@ -429,42 +429,14 @@ namespace XLua
             public bool IsStatic;
         }
 
-        public static void ReflectionWrap(RealStatePtr L, Type type)
+        static void makeReflectionWrap(RealStatePtr L, Type type, int cls_field, int cls_getter, int cls_setter,
+            int obj_field, int obj_getter, int obj_setter, int obj_meta, out LuaCSFunction item_getter, out LuaCSFunction item_setter, bool private_access = false)
         {
-            int top_enter = LuaAPI.lua_gettop(L);
             ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
-            //create obj meta table
-            LuaAPI.luaL_getmetatable(L, type.FullName);
-            if (LuaAPI.lua_isnil(L, -1))
-            {
-                LuaAPI.lua_pop(L, 1);
-                LuaAPI.luaL_newmetatable(L, type.FullName);
-            }
-            LuaAPI.lua_pushlightuserdata(L, LuaAPI.xlua_tag());
-            LuaAPI.lua_pushnumber(L, 1);
-            LuaAPI.lua_rawset(L, -3);
-            int obj_meta = LuaAPI.lua_gettop(L);
-
-            LuaAPI.lua_newtable(L);
-            int cls_meta = LuaAPI.lua_gettop(L);
-
-            LuaAPI.lua_newtable(L);
-            int obj_field = LuaAPI.lua_gettop(L);
-            LuaAPI.lua_newtable(L);
-            int obj_getter = LuaAPI.lua_gettop(L);
-            LuaAPI.lua_newtable(L);
-            int obj_setter = LuaAPI.lua_gettop(L);
-            LuaAPI.lua_newtable(L);
-            int cls_field = LuaAPI.lua_gettop(L);
-            LuaAPI.lua_newtable(L);
-            int cls_getter = LuaAPI.lua_gettop(L);
-            LuaAPI.lua_newtable(L);
-            int cls_setter = LuaAPI.lua_gettop(L);
-
-            BindingFlags flag = BindingFlags.DeclaredOnly | BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static;
+            BindingFlags flag = BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.Static | (private_access ? BindingFlags.NonPublic : BindingFlags.Public);
             FieldInfo[] fields = type.GetFields(flag);
 
-            for(int i = 0; i < fields.Length; ++i)
+            for (int i = 0; i < fields.Length; ++i)
             {
                 FieldInfo field = fields[i];
                 if (field.IsStatic && (field.IsInitOnly || field.IsLiteral))
@@ -486,7 +458,7 @@ namespace XLua
             }
 
             EventInfo[] events = type.GetEvents(flag);
-            for(int i = 0; i < events.Length; ++i)
+            for (int i = 0; i < events.Length; ++i)
             {
                 EventInfo eventInfo = events[i];
                 LuaAPI.xlua_pushasciistring(L, eventInfo.Name);
@@ -498,7 +470,7 @@ namespace XLua
             Dictionary<string, PropertyInfo> prop_map = new Dictionary<string, PropertyInfo>();
             List<PropertyInfo> items = new List<PropertyInfo>();
             PropertyInfo[] props = type.GetProperties(flag);
-            for(int i = 0; i < props.Length; ++i)
+            for (int i = 0; i < props.Length; ++i)
             {
                 PropertyInfo prop = props[i];
                 if (prop.Name == "Item")
@@ -512,8 +484,8 @@ namespace XLua
             }
 
             var item_array = items.ToArray();
-            LuaCSFunction item_getter = item_array.Length > 0 ? genItemGetter(type, item_array) : null;
-            LuaCSFunction item_setter = item_array.Length > 0 ? genItemSetter(type, item_array) : null; ;
+            item_getter = item_array.Length > 0 ? genItemGetter(type, item_array) : null;
+            item_setter = item_array.Length > 0 ? genItemSetter(type, item_array) : null; ;
             MethodInfo[] methods = type.GetMethods(flag);
             Dictionary<MethodKey, List<MemberInfo>> pending_methods = new Dictionary<MethodKey, List<MemberInfo>>();
             for (int i = 0; i < methods.Length; ++i)
@@ -530,7 +502,7 @@ namespace XLua
                 }
 
                 PropertyInfo prop = null;
-                if (method_name.StartsWith("add_") || method_name.StartsWith("remove_") 
+                if (method_name.StartsWith("add_") || method_name.StartsWith("remove_")
                     || method_name == "get_Item" || method_name == "set_Item")
                 {
                     continue;
@@ -597,13 +569,116 @@ namespace XLua
             IEnumerable<MethodInfo> extend_methods = GetExtensionMethodsOf(type);
             if (extend_methods != null)
             {
-                foreach(var kv in (from extend_method in extend_methods select (MemberInfo)extend_method into member group member by member.Name))
+                foreach (var kv in (from extend_method in extend_methods select (MemberInfo)extend_method into member group member by member.Name))
                 {
                     LuaAPI.xlua_pushasciistring(L, kv.Key);
                     translator.PushFixCSFunction(L, new LuaCSFunction(translator.methodWrapsCache._GenMethodWrap(type, kv.Key, kv).Call));
                     LuaAPI.lua_rawset(L, obj_field);
                 }
             }
+        }
+
+        public static void loadUpvalue(RealStatePtr L, Type type, string metafunc, int num)
+        {
+            ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
+            LuaAPI.xlua_pushasciistring(L, metafunc);
+            LuaAPI.lua_rawget(L, LuaIndexes.LUA_REGISTRYINDEX);
+            translator.Push(L, type);
+            LuaAPI.lua_rawget(L, -2);
+            for (int i = 1; i <= num; i++)
+            {
+                LuaAPI.lua_getupvalue(L, -i, i);
+                if (LuaAPI.lua_isnil(L, -1))
+                {
+                    LuaAPI.lua_pop(L, 1);
+                    LuaAPI.lua_newtable(L);
+                    LuaAPI.lua_pushvalue(L, -1);
+                    LuaAPI.lua_setupvalue(L, -i - 2, i);
+                }
+            }
+            for (int i = 0; i < num; i++)
+            {
+                LuaAPI.lua_remove(L, -num - 1);
+            }
+        }
+
+        public static void MakePrivateAccessible(RealStatePtr L, Type type)
+        {
+            ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
+            int oldTop = LuaAPI.lua_gettop(L);
+
+            LuaAPI.luaL_getmetatable(L, type.FullName);
+            if (LuaAPI.lua_isnil(L, -1))
+            {
+                LuaAPI.lua_settop(L, oldTop);
+                throw new Exception("can not find the metatable for " + type);
+            }
+            int obj_meta = LuaAPI.lua_gettop(L);
+
+            LoadCSTable(L, type);
+            if (LuaAPI.lua_isnil(L, -1))
+            {
+                LuaAPI.lua_settop(L, oldTop);
+                throw new Exception("can not find the class for " + type);
+            }
+            int cls_field = LuaAPI.lua_gettop(L);
+
+            loadUpvalue(L, type, Utils.LuaIndexsFieldName, 2);
+            int obj_getter = LuaAPI.lua_gettop(L);
+            int obj_field = obj_getter - 1;
+
+            loadUpvalue(L, type, Utils.LuaNewIndexsFieldName, 1);
+            int obj_setter = LuaAPI.lua_gettop(L);
+
+            loadUpvalue(L, type, Utils.LuaClassIndexsFieldName, 1);
+            int cls_getter = LuaAPI.lua_gettop(L);
+
+            loadUpvalue(L, type, Utils.LuaClassNewIndexsFieldName, 1);
+            int cls_setter = LuaAPI.lua_gettop(L);
+
+            LuaCSFunction item_getter;
+            LuaCSFunction item_setter;
+            makeReflectionWrap(L, type, cls_field, cls_getter, cls_setter, obj_field, obj_getter, obj_setter, obj_meta,
+                out item_getter, out item_setter, true);
+            LuaAPI.lua_settop(L, oldTop);
+        }
+
+        public static void ReflectionWrap(RealStatePtr L, Type type)
+        {
+            int top_enter = LuaAPI.lua_gettop(L);
+            ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
+            //create obj meta table
+            LuaAPI.luaL_getmetatable(L, type.FullName);
+            if (LuaAPI.lua_isnil(L, -1))
+            {
+                LuaAPI.lua_pop(L, 1);
+                LuaAPI.luaL_newmetatable(L, type.FullName);
+            }
+            LuaAPI.lua_pushlightuserdata(L, LuaAPI.xlua_tag());
+            LuaAPI.lua_pushnumber(L, 1);
+            LuaAPI.lua_rawset(L, -3);
+            int obj_meta = LuaAPI.lua_gettop(L);
+
+            LuaAPI.lua_newtable(L);
+            int cls_meta = LuaAPI.lua_gettop(L);
+
+            LuaAPI.lua_newtable(L);
+            int obj_field = LuaAPI.lua_gettop(L);
+            LuaAPI.lua_newtable(L);
+            int obj_getter = LuaAPI.lua_gettop(L);
+            LuaAPI.lua_newtable(L);
+            int obj_setter = LuaAPI.lua_gettop(L);
+            LuaAPI.lua_newtable(L);
+            int cls_field = LuaAPI.lua_gettop(L);
+            LuaAPI.lua_newtable(L);
+            int cls_getter = LuaAPI.lua_gettop(L);
+            LuaAPI.lua_newtable(L);
+            int cls_setter = LuaAPI.lua_gettop(L);
+
+            LuaCSFunction item_getter;
+            LuaCSFunction item_setter;
+            makeReflectionWrap(L, type, cls_field, cls_getter, cls_setter, obj_field, obj_getter, obj_setter, obj_meta,
+                out item_getter, out item_setter);
 
             // init obj metatable
             LuaAPI.xlua_pushasciistring(L, "__gc");

@@ -704,7 +704,7 @@ namespace XLua
                     obj = translator.SafeGetCSObj(L, 1);
                     if (obj == null)
                     {
-                        return LuaAPI.luaL_error(L, "xlua.access, #1 parameter must a type or c# object");
+                        return LuaAPI.luaL_error(L, "xlua.access, #1 parameter must a type/c# object/string");
                     }
                     type = obj.GetType();
                 }
@@ -753,6 +753,43 @@ namespace XLua
             catch(Exception e)
             {
                 return LuaAPI.luaL_error(L, "exception in xlua.access: " + e);
+            }
+        }
+
+        [MonoPInvokeCallback(typeof(LuaCSFunction))]
+        public static int XLuaPrivateAccessible(RealStatePtr L)
+        {
+            try
+            {
+                ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
+                Type type = null;
+                if (LuaAPI.lua_type(L, 1) == LuaTypes.LUA_TTABLE)
+                {
+                    LuaTable tbl;
+                    translator.Get(L, 1, out tbl);
+                    type = tbl.Get<Type>("UnderlyingSystemType");
+                }
+                else if (LuaAPI.lua_type(L, 1) == LuaTypes.LUA_TSTRING)
+                {
+                    string className = LuaAPI.lua_tostring(L, 1);
+                    type = translator.FindType(className);
+                }
+                else
+                {
+                    return LuaAPI.luaL_error(L, "xlua.private_accessible, #1 parameter must a type/string");
+                }
+
+                if (type == null)
+                {
+                    return LuaAPI.luaL_error(L, "xlua.private_accessible, can not find c# type");
+                }
+
+                Utils.MakePrivateAccessible(L, type);
+                return 0;
+            }
+            catch (Exception e)
+            {
+                return LuaAPI.luaL_error(L, "exception in xlua.private_accessible: " + e);
             }
         }
     }
