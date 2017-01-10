@@ -34,7 +34,7 @@ public class LuaTestCommon
 	public static string xxxtdr2filepath = Application.streamingAssetsPath + "/testxxx2.tdr";
 	public static bool android_platform = true;
 #elif   UNITY_EDITOR
-    public static string resultPath = Application.dataPath + "/luaTest/";
+    public static string resultPath = Application.dataPath + "/xLuaTest/";
 	public static string xxxtdrfilepath = Application.dataPath + "/StreamingAssets" + "/testxxx.tdr";
 	public static string xxxtdr2filepath = Application.dataPath + "/StreamingAssets" + "/testxxx2.tdr";
 	public static bool android_platform = false;
