@@ -449,7 +449,7 @@ namespace XLua
             }
             else if (type.IsEnum)
             {
-                castersMap[type] = (RealStatePtr L, int idx, object target) =>
+                return (RealStatePtr L, int idx, object target) =>
                 {
                     object obj = fixTypeGetter(L, idx, target);
                     if (obj != null) return obj;
