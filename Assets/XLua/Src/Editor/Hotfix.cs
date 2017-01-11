@@ -49,6 +49,9 @@ namespace XLua
             inParam = luaFunctionType.Methods.Single(m => m.Name == "InParam");
             inParams = luaFunctionType.Methods.Single(m => m.Name == "InParams");
             outParam = luaFunctionType.Methods.Single(m => m.Name == "OutParam");
+
+			var resolver = assembly.MainModule.AssemblyResolver as BaseAssemblyResolver;
+			resolver.AddSearchDirectory("./Library/UnityAssemblies");
         }
 
         static List<TypeDefinition> hotfix_delegates = null;
