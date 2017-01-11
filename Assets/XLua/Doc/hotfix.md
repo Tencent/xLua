@@ -1,12 +1,6 @@
 ## 约束
 
-为了不影响开发，这个特性默认是不打开的，需要添加HOTFIX_ENABLE宏（在Unity3D的File->Build Setting->Scripting Define Symbols下添加）。
-
-打开HOTFIX_ENABLE后由于il和源代码已经对应不上，所以（双击Unity3D日志）代码会定位到错误的地方，调试功能工作也不正常。
-
-打开HOTFIX_DEBUG_SYMBOLS可以解决il和源代码对应不上的问题，但如果在编辑器下运行过后在修改代码，会报Assembly-CSharp.dll.mdb的写冲突错误。
-
-建议的做法是HOTFIX_ENABLE，HOTFIX_DEBUG_SYMBOLS在build手机版本的时候打开，平时编辑器下需要开发补丁的时候打开HOTFIX_ENABLE，开发补丁时需要调试的时候打开HOTFIX_DEBUG_SYMBOLS。
+为了不影响开发，这个特性默认是关闭的，需要添加HOTFIX_ENABLE宏打开（在Unity3D的File->Build Setting->Scripting Define Symbols下添加）。使用该特性的切记build手机版本时不要忘记了！
 
 热补丁特性依赖Cecil，添加HOTFIX_ENABLE宏之后，可能会报找不到Cecil。这时你需要到Unity安装目录下找到Mono.Cecil.dll，拷贝到项目里头。而HOTFIX_DEBUG_SYMBOLS则依赖Mono.Cecil.Pdb.dll，Mono.Cecil.Mdb.dll。
 

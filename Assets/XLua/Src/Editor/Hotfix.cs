@@ -105,7 +105,6 @@ namespace XLua
                         }
 						bool isparam = param_left.CustomAttributes.FirstOrDefault(ca => ca.AttributeType.Name == "ParamArrayAttribute") != null;
 						var type_left = (isparam || param_left.ParameterType.IsByReference || param_left.ParameterType.IsValueType) ? param_left.ParameterType : objType;
-                        //var type_left = (param_left.ParameterType.IsByReference || param_left.ParameterType.IsValueType) ? param_left.ParameterType : objType;
                         if (!isSameType(type_left, param_right.ParameterType))
                         {
                             paramMatch = false;
@@ -250,12 +249,8 @@ namespace XLua
         //[UnityEditor.MenuItem("XLua/Hotfix Inject In Editor", false, 3)]
         public static void HotfixInject()
         {
-#if HOTFIX_DEBUG_SYMBOLS
             var readerParameters = new ReaderParameters { ReadSymbols = true };
             AssemblyDefinition assembly = AssemblyDefinition.ReadAssembly(INTERCEPT_ASSEMBLY_PATH, readerParameters);
-#else
-            AssemblyDefinition assembly = AssemblyDefinition.ReadAssembly(INTERCEPT_ASSEMBLY_PATH);
-#endif
             init(assembly);
 
 			if (assembly.MainModule.Types.Any(t => t.Name == "__XLUA_GEN_FLAG"))
@@ -282,12 +277,9 @@ namespace XLua
 					return;
                 }
             }
-#if HOTFIX_DEBUG_SYMBOLS
+
             var writerParameters = new WriterParameters { WriteSymbols = true };
             assembly.Write(INTERCEPT_ASSEMBLY_PATH, writerParameters);
-#else
-            assembly.Write(INTERCEPT_ASSEMBLY_PATH);
-#endif
 			Clean(assembly);
 			Debug.Log("hotfix inject finish!");
         }
