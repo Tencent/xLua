@@ -253,7 +253,11 @@ namespace XLua
 #endif
             init(assembly);
 
-            if (assembly.MainModule.Types.Any(t => t.Name == "__XLUA_GEN_FLAG")) return;
+			if (assembly.MainModule.Types.Any(t => t.Name == "__XLUA_GEN_FLAG"))
+			{
+				Clean(assembly);
+				return;
+			}
 
             assembly.MainModule.Types.Add(new TypeDefinition("__XLUA_GEN", "__XLUA_GEN_FLAG", Mono.Cecil.TypeAttributes.Class,
                 objType));
@@ -269,7 +273,8 @@ namespace XLua
             {
                 if (!injectType(assembly, hotfixAttributeType, type))
                 {
-                    return;
+					Clean(assembly);
+					return;
                 }
             }
 #if HOTFIX_DEBUG_SYMBOLS
@@ -278,10 +283,18 @@ namespace XLua
 #else
             assembly.Write(INTERCEPT_ASSEMBLY_PATH);
 #endif
-
-            Debug.Log("hotfix inject finish!");
+			Clean(assembly);
+			Debug.Log("hotfix inject finish!");
         }
-        
+
+		static void Clean(AssemblyDefinition assembly)
+		{
+			if (assembly.MainModule.SymbolReader != null)
+			{
+				assembly.MainModule.SymbolReader.Dispose();
+			}
+		}
+
         static OpCode[] ldargs = new OpCode[] { OpCodes.Ldarg_0, OpCodes.Ldarg_1, OpCodes.Ldarg_2, OpCodes.Ldarg_3 };
 
         static readonly int MAX_OVERLOAD = 100;
