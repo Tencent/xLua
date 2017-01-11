@@ -52,6 +52,7 @@ namespace XLua
 
 			var resolver = assembly.MainModule.AssemblyResolver as BaseAssemblyResolver;
 			resolver.AddSearchDirectory("./Library/UnityAssemblies");
+            resolver.AddSearchDirectory("./Library/ScriptAssemblies");
         }
 
         static List<TypeDefinition> hotfix_delegates = null;
