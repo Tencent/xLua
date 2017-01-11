@@ -232,7 +232,7 @@ namespace XLua
                 }
                 foreach (var method in type.Methods)
                 {
-                    if (method.Name != ".cctor" && !method.IsAbstract)
+                    if (method.Name != ".cctor" && !method.IsAbstract && !method.IsPInvokeImpl)
                     {
                         if ((method.HasGenericParameters || genericInOut(assembly, method)) ? !injectGenericMethod(assembly, method, hotfixType, stateTable) :
                             !injectMethod(assembly, method, hotfixType, stateTable))
