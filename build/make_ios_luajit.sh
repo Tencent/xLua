@@ -42,4 +42,5 @@ cmake -DUSING_LUAJIT=ON  -DCMAKE_TOOLCHAIN_FILE=../cmake/iOS.cmake  -GXcode ../
 cd ..
 cmake --build build_lj_ios --config Release
 
+mkdir -p plugin_luajit/Plugins/iOS/
 libtool -static -o plugin_luajit/Plugins/iOS/libxlua.a build_lj_ios/Release-iphoneos/libxlua.a luajit-2.1.0b2/src/libluajit.a
