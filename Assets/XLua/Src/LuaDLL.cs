@@ -96,10 +96,10 @@ namespace XLua.LuaDLL
 		}
 
         [DllImport(LUADLL, CallingConvention = CallingConvention.Cdecl)]
-        public static extern int lua_getglobal(IntPtr L, string name);//[-1, +0, m]
+        public static extern int xlua_getglobal(IntPtr L, string name);//[-1, +0, m]
 
         [DllImport(LUADLL, CallingConvention = CallingConvention.Cdecl)]
-        public static extern void lua_setglobal(IntPtr L, string name);//[-1, +0, m]
+        public static extern int xlua_setglobal(IntPtr L, string name);//[-1, +0, m]
 
         [DllImport(LUADLL, CallingConvention = CallingConvention.Cdecl)]
         public static extern void xlua_getloaders(IntPtr L);

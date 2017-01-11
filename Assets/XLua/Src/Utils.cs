@@ -1092,7 +1092,10 @@ namespace XLua
         public static void LoadCSTable(RealStatePtr L, Type type)
         {
             int oldTop = LuaAPI.lua_gettop(L);
-            LuaAPI.lua_getglobal(L, "CS");
+            if (0 != LuaAPI.xlua_getglobal(L, "CS"))
+            {
+                throw new Exception("call xlua_getglobal fail!");
+            }
 
             List<string> path = getPathOfType(type);
 
@@ -1119,7 +1122,10 @@ namespace XLua
         {
             int oldTop = LuaAPI.lua_gettop(L);
             cls_table = abs_idx(oldTop, cls_table);
-            LuaAPI.lua_getglobal(L, "CS");
+            if (0 != LuaAPI.xlua_getglobal(L, "CS"))
+            {
+                throw new Exception("call xlua_getglobal fail!");
+            }
 
             List<string> path = getPathOfType(type);
 

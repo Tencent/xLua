@@ -265,8 +265,8 @@ namespace CSObjectWrap
             <%end)%>
             return LuaAPI.luaL_error(L, "invalid arguments to right hand of <%=OpCallNameMap[operator.Name]%> operator, need <%=CsFullTypeName(type)%>!");
             <%else%>
-            <%=GetCasterStatement(type, 1, "rightside", true)%>;
             try {
+                <%=GetCasterStatement(type, 1, "rightside", true)%>;
                 <%=GetPushStatement(operator.Overloads[0].ReturnType, OpCallNameMap[operator.Name] .. " rightside")%>;
             } catch(System.Exception __gen_e) {
                 return LuaAPI.luaL_error(L, "c# exception:" + __gen_e);

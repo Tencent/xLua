@@ -59,7 +59,10 @@ namespace XLua
                 LuaAPI.lua_atpanic(L, StaticLuaCallbacks.Panic);
 
                 LuaAPI.lua_pushstdcallcfunction(L, StaticLuaCallbacks.Print);
-                LuaAPI.lua_setglobal(L, "print");
+                if (0 != LuaAPI.xlua_setglobal(L, "print"))
+                {
+                    throw new Exception("call xlua_setglobal fail!");
+                }
 
                 //template engine lib register
                 TemplateEngine.LuaTemplate.OpenLib(L);
@@ -111,7 +114,10 @@ namespace XLua
 
                 translator.Alias(typeof(Type), "System.MonoType");
 
-                LuaAPI.lua_getglobal(L, "_G");
+                if (0 != LuaAPI.xlua_getglobal(L, "_G"))
+                {
+                    throw new Exception("call xlua_getglobal fail!");
+                }
                 translator.Get(L, -1, out _G);
                 LuaAPI.lua_pop(L, 1);
 

@@ -15,7 +15,7 @@ UnityVS
 /Assets/UnityVS.meta
 .DS_Store
 *.o
-*.a
+/build/*/*.a
 luajit
 buildvm
 minilua

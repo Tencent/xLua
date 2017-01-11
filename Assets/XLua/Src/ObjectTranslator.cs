@@ -469,7 +469,10 @@ namespace XLua
 
 		public void OpenLib(RealStatePtr L)
 		{
-            LuaAPI.lua_getglobal(L, "xlua");
+            if (0 != LuaAPI.xlua_getglobal(L, "xlua"))
+            {
+                throw new Exception("call xlua_getglobal fail!" + LuaAPI.lua_tostring(L, -1));
+            }
             LuaAPI.xlua_pushasciistring(L, "import_type");
 			LuaAPI.lua_pushstdcallcfunction(L,importTypeFunction);
 			LuaAPI.lua_rawset(L, -3);
