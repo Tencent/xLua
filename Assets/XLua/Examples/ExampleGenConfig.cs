@@ -77,7 +77,6 @@ public static class ExampleGenConfig
                 new List<string>(){"System.IO.DirectoryInfo", "SetAccessControl", "System.Security.AccessControl.DirectorySecurity"},
                 new List<string>(){"System.IO.DirectoryInfo", "CreateSubdirectory", "System.String", "System.Security.AccessControl.DirectorySecurity"},
                 new List<string>(){"System.IO.DirectoryInfo", "Create", "System.Security.AccessControl.DirectorySecurity"},
-    #if !UNITY_EDITOR
-                new List<string>(){"UnityEngine.MonoBehaviour", "runInEditMode"}, 
-    #endif
+                new List<string>(){"UnityEngine.MonoBehaviour", "runInEditMode"},
+            };
 }
