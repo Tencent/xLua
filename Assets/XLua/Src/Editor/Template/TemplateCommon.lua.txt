@@ -247,6 +247,11 @@ function IsParams(pi)
     return pi:IsDefined(paramsAttriType, false)
 end
 
+local obsoluteAttriType = typeof(CS.System.ObsoleteAttribute)
+function IsObsolute(f)
+    return f:IsDefined(obsoluteAttriType, false)
+end
+
 local objectType = typeof(CS.System.Object)
 function GetSelfStatement(t)
     local fulltypename = CsFullTypeName(t)
