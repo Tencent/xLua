@@ -50,8 +50,8 @@ namespace XLua
             inParams = luaFunctionType.Methods.Single(m => m.Name == "InParams");
             outParam = luaFunctionType.Methods.Single(m => m.Name == "OutParam");
 
-			var resolver = assembly.MainModule.AssemblyResolver as BaseAssemblyResolver;
-			resolver.AddSearchDirectory(System.IO.Path.GetDirectoryName(typeof(GameObject).Module.FullyQualifiedName));
+            var resolver = assembly.MainModule.AssemblyResolver as BaseAssemblyResolver;
+            resolver.AddSearchDirectory(System.IO.Path.GetDirectoryName(typeof(GameObject).Module.FullyQualifiedName));
             resolver.AddSearchDirectory("./Library/ScriptAssemblies");
         }
 
