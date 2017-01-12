@@ -338,7 +338,7 @@ namespace XLua
 
             if (!findHotfixDelegate(assembly, method, out delegateType, out invoke, hotfixType))
             {
-                Debug.LogWarning("can not find delegate for " + method.DeclaringType + "." + method.Name + "! try re-genertate code.");
+                Debug.LogError("can not find delegate for " + method.DeclaringType + "." + method.Name + "! try re-genertate code.");
                 return false;
             }
 
