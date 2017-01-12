@@ -51,7 +51,7 @@ namespace XLua
             outParam = luaFunctionType.Methods.Single(m => m.Name == "OutParam");
 
 			var resolver = assembly.MainModule.AssemblyResolver as BaseAssemblyResolver;
-			resolver.AddSearchDirectory("./Library/UnityAssemblies");
+			resolver.AddSearchDirectory(System.IO.Path.GetDirectoryName(typeof(GameObject).Module.FullyQualifiedName));
             resolver.AddSearchDirectory("./Library/ScriptAssemblies");
         }
 
