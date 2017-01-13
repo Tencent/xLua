@@ -23,7 +23,7 @@ using System.Collections;
 
 namespace XLua
 {
-    public class LuaTable : LuaBase
+    public class LuaTable : LuaBase, IEnumerable<LuaTable.TablePair>
     {
         public LuaTable(int reference, LuaEnv luaenv) : base(reference, luaenv)
         {
@@ -185,6 +185,16 @@ namespace XLua
             }
         }
 
+		[Obsolete("use no boxing version: GetInPath/SetInPath Get/Set instead!")]
+		public object this[int field] {
+			get {
+				return Get<int, object>(field);
+			}
+			set {
+				Set(field, value);
+			}
+		}
+
 #if THREAD_SAFT || HOTFIX_ENABLE
         [Obsolete("not thread saft!", true)]
 #endif
@@ -288,5 +298,89 @@ namespace XLua
         {
             return "table :" + luaReference;
         }
-    }
+
+
+		public struct TablePair
+		{
+			public object key;
+			public object value;
+		}
+
+		public class Enumerator : IEnumerator<TablePair>, IDisposable
+		{
+			LuaTable t;
+			int indext = -1;
+			TablePair current = new TablePair();
+			int iterPhase = 0;
+
+			public Enumerator(LuaTable table)
+			{
+				t = table;
+				Reset();
+			}
+
+			public bool MoveNext()
+			{
+				if (indext < 0) {
+					return false;
+				}
+
+				if (iterPhase == 0) {
+					LuaAPI.lua_pushnil(t.luaEnv.L);
+					iterPhase = 1;
+				} else {
+					LuaAPI.lua_pop(t.luaEnv.L, 1);
+				}
+
+				bool ret = LuaAPI.lua_next(t.luaEnv.L, indext) > 0;
+				if (!ret) iterPhase = 2;
+
+				return ret;
+			}
+
+			public void Reset()
+			{
+				LuaAPI.lua_getref(t.luaEnv.L, t.luaReference);
+				indext = LuaAPI.lua_gettop(t.luaEnv.L);
+			}
+
+			public void Dispose()
+			{
+				if (iterPhase == 1) {
+					LuaAPI.lua_pop(t.luaEnv.L, 2);
+				}
+
+				LuaAPI.lua_remove(t.luaEnv.L, indext);
+			}
+
+			public TablePair Current
+			{
+				get
+				{
+					ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(t.luaEnv.L);
+					translator.Get(t.luaEnv.L, -2, out current.key);
+					translator.Get(t.luaEnv.L, -1, out current.value);
+					return current;
+				}
+			}
+
+			object IEnumerator.Current
+			{
+				get
+				{
+					return Current;
+				}
+			}
+		}
+
+		public IEnumerator<TablePair> GetEnumerator()
+		{
+			return new LuaTable.Enumerator(this);
+		}
+
+		IEnumerator IEnumerable.GetEnumerator()
+		{
+			return GetEnumerator();
+		}
+	}
 }
