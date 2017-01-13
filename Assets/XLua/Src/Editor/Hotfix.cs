@@ -163,6 +163,16 @@ namespace XLua
             }
             else
             {
+                if (type.IsGenericInstance)
+                {
+                    foreach (var typeArg in ((GenericInstanceType)type).GenericArguments)
+                    {
+                        if (isNoPublic(assembly, typeArg))
+                        {
+                            return true;
+                        }
+                    }
+                }
                 var scope = type.Scope;
                 if (type.Scope.MetadataScopeType == MetadataScopeType.AssemblyNameReference
                     && ((AssemblyNameReference)scope).Name != assembly.MainModule.FullyQualifiedName) // other assembly must be public
@@ -173,16 +183,6 @@ namespace XLua
                 if ((!type.IsNested && !resolveType.IsPublic) || (type.IsNested && !resolveType.IsNestedPublic))
                 {
                     return true;
-                }
-                if (type.IsGenericInstance)
-                {
-                    foreach (var typeArg in ((GenericInstanceType)type).GenericArguments)
-                    {
-                        if (isNoPublic(assembly, typeArg))
-                        {
-                            return true;
-                        }
-                    }
                 }
                 return false;
             }
