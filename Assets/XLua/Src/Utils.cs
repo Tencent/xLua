@@ -473,7 +473,7 @@ namespace XLua
             for (int i = 0; i < props.Length; ++i)
             {
                 PropertyInfo prop = props[i];
-                if (prop.Name == "Item")
+                if (prop.Name == "Item" && prop.GetIndexParameters().Length > 0)
                 {
                     items.Add(prop);
                 }
