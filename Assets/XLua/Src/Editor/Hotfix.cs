@@ -51,8 +51,13 @@ namespace XLua
             outParam = luaFunctionType.Methods.Single(m => m.Name == "OutParam");
 
             var resolver = assembly.MainModule.AssemblyResolver as BaseAssemblyResolver;
-            resolver.AddSearchDirectory(System.IO.Path.GetDirectoryName(typeof(GameObject).Module.FullyQualifiedName));
-            resolver.AddSearchDirectory("./Library/ScriptAssemblies");
+            foreach (var path in 
+                (from asm in AppDomain.CurrentDomain.GetAssemblies()
+                 select System.IO.Path.GetDirectoryName(asm.ManifestModule.FullyQualifiedName))
+                 .Distinct())
+            {
+                resolver.AddSearchDirectory(path);
+            }
         }
 
         static List<TypeDefinition> hotfix_delegates = null;
@@ -250,39 +255,47 @@ namespace XLua
         //[UnityEditor.MenuItem("XLua/Hotfix Inject In Editor", false, 3)]
         public static void HotfixInject()
         {
-            var readerParameters = new ReaderParameters { ReadSymbols = true };
-            AssemblyDefinition assembly = AssemblyDefinition.ReadAssembly(INTERCEPT_ASSEMBLY_PATH, readerParameters);
-            init(assembly);
-
-			if (assembly.MainModule.Types.Any(t => t.Name == "__XLUA_GEN_FLAG"))
-			{
-				Clean(assembly);
-				return;
-			}
-
-            assembly.MainModule.Types.Add(new TypeDefinition("__XLUA_GEN", "__XLUA_GEN_FLAG", Mono.Cecil.TypeAttributes.Class,
-                objType));
-
-            var hotfixDelegateAttributeType = assembly.MainModule.Types.Single(t => t.FullName == "XLua.HotfixDelegateAttribute");
-            hotfix_delegates = (from module in assembly.Modules
-                                from type in module.Types
-                                where type.CustomAttributes.Any(ca => ca.AttributeType == hotfixDelegateAttributeType)
-                                select type).ToList();
-
-            var hotfixAttributeType = assembly.MainModule.Types.Single(t => t.FullName == "XLua.HotfixAttribute");
-            foreach (var type in (from module in assembly.Modules from type in module.Types select type))
+            AssemblyDefinition assembly = null;
+            try
             {
-                if (!injectType(assembly, hotfixAttributeType, type))
+                var readerParameters = new ReaderParameters { ReadSymbols = true };
+                assembly = AssemblyDefinition.ReadAssembly(INTERCEPT_ASSEMBLY_PATH, readerParameters);
+                init(assembly);
+
+                if (assembly.MainModule.Types.Any(t => t.Name == "__XLUA_GEN_FLAG"))
                 {
-					Clean(assembly);
-					return;
+                    return;
+                }
+
+                assembly.MainModule.Types.Add(new TypeDefinition("__XLUA_GEN", "__XLUA_GEN_FLAG", Mono.Cecil.TypeAttributes.Class,
+                    objType));
+
+                var hotfixDelegateAttributeType = assembly.MainModule.Types.Single(t => t.FullName == "XLua.HotfixDelegateAttribute");
+                hotfix_delegates = (from module in assembly.Modules
+                                    from type in module.Types
+                                    where type.CustomAttributes.Any(ca => ca.AttributeType == hotfixDelegateAttributeType)
+                                    select type).ToList();
+
+                var hotfixAttributeType = assembly.MainModule.Types.Single(t => t.FullName == "XLua.HotfixAttribute");
+                foreach (var type in (from module in assembly.Modules from type in module.Types select type))
+                {
+                    if (!injectType(assembly, hotfixAttributeType, type))
+                    {
+                        return;
+                    }
+                }
+
+                var writerParameters = new WriterParameters { WriteSymbols = true };
+                assembly.Write(INTERCEPT_ASSEMBLY_PATH, writerParameters);
+                Debug.Log("hotfix inject finish!");
+            }
+            finally
+            {
+                if (assembly != null)
+                {
+                    Clean(assembly);
                 }
             }
-
-            var writerParameters = new WriterParameters { WriteSymbols = true };
-            assembly.Write(INTERCEPT_ASSEMBLY_PATH, writerParameters);
-			Clean(assembly);
-			Debug.Log("hotfix inject finish!");
         }
 
 		static void Clean(AssemblyDefinition assembly)
