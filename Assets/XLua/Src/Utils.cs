@@ -435,23 +435,37 @@ namespace XLua
             ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
             BindingFlags flag = BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.Static | (private_access ? BindingFlags.NonPublic : BindingFlags.Public);
             FieldInfo[] fields = type.GetFields(flag);
+            EventInfo[] all_events = type.GetEvents(flag | BindingFlags.Public | BindingFlags.NonPublic);
 
             for (int i = 0; i < fields.Length; ++i)
             {
                 FieldInfo field = fields[i];
+                string fieldName = field.Name;
+                if (private_access)
+                {
+                    // skip hotfix inject field
+                    if (field.IsStatic && (field.Name.StartsWith("__Hitfix") || field.Name.StartsWith("_c__Hitfix")) && typeof(Delegate).IsAssignableFrom(field.FieldType))
+                    {
+                        continue;
+                    }
+                    if (all_events.Any(e => e.Name == fieldName))
+                    {
+                        fieldName = "&" + fieldName;
+                    }
+                }
                 if (field.IsStatic && (field.IsInitOnly || field.IsLiteral))
                 {
-                    LuaAPI.xlua_pushasciistring(L, field.Name);
+                    LuaAPI.xlua_pushasciistring(L, fieldName);
                     translator.PushAny(L, field.GetValue(null));
                     LuaAPI.lua_rawset(L, cls_field);
                 }
                 else
                 {
-                    LuaAPI.xlua_pushasciistring(L, field.Name);
+                    LuaAPI.xlua_pushasciistring(L, fieldName);
                     translator.PushFixCSFunction(L, genFieldGetter(type, field));
                     LuaAPI.lua_rawset(L, field.IsStatic ? cls_getter : obj_getter);
 
-                    LuaAPI.xlua_pushasciistring(L, field.Name);
+                    LuaAPI.xlua_pushasciistring(L, fieldName);
                     translator.PushFixCSFunction(L, genFieldSetter(type, field));
                     LuaAPI.lua_rawset(L, field.IsStatic ? cls_setter : obj_setter);
                 }
