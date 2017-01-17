@@ -30,6 +30,51 @@ ios和osx需要在mac下编译。
 
 解决办法，确认XXX（类型名）加上CSharpCallLua后，清除代码后运行。
 
+## hotfix下怎么触发一个event
+
+首先通过xlua.private_accessible开启私有成员访问。
+
+跟着通过对象的"&事件名"字段调用delegate，例如self\['&MyEvent'\]()，其中MyEvent是事件名。
+
+## 怎么对Unity Coroutine的实现函数打补丁。
+
+Unity Coroutine是通过迭代器模拟的，而迭代器的yield return只是一个语法糖，编译器帮我们生成IEnumerator的函数而已，我们可以通过手动实现IEnumerator完成hotfix。
+
+首先，要把IEnumerator加到CSharpCallLua生成列表，生成代码后，我们就有了用lua table实现IEnumerator的能力；
+
+其次，在hotfix函数里头，返回一个table作为IEnumerator的实现。
+
+~~~csharp
+[XLua.Hotfix]
+public class HotFixSubClass : MonoBehaviour {
+    IEnumerator Start()
+    {
+        while (true)
+        {
+            yield return new WaitForSeconds(3);
+            Debug.Log("Wait for 3 seconds");
+        }
+    }
+}
+~~~
+
+~~~csharp
+luaenv.DoString(@"
+	xlua.hotfix(CS.HotFixSubClass,{
+		Start = function(self)
+			 return {
+				 MoveNext = function(self)
+					 print('lua MoveNext')
+					 self.Current = CS.UnityEngine.WaitForSeconds(1)
+					 return true
+				 end
+			 }
+		end;
+	})
+");
+~~~
+
+
 ## 什么是生成代码？
 
 xLua支持的lua和C#间交互技术之一，这种技术通过生成两者间的适配代码来实现交互，性能较好，是推荐的方式。
