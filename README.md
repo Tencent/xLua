@@ -4,15 +4,15 @@
 [![release](https://img.shields.io/badge/release-v2.1.5-blue.png)](https://github.com/Tencent/xLua/releases)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-blue.png)](https://github.com/Tencent/xLua/pulls)
 
-## Unity3D下Lua编程支持
+## Unity下Lua编程支持
 
-xLua为Unity3D增加Lua脚本编程的能力，进而提供代码逻辑增量更新的可能。当然不仅仅如此，在coco2dx上的实践告诉我们，以Lua为主打语言的游戏客户端编程是可行的。
+xLua为Unity增加Lua脚本编程的能力，进而提供代码逻辑增量更新的可能。当然不仅仅如此，在coco2dx上的实践告诉我们，以Lua为主打语言的游戏客户端编程是可行的。
 
 ## xLua的突破
 
 xLua在功能、性能、易用性都有不少突破，这几方面分别最具代表性的是：
 
-* Unity3D全平台热补丁技术，可以运行时把C#实现（方法，操作符，属性，事件，构造函数，析构函数，支持泛化）替换成lua实现；
+* Unity全平台热补丁技术，可以运行时把C#实现（方法，操作符，属性，事件，构造函数，析构函数，支持泛化）替换成lua实现；
 * 自定义struct，枚举在Lua和C#间传递无C# gc alloc；
 * 编辑器下无需生成代码，开发更轻量；
 
