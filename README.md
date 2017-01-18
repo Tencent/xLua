@@ -101,3 +101,8 @@ xLua支持热补丁，这意味着你可以：
 * [XLua增加删除第三方lua库.doc](Assets/XLua/Doc/XLua增加删除第三方lua库.doc)：如何增删第三方lua扩展库。
 * [XLua API.doc](Assets/XLua/Doc/XLua_API.doc)：API文档。
 
+## 技术支持
+
+QQ群：612705778
+
+
