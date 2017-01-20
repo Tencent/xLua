@@ -62,13 +62,12 @@ public class HotFixSubClass : MonoBehaviour {
 luaenv.DoString(@"
 	xlua.hotfix(CS.HotFixSubClass,{
 		Start = function(self)
-			 return {
-				 MoveNext = function(self)
-					 print('lua MoveNext')
-					 self.Current = CS.UnityEngine.WaitForSeconds(1)
-					 return true
-				 end
-			 }
+			return util.cs_generator(function()
+			    while true do
+				    coroutine.yield(CS.UnityEngine.WaitForSeconds(3))
+                    print('Wait for 3 seconds');
+                end				
+			end
 		end;
 	})
 ");
