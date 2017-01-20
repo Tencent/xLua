@@ -34,7 +34,34 @@ xlua.private_accessible(class)
 
 ## 标识要热更新的类型
 
-打上Hotfix标签即可。
+和其它配置一样，有两者方式
+
+方式一：直接在类里头打Hotfix标签；
+
+方式二：在一个static类的static字段或者属性里头配置一个列表。属性可以用于实现的比较复杂的配置，比如根据Namespace做白名单。
+
+~~~csharp
+public static class HotfixCfg
+{
+    [Hotfix]
+    public static List<Type> by_field = new List<Type>()
+    {
+        typeof(HotFixSubClass),
+        typeof(GenericClass<>),
+    };
+
+    [Hotfix]
+    public static List<Type> by_property
+    {
+        get
+        {
+            return (from type in Assembly.GetExecutingAssembly().GetTypes()
+                    where type.Namespace == "XXXX"
+                    select type).ToList();
+        }
+    }
+}
+~~~
 
 ## Stateless和Stateful
 

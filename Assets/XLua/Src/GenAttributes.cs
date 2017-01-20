@@ -69,7 +69,6 @@ namespace XLua
         Stateful = 1,
     }
 
-    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct)]
     public class HotfixAttribute : Attribute
     {
         HotfixFlag flag;

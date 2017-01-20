@@ -621,7 +621,7 @@ namespace CSObjectWrapEditor
             StreamWriter textWriter = new StreamWriter(filePath, false, Encoding.UTF8);
             var delegates = types.Select(wrap_type => makeMethodInfoSimulation(wrap_type.GetMethod("Invoke")));
             var hotfxDelegates = new List<MethodInfoSimulation>();
-            foreach (var type in (from type in Utils.GetAllTypes() where type.IsDefined(typeof(HotfixAttribute), false) select type))
+            foreach (var type in (from type in Utils.GetAllTypes(false) where type.IsDefined(typeof(HotfixAttribute), false) select type))
             {
                 var hotfixType = ((type.GetCustomAttributes(typeof(HotfixAttribute), false)[0]) as HotfixAttribute).Flag;
                 hotfxDelegates.AddRange(type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly | BindingFlags.NonPublic)
@@ -629,6 +629,14 @@ namespace CSObjectWrapEditor
                     .Cast<MethodBase>()
                     .Concat(type.GetConstructors(BindingFlags.Instance | BindingFlags.Public).Cast<MethodBase>())
                     .Where(method => !method.ContainsGenericParameters).Select(method => makeHotfixMethodInfoSimulation(method, hotfixType)));
+            }
+            foreach (var kv in HotfixCfg)
+            {
+                hotfxDelegates.AddRange(kv.Key.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly | BindingFlags.NonPublic)
+                    .Where(method => !hasNotPublicTypeRetOrParam(method))
+                    .Cast<MethodBase>()
+                    .Concat(kv.Key.GetConstructors(BindingFlags.Instance | BindingFlags.Public).Cast<MethodBase>())
+                    .Where(method => !method.ContainsGenericParameters).Select(method => makeHotfixMethodInfoSimulation(method, kv.Value)));
             }
             hotfxDelegates = hotfxDelegates.Distinct(new MethodInfoSimulationComparer()).ToList();
             GenOne(typeof(DelegateBridge), (type, type_info) =>
@@ -887,6 +895,8 @@ namespace CSObjectWrapEditor
 
         public static List<Type> ReflectionUse = null;
 
+        public static Dictionary<Type, HotfixFlag> HotfixCfg = null;
+
         static void AddToList(List<Type> list, Func<object> get)
         {
             object obj = get();
@@ -922,6 +932,24 @@ namespace CSObjectWrapEditor
             if (test.IsDefined(typeof(ReflectionUseAttribute), false))
             {
                 AddToList(ReflectionUse, get_cfg);
+            }
+            if (test.IsDefined(typeof(HotfixAttribute), false))
+            {
+                object cfg = get_cfg();
+                if (cfg is IEnumerable<Type>)
+                {
+                    var hotfixType = ((test.GetCustomAttributes(typeof(HotfixAttribute), false)[0]) as HotfixAttribute).Flag;
+                    foreach (var type in cfg as IEnumerable<Type>)
+                    {
+                        if (!HotfixCfg.ContainsKey(type) && !isObsolete(type) 
+                            && !type.IsEnum && !typeof(Delegate).IsAssignableFrom(type)
+                            && (!type.IsGenericType || type.IsGenericTypeDefinition) 
+                            && (type.Module.Assembly.GetName().Name == "Assembly-CSharp"))
+                        {
+                            HotfixCfg.Add(type, hotfixType);
+                        }
+                    }
+                }
             }
             if (test.IsDefined(typeof(BlackListAttribute), false)
                         && (typeof(List<List<string>>)).IsAssignableFrom(cfg_type))
@@ -959,7 +987,9 @@ namespace CSObjectWrapEditor
             {
             };
 
-            foreach(var t in Utils.GetAllTypes())
+            HotfixCfg = new Dictionary<Type, HotfixFlag>();
+
+            foreach (var t in Utils.GetAllTypes())
             {
                 if(!t.IsInterface && typeof(GenConfig).IsAssignableFrom(t))
                 {

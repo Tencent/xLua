@@ -46,12 +46,12 @@ namespace XLua
             return ret;
         }
 
-        public static IEnumerable<Type> GetAllTypes()
+        public static IEnumerable<Type> GetAllTypes(bool exclude_generic_definition = true)
         {
             return from assembly in AppDomain.CurrentDomain.GetAssemblies()
                                           where !(assembly.ManifestModule is System.Reflection.Emit.ModuleBuilder)
                                           from type in assembly.GetTypes()
-                                          where !type.IsGenericTypeDefinition
+                                          where exclude_generic_definition ? !type.IsGenericTypeDefinition : true
                                           select type;
         }
 

@@ -34,6 +34,7 @@ namespace XLua
         static MethodDefinition inParams = null;
         static MethodDefinition outParam = null;
 
+        static Dictionary<string, HotfixFlag> hotfixCfg;
 
         static void init(AssemblyDefinition assembly)
         {
@@ -221,29 +222,39 @@ namespace XLua
                 }
             }
             CustomAttribute hotfixAttr = type.CustomAttributes.FirstOrDefault(ca => ca.AttributeType == hotfixAttributeType);
+            int hotfixType;
             if (hotfixAttr != null)
             {
-                int hotfixType = (int)hotfixAttr.ConstructorArguments[0].Value;
-                FieldReference stateTable = null;
-                if (hotfixType == 1)
+                hotfixType = (int)hotfixAttr.ConstructorArguments[0].Value;
+            }
+            else
+            {
+                if (!hotfixCfg.ContainsKey(type.FullName))
                 {
-                    if (type.IsAbstract && type.IsSealed)
-                    {
-                        throw new InvalidOperationException(type.FullName + " is static, can not be mark as Stateful!");
-                    }
-                    var stateTableDefinition = new FieldDefinition("__Hitfix_xluaStateTable", Mono.Cecil.FieldAttributes.Private, luaTableType);
-                    type.Fields.Add(stateTableDefinition);
-                    stateTable = stateTableDefinition.GetGeneric();
+                    return true;
                 }
-                foreach (var method in type.Methods)
+                hotfixType = (int)hotfixCfg[type.FullName];
+            }
+
+            FieldReference stateTable = null;
+            if (hotfixType == 1)
+            {
+                if (type.IsAbstract && type.IsSealed)
                 {
-                    if (method.Name != ".cctor" && !method.IsAbstract && !method.IsPInvokeImpl && method.Body != null)
+                    throw new InvalidOperationException(type.FullName + " is static, can not be mark as Stateful!");
+                }
+                var stateTableDefinition = new FieldDefinition("__Hitfix_xluaStateTable", Mono.Cecil.FieldAttributes.Private, luaTableType);
+                type.Fields.Add(stateTableDefinition);
+                stateTable = stateTableDefinition.GetGeneric();
+            }
+            foreach (var method in type.Methods)
+            {
+                if (method.Name != ".cctor" && !method.IsAbstract && !method.IsPInvokeImpl && method.Body != null)
+                {
+                    if ((method.HasGenericParameters || genericInOut(assembly, method)) ? !injectGenericMethod(assembly, method, hotfixType, stateTable) :
+                        !injectMethod(assembly, method, hotfixType, stateTable))
                     {
-                        if ((method.HasGenericParameters || genericInOut(assembly, method)) ? !injectGenericMethod(assembly, method, hotfixType, stateTable) :
-                            !injectMethod(assembly, method, hotfixType, stateTable))
-                        {
-                            return false;
-                        }
+                        return false;
                     }
                 }
             }
@@ -269,6 +280,9 @@ namespace XLua
 
                 assembly.MainModule.Types.Add(new TypeDefinition("__XLUA_GEN", "__XLUA_GEN_FLAG", Mono.Cecil.TypeAttributes.Class,
                     objType));
+
+                CSObjectWrapEditor.Generator.GetGenConfig();
+                hotfixCfg = CSObjectWrapEditor.Generator.HotfixCfg.ToDictionary(kv => kv.Key.FullName.Replace('+', '/'), kv => kv.Value);
 
                 var hotfixDelegateAttributeType = assembly.MainModule.Types.Single(t => t.FullName == "XLua.HotfixDelegateAttribute");
                 hotfix_delegates = (from module in assembly.Modules
