@@ -34,7 +34,7 @@ xlua.private_accessible(class)
 
 ## 标识要热更新的类型
 
-和其它配置一样，有两者方式
+和其它配置一样，有两种方式
 
 方式一：直接在类里头打Hotfix标签；
 
