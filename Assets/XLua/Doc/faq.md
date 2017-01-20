@@ -65,7 +65,7 @@ luaenv.DoString(@"
 			return util.cs_generator(function()
 			    while true do
 				    coroutine.yield(CS.UnityEngine.WaitForSeconds(3))
-                    print('Wait for 3 seconds');
+                    print('Wait for 3 seconds')
                 end				
 			end
 		end;
