@@ -637,17 +637,17 @@ namespace XLua
             }
             int cls_field = LuaAPI.lua_gettop(L);
 
-            loadUpvalue(L, type, Utils.LuaIndexsFieldName, 2);
+            loadUpvalue(L, type, LuaIndexsFieldName, 2);
             int obj_getter = LuaAPI.lua_gettop(L);
             int obj_field = obj_getter - 1;
 
-            loadUpvalue(L, type, Utils.LuaNewIndexsFieldName, 1);
+            loadUpvalue(L, type, LuaNewIndexsFieldName, 1);
             int obj_setter = LuaAPI.lua_gettop(L);
 
-            loadUpvalue(L, type, Utils.LuaClassIndexsFieldName, 1);
+            loadUpvalue(L, type, LuaClassIndexsFieldName, 1);
             int cls_getter = LuaAPI.lua_gettop(L);
 
-            loadUpvalue(L, type, Utils.LuaClassNewIndexsFieldName, 1);
+            loadUpvalue(L, type, LuaClassNewIndexsFieldName, 1);
             int cls_setter = LuaAPI.lua_gettop(L);
 
             LuaCSFunction item_getter;
@@ -708,12 +708,12 @@ namespace XLua
             LuaAPI.lua_pushvalue(L, obj_getter);
             translator.PushFixCSFunction(L, item_getter);
             translator.PushAny(L, type.BaseType);
-            LuaAPI.xlua_pushasciistring(L, Utils.LuaIndexsFieldName);
+            LuaAPI.xlua_pushasciistring(L, LuaIndexsFieldName);
             LuaAPI.lua_rawget(L, LuaIndexes.LUA_REGISTRYINDEX);
             LuaAPI.lua_pushnil(L);
             LuaAPI.gen_obj_indexer(L);
             //store in lua indexs function tables
-            LuaAPI.xlua_pushasciistring(L, Utils.LuaIndexsFieldName);
+            LuaAPI.xlua_pushasciistring(L, LuaIndexsFieldName);
             LuaAPI.lua_rawget(L, LuaIndexes.LUA_REGISTRYINDEX);
             translator.Push(L, type);
             LuaAPI.lua_pushvalue(L, -3);
@@ -725,12 +725,12 @@ namespace XLua
             LuaAPI.lua_pushvalue(L, obj_setter);
             translator.PushFixCSFunction(L, item_setter);
             translator.Push(L, type.BaseType);
-            LuaAPI.xlua_pushasciistring(L, Utils.LuaNewIndexsFieldName);
+            LuaAPI.xlua_pushasciistring(L, LuaNewIndexsFieldName);
             LuaAPI.lua_rawget(L, LuaIndexes.LUA_REGISTRYINDEX);
             LuaAPI.lua_pushnil(L);
             LuaAPI.gen_obj_newindexer(L);
             //store in lua newindexs function tables
-            LuaAPI.xlua_pushasciistring(L, Utils.LuaNewIndexsFieldName);
+            LuaAPI.xlua_pushasciistring(L, LuaNewIndexsFieldName);
             LuaAPI.lua_rawget(L, LuaIndexes.LUA_REGISTRYINDEX);
             translator.Push(L, type);
             LuaAPI.lua_pushvalue(L, -3);
@@ -759,11 +759,11 @@ namespace XLua
             LuaAPI.lua_pushvalue(L, cls_getter);
             LuaAPI.lua_pushvalue(L, cls_field);
             translator.Push(L, type.BaseType);
-            LuaAPI.xlua_pushasciistring(L, Utils.LuaClassIndexsFieldName);
+            LuaAPI.xlua_pushasciistring(L, LuaClassIndexsFieldName);
             LuaAPI.lua_rawget(L, LuaIndexes.LUA_REGISTRYINDEX);
             LuaAPI.gen_cls_indexer(L);
             //store in lua indexs function tables
-            LuaAPI.xlua_pushasciistring(L, Utils.LuaClassIndexsFieldName);
+            LuaAPI.xlua_pushasciistring(L, LuaClassIndexsFieldName);
             LuaAPI.lua_rawget(L, LuaIndexes.LUA_REGISTRYINDEX);
             translator.Push(L, type);
             LuaAPI.lua_pushvalue(L, -3);
@@ -774,11 +774,11 @@ namespace XLua
             LuaAPI.xlua_pushasciistring(L, "__newindex");
             LuaAPI.lua_pushvalue(L, cls_setter);
             translator.Push(L, type.BaseType);
-            LuaAPI.xlua_pushasciistring(L, Utils.LuaClassNewIndexsFieldName);
+            LuaAPI.xlua_pushasciistring(L, LuaClassNewIndexsFieldName);
             LuaAPI.lua_rawget(L, LuaIndexes.LUA_REGISTRYINDEX);
             LuaAPI.gen_cls_newindexer(L);
             //store in lua newindexs function tables
-            LuaAPI.xlua_pushasciistring(L, Utils.LuaClassNewIndexsFieldName);
+            LuaAPI.xlua_pushasciistring(L, LuaClassNewIndexsFieldName);
             LuaAPI.lua_rawget(L, LuaIndexes.LUA_REGISTRYINDEX);
             translator.Push(L, type);
             LuaAPI.lua_pushvalue(L, -3);
@@ -903,7 +903,7 @@ namespace XLua
 
             translator.Push(L, type == null ? base_type : type.BaseType);
 
-            LuaAPI.xlua_pushasciistring(L, Utils.LuaIndexsFieldName);
+            LuaAPI.xlua_pushasciistring(L, LuaIndexsFieldName);
             LuaAPI.lua_rawget(L, LuaIndexes.LUA_REGISTRYINDEX);
             if (arrayIndexer == null)
             {
@@ -918,7 +918,7 @@ namespace XLua
 
             if (type != null)
             {
-                LuaAPI.xlua_pushasciistring(L, Utils.LuaIndexsFieldName);
+                LuaAPI.xlua_pushasciistring(L, LuaIndexsFieldName);
                 LuaAPI.lua_rawget(L, LuaIndexes.LUA_REGISTRYINDEX);//store in lua indexs function tables
                 translator.Push(L, type);
                 LuaAPI.lua_pushvalue(L, -3);
@@ -944,7 +944,7 @@ namespace XLua
 
             translator.Push(L, type == null ? base_type : type.BaseType);
 
-            LuaAPI.xlua_pushasciistring(L, Utils.LuaNewIndexsFieldName);
+            LuaAPI.xlua_pushasciistring(L, LuaNewIndexsFieldName);
             LuaAPI.lua_rawget(L, LuaIndexes.LUA_REGISTRYINDEX);
 
             if (arrayNewIndexer == null)
@@ -960,7 +960,7 @@ namespace XLua
 
             if (type != null)
             {
-                LuaAPI.xlua_pushasciistring(L, Utils.LuaNewIndexsFieldName);
+                LuaAPI.xlua_pushasciistring(L, LuaNewIndexsFieldName);
                 LuaAPI.lua_rawget(L, LuaIndexes.LUA_REGISTRYINDEX);//store in lua newindexs function tables
                 translator.Push(L, type);
                 LuaAPI.lua_pushvalue(L, -3);
@@ -1046,11 +1046,11 @@ namespace XLua
             LuaAPI.lua_pushvalue(L, cls_getter_idx);
             LuaAPI.lua_pushvalue(L, cls_idx);
             translator.Push(L, type.BaseType);
-            LuaAPI.xlua_pushasciistring(L, Utils.LuaClassIndexsFieldName);
+            LuaAPI.xlua_pushasciistring(L, LuaClassIndexsFieldName);
             LuaAPI.lua_rawget(L, LuaIndexes.LUA_REGISTRYINDEX);
             LuaAPI.gen_cls_indexer(L);
 
-            LuaAPI.xlua_pushasciistring(L, Utils.LuaClassIndexsFieldName);
+            LuaAPI.xlua_pushasciistring(L, LuaClassIndexsFieldName);
             LuaAPI.lua_rawget(L, LuaIndexes.LUA_REGISTRYINDEX);//store in lua indexs function tables
             translator.Push(L, type);
             LuaAPI.lua_pushvalue(L, -3);
@@ -1064,11 +1064,11 @@ namespace XLua
             LuaAPI.xlua_pushasciistring(L, "__newindex");
             LuaAPI.lua_pushvalue(L, cls_setter_idx);
             translator.Push(L, type.BaseType);
-            LuaAPI.xlua_pushasciistring(L, Utils.LuaClassNewIndexsFieldName);
+            LuaAPI.xlua_pushasciistring(L, LuaClassNewIndexsFieldName);
             LuaAPI.lua_rawget(L, LuaIndexes.LUA_REGISTRYINDEX);
             LuaAPI.gen_cls_newindexer(L);
 
-            LuaAPI.xlua_pushasciistring(L, Utils.LuaClassNewIndexsFieldName);
+            LuaAPI.xlua_pushasciistring(L, LuaClassNewIndexsFieldName);
             LuaAPI.lua_rawget(L, LuaIndexes.LUA_REGISTRYINDEX);//store in lua newindexs function tables
             translator.Push(L, type);
             LuaAPI.lua_pushvalue(L, -3);

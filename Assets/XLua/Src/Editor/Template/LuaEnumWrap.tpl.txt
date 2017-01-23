@@ -16,6 +16,7 @@ require "TemplateCommon"
 
 namespace CSObjectWrap
 {
+    using Utils = XLua.Utils;
     <%ForEachCsList(types, function(type)
 	local fields = type:GetFields()
 	%>

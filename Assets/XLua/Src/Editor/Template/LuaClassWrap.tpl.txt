@@ -64,6 +64,7 @@ end)
 %>
 namespace CSObjectWrap
 {
+    using Utils = XLua.Utils;
     public class <%=CSVariableName(type)%>Wrap
     {
         public static void __Register(RealStatePtr L)
