@@ -2,9 +2,9 @@
 
 为了不影响开发，这个特性默认是关闭的，需要添加HOTFIX_ENABLE宏打开（在Unity3D的File->Build Setting->Scripting Define Symbols下添加）。使用该特性的切记build手机版本时不要忘记了！
 
-热补丁特性依赖Cecil，添加HOTFIX_ENABLE宏之后，可能会报找不到Cecil。这时你需要到Unity安装目录下找到Mono.Cecil.dll，拷贝到项目里头。而HOTFIX_DEBUG_SYMBOLS则依赖Mono.Cecil.Pdb.dll，Mono.Cecil.Mdb.dll。
+热补丁特性依赖Cecil，添加HOTFIX_ENABLE宏之后，可能会报找不到Cecil。这时你需要到Unity安装目录下找到Mono.Cecil.dll，Mono.Cecil.Pdb.dll，Mono.Cecil.Mdb.dll，拷贝到项目里头。
 
-热补丁需要执行XLua/Generate Code才能正常运行。
+热补丁需要执行XLua/Generate Code才能正常运行。（建议的开发方式是平时不打开HOTFIX_ENABLE，这样不用生成代码，开发更便捷，build手机版本或者要在编译器下开发补丁时打开HOTFIX_ENABLE）
 
 参考命令（可能Unity版本不同会略有不同，把别的Unity版本带的拷贝过来试了也能用，比如有的老版本Unity是不带Mono.Cecil.Pdb.dll，Mono.Cecil.Mdb.dll的，这时可以把新版本带的整套拷贝过来）：
 
@@ -142,6 +142,8 @@ C#的操作符都有一套内部表示，比如+号的操作符函数名是op_Ad
 
 比如对于事件“AEvent”，+=操作符是add_AEvent，-=对应的是remove_AEvent。这两个函数均是第一个参数是self，第二个参数是操作符后面跟的delegate。
 
+通过xlua.private_accessible来直接访问事件对应的私有delegate的直接访问后，可以通过对象的"&事件名"字段直接触发事件，例如self\['&MyEvent'\]()，其中MyEvent是事件名。
+
 * 析构函数
 
 method_name是"Finalize"，传一个self参数。
@@ -180,6 +182,40 @@ luaenv.DoString(@"
     })
 ");
 ```
+
+* Unity协程
+
+通过util.cs_generator可以用一个function模拟一个IEnumerator，在里头用coroutine.yield，就类似C#里头的yield return。比如下面的C#代码和对应的hotfix代码是等同效果的
+
+~~~csharp
+[XLua.Hotfix]
+public class HotFixSubClass : MonoBehaviour {
+    IEnumerator Start()
+    {
+        while (true)
+        {
+            yield return new WaitForSeconds(3);
+            Debug.Log("Wait for 3 seconds");
+        }
+    }
+}
+~~~
+
+~~~csharp
+luaenv.DoString(@"
+    local util = require 'xlua.util'
+	xlua.hotfix(CS.HotFixSubClass,{
+		Start = function(self)
+			return util.cs_generator(function()
+			    while true do
+				    coroutine.yield(CS.UnityEngine.WaitForSeconds(3))
+                    print('Wait for 3 seconds')
+                end				
+			end
+		end;
+	})
+");
+~~~
 
 * 整个类
 

@@ -60,6 +60,7 @@ public class HotFixSubClass : MonoBehaviour {
 
 ~~~csharp
 luaenv.DoString(@"
+    local util = require 'xlua.util'
 	xlua.hotfix(CS.HotFixSubClass,{
 		Start = function(self)
 			return util.cs_generator(function()
