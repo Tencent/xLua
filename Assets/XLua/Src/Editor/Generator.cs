@@ -628,7 +628,8 @@ namespace CSObjectWrapEditor
                     .Where(method => !hasNotPublicTypeRetOrParam(method))
                     .Cast<MethodBase>()
                     .Concat(type.GetConstructors(BindingFlags.Instance | BindingFlags.Public).Cast<MethodBase>())
-                    .Where(method => !method.ContainsGenericParameters).Select(method => makeHotfixMethodInfoSimulation(method, hotfixType)));
+                    .Where(method => !method.ContainsGenericParameters && !(type.IsGenericTypeDefinition && (method.IsConstructor || hotfixType == HotfixFlag.Stateless)))
+                    .Select(method => makeHotfixMethodInfoSimulation(method, hotfixType)));
             }
             foreach (var kv in HotfixCfg)
             {
@@ -636,7 +637,8 @@ namespace CSObjectWrapEditor
                     .Where(method => !hasNotPublicTypeRetOrParam(method))
                     .Cast<MethodBase>()
                     .Concat(kv.Key.GetConstructors(BindingFlags.Instance | BindingFlags.Public).Cast<MethodBase>())
-                    .Where(method => !method.ContainsGenericParameters).Select(method => makeHotfixMethodInfoSimulation(method, kv.Value)));
+                    .Where(method => !method.ContainsGenericParameters && !(kv.Key.IsGenericTypeDefinition && (method.IsConstructor || kv.Value == HotfixFlag.Stateless)))
+                    .Select(method => makeHotfixMethodInfoSimulation(method, kv.Value)));
             }
             hotfxDelegates = hotfxDelegates.Distinct(new MethodInfoSimulationComparer()).ToList();
             GenOne(typeof(DelegateBridge), (type, type_info) =>

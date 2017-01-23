@@ -406,6 +406,10 @@ namespace XLua
                 {
                     processor.InsertBefore(firstIns, processor.Create(OpCodes.Ldfld, stateTable));
                 }
+                else if (i == 0 && !method.IsStatic && type.IsValueType)
+                {
+                    processor.InsertBefore(firstIns, processor.Create(OpCodes.Ldobj, type));
+                }
             }
 
             processor.InsertBefore(firstIns, processor.Create(OpCodes.Call, invoke));
@@ -524,6 +528,10 @@ namespace XLua
                     }
                     else
                     {
+                        if (type.IsValueType)
+                        {
+                            processor.InsertBefore(firstIns, processor.Create(OpCodes.Ldobj, method.DeclaringType.GetGeneric()));
+                        }
                         processor.InsertBefore(firstIns, processor.Create(OpCodes.Callvirt, MakeGenericMethod(inParam, method.DeclaringType.GetGeneric())));
                     }
                 }
