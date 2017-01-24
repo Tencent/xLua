@@ -500,7 +500,7 @@ LUA_API int obj_newindexer(lua_State *L) {
 		lua_call(L, 3, 0);
 		return 0;
 	} else {
-		return luaL_error(L, "cannot set %s, no suck field", lua_tostring(L, 2));
+		return luaL_error(L, "cannot set %s, no such field", lua_tostring(L, 2));
 	}
 }
 
