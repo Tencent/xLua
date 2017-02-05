@@ -748,25 +748,23 @@ namespace XLua
                 //循环依赖，自身依赖自己的class，比如有个自身类型的静态readonly对象。
                 if (typeIdMap.TryGetValue(type, out type_id))
                 {
-                    typeIdMap.Remove(type);
-                    LuaAPI.lua_unref(L, type_id);
-                    if (type.IsValueType && typeMap.ContainsKey(type_id))
-                    {
-                        typeMap.Remove(type_id);
-                    }
+                    LuaAPI.lua_pop(L, 1);
                 }
-                LuaAPI.lua_pushvalue(L, -1);
-                type_id = LuaAPI.luaL_ref(L, LuaIndexes.LUA_REGISTRYINDEX);
-                LuaAPI.lua_pushnumber(L, type_id);
-                LuaAPI.xlua_rawseti(L, -2, 1);
-                LuaAPI.lua_pop(L, 1);
-
-                if (type.IsValueType)
+                else
                 {
-                    typeMap.Add(type_id, type);
-                }
+                    LuaAPI.lua_pushvalue(L, -1);
+                    type_id = LuaAPI.luaL_ref(L, LuaIndexes.LUA_REGISTRYINDEX);
+                    LuaAPI.lua_pushnumber(L, type_id);
+                    LuaAPI.xlua_rawseti(L, -2, 1);
+                    LuaAPI.lua_pop(L, 1);
 
-                typeIdMap.Add(type, type_id);
+                    if (type.IsValueType)
+                    {
+                        typeMap.Add(type_id, type);
+                    }
+
+                    typeIdMap.Add(type, type_id);
+                }
             }
             return type_id;
         }
