@@ -205,23 +205,7 @@ namespace XLua
             LuaAPI.lua_setmetatable(L, -2);
             cacheRef = LuaAPI.luaL_ref(L, LuaIndexes.LUA_REGISTRYINDEX);
 
-            if (initers != null)
-            {
-                for (int i = 0; i < initers.Count; i++)
-                {
-                    initers[i](this);
-                }
-            }
-
             initCSharpCallLua();
-        }
-
-        private static List<Action<ObjectTranslator>> initers = null;
-
-        public static void AddIniter(Action<ObjectTranslator> initer)
-        {
-            if (initers == null) initers = new List<Action<ObjectTranslator>>();
-            initers.Add(initer);
         }
 
         enum LOGLEVEL{

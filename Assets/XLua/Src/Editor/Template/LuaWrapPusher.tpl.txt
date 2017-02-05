@@ -24,10 +24,10 @@ namespace XLua
         {
             static <%=init_class_name%>()
             {
-                AddIniter(Init);
+                LuaEnv.AddIniter(Init);
             }
 			
-			static void Init(ObjectTranslator translator)
+			static void Init(LuaEnv luaenv, ObjectTranslator translator)
 			{
 			<%ForEachCsList(purevaluetypes, function(type_info)
             if not type_info.Type.IsValueType then return end

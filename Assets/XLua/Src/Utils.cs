@@ -618,7 +618,6 @@ namespace XLua
 
         public static void MakePrivateAccessible(RealStatePtr L, Type type)
         {
-            ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
             int oldTop = LuaAPI.lua_gettop(L);
 
             LuaAPI.luaL_getmetatable(L, type.FullName);
