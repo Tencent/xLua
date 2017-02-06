@@ -157,7 +157,7 @@ end
 
 function CSVariableName(t)
     if t.IsArray then
-	    return CSVariableName(t:GetElementType()) .. '__'
+	    return CSVariableName(t:GetElementType()) .. '_'.. t:GetArrayRank() ..'_'
 	end
     return t:ToString():gsub("&", ""):gsub("%+", ""):gsub("`", "_"):gsub("%.", ""):gsub("%[", ""):gsub("%]", ""):gsub(",", "")
 end
