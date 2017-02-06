@@ -24,6 +24,8 @@ using LuaCSFunction = XLua.LuaDLL.lua_CSFunction;
 
 namespace XLua
 {
+    using UnityEngine;
+
     public static partial class Utils
     {
         public static bool LoadField(RealStatePtr L, int idx, string field_name)
@@ -415,8 +417,8 @@ namespace XLua
 
                 extension_method_map = (from type in type_def_extention_method
                                         from method in type.GetMethods(BindingFlags.Static | BindingFlags.Public)
-                                        where !method.ContainsGenericParameters && method.IsDefined(typeof(ExtensionAttribute), false)
-                                        group method by method.GetParameters()[0].ParameterType).ToDictionary(g => g.Key, g => g as IEnumerable<MethodInfo>);
+                                        where isSupportedExtensionMethod(method)
+                                        group method by getExtendedType(method)).ToDictionary(g => g.Key, g => g as IEnumerable<MethodInfo>);
             }
             IEnumerable<MethodInfo> ret = null;
             extension_method_map.TryGetValue(type_to_be_extend, out ret);
@@ -1207,6 +1209,41 @@ namespace XLua
             }
 
             return true;
+        }
+
+        public static bool isSupportedExtensionMethod(MethodBase method)
+        {
+            if (!method.IsDefined(typeof(ExtensionAttribute), false))
+                return false;
+            if (!method.ContainsGenericParameters)
+                return true;
+            var methodParameters = method.GetParameters();
+            for (var i = 0; i < methodParameters.Length; i++)
+            {
+                var parameterType = methodParameters[i].ParameterType;
+                if (parameterType.IsGenericParameter)
+                {
+                    var parameterConstraints = parameterType.GetGenericParameterConstraints();
+                    if (parameterConstraints.Length == 0 || !parameterConstraints[0].IsClass)
+                        return false;
+                }
+            }
+            return true;
+        }
+
+        private static Type getExtendedType(MethodInfo method)
+        {
+            var type = method.GetParameters()[0].ParameterType;
+            if (!type.IsGenericParameter)
+                return type;
+            var parameterConstraints = type.GetGenericParameterConstraints();
+            if (parameterConstraints.Length == 0)
+                throw new InvalidOperationException();
+
+            var firstParameterConstraint = parameterConstraints[0];
+            if (!firstParameterConstraint.IsClass)
+                throw new InvalidOperationException();
+            return firstParameterConstraint;
         }
     }
 }
