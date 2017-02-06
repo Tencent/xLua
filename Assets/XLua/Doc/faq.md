@@ -36,44 +36,17 @@ ios和osx需要在mac下编译。
 
 跟着通过对象的"&事件名"字段调用delegate，例如self\['&MyEvent'\]()，其中MyEvent是事件名。
 
-## 怎么对Unity Coroutine的实现函数打补丁。
+## 怎么对Unity Coroutine的实现函数打补丁？
 
-Unity Coroutine是通过迭代器模拟的，而迭代器的yield return只是一个语法糖，编译器帮我们生成IEnumerator的函数而已，我们可以通过手动实现IEnumerator完成hotfix。
+见hotfix.md相应章节。
 
-首先，要把IEnumerator加到CSharpCallLua生成列表，生成代码后，我们就有了用lua table实现IEnumerator的能力；
+## 支持NGUI（或者UGUI/DOTween等等）么？
 
-其次，在hotfix函数里头，返回一个table作为IEnumerator的实现。
+支持，xLua最主要的特性是让你原来用C#写的地方可以换成用lua写，你C#能用的插件，基本都能用。
 
-~~~csharp
-[XLua.Hotfix]
-public class HotFixSubClass : MonoBehaviour {
-    IEnumerator Start()
-    {
-        while (true)
-        {
-            yield return new WaitForSeconds(3);
-            Debug.Log("Wait for 3 seconds");
-        }
-    }
-}
-~~~
+## 如果需要调试，CustomLoader的filepath参数该如何处理？
 
-~~~csharp
-luaenv.DoString(@"
-    local util = require 'xlua.util'
-	xlua.hotfix(CS.HotFixSubClass,{
-		Start = function(self)
-			return util.cs_generator(function()
-			    while true do
-				    coroutine.yield(CS.UnityEngine.WaitForSeconds(3))
-                    print('Wait for 3 seconds')
-                end				
-			end
-		end;
-	})
-");
-~~~
-
+lua里头调用require 'a.b'时，CustomLoader会被调用，并传入字符串"a.b"，你需要理解这字符串，（从文件/内存，网络等）加载好lua文件，返回两个东西，第一个是调试器可以理解的路径，比如：a/b.lua，这个通过设置ref类型的filepath参数返回，第二个是UTF8格式的源码的字节流（byte[]），通过返回值返回。
 
 ## 什么是生成代码？
 
