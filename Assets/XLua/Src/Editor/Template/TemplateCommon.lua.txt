@@ -142,7 +142,10 @@ function CsFullTypeName(t)
         return CsFullTypeName(t:GetElementType()) .. '[' .. string.rep(',', t:GetArrayRank() - 1) .. ']'
     elseif t.IsByRef then
         return CsFullTypeName(t:GetElementType())
+    elseif t.IsGenericParameter then
+        return CsFullTypeName(t.BaseType)
     end
+
     local name = t.FullName:gsub("&", ""):gsub("%+", ".") 
     if not t.IsGenericType then 
         return friendlyNameMap[name] or name
@@ -268,12 +271,25 @@ function GetSelfStatement(t)
     
 end
 
+local function getSafeFullName(t)
+    if t == nil then
+        return ""
+    end
+
+    if t.IsGenericParameter then
+        return getSafeFullName(t.BaseType)
+    end
+
+    return t.FullName:gsub("&", "")
+end
+
 function GetPushStatement(t, variable, is_v_params)
     if is_v_params then
 	    local item_push = GetPushStatement(t:GetElementType(), variable..'[__gen_i]')
 		return 'for (int __gen_i = 0; __gen_i < ' .. variable .. '.Length; ++__gen_i) ' .. item_push
 	end
-    local testname = t.FullName:gsub("&", "")
+    
+    local testname = getSafeFullName(t)
     if fixPush[testname] then
         return fixPush[testname] .. "(L, ".. variable ..")" 
     elseif genPushAndUpdateTypes[t] then
@@ -293,12 +309,12 @@ function GetUpdateStatement(t, idx, variable)
 end
 
 function JustLuaType(t)
-    return notranslator[t.FullName:gsub("&", "")]
+    return notranslator[getSafeFullName(t)]
 end
 
 function CallNeedTranslator(overload, isdelegate)
     if not overload.IsStatic and not isdelegate then return true end
-	local ret_type_name = overload.ReturnType.FullName:gsub("&", "")
+	local ret_type_name = getSafeFullName(overload.ReturnType)
     if not notranslator[ret_type_name] then return true end 
     local parameters = overload:GetParameters()
     return IfAny(overload:GetParameters(), function(parameter) return not notranslator[parameter.ParameterType.FullName:gsub("&", "")] end)

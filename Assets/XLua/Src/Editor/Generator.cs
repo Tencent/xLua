@@ -131,14 +131,13 @@ namespace CSObjectWrapEditor
 
                 type_has_extension_methods = from type in gen_types
                                              where type.GetMethods(BindingFlags.Static | BindingFlags.Public)
-                                                    .Any(method => !method.ContainsGenericParameters && method.IsDefined(typeof(ExtensionAttribute), false))
+                                                    .Any(method => isSupportedExtensionMethod(method))
                                              select type;
             }
             return from type in type_has_extension_methods
                    where type.IsSealed && !type.IsGenericType && !type.IsNested
                         from method in type.GetMethods(BindingFlags.Static | BindingFlags.Public)
-                        where !method.ContainsGenericParameters && method.IsDefined(typeof(ExtensionAttribute), false)
-                        where method.GetParameters()[0].ParameterType == extendedType
+                        where isSupportedExtensionMethod(method, extendedType)
                         select method;
         }
 
@@ -209,7 +208,7 @@ namespace CSObjectWrapEditor
                 .Where(method=> !method.IsDefined(typeof(System.Runtime.CompilerServices.ExtensionAttribute), false) || method.DeclaringType != type)
                 .Where(method => methodNames.ContainsKey(method.Name)) //GenericMethod can not be invoke becuase not static info available!
                 .Concat(extension_methods)
-                .Where(method =>!isMethodInBlackList(method) && !method.IsGenericMethod && !isObsolete(method) && !method.Name.StartsWith("op_") && !method.Name.StartsWith("add_") && !method.Name.StartsWith("remove_"))
+                .Where(method =>!isMethodInBlackList(method) && (!method.IsGenericMethod || extension_methods.Contains(method))&& !isObsolete(method) && !method.Name.StartsWith("op_") && !method.Name.StartsWith("add_") && !method.Name.StartsWith("remove_"))
                 .GroupBy(method => (method.Name + ((method.IsStatic && !method.IsDefined(typeof(System.Runtime.CompilerServices.ExtensionAttribute), false)) ? "_xlua_st_" : "")), (k, v) => {
                     var overloads = new List<MethodBase>();
                     List<int> def_vals = new List<int>();
@@ -1213,6 +1212,64 @@ namespace CSObjectWrapEditor
             AssetDatabase.Refresh();
         }
 
+        private static bool isSupportedExtensionMethod(MethodInfo method)
+        {
+            if (!method.IsDefined(typeof (ExtensionAttribute), false))
+                return false;
+            if (!method.ContainsGenericParameters)
+                return true;
+            var methodParameters = method.GetParameters();
+            for (var i = 0; i < methodParameters.Length; i++)
+            {
+                if (i == 0)
+                {
+                    if (methodParameters[0].ParameterType.IsGenericParameter)
+                    {
+                        var parameterConstraints = methodParameters[0].ParameterType.GetGenericParameterConstraints();
+                        foreach (var constraints in parameterConstraints)
+                        {
+                            if (!LuaCallCSharp.Contains(constraints))
+                                return false;
+                        }
+                        return true;
+                    }
+                    return false;
+                }
+
+                if (methodParameters[i].ParameterType.IsGenericParameter)
+                    return false;
+            }
+            return true;
+        }
+        private static bool isSupportedExtensionMethod(MethodInfo method, Type extendedType)
+        {
+            if (!method.IsDefined(typeof(ExtensionAttribute), false))
+                return false;
+            var methodParameters = method.GetParameters();
+            if (!method.ContainsGenericParameters && methodParameters[0].ParameterType == extendedType)
+                return true;
+            for (var i = 0; i < methodParameters.Length; i++)
+            {
+                if (i == 0)
+                {
+                    if (methodParameters[0].ParameterType.IsGenericParameter)
+                    {
+                        var parameterConstraints = methodParameters[0].ParameterType.GetGenericParameterConstraints();
+                        foreach (var constraints in parameterConstraints)
+                        {
+                            if (!constraints.IsAssignableFrom(extendedType))
+                                return false;
+                        }
+                        return true;
+                    }
+                    return false;
+                }
+
+                if (methodParameters[i].ParameterType.IsGenericParameter)
+                    return false;
+            }
+            return true;
+        }
     }
 
     [InitializeOnLoad]
