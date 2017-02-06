@@ -269,8 +269,12 @@ namespace XLua
             AssemblyDefinition assembly = null;
             try
             {
+#if HOTFIX_SYMBOLS_DISABLE
+                assembly = AssemblyDefinition.ReadAssembly(INTERCEPT_ASSEMBLY_PATH);
+#else
                 var readerParameters = new ReaderParameters { ReadSymbols = true };
                 assembly = AssemblyDefinition.ReadAssembly(INTERCEPT_ASSEMBLY_PATH, readerParameters);
+#endif
                 init(assembly);
 
                 if (assembly.MainModule.Types.Any(t => t.Name == "__XLUA_GEN_FLAG"))
@@ -298,10 +302,14 @@ namespace XLua
                         return;
                     }
                 }
-
+#if HOTFIX_SYMBOLS_DISABLE
+                assembly.Write(INTERCEPT_ASSEMBLY_PATH);
+                Debug.Log("hotfix inject finish!(no symbols)");
+#else
                 var writerParameters = new WriterParameters { WriteSymbols = true };
                 assembly.Write(INTERCEPT_ASSEMBLY_PATH, writerParameters);
                 Debug.Log("hotfix inject finish!");
+#endif
             }
             finally
             {

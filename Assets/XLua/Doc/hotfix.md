@@ -4,9 +4,11 @@
 
 热补丁特性依赖Cecil，添加HOTFIX_ENABLE宏之后，可能会报找不到Cecil。这时你需要到Unity安装目录下找到Mono.Cecil.dll，Mono.Cecil.Pdb.dll，Mono.Cecil.Mdb.dll，拷贝到项目里头。
 
+注意：如果你的Unity安装目录没有Mono.Cecil.Pdb.dll，Mono.Cecil.Mdb.dll（往往是一些老版本），那就只拷贝Mono.Cecil.dll（你从别的版本的Unity拷贝一套可能会导致编辑器不稳定），这时你需要定义HOTFIX_SYMBOLS_DISABLE，这会导致C#代码没法调试以及Log的栈源文件及行号错乱（所以赶紧升级Unity）。
+
 热补丁需要执行XLua/Generate Code才能正常运行。（建议的开发方式是平时不打开HOTFIX_ENABLE，这样不用生成代码，开发更便捷，build手机版本或者要在编译器下开发补丁时打开HOTFIX_ENABLE）
 
-参考命令（可能Unity版本不同会略有不同，把别的Unity版本带的拷贝过来试了也能用，比如有的老版本Unity是不带Mono.Cecil.Pdb.dll，Mono.Cecil.Mdb.dll的，这时可以把新版本带的整套拷贝过来）：
+参考命令（可能Unity版本不同会略有不同）：
 
 ```shell
 OSX命令行 cp /Applications/Unity/Unity.app/Contents/Managed/Mono.Cecil.* Project/Assets/XLua/Src/Editor/
