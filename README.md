@@ -1,16 +1,18 @@
 ![](Assets/XLua/Doc/xLua.png)
 
-![](https://img.shields.io/badge/release-v2.1.5-blue.png)
+[![license](https://img.shields.io/badge/license-MIT-blue.png)](https://github.com/Tencent/xLua/blob/master/LICENSE.TXT)
+[![release](https://img.shields.io/badge/release-v2.1.5-blue.png)](https://github.com/Tencent/xLua/releases)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-blue.png)](https://github.com/Tencent/xLua/pulls)
 
-## Unity3D下Lua编程支持
+## Unity下Lua编程支持
 
-xLua为Unity3D增加Lua脚本编程的能力，进而提供代码逻辑增量更新的可能。当然不仅仅如此，在coco2dx上的实践告诉我们，以Lua为主打语言的游戏客户端编程是可行的。
+xLua为Unity增加Lua脚本编程的能力，进而提供代码逻辑增量更新的可能。当然不仅仅如此，在coco2dx上的实践告诉我们，以Lua为主打语言的游戏客户端编程是可行的。
 
 ## xLua的突破
 
 xLua在功能、性能、易用性都有不少突破，这几方面分别最具代表性的是：
 
-* Unity3D全平台热补丁技术，可以运行时把C#实现（方法，操作符，属性，事件，构造函数，析构函数，支持泛化）替换成lua实现；
+* Unity全平台热补丁技术，可以运行时把C#实现（方法，操作符，属性，事件，构造函数，析构函数，支持泛化）替换成lua实现；
 * 自定义struct，枚举在Lua和C#间传递无C# gc alloc；
 * 编辑器下无需生成代码，开发更轻量；
 
@@ -28,7 +30,7 @@ xLua有两个版本，分别集成了lua5.3和luajit，一个项目只能选择�
 
 lua5.3的特性更丰富些，比如支持原生64位整数，支持苹果bitcode，支持utf8等。出现问题因为是纯c代码，也好定位。比起luajit，lua对安装包的影响也更小。
 
-而luajit胜在性能，如果其jit不出问题的话，可以比lua高一个数量级。目前luajit作者不打算维护luajit，已经在找人接替其维护，所以其前途堪然。
+而luajit胜在性能，如果其jit不出问题的话，可以比lua高一个数量级。目前luajit作者不打算维护luajit，在找人接替其维护，后续发展不太明朗。
 
 项目可以根据自己情况判断哪个更适合。因为目前lua53版本使用较多，所以xLua工程Plugins目录下默认配套是lua53版本。
 
@@ -94,9 +96,13 @@ xLua支持热补丁，这意味着你可以：
  
 ## 文档
 
-* [XLua介绍.ppt](Assets/XLua/Doc/XLua介绍.ppt)：总体介绍文档。
 * [XLua教程.doc](Assets/XLua/Doc/XLua教程.doc)：教程，其配套代码[这里](Assets/XLua/Tutorial/)。
 * [XLua的配置.doc](Assets/XLua/Doc/XLua的配置.doc)：介绍如何配置xLua。
 * [XLua增加删除第三方lua库.doc](Assets/XLua/Doc/XLua增加删除第三方lua库.doc)：如何增删第三方lua扩展库。
 * [XLua API.doc](Assets/XLua/Doc/XLua_API.doc)：API文档。
+
+## 技术支持
+
+QQ群：612705778
+
 

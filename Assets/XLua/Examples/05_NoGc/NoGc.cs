@@ -83,10 +83,15 @@ namespace XLuaTest
 
         LuaFunction add;
 
+        [NonSerialized]
         public double[] a1 = new double[] { 1, 2 };
+        [NonSerialized]
         public Vector3[] a2 = new Vector3[] { new Vector3(1, 2, 3), new Vector3(4, 5, 6) };
+        [NonSerialized]
         public MyStruct[] a3 = new MyStruct[] { new MyStruct(1, 2), new MyStruct(3, 4) };
+        [NonSerialized]
         public MyEnum[] a4 = new MyEnum[] { MyEnum.E1, MyEnum.E2 };
+        [NonSerialized]
         public decimal[] a5 = new decimal[] { 1.00001M, 2.00002M };
 
         public float FloatParamMethod(float p)

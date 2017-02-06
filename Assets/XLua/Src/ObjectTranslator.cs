@@ -205,23 +205,7 @@ namespace XLua
             LuaAPI.lua_setmetatable(L, -2);
             cacheRef = LuaAPI.luaL_ref(L, LuaIndexes.LUA_REGISTRYINDEX);
 
-            if (initers != null)
-            {
-                for (int i = 0; i < initers.Count; i++)
-                {
-                    initers[i](this);
-                }
-            }
-
             initCSharpCallLua();
-        }
-
-        private static List<Action<ObjectTranslator>> initers = null;
-
-        public static void AddIniter(Action<ObjectTranslator> initer)
-        {
-            if (initers == null) initers = new List<Action<ObjectTranslator>>();
-            initers.Add(initer);
         }
 
         enum LOGLEVEL{
@@ -469,7 +453,10 @@ namespace XLua
 
 		public void OpenLib(RealStatePtr L)
 		{
-            LuaAPI.lua_getglobal(L, "xlua");
+            if (0 != LuaAPI.xlua_getglobal(L, "xlua"))
+            {
+                throw new Exception("call xlua_getglobal fail!" + LuaAPI.lua_tostring(L, -1));
+            }
             LuaAPI.xlua_pushasciistring(L, "import_type");
 			LuaAPI.lua_pushstdcallcfunction(L,importTypeFunction);
 			LuaAPI.lua_rawset(L, -3);
@@ -481,6 +468,9 @@ namespace XLua
             LuaAPI.lua_rawset(L, -3);
             LuaAPI.xlua_pushasciistring(L, "access");
             LuaAPI.lua_pushstdcallcfunction(L, StaticLuaCallbacks.XLuaAccess);
+            LuaAPI.lua_rawset(L, -3);
+            LuaAPI.xlua_pushasciistring(L, "private_accessible");
+            LuaAPI.lua_pushstdcallcfunction(L, StaticLuaCallbacks.XLuaPrivateAccessible);
             LuaAPI.lua_rawset(L, -3);
             LuaAPI.lua_pop(L, 1);
 
@@ -758,25 +748,23 @@ namespace XLua
                 //循环依赖，自身依赖自己的class，比如有个自身类型的静态readonly对象。
                 if (typeIdMap.TryGetValue(type, out type_id))
                 {
-                    typeIdMap.Remove(type);
-                    LuaAPI.lua_unref(L, type_id);
-                    if (type.IsValueType && typeMap.ContainsKey(type_id))
-                    {
-                        typeMap.Remove(type_id);
-                    }
+                    LuaAPI.lua_pop(L, 1);
                 }
-                LuaAPI.lua_pushvalue(L, -1);
-                type_id = LuaAPI.luaL_ref(L, LuaIndexes.LUA_REGISTRYINDEX);
-                LuaAPI.lua_pushnumber(L, type_id);
-                LuaAPI.xlua_rawseti(L, -2, 1);
-                LuaAPI.lua_pop(L, 1);
-
-                if (type.IsValueType)
+                else
                 {
-                    typeMap.Add(type_id, type);
-                }
+                    LuaAPI.lua_pushvalue(L, -1);
+                    type_id = LuaAPI.luaL_ref(L, LuaIndexes.LUA_REGISTRYINDEX);
+                    LuaAPI.lua_pushnumber(L, type_id);
+                    LuaAPI.xlua_rawseti(L, -2, 1);
+                    LuaAPI.lua_pop(L, 1);
 
-                typeIdMap.Add(type, type_id);
+                    if (type.IsValueType)
+                    {
+                        typeMap.Add(type_id, type);
+                    }
+
+                    typeIdMap.Add(type, type_id);
+                }
             }
             return type_id;
         }

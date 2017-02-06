@@ -1,0 +1,101 @@
+<?xml version="1.0" ?>
+<metalib name="net" >
+    <macro name="MAX_NAME_LEN" value="128" />
+    <macro name="MAX_PASS_LEN" value="32" />
+    <struct name="CmdLogin" version="1" id="1" >
+        <entry name="name" type="string" id="1" defaultvalue="腾讯" size="MAX_NAME_LEN" sizeinfo="smalluint" />
+        <entry name="pass" type="string" id="2" size="MAX_PASS_LEN" />
+        <entry name="zone" type="string" id="3" size="MAX_PASS_LEN" />
+        <entry name="destIp" type="ip" id="4" version="2" defaultvalue="10.6.221.149" />
+    </struct>
+    <macro name="MAX_ATTR_SIZE" value="3" />
+    <struct name="CmdLogout" version="2" id="2" >
+        <entry name="reason" type="bigint" id="1" />
+        <entry name="count" type="int" id="2" defaultvalue="10" />
+        <entry name="attr" type="tinyint" id="3" count="MAX_ATTR_SIZE" refer="count" />
+    </struct>
+    
+    <struct name="TypeTester" sizeinfo="int" version="2" >
+        <entry name="date" type="Date" id="10" />
+        <entry name="time" type="Time" id="20" defaultvalue="14:36:30" />
+        
+        <entry name="int8"              type="int8" id="30" version="3" />
+        <entry name="uint8Array"        type="uint8" id="31" count="3" version="3" />
+        <entry name="int8VarArrayRefer" type="int"  id="32" version="3" />
+        <entry name="int8VarArray"      type="int8" id="33" count="3" refer="int8VarArrayRefer" version="3" />
+
+        <entry name="int"               type="int"  id="40" version="3" defaultvalue="0x7FFFFFFF" />
+        <entry name="uintArray"         type="uint"  id="41" count="3" version="3" />
+        <entry name="intVarArrayRefer"  type="int"  id="42" version="3" />
+        <entry name="intVarArray"       type="int"  id="43" count="3" refer="intVarArrayRefer" version="3" />
+        
+        <entry name="strArray" type="string" id="50" count="2" size="16" version="3" />
+        
+        <entry name="uint64"              type="uint64"  id="60" version="3" />
+        <entry name="int64Array"          type="int64"  id="61" count="3" version="3" />
+        
+        <entry name="float"               type="float"  id="70" version="3" />
+        <entry name="floatArray"          type="float"  id="71" count="3" version="3" />
+        
+        <entry name="double"              type="double"  id="80" version="3" />
+        <entry name="doubleArray"         type="double"  id="81" count="3" version="3" />
+    </struct>
+    <struct name="InnerStruct" sizeinfo="int" version="2" >
+        <entry name="uint64" type="uint64" id="1" />
+        <entry name="uint" type="uint" id="2" />
+    </struct>
+    <struct name="InnerStructList" version="3" >
+        <entry name="count" type="int" id="1" defaultvalue="2" />
+        <entry name="array" type="InnerStruct" count="3" refer="count" id="2" />
+    </struct>
+    <union name="InnerUnion" version="3" >
+        <entry name="field1" type="InnerStruct" count="2" id="1" />
+        <entry name="field2" type="InnerStruct" id="2" />
+    </union>
+    <struct name="CmdXXX" sizeinfo="int" version="2" >
+        <entry name="typeTester" type="TypeTester" id="1" />
+        <entry name="boundary" type="float" id="11" />
+        <entry name="selector" type="int" version="3" id="21" />
+        <entry name="innerUnion" type="InnerUnion" select="selector" version="3" id="22" sizeinfo="int" />
+        <entry name="structArray" type="InnerStructList" version="3" id="31" />
+        <entry name="boundary2" type="float" id="51" version="3" defaultvalue="-3.40282346e+38" />
+    </struct>
+	
+	<struct name="TestInnerStruct1" sizeinfo="int" version="2" >
+        <entry name="int8" type="int8" id="1" />
+        <entry name="double" type="double" id="2" />
+		<entry name="float" type="float" id="3" />
+		<entry name="int16" type="int16" id="4" />
+		<entry name="int32Array" type="int32" count="3" id="5" />
+    </struct>
+	
+	<struct name="TestInnerStruct2" sizeinfo="int" version="2" >
+        <entry name="double" type="double" id="1" />
+        <entry name="int8" type="int8" id="2" />
+		<entry name="int32Array" type="int32" count="3" id="10" />
+		<entry name="int16" type="int16" id="20" />
+		<entry name="float" type="float" id="21" />
+    </struct>
+	
+	<union name="TestUnion" version="3" >
+        <entry name="field1" type="TestInnerStruct1" id="1" />
+        <entry name="field2" type="TestInnerStruct2" id="2" />
+    </union>
+	
+	<struct name="CmdOther" sizeinfo="int" version="2" >
+        <entry name="int8" type="int8" id="1" />
+        <entry name="double" type="float" id="11" />
+        <entry name="selector" type="int" version="3" id="21" />
+        <entry name="testunion" type="TestUnion" select="selector" version="3" id="22" sizeinfo="int" />
+    </struct>
+    
+    <!-- Test version compatibility -->
+    <struct name="TypeTesterPrevious" sizeinfo="int" version="2" >
+        <entry name="date" type="Date" id="10" />
+        <entry name="time" type="Time" id="20" defaultvalue="14:36:30" />
+    </struct>
+    <struct name="CmdXXXPrevious" sizeinfo="int" version="2" >
+        <entry name="typeTester" type="TypeTesterPrevious" id="1" />
+        <entry name="boundary" type="float" id="11" />
+    </struct>
+</metalib>

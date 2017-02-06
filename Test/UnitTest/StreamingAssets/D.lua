@@ -1,0 +1,1 @@
+strValue = "D.lua"

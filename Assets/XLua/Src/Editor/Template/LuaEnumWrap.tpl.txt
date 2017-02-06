@@ -16,6 +16,7 @@ require "TemplateCommon"
 
 namespace CSObjectWrap
 {
+    using Utils = XLua.Utils;
     <%ForEachCsList(types, function(type)
 	local fields = type:GetFields()
 	%>
@@ -29,7 +30,7 @@ namespace CSObjectWrap
 			
 			Utils.BeginClassRegister(typeof(<%=CsFullTypeName(type)%>), L, null, <%=fields.Length + 1%>, 0, 0);
             <% ForEachCsList(fields, function(field) 
-			if field.Name == "value__" then return end
+			if field.Name == "value__" or IsObsolute(field) then return end
 			%>
             Utils.RegisterObject(L, translator, Utils.CLS_IDX, "<%=field.Name%>", <%=CsFullTypeName(type)%>.<%=field.Name%>);
             <%end)%>
@@ -53,7 +54,7 @@ namespace CSObjectWrap
 			    <%
                 local is_first = true
 				ForEachCsList(fields, function(field, i) 
-			        if field.Name == "value__" then return end
+			        if field.Name == "value__" or IsObsolute(field) then return end
 			    %><%=(is_first and "" or "else ")%>if (LuaAPI.xlua_is_eq_str(L, 1, "<%=field.Name%>"))
                 {
                     translator.Push<%=CSVariableName(type)%>(L, <%=CsFullTypeName(type)%>.<%=field.Name%>);

@@ -447,6 +447,25 @@ namespace XLua
                     return translator.CreateInterfaceBridge(L, type, idx);
                 };
             }
+            else if (type.IsEnum)
+            {
+                return (RealStatePtr L, int idx, object target) =>
+                {
+                    object obj = fixTypeGetter(L, idx, target);
+                    if (obj != null) return obj;
+
+                    LuaTypes lua_type = LuaAPI.lua_type(L, idx);
+                    if (lua_type == LuaTypes.LUA_TSTRING)
+                    {
+                        return Enum.Parse(type, LuaAPI.lua_tostring(L, idx));
+                    }
+                    else if (lua_type == LuaTypes.LUA_TNUMBER)
+                    {
+                        return Enum.ToObject(type, LuaAPI.xlua_tointeger(L, idx));
+                    }
+                    throw new InvalidCastException("invalid value for enum " + type);
+                };
+            }
             else if (type.IsArray)
             {
                 return (RealStatePtr L, int idx, object target) =>
@@ -641,21 +660,6 @@ namespace XLua
                     }
 
                     return obj;
-                };
-            }
-            else if (type.IsEnum)
-            {
-                return (RealStatePtr L, int idx, object target) =>
-                {
-                    object obj = fixTypeGetter(L, idx, target);
-                    if (obj == null)
-                    {
-                        throw new InvalidCastException("invalid obj for " + type);
-                    }
-                    else
-                    {
-                        return obj;
-                    }
                 };
             }
             else

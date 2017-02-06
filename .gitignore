@@ -4,6 +4,10 @@
 /Temp
 /Assets/XLua/Gen
 /Assets/XLua/Gen.meta
+Assets/StreamingAssets.meta
+Assets/StreamingAssets/
+Assets/xLuaTest.meta
+Assets/xLuaTest/
 /*.csproj
 /*.sln
 /build/build*
@@ -11,7 +15,7 @@ UnityVS
 /Assets/UnityVS.meta
 .DS_Store
 *.o
-*.a
+/build/*/*.a
 luajit
 buildvm
 minilua

@@ -343,11 +343,15 @@ namespace CSObjectWrapEditor
                 if (mb.DeclaringType.FullName == exclude[0] && mb.Name == exclude[1])
                 {
                     var parameters = mb.GetParameters();
+                    if (parameters.Length != exclude.Count - 2)
+                    {
+                        continue;
+                    }
                     bool paramsMatch = true;
 
                     for (int i = 0; i < parameters.Length; i++)
                     {
-                        if (i + 2 >= exclude.Count || parameters[i].ParameterType.FullName != exclude[i + 2])
+                        if (parameters[i].ParameterType.FullName != exclude[i + 2])
                         {
                             paramsMatch = false;
                             break;
@@ -478,6 +482,32 @@ namespace CSObjectWrapEditor
             };
         }
 
+        static bool isNotPublic(Type type)
+        {
+            if (type.IsByRef || type.IsArray)
+            {
+                return isNotPublic(type.GetElementType());
+            }
+            else
+            {
+                if ((!type.IsNested && !type.IsPublic) || (type.IsNested && !type.IsNestedPublic))
+                {
+                    return true;
+                }
+                if (type.IsGenericType)
+                {
+                    foreach (var ga in type.GetGenericArguments())
+                    {
+                        if (isNotPublic(ga))
+                        {
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            }
+        }
+
         static MethodInfoSimulation makeHotfixMethodInfoSimulation(MethodBase hotfixMethod, HotfixFlag hotfixType)
         {
             Type retTypeExpect = (hotfixType == HotfixFlag.Stateful && hotfixMethod.IsConstructor && !hotfixMethod.IsStatic)
@@ -519,7 +549,8 @@ namespace CSObjectWrapEditor
                     Name = param.Name,
                     IsOut = param.IsOut,
                     IsIn = param.IsIn,
-                    ParameterType = (param.ParameterType.IsByRef || param.ParameterType.IsValueType) ? param.ParameterType : typeof(object),
+                    ParameterType = (param.ParameterType.IsByRef || param.ParameterType.IsValueType
+                      || param.IsDefined(typeof(System.ParamArrayAttribute), false)) ? param.ParameterType : typeof(object),
                     IsParamArray = param.IsDefined(typeof(System.ParamArrayAttribute), false)
                 };
                 if (param.IsOut)
@@ -573,6 +604,16 @@ namespace CSObjectWrapEditor
                 return obj.HashCode;
             }
         }
+
+        static bool hasNotPublicTypeRetOrParam(MethodInfo method)
+        {
+            if (isNotPublic(method.ReturnType)) return true;
+            foreach(var param in method.GetParameters())
+            {
+                if (isNotPublic(param.ParameterType)) return true;
+            }
+            return false;
+        }
         
         static void GenDelegateBridge(IEnumerable<Type> types, string save_path)
         {
@@ -580,13 +621,24 @@ namespace CSObjectWrapEditor
             StreamWriter textWriter = new StreamWriter(filePath, false, Encoding.UTF8);
             var delegates = types.Select(wrap_type => makeMethodInfoSimulation(wrap_type.GetMethod("Invoke")));
             var hotfxDelegates = new List<MethodInfoSimulation>();
-            foreach (var type in (from type in Utils.GetAllTypes() where type.IsDefined(typeof(HotfixAttribute), false) select type))
+            foreach (var type in (from type in Utils.GetAllTypes(false) where type.IsDefined(typeof(HotfixAttribute), false) select type))
             {
                 var hotfixType = ((type.GetCustomAttributes(typeof(HotfixAttribute), false)[0]) as HotfixAttribute).Flag;
                 hotfxDelegates.AddRange(type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly | BindingFlags.NonPublic)
+                    .Where(method => !hasNotPublicTypeRetOrParam(method))
                     .Cast<MethodBase>()
                     .Concat(type.GetConstructors(BindingFlags.Instance | BindingFlags.Public).Cast<MethodBase>())
-                    .Where(method => !method.ContainsGenericParameters).Select(method => makeHotfixMethodInfoSimulation(method, hotfixType)));
+                    .Where(method => !method.ContainsGenericParameters && !(type.IsGenericTypeDefinition && (method.IsConstructor || hotfixType == HotfixFlag.Stateless)))
+                    .Select(method => makeHotfixMethodInfoSimulation(method, hotfixType)));
+            }
+            foreach (var kv in HotfixCfg)
+            {
+                hotfxDelegates.AddRange(kv.Key.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly | BindingFlags.NonPublic)
+                    .Where(method => !hasNotPublicTypeRetOrParam(method))
+                    .Cast<MethodBase>()
+                    .Concat(kv.Key.GetConstructors(BindingFlags.Instance | BindingFlags.Public).Cast<MethodBase>())
+                    .Where(method => !method.ContainsGenericParameters && !(kv.Key.IsGenericTypeDefinition && (method.IsConstructor || kv.Value == HotfixFlag.Stateless)))
+                    .Select(method => makeHotfixMethodInfoSimulation(method, kv.Value)));
             }
             hotfxDelegates = hotfxDelegates.Distinct(new MethodInfoSimulationComparer()).ToList();
             GenOne(typeof(DelegateBridge), (type, type_info) =>
@@ -845,6 +897,8 @@ namespace CSObjectWrapEditor
 
         public static List<Type> ReflectionUse = null;
 
+        public static Dictionary<Type, HotfixFlag> HotfixCfg = null;
+
         static void AddToList(List<Type> list, Func<object> get)
         {
             object obj = get();
@@ -880,6 +934,24 @@ namespace CSObjectWrapEditor
             if (test.IsDefined(typeof(ReflectionUseAttribute), false))
             {
                 AddToList(ReflectionUse, get_cfg);
+            }
+            if (test.IsDefined(typeof(HotfixAttribute), false))
+            {
+                object cfg = get_cfg();
+                if (cfg is IEnumerable<Type>)
+                {
+                    var hotfixType = ((test.GetCustomAttributes(typeof(HotfixAttribute), false)[0]) as HotfixAttribute).Flag;
+                    foreach (var type in cfg as IEnumerable<Type>)
+                    {
+                        if (!HotfixCfg.ContainsKey(type) && !isObsolete(type) 
+                            && !type.IsEnum && !typeof(Delegate).IsAssignableFrom(type)
+                            && (!type.IsGenericType || type.IsGenericTypeDefinition) 
+                            && (type.Module.Assembly.GetName().Name == "Assembly-CSharp"))
+                        {
+                            HotfixCfg.Add(type, hotfixType);
+                        }
+                    }
+                }
             }
             if (test.IsDefined(typeof(BlackListAttribute), false)
                         && (typeof(List<List<string>>)).IsAssignableFrom(cfg_type))
@@ -917,7 +989,9 @@ namespace CSObjectWrapEditor
             {
             };
 
-            foreach(var t in Utils.GetAllTypes())
+            HotfixCfg = new Dictionary<Type, HotfixFlag>();
+
+            foreach (var t in Utils.GetAllTypes())
             {
                 if(!t.IsInterface && typeof(GenConfig).IsAssignableFrom(t))
                 {

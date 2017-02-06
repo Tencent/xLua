@@ -76,12 +76,64 @@ public class GenericClass<T>
 
     public void Func1()
     {
-
+        Debug.Log("a=" + a);
     }
 
     public T Func2()
     {
         return default(T);
+    }
+}
+
+[Hotfix]
+public class InnerTypeTest
+{
+    public void Foo()
+    {
+        _InnerStruct ret = Bar();
+        Debug.Log("{x=" + ret.x + ",y= " + ret.y + "}");
+    }
+
+    struct _InnerStruct
+    {
+        public int x;
+        public int y;
+    }
+
+    _InnerStruct Bar()
+    {
+        return new _InnerStruct { x = 1, y = 2 };
+    }
+}
+
+[Hotfix]
+public struct StructTest
+{
+    GameObject go;
+    public StructTest(GameObject go)
+    {
+        this.go = go;
+    }
+
+    public GameObject GetGo(int a, object b)
+    {
+        return go;
+    }
+}
+
+[Hotfix(HotfixFlag.Stateful)]
+public struct GenericStruct<T>
+{
+    T a;
+
+    public GenericStruct(T a)
+    {
+        this.a = a;
+    }
+
+    public T GetA(int p)
+    {
+        return a;
     }
 }
 
@@ -260,7 +312,44 @@ public class HotfixTest2 : MonoBehaviour {
         genericObj.Func1();
         Debug.Log(genericObj.Func2());
 
-        calc.TestOut(100, out num, ref str, gameObject);
+        InnerTypeTest itt = new InnerTypeTest();
+        itt.Foo();
+        luaenv.DoString(@"
+            xlua.hotfix(CS.InnerTypeTest, 'Bar', function(obj)
+                    print('lua Bar', obj)
+                    return {x = 10, y = 20}
+                end)
+        ");
+        itt.Foo();
+
+        StructTest st = new StructTest(gameObject);
+        Debug.Log("go=" + st.GetGo(123, "john"));
+        luaenv.DoString(@"
+            xlua.hotfix(CS.StructTest, 'GetGo', function(self, a, b)
+                    print('GetGo', self, a, b)
+                    return nil
+                end)
+        ");
+        Debug.Log("go=" + st.GetGo(123, "john"));
+
+        GenericStruct<int> gs = new GenericStruct<int>(1);
+        Debug.Log("gs.GetA()=" + gs.GetA(123));
+        luaenv.DoString(@"
+            xlua.hotfix(CS['GenericStruct`1[System.Int32]'], 'GetA', function(self, a)
+                    print('GetA',self, a)
+                    return 789
+                end)
+        ");
+        Debug.Log("gs.GetA()=" + gs.GetA(123));
+
+        try
+        {
+            calc.TestOut(100, out num, ref str, gameObject);
+        }
+        catch(LuaException e)
+        {
+            Debug.Log("throw in lua an catch in c# ok, e.Message:" + e.Message);
+        }
     }
 
     void TestStateful()

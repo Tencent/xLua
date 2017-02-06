@@ -285,6 +285,29 @@ LUA_API int xlua_psettable_bypath(lua_State* L, int idx, const char *path) {
     return lua_pcall(L, 3, 0, 0);
 }
 
+static int c_lua_getglobal(lua_State* L) {
+	lua_getglobal(L, lua_tostring(L, 1));
+	return 1;
+}
+
+LUA_API int xlua_getglobal (lua_State *L, const char *name) {
+	lua_pushcfunction(L, c_lua_getglobal);
+	lua_pushstring(L, name);
+	return lua_pcall(L, 1, 1, 0);
+}
+
+static int c_lua_setglobal(lua_State* L) {
+	lua_setglobal(L, lua_tostring(L, 1));
+	return 0;
+}
+
+LUA_API int xlua_setglobal (lua_State *L, const char *name) {
+	lua_pushcfunction(L, c_lua_setglobal);
+	lua_pushstring(L, name);
+	lua_pushvalue(L, -3);
+	return lua_pcall(L, 2, 0, 0);
+}
+
 LUA_API int xlua_tryget_cachedud(lua_State *L, int key, int cache_ref) {
 	lua_rawgeti(L, LUA_REGISTRYINDEX, cache_ref);
 	lua_rawgeti(L, -1, key);
@@ -477,7 +500,7 @@ LUA_API int obj_newindexer(lua_State *L) {
 		lua_call(L, 3, 0);
 		return 0;
 	} else {
-		return luaL_error(L, "cannot set %s, no suck field", lua_tostring(L, 2));
+		return luaL_error(L, "cannot set %s, no such field", lua_tostring(L, 2));
 	}
 }
 

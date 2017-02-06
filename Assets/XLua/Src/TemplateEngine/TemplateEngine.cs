@@ -244,7 +244,10 @@ namespace TemplateEngine
             LuaAPI.xlua_pushasciistring(L, "execute");
             LuaAPI.lua_pushstdcallcfunction(L, templateExecuteFunction);
             LuaAPI.lua_rawset(L, -3);
-            LuaAPI.lua_setglobal(L, "template");
+            if (0 != LuaAPI.xlua_setglobal(L, "template"))
+            {
+                throw new Exception("call xlua_setglobal fail!");
+            }
         }
     }
 }

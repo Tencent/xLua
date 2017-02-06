@@ -1,0 +1,61 @@
+<?xml version="1.0" ?>
+<metalib name="net" version="4" >
+    <include file="non_tlv_net_msg_type.xml" />
+    <struct name="PkgHead" version="1" id="3" desc="package header" >
+        <entry name="magic" type="smallint" id="1" defaultvalue="13124" />
+        <entry name="msgid" type="biguint" id="2" />
+        <entry name="cmd" type="smallint" id="3" />
+        <entry name="version" type="smallint" id="4" />
+        <entry name="bodyLen" type="smallint" id="5" />
+        <entry name="datetime" type="datetime" id="6" version="2" />
+        <entry name="srcIp" type="ip" id="7" version="3" />
+		<entry name="destIp" type="ip" id="8" version="4" />
+    </struct>
+    <macrosgroup name="NET_CMD_ID" >
+        <macro name="CMD_LOGIN" value="1" />
+        <macro name="CMD_LOGOUT" value="2" />
+        <macro name="CMD_STRUCT" value="3" />
+        <macro name="CMD_EXT1" value="13" />
+        <macro name="CMD_EXT2_MIN" value="70" />
+        <macro name="CMD_EXT2_MAX" value="80" />
+        <macro name="CMD_EXT3" value="15" />
+        <macro name="CMD_EXT4" value="100" />
+    </macrosgroup>
+    <union name="PkgBody" version="2" id="4" desc="pakcage body" >
+        <entry name="login" type="CmdLogin" id="CMD_LOGIN" sizeinfo="smalluint" />
+        <entry name="logout" type="CmdLogout" id="CMD_LOGOUT" sizeinfo="smalluint" />
+        <entry name="xxx" type="CmdXXX" id="CMD_STRUCT" />
+        <!-- no id --><entry name="ext1" type="int" version="3" />
+        <!-- minid & maxid --><entry name="ext2" type="byte" minid="CMD_EXT2_MIN" maxid="CMD_EXT2_MAX" count="3" version="3" />
+        <entry name="ext3" type="string" id="CMD_EXT3" size="40" count="2" defaultvalue="string: ext3" version="3" />
+        <entry name="ext4" type="string" id="CMD_EXT4" size="40" version="3" />
+    </union>
+    <macrosgroup name="PKG_ID" >
+        <macro name="PKG_HEADER" value="1" />
+        <macro name="PKG_BODY" value="2" />
+    </macrosgroup>
+    <struct name="Pkg" versionindicator="head.version" version="1" id="5" sizeinfo="int" >
+        <entry name="head" type="PkgHead" id="PKG_HEADER" />
+        <entry name="body" type="PkgBody" id="PKG_BODY" select="head.cmd" version="2" sizeinfo="head.bodyLen" />
+    </struct>
+    
+    
+    <!-- Test version compatibility -->
+    <struct name="PkgHeadPrevious" version="1" id="103" desc="package header" >
+        <entry name="magic" type="smallint" id="1" defaultvalue="13124" />
+        <entry name="msgid" type="biguint" id="2" />
+        <entry name="cmd" type="smallint" id="3" />
+        <entry name="version" type="smallint" id="4" />
+        <entry name="bodyLen" type="smallint" id="5" />
+        <entry name="datetime" type="datetime" id="6" version="2" />
+    </struct>
+    <union name="PkgBodyPrevious" version="2" id="104" desc="pakcage body" >
+        <entry name="login" type="CmdLogin" id="CMD_LOGIN" sizeinfo="smalluint" />
+        <entry name="logout" type="CmdLogout" id="CMD_LOGOUT" sizeinfo="smalluint" />
+        <entry name="xxx" type="CmdXXXPrevious" id="CMD_STRUCT" />
+    </union>
+    <struct name="PkgPrevious" versionindicator="head.version" version="1" id="105" sizeinfo="int" >
+        <entry name="head" type="PkgHeadPrevious" id="PKG_HEADER" />
+        <entry name="body" type="PkgBodyPrevious" id="PKG_BODY" select="head.cmd" version="2" sizeinfo="head.bodyLen" />
+    </struct>
+</metalib>

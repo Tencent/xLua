@@ -1,0 +1,1 @@
+strFile = "E.lua"

@@ -156,6 +156,9 @@ function CsFullTypeName(t)
 end
 
 function CSVariableName(t)
+    if t.IsArray then
+	    return CSVariableName(t:GetElementType()) .. '_'.. t:GetArrayRank() ..'_'
+	end
     return t:ToString():gsub("&", ""):gsub("%+", ""):gsub("`", "_"):gsub("%.", ""):gsub("%[", ""):gsub("%]", ""):gsub(",", "")
 end
 
@@ -242,6 +245,11 @@ end
 local paramsAttriType = typeof(CS.System.ParamArrayAttribute)
 function IsParams(pi)
     return pi:IsDefined(paramsAttriType, false)
+end
+
+local obsoluteAttriType = typeof(CS.System.ObsoleteAttribute)
+function IsObsolute(f)
+    return f:IsDefined(obsoluteAttriType, false)
 end
 
 local objectType = typeof(CS.System.Object)

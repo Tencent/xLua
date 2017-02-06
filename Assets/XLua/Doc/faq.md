@@ -30,6 +30,24 @@ ios和osx需要在mac下编译。
 
 解决办法，确认XXX（类型名）加上CSharpCallLua后，清除代码后运行。
 
+## hotfix下怎么触发一个event
+
+首先通过xlua.private_accessible开启私有成员访问。
+
+跟着通过对象的"&事件名"字段调用delegate，例如self\['&MyEvent'\]()，其中MyEvent是事件名。
+
+## 怎么对Unity Coroutine的实现函数打补丁？
+
+见hotfix.md相应章节。
+
+## 支持NGUI（或者UGUI/DOTween等等）么？
+
+支持，xLua最主要的特性是让你原来用C#写的地方可以换成用lua写，你C#能用的插件，基本都能用。
+
+## 如果需要调试，CustomLoader的filepath参数该如何处理？
+
+lua里头调用require 'a.b'时，CustomLoader会被调用，并传入字符串"a.b"，你需要理解这字符串，（从文件/内存，网络等）加载好lua文件，返回两个东西，第一个是调试器可以理解的路径，比如：a/b.lua，这个通过设置ref类型的filepath参数返回，第二个是UTF8格式的源码的字节流（byte[]），通过返回值返回。
+
 ## 什么是生成代码？
 
 xLua支持的lua和C#间交互技术之一，这种技术通过生成两者间的适配代码来实现交互，性能较好，是推荐的方式。

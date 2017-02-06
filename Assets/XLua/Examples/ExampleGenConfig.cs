@@ -55,6 +55,7 @@ public static class ExampleGenConfig
                 typeof(Action<string>),
                 typeof(Action<double>),
                 typeof(UnityEngine.Events.UnityAction),
+                typeof(System.Collections.IEnumerator)
             };
 
     //黑名单
@@ -77,5 +78,6 @@ public static class ExampleGenConfig
                 new List<string>(){"System.IO.DirectoryInfo", "SetAccessControl", "System.Security.AccessControl.DirectorySecurity"},
                 new List<string>(){"System.IO.DirectoryInfo", "CreateSubdirectory", "System.String", "System.Security.AccessControl.DirectorySecurity"},
                 new List<string>(){"System.IO.DirectoryInfo", "Create", "System.Security.AccessControl.DirectorySecurity"},
+                new List<string>(){"UnityEngine.MonoBehaviour", "runInEditMode"},
             };
 }

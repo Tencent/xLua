@@ -6,7 +6,7 @@ using XLua;
 public class HotfixTest : MonoBehaviour {
     LuaEnv luaenv = new LuaEnv();
 
-    int tick = 0;
+    public int tick = 0; //如果是private的，在lua设置xlua.private_accessible(CS.HotfixTest)后即可访问
 
     // Use this for initialization
     void Start () {
@@ -25,11 +25,10 @@ public class HotfixTest : MonoBehaviour {
         if (GUI.Button(new Rect(10, 100, 300, 150), "Hotfix"))
         {
             luaenv.DoString(@"
-                local tick = 0
-                xlua.hotfix(CS.HotfixTest, 'Update', function()
-                    tick = tick + 1
-                    if (tick % 50) == 0 then
-                        print('<<<<<<<<Update in lua, tick = ' .. tick)
+                xlua.hotfix(CS.HotfixTest, 'Update', function(self)
+                    self.tick = self.tick + 1
+                    if (self.tick % 50) == 0 then
+                        print('<<<<<<<<Update in lua, tick = ' .. self.tick)
                     end
                 end)
             ");

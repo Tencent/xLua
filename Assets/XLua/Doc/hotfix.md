@@ -1,16 +1,12 @@
 ## 约束
 
-为了不影响开发，这个特性默认是不打开的，需要添加HOTFIX_ENABLE宏（在Unity3D的File->Build Setting->Scripting Define Symbols下添加）。
+为了不影响开发，这个特性默认是关闭的，需要添加HOTFIX_ENABLE宏打开（在Unity3D的File->Build Setting->Scripting Define Symbols下添加）。使用该特性的切记build手机版本时不要忘记了！
 
-打开HOTFIX_ENABLE后由于il和源代码已经对应不上，所以（双击Unity3D日志）代码会定位到错误的地方，调试功能工作也不正常。
+热补丁特性依赖Cecil，添加HOTFIX_ENABLE宏之后，可能会报找不到Cecil。这时你需要到Unity安装目录下找到Mono.Cecil.dll，Mono.Cecil.Pdb.dll，Mono.Cecil.Mdb.dll，拷贝到项目里头。
 
-打开HOTFIX_DEBUG_SYMBOLS可以解决il和源代码对应不上的问题，但如果在编辑器下运行过后在修改代码，会报Assembly-CSharp.dll.mdb的写冲突错误。
+热补丁需要执行XLua/Generate Code才能正常运行。（建议的开发方式是平时不打开HOTFIX_ENABLE，这样不用生成代码，开发更便捷，build手机版本或者要在编译器下开发补丁时打开HOTFIX_ENABLE）
 
-建议的做法是HOTFIX_ENABLE，HOTFIX_DEBUG_SYMBOLS在build手机版本的时候打开，平时编辑器下需要开发补丁的时候打开HOTFIX_ENABLE，开发补丁时需要调试的时候打开HOTFIX_DEBUG_SYMBOLS。
-
-热更特性依赖Cecil，添加HOTFIX_ENABLE宏之后，可能会报找不到Cecil。这时你需要到Unity安装目录下找到Mono.Cecil.dll，拷贝到项目里头。而HOTFIX_DEBUG_SYMBOLS则依赖Mono.Cecil.Pdb.dll，Mono.Cecil.Mdb.dll。
-
-参考：
+参考命令（可能Unity版本不同会略有不同，把别的Unity版本带的拷贝过来试了也能用，比如有的老版本Unity是不带Mono.Cecil.Pdb.dll，Mono.Cecil.Mdb.dll的，这时可以把新版本带的整套拷贝过来）：
 
 ```shell
 OSX命令行 cp /Applications/Unity/Unity.app/Contents/Managed/Mono.Cecil.* Project/Assets/XLua/Src/Editor/
@@ -26,13 +22,46 @@ Win命令行 copy UnityPath\Editor\Data\Managed\Mono.Cecil.* Project\Assets\XLua
 ## API
 xlua.hotfix(class, [method_name], fix)
 
-* class        ： C#类；
+* 描述         ： 注入lua补丁
+* class        ： C#类，两种表示方法，CS.Namespace.TypeName或者字符串方式"Namespace.TypeName"，字符串格式和C#的Type.GetType要求一致，如果是内嵌类型（Nested Type）是非Public类型的话，只能用字符串方式表示"Namespace.TypeName+NestedTypeName"；
 * method_name  ： 方法名，可选；
 * fix          ： 如果传了method_name，fix将会是一个function，否则通过table提供一组函数。table的组织按key是method_name，value是function的方式。
 
+xlua.private_accessible(class)
+
+* 描述          ： 让一个类的私有字段，属性，方法等可用
+* class         ： 同xlua.hotfix的class参数
+
 ## 标识要热更新的类型
 
-打上Hotfix标签即可。
+和其它配置一样，有两种方式
+
+方式一：直接在类里头打Hotfix标签；
+
+方式二：在一个static类的static字段或者属性里头配置一个列表。属性可以用于实现的比较复杂的配置，比如根据Namespace做白名单。
+
+~~~csharp
+public static class HotfixCfg
+{
+    [Hotfix]
+    public static List<Type> by_field = new List<Type>()
+    {
+        typeof(HotFixSubClass),
+        typeof(GenericClass<>),
+    };
+
+    [Hotfix]
+    public static List<Type> by_property
+    {
+        get
+        {
+            return (from type in Assembly.GetExecutingAssembly().GetTypes()
+                    where type.Namespace == "XXXX"
+                    select type).ToList();
+        }
+    }
+}
+~~~
 
 ## Stateless和Stateful
 
@@ -113,6 +142,8 @@ C#的操作符都有一套内部表示，比如+号的操作符函数名是op_Ad
 
 比如对于事件“AEvent”，+=操作符是add_AEvent，-=对应的是remove_AEvent。这两个函数均是第一个参数是self，第二个参数是操作符后面跟的delegate。
 
+通过xlua.private_accessible来直接访问事件对应的私有delegate的直接访问后，可以通过对象的"&事件名"字段直接触发事件，例如self\['&MyEvent'\]()，其中MyEvent是事件名。
+
 * 析构函数
 
 method_name是"Finalize"，传一个self参数。
@@ -151,6 +182,40 @@ luaenv.DoString(@"
     })
 ");
 ```
+
+* Unity协程
+
+通过util.cs_generator可以用一个function模拟一个IEnumerator，在里头用coroutine.yield，就类似C#里头的yield return。比如下面的C#代码和对应的hotfix代码是等同效果的
+
+~~~csharp
+[XLua.Hotfix]
+public class HotFixSubClass : MonoBehaviour {
+    IEnumerator Start()
+    {
+        while (true)
+        {
+            yield return new WaitForSeconds(3);
+            Debug.Log("Wait for 3 seconds");
+        }
+    }
+}
+~~~
+
+~~~csharp
+luaenv.DoString(@"
+    local util = require 'xlua.util'
+	xlua.hotfix(CS.HotFixSubClass,{
+		Start = function(self)
+			return util.cs_generator(function()
+			    while true do
+				    coroutine.yield(CS.UnityEngine.WaitForSeconds(3))
+                    print('Wait for 3 seconds')
+                end				
+			end
+		end;
+	})
+");
+~~~
 
 * 整个类
 
@@ -205,3 +270,4 @@ xlua.hotfix(CS.StatefullTest, {
 })
 
 ```
+
