@@ -14,7 +14,7 @@ public class GenericMethodExample : MonoBehaviour
         foo1:Extension2(foo2) -- overload2
         
         local foo = CS.Foo()
-        foo:Test1()
+        foo:Test1(foo1)
         foo:Test2(foo1,foo2,obj)
 ";
     private LuaEnv env;

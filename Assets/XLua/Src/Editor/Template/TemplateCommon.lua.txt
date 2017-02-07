@@ -165,10 +165,22 @@ function CSVariableName(t)
     return t:ToString():gsub("&", ""):gsub("%+", ""):gsub("`", "_"):gsub("%.", ""):gsub("%[", ""):gsub("%]", ""):gsub(",", "")
 end
 
+local function getSafeFullName(t)
+    if t == nil then
+        return ""
+    end
+
+    if t.IsGenericParameter then
+        return getSafeFullName(t.BaseType)
+    end
+
+    return t.FullName:gsub("&", "")
+end
+
 function GetCheckStatement(t, idx, is_v_params)
     local cond_start = is_v_params and "(LuaTypes.LUA_TNONE == LuaAPI.lua_type(L, ".. idx ..") || " or ""
 	local cond_end = is_v_params and ")" or ""
-    local testname = t.FullName:gsub("&", "")
+    local testname = getSafeFullName(t)
     if testname ==  "System.String" or testname == "System.Byte[]" then
         return cond_start .. "(LuaAPI.lua_isnil(L, " .. idx .. ") || LuaAPI.lua_type(L, ".. idx ..") == LuaTypes.LUA_TSTRING)" .. cond_end
     elseif testname == "System.Int64" then
@@ -213,7 +225,7 @@ function NeedUpdate(t)
 end
 
 function GetCasterStatement(t, idx, var_name, need_declare, is_v_params)
-    local testname = t.FullName:gsub("&", "")
+    local testname = getSafeFullName(t)
 	local statement = ""
     local is_struct = IsStruct(t)
 	
@@ -269,18 +281,6 @@ function GetSelfStatement(t)
         end
 	end
     
-end
-
-local function getSafeFullName(t)
-    if t == nil then
-        return ""
-    end
-
-    if t.IsGenericParameter then
-        return getSafeFullName(t.BaseType)
-    end
-
-    return t.FullName:gsub("&", "")
 end
 
 function GetPushStatement(t, variable, is_v_params)

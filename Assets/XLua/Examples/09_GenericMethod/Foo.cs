@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Collections.Generic;
 using UnityEngine;
 using XLua;
 
@@ -28,7 +29,7 @@ public class Foo
 {
     #region Supported methods
 
-    public void Test1<T>() where T : Foo1Parent
+    public void Test1<T>(T a) where T : Foo1Parent
     {
         Debug.Log(string.Format("Test1<{0}>", typeof (T)));
     }
@@ -43,30 +44,28 @@ public class Foo
 
     #region Unsupported methods
 
+    /// <summary>
+    /// 不支持生成lua的泛型方法（没有泛型约束）
+    /// </summary>
     public void UnsupportedMethod1<T>(T a)
     {
-        Debug.Log("Test");
+        Debug.Log("UnsupportedMethod1");
     }
 
     /// <summary>
-    /// 不支持生成lua的泛型方法（泛型约束必须在生成列表）
+    /// 不支持生成lua的泛型方法（缺少带约束的泛型参数）
     /// </summary>
-    public void UnsupportedMethod2<T>(T a) where T : new()
+    public void UnsupportedMethod2<T>() where T : Foo1Parent
     {
-    }
-
-    /// <summary>
-    /// 不支持生成lua的泛型方法（生成列表里没有包含<see cref="StreamReader"/>类型）
-    /// </summary>
-    public void UnsupportedMethod3<T>(T a) where T : StreamReader
-    {
+        Debug.Log(string.Format("UnsupportedMethod2<{0}>",typeof(T)));
     }
 
     /// <summary>
     /// 不支持生成lua的泛型方法（泛型约束必须为class）
     /// </summary>
-    public void UnsupportedMethod4<T>(T a) where T : IDisposable
+    public void UnsupportedMethod3<T>(T a) where T : IDisposable
     {
+        Debug.Log(string.Format("UnsupportedMethod3<{0}>", typeof(T)));
     }
 
     #endregion

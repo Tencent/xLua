@@ -417,7 +417,7 @@ namespace XLua
 
                 extension_method_map = (from type in type_def_extention_method
                                         from method in type.GetMethods(BindingFlags.Static | BindingFlags.Public)
-                                        where isSupportedExtensionMethod(method)
+                                        where IsSupportedExtensionMethod(method)
                                         group method by getExtendedType(method)).ToDictionary(g => g.Key, g => g as IEnumerable<MethodInfo>);
             }
             IEnumerable<MethodInfo> ret = null;
@@ -1211,7 +1211,7 @@ namespace XLua
             return true;
         }
 
-        public static bool isSupportedExtensionMethod(MethodBase method)
+        public static bool IsSupportedExtensionMethod(MethodBase method)
         {
             if (!method.IsDefined(typeof(ExtensionAttribute), false))
                 return false;
@@ -1222,6 +1222,38 @@ namespace XLua
             {
                 var parameterType = methodParameters[i].ParameterType;
                 if (parameterType.IsGenericParameter)
+                {
+                    var parameterConstraints = parameterType.GetGenericParameterConstraints();
+                    if (parameterConstraints.Length == 0 || !parameterConstraints[0].IsClass)
+                        return false;
+                }
+            }
+            return true;
+        }
+
+        public static bool IsSupportedExtensionMethod(MethodBase method,Type extendedType)
+        {
+            if (!method.IsDefined(typeof(ExtensionAttribute), false))
+                return false;
+            var methodParameters = method.GetParameters();
+            if (methodParameters.Length < 1)
+                return false;
+
+            for (var i = 0; i < methodParameters.Length; i++)
+            {
+                var parameterType = methodParameters[i].ParameterType;
+                if (i == 0)
+                {
+                    if (parameterType.IsGenericParameter)
+                    {
+                        var parameterConstraints = parameterType.GetGenericParameterConstraints();
+                        if (parameterConstraints.Length == 0 || !parameterConstraints[0].IsAssignableFrom(extendedType))
+                            return false;
+                    }
+                    else if (!parameterType.IsAssignableFrom(extendedType))
+                        return false;
+                }
+                else if (parameterType.IsGenericParameter)
                 {
                     var parameterConstraints = parameterType.GetGenericParameterConstraints();
                     if (parameterConstraints.Length == 0 || !parameterConstraints[0].IsClass)
