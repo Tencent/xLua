@@ -453,14 +453,34 @@ namespace XLua
             List<OverloadMethodWrap> overloads = new List<OverloadMethodWrap>();
             foreach(var methodBase in methodBases)
             {
-                if (methodBase is MethodBase && !(methodBase as MethodBase).ContainsGenericParameters)
-                {
-                    var overload = new OverloadMethodWrap(translator, type, methodBase as MethodBase);
-                    overload.Init(objCheckers, objCasters);
-                    overloads.Add(overload);
-                }
+                var mb = methodBase as MethodBase;
+                if (mb == null)
+                    continue;
+
+                if (mb.ContainsGenericParameters && !tryMakeGenericMethod(ref mb))
+                    continue;
+
+                var overload = new OverloadMethodWrap(translator, type, mb);
+                overload.Init(objCheckers, objCasters);
+                overloads.Add(overload);
             }
             return new MethodWrap(methodName, overloads);
+        }
+
+        private static bool tryMakeGenericMethod(ref MethodBase method)
+        {
+            var genericArguments = method.GetGenericArguments();
+            var constraintedArgumentTypes = new Type[genericArguments.Length];
+            for (var i = 0; i < genericArguments.Length; i++)
+            {
+                var argumentType = genericArguments[i];
+                var parameterConstraints = argumentType.GetGenericParameterConstraints();
+                if (parameterConstraints.Length == 0 || !parameterConstraints[0].IsClass)
+                    return false;
+                constraintedArgumentTypes[i] = parameterConstraints[0];
+            }
+            method = ((MethodInfo)method).MakeGenericMethod(constraintedArgumentTypes);
+            return true;
         }
     }
 }

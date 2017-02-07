@@ -131,14 +131,13 @@ namespace CSObjectWrapEditor
 
                 type_has_extension_methods = from type in gen_types
                                              where type.GetMethods(BindingFlags.Static | BindingFlags.Public)
-                                                    .Any(method => !method.ContainsGenericParameters && method.IsDefined(typeof(ExtensionAttribute), false))
+                                                    .Any(method => Utils.IsSupportedExtensionMethod(method))
                                              select type;
             }
             return from type in type_has_extension_methods
                    where type.IsSealed && !type.IsGenericType && !type.IsNested
                         from method in type.GetMethods(BindingFlags.Static | BindingFlags.Public)
-                        where !method.ContainsGenericParameters && method.IsDefined(typeof(ExtensionAttribute), false)
-                        where method.GetParameters()[0].ParameterType == extendedType
+                        where Utils.IsSupportedExtensionMethod(method, extendedType)
                         select method;
         }
 
@@ -192,10 +191,10 @@ namespace CSObjectWrapEditor
                 methodNames.Remove("set_" + setter.Name);
             }
             List<string> extension_methods_namespace = new List<string>();
-            var extension_methods = GetExtensionMethods(type);
+            var extension_methods = GetExtensionMethods(type).ToArray();
             foreach(var extension_method in extension_methods)
             {
-                if (extension_method.DeclaringType.Namespace != null 
+                if (extension_method.DeclaringType.Namespace != null
                     && extension_method.DeclaringType.Namespace != "System.Collections.Generic"
                     && extension_method.DeclaringType.Namespace != "XLua")
                 {
@@ -206,11 +205,12 @@ namespace CSObjectWrapEditor
 
             //warnning: filter all method start with "op_"  "add_" "remove_" may  filter some ordinary method
             parameters.Set("methods", type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.IgnoreCase | BindingFlags.DeclaredOnly)
-                .Where(method=> !method.IsDefined(typeof(System.Runtime.CompilerServices.ExtensionAttribute), false) || method.DeclaringType != type)
+                .Where(method => !method.IsDefined(typeof (ExtensionAttribute), false) || method.DeclaringType != type)
                 .Where(method => methodNames.ContainsKey(method.Name)) //GenericMethod can not be invoke becuase not static info available!
                 .Concat(extension_methods)
-                .Where(method =>!isMethodInBlackList(method) && !method.IsGenericMethod && !isObsolete(method) && !method.Name.StartsWith("op_") && !method.Name.StartsWith("add_") && !method.Name.StartsWith("remove_"))
-                .GroupBy(method => (method.Name + ((method.IsStatic && !method.IsDefined(typeof(System.Runtime.CompilerServices.ExtensionAttribute), false)) ? "_xlua_st_" : "")), (k, v) => {
+                .Where(method => !isMethodInBlackList(method) && (!method.IsGenericMethod || extension_methods.Contains(method) || isSupportedGenericMethod(method)) && !isObsolete(method) && !method.Name.StartsWith("op_") && !method.Name.StartsWith("add_") && !method.Name.StartsWith("remove_"))
+                .GroupBy(method => (method.Name + ((method.IsStatic && !method.IsDefined(typeof (ExtensionAttribute), false)) ? "_xlua_st_" : "")), (k, v) =>
+                {
                     var overloads = new List<MethodBase>();
                     List<int> def_vals = new List<int>();
                     foreach (var overload in v.Cast<MethodBase>().OrderBy(mb => OverloadCosting(mb)))
@@ -1213,27 +1213,46 @@ namespace CSObjectWrapEditor
             AssetDatabase.Refresh();
         }
 
-    }
-
-    [InitializeOnLoad]
-    public class Startup
-    {
-
-        static Startup()
+        private static bool isSupportedGenericMethod(MethodInfo method)
         {
-            EditorApplication.update += Update;
-        }
-
-
-        static void Update()
-        {
-            EditorApplication.update -= Update;
-
-            if (!System.IO.File.Exists(GeneratorConfig.common_path + "XLuaGenAutoRegister.cs"))
+            if (!method.ContainsGenericParameters)
+                return true;
+            var methodParameters = method.GetParameters();
+            var hasValidGenericParameter = false;
+            for (var i = 0; i < methodParameters.Length; i++)
             {
-                UnityEngine.Debug.LogWarning("code has not been genrate, may be not work in phone!");
+                var parameterType = methodParameters[i].ParameterType;
+                if (parameterType.IsGenericParameter)
+                {
+                    var parameterConstraints = parameterType.GetGenericParameterConstraints();
+                    if (parameterConstraints.Length == 0 || !parameterConstraints[0].IsClass)
+                        return false;
+                    hasValidGenericParameter = true;
+                }
             }
+            return hasValidGenericParameter;
         }
 
+        [InitializeOnLoad]
+        public class Startup
+        {
+
+            static Startup()
+            {
+                EditorApplication.update += Update;
+            }
+
+
+            static void Update()
+            {
+                EditorApplication.update -= Update;
+
+                if (!System.IO.File.Exists(GeneratorConfig.common_path + "XLuaGenAutoRegister.cs"))
+                {
+                    UnityEngine.Debug.LogWarning("code has not been genrate, may be not work in phone!");
+                }
+            }
+
+        }
     }
 }
