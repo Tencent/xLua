@@ -72,13 +72,17 @@ namespace CSObjectWrap
 				}
 				LuaAPI.lua_pushvalue(L, -2);
 				LuaAPI.lua_remove(L, -3);
-				<%ForEachCsList(parameters, function(parameter) 
+				<%
+				local param_count = parameters.Length
+                local has_v_params = param_count > 0 and IsParams(parameters[param_count - 1])
+
+				ForEachCsList(parameters, function(parameter, pi) 
 					if parameter.IsIn or not parameter.IsOut then 
-						%><%=GetPushStatement(parameter.ParameterType, parameter.Name)%>;
+						%><%=GetPushStatement(parameter.ParameterType, parameter.Name, has_v_params and pi == param_count - 1)%>;
 				<% 
 					end
 				end) %>
-				int __gen_error = LuaAPI.lua_pcall(L, <%=in_num + 1%>, <%=out_num%>, err_func);
+				int __gen_error = LuaAPI.lua_pcall(L, <%=has_v_params and ((in_num) .. " + " .. parameters[param_count - 1].Name .. ".Length" ) or (in_num + 1)%>, <%=out_num%>, err_func);
 				if (__gen_error != 0)
 					luaEnv.ThrowExceptionFromError(err_func - 1);
 				
