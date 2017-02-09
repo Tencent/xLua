@@ -95,4 +95,9 @@ public static class FooExtension
     {
         Debug.Log(string.Format("Extension2<{0},{1}>", typeof (T1), typeof (T2)));
     }
+
+    public static T UnsupportedExtension<T>(this GameObject obj) where T : Component
+    {
+        return obj.GetComponent<T>();
+    }
 }

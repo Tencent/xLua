@@ -1219,6 +1219,7 @@ namespace XLua
             if (!method.ContainsGenericParameters)
                 return true;
             var methodParameters = method.GetParameters();
+            var hasValidGenericParameter = false;
             for (var i = 0; i < methodParameters.Length; i++)
             {
                 var parameterType = methodParameters[i].ParameterType;
@@ -1227,9 +1228,10 @@ namespace XLua
                     var parameterConstraints = parameterType.GetGenericParameterConstraints();
                     if (parameterConstraints.Length == 0 || !parameterConstraints[0].IsClass)
                         return false;
+                    hasValidGenericParameter = true;
                 }
             }
-            return true;
+            return hasValidGenericParameter;
         }
 
         public static bool IsSupportedExtensionMethod(MethodBase method,Type extendedType)
@@ -1240,6 +1242,7 @@ namespace XLua
             if (methodParameters.Length < 1)
                 return false;
 
+            var hasValidGenericParameter = false;
             for (var i = 0; i < methodParameters.Length; i++)
             {
                 var parameterType = methodParameters[i].ParameterType;
@@ -1250,6 +1253,7 @@ namespace XLua
                         var parameterConstraints = parameterType.GetGenericParameterConstraints();
                         if (parameterConstraints.Length == 0 || !parameterConstraints[0].IsAssignableFrom(extendedType))
                             return false;
+                        hasValidGenericParameter = true;
                     }
                     else if (!parameterType.IsAssignableFrom(extendedType))
                         return false;
@@ -1259,9 +1263,10 @@ namespace XLua
                     var parameterConstraints = parameterType.GetGenericParameterConstraints();
                     if (parameterConstraints.Length == 0 || !parameterConstraints[0].IsClass)
                         return false;
+                    hasValidGenericParameter = true;
                 }
             }
-            return true;
+            return hasValidGenericParameter || !method.ContainsGenericParameters;
         }
 
         private static Type getExtendedType(MethodInfo method)
