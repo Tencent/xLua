@@ -14,7 +14,7 @@ namespace XLua.LuaDLL
     using System.Text;
     using XLua;
 
-#if !UNITY_IPHONE
+#if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 #endif
     public delegate int lua_CSFunction(IntPtr L);
