@@ -93,6 +93,7 @@ xLua支持热补丁，这意味着你可以：
 * [06_Coroutine](Assets/XLua/Examples/06_Coroutine/): 展示lua协程怎么和Unity协程相配合。
 * [07_AsyncTest](Assets/XLua/Examples/07_AsyncTest/): 展示怎么用lua协程来把异步逻辑同步化。
 * [08_Hotfix](Assets/XLua/Examples/08_Hotfix/): 热补丁的示例（需要开启热补丁特性，如何开启请看[指南](Assets/XLua/Doc/hotfix.md)）。
+* [09_GenericMethod](Assets/XLua/Examples/09_GenericMethod/): 泛化函数支持的演示。
  
 ## 文档
 
@@ -100,6 +101,7 @@ xLua支持热补丁，这意味着你可以：
 * [XLua的配置.doc](Assets/XLua/Doc/XLua的配置.doc)：介绍如何配置xLua。
 * [XLua增加删除第三方lua库.doc](Assets/XLua/Doc/XLua增加删除第三方lua库.doc)：如何增删第三方lua扩展库。
 * [XLua API.doc](Assets/XLua/Doc/XLua_API.doc)：API文档。
+* [custom_generate.md](Assets/XLua/Doc/custom_generate.md)：生成引擎二次开发指南。
 
 ## 技术支持
 
