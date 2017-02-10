@@ -354,6 +354,23 @@ namespace XLua
             return luaDelegateName;
         }
 
+        static Instruction findNextRet(Mono.Collections.Generic.Collection<Instruction> instructions, Instruction pos)
+        {
+            bool posFound = false;
+            for(int i = 0; i < instructions.Count; i++)
+            {
+                if (posFound && instructions[i].OpCode == OpCodes.Ret)
+                {
+                    return instructions[i];
+                }
+                else if (instructions[i] == pos)
+                {
+                    posFound = true;
+                }
+            }
+            return null;
+        }
+
         static bool injectMethod(AssemblyDefinition assembly, MethodDefinition method, int hotfixType, FieldReference stateTable)
         {
             var type = method.DeclaringType;
@@ -388,52 +405,65 @@ namespace XLua
 
             bool statefulConstructor = (hotfixType == 1) && method.IsConstructor && !method.IsStatic;
 
-            
-            var firstIns = method.Body.Instructions[0];
+            var insertPoint = method.Body.Instructions[0];
             var processor = method.Body.GetILProcessor();
 
-            processor.InsertBefore(firstIns, processor.Create(OpCodes.Ldsfld, fieldReference));
-            processor.InsertBefore(firstIns, processor.Create(OpCodes.Brfalse, firstIns));
-
-            if (statefulConstructor)
+            if (method.IsConstructor)
             {
-                processor.InsertBefore(firstIns, processor.Create(OpCodes.Ldarg_0));
-            }
-            processor.InsertBefore(firstIns, processor.Create(OpCodes.Ldsfld, fieldReference));
-            for (int i = 0; i < param_count; i++)
-            {
-                if (i < ldargs.Length)
-                {
-                    processor.InsertBefore(firstIns, processor.Create(ldargs[i]));
-                }
-                else
-                {
-                    processor.InsertBefore(firstIns, processor.Create(OpCodes.Ldarg, (short)i));
-                }
-                if (i == 0 && hotfixType == 1 && !method.IsStatic && !method.IsConstructor)
-                {
-                    processor.InsertBefore(firstIns, processor.Create(OpCodes.Ldfld, stateTable));
-                }
-                else if (i == 0 && !method.IsStatic && type.IsValueType)
-                {
-                    processor.InsertBefore(firstIns, processor.Create(OpCodes.Ldobj, type));
-                }
+                insertPoint = findNextRet(method.Body.Instructions, insertPoint);
             }
 
-            processor.InsertBefore(firstIns, processor.Create(OpCodes.Call, invoke));
-            if (statefulConstructor)
+            while (insertPoint != null)
             {
-                processor.InsertBefore(firstIns, processor.Create(OpCodes.Stfld, stateTable));
-            }
-            if (isFinalize && hotfixType == 1)
-            {
-                processor.InsertBefore(firstIns, processor.Create(OpCodes.Ldarg_0));
-                processor.InsertBefore(firstIns, processor.Create(OpCodes.Ldnull));
-                processor.InsertBefore(firstIns, processor.Create(OpCodes.Stfld, stateTable));
-            }
-            if (!method.IsConstructor && !isFinalize)
-            {
-                processor.InsertBefore(firstIns, processor.Create(OpCodes.Ret));
+                processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldsfld, fieldReference));
+                processor.InsertBefore(insertPoint, processor.Create(OpCodes.Brfalse, insertPoint));
+
+                if (statefulConstructor)
+                {
+                    processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldarg_0));
+                }
+                processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldsfld, fieldReference));
+                for (int i = 0; i < param_count; i++)
+                {
+                    if (i < ldargs.Length)
+                    {
+                        processor.InsertBefore(insertPoint, processor.Create(ldargs[i]));
+                    }
+                    else
+                    {
+                        processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldarg, (short)i));
+                    }
+                    if (i == 0 && hotfixType == 1 && !method.IsStatic && !method.IsConstructor)
+                    {
+                        processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldfld, stateTable));
+                    }
+                    else if (i == 0 && !method.IsStatic && type.IsValueType)
+                    {
+                        processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldobj, type));
+                    }
+                }
+
+                processor.InsertBefore(insertPoint, processor.Create(OpCodes.Call, invoke));
+                if (statefulConstructor)
+                {
+                    processor.InsertBefore(insertPoint, processor.Create(OpCodes.Stfld, stateTable));
+                }
+                if (isFinalize && hotfixType == 1)
+                {
+                    processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldarg_0));
+                    processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldnull));
+                    processor.InsertBefore(insertPoint, processor.Create(OpCodes.Stfld, stateTable));
+                }
+                if (!method.IsConstructor && !isFinalize)
+                {
+                    processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ret));
+                }
+
+                if (!method.IsConstructor)
+                {
+                    break;
+                }
+                insertPoint = findNextRet(method.Body.Instructions, insertPoint);
             }
 
             if (isFinalize)
@@ -506,142 +536,156 @@ namespace XLua
 
             int param_start = method.IsStatic ? 0 : 1;
             int param_count = method.Parameters.Count + param_start;
-            var firstIns = method.Body.Instructions[0];
+            var insertPoint = method.Body.Instructions[0];
             var processor = method.Body.GetILProcessor();
 
-            processor.InsertBefore(firstIns, processor.Create(OpCodes.Ldsfld, fieldReference));
-            processor.InsertBefore(firstIns, processor.Create(OpCodes.Brfalse, firstIns));
-
-            processor.InsertBefore(firstIns, processor.Create(OpCodes.Ldsfld, fieldReference));
-            processor.InsertBefore(firstIns, processor.Create(OpCodes.Callvirt, invokeSessionStart));
-
-            bool statefulConstructor = (hotfixType == 1) && method.IsConstructor && !method.IsStatic;
-
-            TypeReference returnType = statefulConstructor ? luaTableType : method.ReturnType;
-
-            bool isVoid = returnType.FullName == "System.Void";
-
-            int outCout = 0;
-
-            for (int i = 0; i < param_count; i++)
+            if (method.IsConstructor)
             {
-                if (i == 0 && !method.IsStatic)
-                {
-                    processor.InsertBefore(firstIns, processor.Create(OpCodes.Ldsfld, fieldReference));
-                    processor.InsertBefore(firstIns, processor.Create(OpCodes.Ldarg_0));
-                    if (hotfixType == 1 && !method.IsConstructor)
-                    {
-                        processor.InsertBefore(firstIns, processor.Create(OpCodes.Ldfld, stateTable));
-                        processor.InsertBefore(firstIns, processor.Create(OpCodes.Callvirt, MakeGenericMethod(inParam, luaTableType)));
-                    }
-                    else
-                    {
-                        if (type.IsValueType)
-                        {
-                            processor.InsertBefore(firstIns, processor.Create(OpCodes.Ldobj, method.DeclaringType.GetGeneric()));
-                        }
-                        processor.InsertBefore(firstIns, processor.Create(OpCodes.Callvirt, MakeGenericMethod(inParam, method.DeclaringType.GetGeneric())));
-                    }
-                }
-                else
-                {
-                    var param = method.Parameters[i - param_start];
-                    if (param.ParameterType.IsByReference)
-                    {
-                        outCout++;
-                    }
-                    if (!param.IsOut)
-                    {
-                        processor.InsertBefore(firstIns, processor.Create(OpCodes.Ldsfld, fieldReference));
+                insertPoint = findNextRet(method.Body.Instructions, insertPoint);
+            }
 
-                        if (i < ldargs.Length)
+            while (insertPoint != null)
+            {
+                processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldsfld, fieldReference));
+                processor.InsertBefore(insertPoint, processor.Create(OpCodes.Brfalse, insertPoint));
+
+                processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldsfld, fieldReference));
+                processor.InsertBefore(insertPoint, processor.Create(OpCodes.Callvirt, invokeSessionStart));
+
+                bool statefulConstructor = (hotfixType == 1) && method.IsConstructor && !method.IsStatic;
+
+                TypeReference returnType = statefulConstructor ? luaTableType : method.ReturnType;
+
+                bool isVoid = returnType.FullName == "System.Void";
+
+                int outCout = 0;
+
+                for (int i = 0; i < param_count; i++)
+                {
+                    if (i == 0 && !method.IsStatic)
+                    {
+                        processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldsfld, fieldReference));
+                        processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldarg_0));
+                        if (hotfixType == 1 && !method.IsConstructor)
                         {
-                            processor.InsertBefore(firstIns, processor.Create(ldargs[i]));
+                            processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldfld, stateTable));
+                            processor.InsertBefore(insertPoint, processor.Create(OpCodes.Callvirt, MakeGenericMethod(inParam, luaTableType)));
                         }
                         else
                         {
-                            processor.InsertBefore(firstIns, processor.Create(OpCodes.Ldarg, (short)i));
+                            if (type.IsValueType)
+                            {
+                                processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldobj, method.DeclaringType.GetGeneric()));
+                            }
+                            processor.InsertBefore(insertPoint, processor.Create(OpCodes.Callvirt, MakeGenericMethod(inParam, method.DeclaringType.GetGeneric())));
                         }
-
-                        var paramType = param.ParameterType;
-
+                    }
+                    else
+                    {
+                        var param = method.Parameters[i - param_start];
                         if (param.ParameterType.IsByReference)
                         {
-                            paramType = ((ByReferenceType)paramType).ElementType;
-                            if (paramType.IsValueType || paramType.IsGenericParameter)
+                            outCout++;
+                        }
+                        if (!param.IsOut)
+                        {
+                            processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldsfld, fieldReference));
+
+                            if (i < ldargs.Length)
                             {
-                                processor.InsertBefore(firstIns, processor.Create(OpCodes.Ldobj, paramType));
+                                processor.InsertBefore(insertPoint, processor.Create(ldargs[i]));
                             }
                             else
                             {
-                                processor.InsertBefore(firstIns, processor.Create(OpCodes.Ldind_Ref));
+                                processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldarg, (short)i));
+                            }
+
+                            var paramType = param.ParameterType;
+
+                            if (param.ParameterType.IsByReference)
+                            {
+                                paramType = ((ByReferenceType)paramType).ElementType;
+                                if (paramType.IsValueType || paramType.IsGenericParameter)
+                                {
+                                    processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldobj, paramType));
+                                }
+                                else
+                                {
+                                    processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldind_Ref));
+                                }
+                            }
+                            if (i == param_count - 1 && param.CustomAttributes.Any(ca => ca.AttributeType.FullName == "System.ParamArrayAttribute"))
+                            {
+                                processor.InsertBefore(insertPoint, processor.Create(OpCodes.Callvirt, MakeGenericMethod(inParams, ((ArrayType)paramType).ElementType)));
+                            }
+                            else
+                            {
+                                processor.InsertBefore(insertPoint, processor.Create(OpCodes.Callvirt, MakeGenericMethod(inParam, paramType)));
                             }
                         }
-                        if (i == param_count - 1 && param.CustomAttributes.Any(ca => ca.AttributeType.FullName == "System.ParamArrayAttribute"))
+                    }
+                }
+
+                int outStart = (isVoid ? 0 : 1);
+
+                processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldsfld, fieldReference));
+                processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldc_I4, outCout + outStart));
+                processor.InsertBefore(insertPoint, processor.Create(OpCodes.Callvirt, functionInvoke));
+
+                int outPos = outStart;
+                for (int i = 0; i < method.Parameters.Count; i++)
+                {
+                    if (method.Parameters[i].ParameterType.IsByReference)
+                    {
+                        processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldsfld, fieldReference));
+                        processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldc_I4, outPos));
+                        int arg_pos = param_start + i;
+                        if (arg_pos < ldargs.Length)
                         {
-                            processor.InsertBefore(firstIns, processor.Create(OpCodes.Callvirt, MakeGenericMethod(inParams, ((ArrayType)paramType).ElementType)));
+                            processor.InsertBefore(insertPoint, processor.Create(ldargs[arg_pos]));
                         }
                         else
                         {
-                            processor.InsertBefore(firstIns, processor.Create(OpCodes.Callvirt, MakeGenericMethod(inParam, paramType)));
+                            processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldarg, (short)arg_pos));
                         }
+                        processor.InsertBefore(insertPoint, processor.Create(OpCodes.Callvirt, MakeGenericMethod(outParam,
+                            ((ByReferenceType)method.Parameters[i].ParameterType).ElementType)));
+                        outPos++;
                     }
                 }
-            }
-
-            int outStart = (isVoid ? 0 : 1);
-
-            processor.InsertBefore(firstIns, processor.Create(OpCodes.Ldsfld, fieldReference));
-            processor.InsertBefore(firstIns, processor.Create(OpCodes.Ldc_I4, outCout + outStart));
-            processor.InsertBefore(firstIns, processor.Create(OpCodes.Callvirt, functionInvoke));
-
-            int outPos = outStart;
-            for (int i = 0; i < method.Parameters.Count; i++)
-            {
-                if (method.Parameters[i].ParameterType.IsByReference)
+                if (statefulConstructor)
                 {
-                    processor.InsertBefore(firstIns, processor.Create(OpCodes.Ldsfld, fieldReference));
-                    processor.InsertBefore(firstIns, processor.Create(OpCodes.Ldc_I4, outPos));
-                    int arg_pos = param_start + i;
-                    if (arg_pos < ldargs.Length)
-                    {
-                        processor.InsertBefore(firstIns, processor.Create(ldargs[arg_pos]));
-                    }
-                    else
-                    {
-                        processor.InsertBefore(firstIns, processor.Create(OpCodes.Ldarg, (short)arg_pos));
-                    }
-                    processor.InsertBefore(firstIns, processor.Create(OpCodes.Callvirt, MakeGenericMethod(outParam, 
-                        ((ByReferenceType)method.Parameters[i].ParameterType).ElementType)));
-                    outPos++;
+                    processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldarg_0));
                 }
-            }
-            if (statefulConstructor)
-            {
-                processor.InsertBefore(firstIns, processor.Create(OpCodes.Ldarg_0));
-            }
-            processor.InsertBefore(firstIns, processor.Create(OpCodes.Ldsfld, fieldReference));
-            if (isVoid)
-            {
-                processor.InsertBefore(firstIns, processor.Create(OpCodes.Callvirt, invokeSessionEnd));
-            }
-            else
-            {
-                processor.InsertBefore(firstIns, processor.Create(OpCodes.Callvirt, MakeGenericMethod(invokeSessionEndWithResult, returnType)));
-            }
-            if (statefulConstructor)
-            {
-                processor.InsertBefore(firstIns, processor.Create(OpCodes.Stfld, stateTable));
-            }
-            if (isFinalize && hotfixType == 1)
-            {
-                processor.InsertBefore(firstIns, processor.Create(OpCodes.Ldarg_0));
-                processor.InsertBefore(firstIns, processor.Create(OpCodes.Ldnull));
-                processor.InsertBefore(firstIns, processor.Create(OpCodes.Stfld, stateTable));
-            }
-            if (!method.IsConstructor && !isFinalize)
-            {
-                processor.InsertBefore(firstIns, processor.Create(OpCodes.Ret));
+                processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldsfld, fieldReference));
+                if (isVoid)
+                {
+                    processor.InsertBefore(insertPoint, processor.Create(OpCodes.Callvirt, invokeSessionEnd));
+                }
+                else
+                {
+                    processor.InsertBefore(insertPoint, processor.Create(OpCodes.Callvirt, MakeGenericMethod(invokeSessionEndWithResult, returnType)));
+                }
+                if (statefulConstructor)
+                {
+                    processor.InsertBefore(insertPoint, processor.Create(OpCodes.Stfld, stateTable));
+                }
+                if (isFinalize && hotfixType == 1)
+                {
+                    processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldarg_0));
+                    processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldnull));
+                    processor.InsertBefore(insertPoint, processor.Create(OpCodes.Stfld, stateTable));
+                }
+                if (!method.IsConstructor && !isFinalize)
+                {
+                    processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ret));
+                }
+
+                if (!method.IsConstructor)
+                {
+                    break;
+                }
+                insertPoint = findNextRet(method.Body.Instructions, insertPoint);
             }
 
             if (isFinalize)
