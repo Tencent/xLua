@@ -686,6 +686,15 @@ namespace XLua
             }
             return ret;
         }
+#if UNITY_EDITOR
+        public void PushParams(RealStatePtr L, Array ary)
+        {
+            for(int i = 0; i < ary.Length; i++)
+            {
+                PushAny(L, ary.GetValue(i));
+            }
+        }
+#endif
 
         public T GetDelegate<T>(RealStatePtr L, int index) where T :class
         {
