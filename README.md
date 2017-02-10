@@ -41,7 +41,7 @@ lua5.3的特性更丰富些，比如支持原生64位整数，支持苹果bitcod
 下载xLua后解压到Unity工程Assets目录下，建一个MonoBehaviour拖到场景，在Start加入如下代码：
 
 ```csharp
-Lua.LuaEnv luaenv = new XLua.LuaEnv();
+XLua.LuaEnv luaenv = new XLua.LuaEnv();
 luaenv.DoString("CS.UnityEngine.Debug.Log('hello world')");
 luaenv.Dispose();
 ```
