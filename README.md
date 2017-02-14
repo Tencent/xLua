@@ -101,7 +101,8 @@ xLua支持热补丁，这意味着你可以：
 * [XLua的配置.doc](Assets/XLua/Doc/XLua的配置.doc)：介绍如何配置xLua。
 * [XLua增加删除第三方lua库.doc](Assets/XLua/Doc/XLua增加删除第三方lua库.doc)：如何增删第三方lua扩展库。
 * [XLua API.doc](Assets/XLua/Doc/XLua_API.doc)：API文档。
-* [custom_generate.md](Assets/XLua/Doc/custom_generate.md)：生成引擎二次开发指南。
+* [生成引擎二次开发指南](Assets/XLua/Doc/custom_generate.md)：介绍如何做生成引擎的二次开发。
+* [Hotfix操作指南](Assets/XLua/Doc/hotfix.md)：介绍如何使用hotfix特性。
 
 ## 技术支持
 
