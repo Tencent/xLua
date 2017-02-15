@@ -58,19 +58,23 @@ namespace XLua
 
                 LuaAPI.lua_atpanic(L, StaticLuaCallbacks.Panic);
 
+#if !XLUA_GENERAL
                 LuaAPI.lua_pushstdcallcfunction(L, StaticLuaCallbacks.Print);
                 if (0 != LuaAPI.xlua_setglobal(L, "print"))
                 {
                     throw new Exception("call xlua_setglobal fail!");
                 }
+#endif
 
                 //template engine lib register
                 TemplateEngine.LuaTemplate.OpenLib(L);
 
                 AddSearcher(StaticLuaCallbacks.LoadBuiltinLib, 2); // just after the preload searcher
                 AddSearcher(StaticLuaCallbacks.LoadFromCustomLoaders, 3);
+#if !XLUA_GENERAL
                 AddSearcher(StaticLuaCallbacks.LoadFromResource, 4);
                 AddSearcher(StaticLuaCallbacks.LoadFromStreamingAssetsPath, -1);
+#endif
                 DoString(init_xlua, "Init");
                 init_xlua = null;
 
@@ -111,8 +115,9 @@ namespace XLua
                 LuaAPI.xlua_pushasciistring(L, "xlua_main_thread");
                 LuaAPI.lua_pushthread(L);
                 LuaAPI.lua_rawset(L, LuaIndexes.LUA_REGISTRYINDEX);
-
+#if !XLUA_GENERAL
                 translator.Alias(typeof(Type), "System.MonoType");
+#endif
 
                 if (0 != LuaAPI.xlua_getglobal(L, "_G"))
                 {
@@ -258,6 +263,7 @@ namespace XLua
             translator.Alias(type, alias);
         }
 
+#if !XLUA_GENERAL
         int last_check_point = 0;
 
         int max_check_per_tick = 20;
@@ -268,6 +274,7 @@ namespace XLua
         }
 
         Func<object, bool> object_valid_checker = new Func<object, bool>(ObjectValidCheck);
+#endif
 
         public void Tick()
         {
@@ -283,7 +290,9 @@ namespace XLua
                         translator.ReleaseLuaBase(L, gca.Reference, gca.IsDelegate);
                     }
                 }
+#if !XLUA_GENERAL
                 last_check_point = translator.objects.Check(last_check_point, max_check_per_tick, object_valid_checker, translator.reverseMap);
+#endif
 #if THREAD_SAFT || HOTFIX_ENABLE
             }
 #endif

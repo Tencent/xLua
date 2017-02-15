@@ -511,6 +511,7 @@ namespace XLua
             throw new LuaException(reason);
         }
 
+#if !XLUA_GENERAL
         [MonoPInvokeCallback(typeof(LuaCSFunction))]
         internal static int Print(RealStatePtr L)
         {
@@ -546,6 +547,7 @@ namespace XLua
                 return LuaAPI.luaL_error(L, "c# exception in print:" + e);
             }
         }
+#endif
 
         [MonoPInvokeCallback(typeof(LuaCSFunction))]
         internal static int LoadSocketCore(RealStatePtr L)
@@ -581,6 +583,7 @@ namespace XLua
             }
         }
 
+#if !XLUA_GENERAL
         [MonoPInvokeCallback(typeof(LuaCSFunction))]
         internal static int LoadFromResource(RealStatePtr L)
         {
@@ -671,6 +674,7 @@ namespace XLua
                 return LuaAPI.luaL_error(L, "c# exception in LoadFromStreamingAssetsPath:" + e);
             }
         }
+#endif
 
         [MonoPInvokeCallback(typeof(LuaCSFunction))]
         internal static int LoadFromCustomLoaders(RealStatePtr L)

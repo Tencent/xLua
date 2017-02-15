@@ -145,7 +145,11 @@ namespace XLua
             {
                 Utils.ReflectionWrap(L, type);
 #if NOT_GEN_WARNING
+#if !XLUA_GENERAL
                 UnityEngine.Debug.LogWarning(string.Format("{0} not gen, using reflection instead", type));
+#else
+                System.Console.WriteLine(string.Format("{0} not gen, using reflection instead", type));
+#endif
 #endif
             }
             if (top != LuaAPI.lua_gettop(L))
@@ -217,7 +221,7 @@ namespace XLua
 
         Type delegate_birdge_type;
 
-#if UNITY_EDITOR
+#if UNITY_EDITOR || XLUA_GENERAL
         class CompareByArgRet : IEqualityComparer<MethodInfo>
         {
             public bool Equals(MethodInfo x, MethodInfo y)
@@ -240,7 +244,7 @@ namespace XLua
         void initCSharpCallLua()
         {
             delegate_birdge_type = typeof(DelegateBridge);
-#if UNITY_EDITOR
+#if UNITY_EDITOR || XLUA_GENERAL
             if (!DelegateBridge.Gen_Flag)
             {
                 List<Type> cs_call_lua = new List<Type>();
@@ -291,7 +295,7 @@ namespace XLua
 #endif
         }
 
-#if UNITY_EDITOR
+#if UNITY_EDITOR || XLUA_GENERAL
         CodeEmit ce = new CodeEmit();
 #endif
         
@@ -334,7 +338,7 @@ namespace XLua
             DelegateBridgeBase bridge;
             try
             {
-#if UNITY_EDITOR
+#if UNITY_EDITOR || XLUA_GENERAL
                 if (!DelegateBridge.Gen_Flag)
                 {
                     bridge = Activator.CreateInstance(delegate_birdge_type, new object[] { reference, luaEnv }) as DelegateBridgeBase;
@@ -416,7 +420,7 @@ namespace XLua
 
             if (!interfaceBridgeCreators.TryGetValue(interfaceType, out creator))
             {
-#if UNITY_EDITOR
+#if UNITY_EDITOR || XLUA_GENERAL
                 var bridgeType = ce.EmitInterfaceImpl(interfaceType);
                 creator = (int reference, LuaEnv luaenv) =>
                 {
@@ -1331,9 +1335,17 @@ namespace XLua
 #if OBJECT_POOL_STAT
         public void Stat()
         {
+#if !XLUA_GENERAL
             UnityEngine.Debug.Log("---------------------------STAT----------------------------------");
+#else
+            System.Console.WriteLine("---------------------------STAT----------------------------------");
+#endif
             objects.Stat();
+#if !XLUA_GENERAL
             UnityEngine.Debug.Log("reverse_map.count = " + reverseMap.Count);
+#else
+            System.Console.WriteLine("reverse_map.count = " + reverseMap.Count);
+#endif
             Hashtable ht = new Hashtable();
             foreach (var obj in reverseMap.Keys)
             {
@@ -1342,7 +1354,11 @@ namespace XLua
             }
             foreach (var key in ht.Keys)
             {
+#if !XLUA_GENERAL
                 UnityEngine.Debug.Log("reverse type:" + key + ", num:" + ht[key]);
+#else
+                System.Console.WriteLine("reverse type:" + key + ", num:" + ht[key]);
+#endif
             }
         }
 #endif

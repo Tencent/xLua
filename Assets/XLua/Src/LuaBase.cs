@@ -26,7 +26,7 @@ namespace XLua
         protected int luaReference;
         protected LuaEnv luaEnv;
 
-#if UNITY_EDITOR
+#if UNITY_EDITOR || XLUA_GENERAL
         protected int _errorFuncRef { get { return luaEnv.errorFuncRef; } }
         protected RealStatePtr _L { get { return luaEnv.L; } }
         protected ObjectTranslator _translator { get { return luaEnv.translator; } }

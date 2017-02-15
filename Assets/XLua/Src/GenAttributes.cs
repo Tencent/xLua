@@ -91,6 +91,7 @@ namespace XLua
     {
     }
 
+#if !XLUA_GENERAL
     public static class SysGenConfig
     {
         [GCOptimize]
@@ -125,6 +126,7 @@ namespace XLua
             }
         }
     }
+#endif
 }
 
 

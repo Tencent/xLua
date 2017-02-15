@@ -24,8 +24,6 @@ using LuaCSFunction = XLua.LuaDLL.lua_CSFunction;
 
 namespace XLua
 {
-    using UnityEngine;
-
     public static partial class Utils
     {
         public static bool LoadField(RealStatePtr L, int idx, string field_name)

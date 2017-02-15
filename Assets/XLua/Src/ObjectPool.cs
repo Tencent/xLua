@@ -176,11 +176,18 @@ namespace XLua
                     ++obj_num;
                 }
             }
-
+#if !XLUA_GENERAL
             UnityEngine.Debug.Log("ObjectPool.Count = " + obj_num);
+#else
+            System.Console.WriteLine("ObjectPool.Count = " + obj_num);
+#endif
             foreach (var key in ht.Keys)
             {
+#if !XLUA_GENERAL
                 UnityEngine.Debug.Log("type:" + key + ", num:" + ht[key]);
+#else
+                System.Console.WriteLine("type:" + key + ", num:" + ht[key]);
+#endif
             }
         }
 #endif
