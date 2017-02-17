@@ -184,6 +184,13 @@ namespace XLua
 
         public ObjectTranslator(LuaEnv luaenv,RealStatePtr L)
 		{
+#if XLUA_GENERAL
+            var dumb_field = typeof(ObjectTranslator).GetField("s_gen_reg_dumb_obj", BindingFlags.Static| BindingFlags.DeclaredOnly | BindingFlags.NonPublic);
+            if (dumb_field != null)
+            {
+                dumb_field.GetValue(null);
+            }
+#endif
             assemblies = new List<Assembly>();
 
             foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())

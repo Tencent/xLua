@@ -195,6 +195,9 @@ namespace XLua.LuaDLL
 
 		public static void lua_pushstdcallcfunction(IntPtr L, lua_CSFunction function, int n = 0)//[-0, +1, m]
         {
+#if XLUA_GENERAL
+            GCHandle.Alloc(function);
+#endif
             IntPtr fn = Marshal.GetFunctionPointerForDelegate(function);
             xlua_push_csharp_function(L, fn, n);
         }
