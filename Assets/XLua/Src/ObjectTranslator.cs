@@ -148,7 +148,7 @@ namespace XLua
 #if !XLUA_GENERAL
                 UnityEngine.Debug.LogWarning(string.Format("{0} not gen, using reflection instead", type));
 #else
-                System.Console.WriteLine(string.Format("{0} not gen, using reflection instead", type));
+                System.Console.WriteLine(string.Format("Warning: {0} not gen, using reflection instead", type));
 #endif
 #endif
             }
@@ -1345,36 +1345,5 @@ namespace XLua
                 throw new Exception("invalid lua value for decimal, LuaType=" + lua_type);
             }
         }
-
-#if OBJECT_POOL_STAT
-        public void Stat()
-        {
-#if !XLUA_GENERAL
-            UnityEngine.Debug.Log("---------------------------STAT----------------------------------");
-#else
-            System.Console.WriteLine("---------------------------STAT----------------------------------");
-#endif
-            objects.Stat();
-#if !XLUA_GENERAL
-            UnityEngine.Debug.Log("reverse_map.count = " + reverseMap.Count);
-#else
-            System.Console.WriteLine("reverse_map.count = " + reverseMap.Count);
-#endif
-            Hashtable ht = new Hashtable();
-            foreach (var obj in reverseMap.Keys)
-            {
-                Type type = obj.GetType();
-                ht[type] = ht[type] == null ? 1 : (int)ht[type] + 1;
-            }
-            foreach (var key in ht.Keys)
-            {
-#if !XLUA_GENERAL
-                UnityEngine.Debug.Log("reverse type:" + key + ", num:" + ht[key]);
-#else
-                System.Console.WriteLine("reverse type:" + key + ", num:" + ht[key]);
-#endif
-            }
-        }
-#endif
     }
 }

@@ -160,36 +160,5 @@ namespace XLua
 
             return check_pos %= count;
         }
-
-#if OBJECT_POOL_STAT
-        public void Stat()
-        {
-
-            Hashtable ht = new Hashtable();
-            int obj_num = 0;
-            for (int i = 0; i < count; ++i)
-            {
-                if (list[i].next == -2 && !Object.ReferenceEquals(list[i].obj, null))
-                {
-                    Type type = list[i].obj.GetType();
-                    ht[type] = ht[type] == null ? 1 : (int)ht[type] + 1;
-                    ++obj_num;
-                }
-            }
-#if !XLUA_GENERAL
-            UnityEngine.Debug.Log("ObjectPool.Count = " + obj_num);
-#else
-            System.Console.WriteLine("ObjectPool.Count = " + obj_num);
-#endif
-            foreach (var key in ht.Keys)
-            {
-#if !XLUA_GENERAL
-                UnityEngine.Debug.Log("type:" + key + ", num:" + ht[key]);
-#else
-                System.Console.WriteLine("type:" + key + ", num:" + ht[key]);
-#endif
-            }
-        }
-#endif
     }
 }

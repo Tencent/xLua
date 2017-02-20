@@ -68,18 +68,18 @@ namespace XLua
 
                 //template engine lib register
                 TemplateEngine.LuaTemplate.OpenLib(L);
-#if !XLUA_GENERAL
+
                 AddSearcher(StaticLuaCallbacks.LoadBuiltinLib, 2); // just after the preload searcher
                 AddSearcher(StaticLuaCallbacks.LoadFromCustomLoaders, 3);
+#if !XLUA_GENERAL
                 AddSearcher(StaticLuaCallbacks.LoadFromResource, 4);
                 AddSearcher(StaticLuaCallbacks.LoadFromStreamingAssetsPath, -1);
 #endif
                 DoString(init_xlua, "Init");
                 init_xlua = null;
-#if !XLUA_GENERAL
+
                 AddBuildin("socket.core", StaticLuaCallbacks.LoadSocketCore);
                 AddBuildin("socket", StaticLuaCallbacks.LoadSocketCore);
-#endif
 
                 LuaAPI.lua_newtable(L); //metatable of indexs and newindexs functions
                 LuaAPI.xlua_pushasciistring(L, "__index");

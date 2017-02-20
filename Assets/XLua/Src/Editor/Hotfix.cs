@@ -7,20 +7,24 @@
 */
 
 #if HOTFIX_ENABLE
+#if !XLUA_GENERAL
 using UnityEngine;
+using UnityEditor.Callbacks;
+#endif
 using System.Collections.Generic;
 using System;
 using System.Reflection;
 using System.Linq;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
-using UnityEditor.Callbacks;
 
 namespace XLua
 {
     public static class Hotfix
     {
+#if !XLUA_GENERAL
         static readonly string INTERCEPT_ASSEMBLY_PATH = "./Library/ScriptAssemblies/Assembly-CSharp.dll";
+#endif
 
         static TypeReference objType = null;
         static TypeReference luaTableType = null;
@@ -34,11 +38,15 @@ namespace XLua
         static MethodDefinition inParams = null;
         static MethodDefinition outParam = null;
 
-        static Dictionary<string, HotfixFlag> hotfixCfg;
+        static Dictionary<string, int> hotfixCfg;
 
-        static void init(AssemblyDefinition assembly)
+        static void init(AssemblyDefinition assembly, IEnumerable<string> search_directorys)
         {
+#if XLUA_GENERAL
+            objType = assembly.MainModule.ImportReference(typeof(object));
+#else
             objType = assembly.MainModule.Import(typeof(object));
+#endif
 
             luaTableType = assembly.MainModule.Types.Single(t => t.FullName == "XLua.LuaTable");
 
@@ -52,12 +60,26 @@ namespace XLua
             outParam = luaFunctionType.Methods.Single(m => m.Name == "OutParam");
 
             var resolver = assembly.MainModule.AssemblyResolver as BaseAssemblyResolver;
-            foreach (var path in 
-                (from asm in AppDomain.CurrentDomain.GetAssemblies()
-                 select System.IO.Path.GetDirectoryName(asm.ManifestModule.FullyQualifiedName))
+            foreach (var path in
+                (from asm in AppDomain.CurrentDomain.GetAssemblies() select asm.ManifestModule.FullyQualifiedName)
                  .Distinct())
             {
-                resolver.AddSearchDirectory(path);
+                try
+                {
+                    resolver.AddSearchDirectory(System.IO.Path.GetDirectoryName(path));
+                }
+                catch(Exception)
+                {
+
+                }
+            }
+
+            if (search_directorys != null)
+            {
+                foreach(var directory in search_directorys)
+                {
+                    resolver.AddSearchDirectory(directory);
+                }
             }
         }
 
@@ -233,7 +255,7 @@ namespace XLua
                 {
                     return true;
                 }
-                hotfixType = (int)hotfixCfg[type.FullName];
+                hotfixType = hotfixCfg[type.FullName];
             }
 
             FieldReference stateTable = null;
@@ -261,32 +283,96 @@ namespace XLua
             return true;
         }
 
+#if !XLUA_GENERAL
         [DidReloadScripts]
         [PostProcessScene]
         //[UnityEditor.MenuItem("XLua/Hotfix Inject In Editor", false, 3)]
         public static void HotfixInject()
         {
+            HotfixInject(INTERCEPT_ASSEMBLY_PATH, null, Utils.GetAllTypes());
+        }
+#endif
+
+        //返回-1表示没有标签
+        static int getHotfixType(MemberInfo memberInfo)
+        {
+            foreach(var ca in memberInfo.GetCustomAttributes(false))
+            {
+                var ca_type = ca.GetType();
+                if (ca_type.ToString() == "XLua.HotfixAttribute")
+                {
+                    return (int)(ca_type.GetProperty("Flag").GetValue(ca, null));
+                }
+            }
+            return -1;
+        }
+
+        static void mergeConfig(Dictionary<string, int> hotfixCfg, MemberInfo test, Type cfg_type, Func<IEnumerable<Type>> get_cfg)
+        {
+            int hotfixType = getHotfixType(test);
+            if (-1 == hotfixType || !typeof(IEnumerable<Type>).IsAssignableFrom(cfg_type))
+            {
+                return;
+            }
+
+            foreach (var type in get_cfg())
+            {
+                if (!type.IsDefined(typeof(ObsoleteAttribute), false)
+                    && !type.IsEnum && !typeof(Delegate).IsAssignableFrom(type)
+                    && (!type.IsGenericType || type.IsGenericTypeDefinition))
+                {
+                    string key = type.FullName.Replace('+', '/');
+                    if (!hotfixCfg.ContainsKey(key))
+                    {
+                        hotfixCfg.Add(key, hotfixType);
+                    }
+                }
+            }
+        }
+
+        public static void Config(IEnumerable<Type> cfg_check_types)
+        {
+            if (cfg_check_types != null)
+            {
+                hotfixCfg = new Dictionary<string, int>();
+                foreach (var type in cfg_check_types.Where(t => !t.IsGenericTypeDefinition && t.IsAbstract && t.IsSealed))
+                {
+                    var flags = BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly;
+                    foreach (var field in type.GetFields(flags))
+                    {
+                        mergeConfig(hotfixCfg, field, field.FieldType, () => field.GetValue(null) as IEnumerable<Type>);
+                    }
+                    foreach (var prop in type.GetProperties(flags))
+                    {
+                        mergeConfig(hotfixCfg, prop, prop.PropertyType, () => prop.GetValue(null, null) as IEnumerable<Type>);
+                    }
+                }
+            }
+        }
+
+        public static void HotfixInject(string inject_assembly_path, IEnumerable<string> search_directorys, IEnumerable<Type> cfg_check_types = null)
+        {
             AssemblyDefinition assembly = null;
             try
             {
 #if HOTFIX_SYMBOLS_DISABLE
-                assembly = AssemblyDefinition.ReadAssembly(INTERCEPT_ASSEMBLY_PATH);
+                assembly = AssemblyDefinition.ReadAssembly(inject_assembly_path);
 #else
                 var readerParameters = new ReaderParameters { ReadSymbols = true };
-                assembly = AssemblyDefinition.ReadAssembly(INTERCEPT_ASSEMBLY_PATH, readerParameters);
+                assembly = AssemblyDefinition.ReadAssembly(inject_assembly_path, readerParameters);
 #endif
-                init(assembly);
+                init(assembly, search_directorys);
 
                 if (assembly.MainModule.Types.Any(t => t.Name == "__XLUA_GEN_FLAG"))
                 {
+                    Info("had injected!");
                     return;
                 }
 
                 assembly.MainModule.Types.Add(new TypeDefinition("__XLUA_GEN", "__XLUA_GEN_FLAG", Mono.Cecil.TypeAttributes.Class,
                     objType));
 
-                CSObjectWrapEditor.Generator.GetGenConfig(Utils.GetAllTypes());
-                hotfixCfg = CSObjectWrapEditor.Generator.HotfixCfg.ToDictionary(kv => kv.Key.FullName.Replace('+', '/'), kv => kv.Value);
+                Config(cfg_check_types);
 
                 var hotfixDelegateAttributeType = assembly.MainModule.Types.Single(t => t.FullName == "XLua.HotfixDelegateAttribute");
                 hotfix_delegates = (from module in assembly.Modules
@@ -303,12 +389,12 @@ namespace XLua
                     }
                 }
 #if HOTFIX_SYMBOLS_DISABLE
-                assembly.Write(INTERCEPT_ASSEMBLY_PATH);
-                Debug.Log("hotfix inject finish!(no symbols)");
+                assembly.Write(inject_assembly_path);
+                Info("hotfix inject finish!(no symbols)");
 #else
                 var writerParameters = new WriterParameters { WriteSymbols = true };
-                assembly.Write(INTERCEPT_ASSEMBLY_PATH, writerParameters);
-                Debug.Log("hotfix inject finish!");
+                assembly.Write(inject_assembly_path, writerParameters);
+                Info("hotfix inject finish!");
 #endif
             }
             finally
@@ -320,7 +406,25 @@ namespace XLua
             }
         }
 
-		static void Clean(AssemblyDefinition assembly)
+        static void Info(string info)
+        {
+#if XLUA_GENERAL
+            System.Console.WriteLine(info);
+#else
+            Debug.Log(info);
+#endif
+        }
+
+        static void Error(string info)
+        {
+#if XLUA_GENERAL
+            System.Console.WriteLine("Error:" + info);
+#else
+            Debug.LogError(info);
+#endif
+        }
+
+        static void Clean(AssemblyDefinition assembly)
 		{
 			if (assembly.MainModule.SymbolReader != null)
 			{
@@ -377,7 +481,7 @@ namespace XLua
             var luaDelegateName = getDelegateName(method);
             if (luaDelegateName == null)
             {
-                Debug.LogError("too many overload!");
+                Error("too many overload!");
                 return false;
             }
 
@@ -390,7 +494,7 @@ namespace XLua
 
             if (!findHotfixDelegate(assembly, method, out delegateType, out invoke, hotfixType))
             {
-                Debug.LogError("can not find delegate for " + method.DeclaringType + "." + method.Name + "! try re-genertate code.");
+                Error("can not find delegate for " + method.DeclaringType + "." + method.Name + "! try re-genertate code.");
                 return false;
             }
 
@@ -522,7 +626,7 @@ namespace XLua
             var luaDelegateName = getDelegateName(method);
             if (luaDelegateName == null)
             {
-                Debug.LogError("too many overload!");
+                Error("too many overload!");
                 return false;
             }
 

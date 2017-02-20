@@ -434,7 +434,7 @@ namespace CSObjectWrapEditor
             catch (Exception e)
             {
 #if XLUA_GENERAL
-                System.Console.WriteLine("gen wrap file fail! err=" + e.Message + ", stack=" + e.StackTrace);
+                System.Console.WriteLine("Error: gen wrap file fail! err=" + e.Message + ", stack=" + e.StackTrace);
 #else
                 Debug.LogError("gen wrap file fail! err=" + e.Message + ", stack=" + e.StackTrace);
 #endif
