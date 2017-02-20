@@ -665,10 +665,8 @@ namespace CSObjectWrapEditor
         {
             string filePath = save_path + "DelegatesGensBridge.cs";
             StreamWriter textWriter = new StreamWriter(filePath, false, Encoding.UTF8);
-            var delegates = types
-                .Select(delegate_type=> delegate_type.GetMethod("Invoke"))
-                .Where(method=>!method.GetParameters().Any(paramInfo=>paramInfo.ParameterType.IsGenericParameter))
-                .Select(method => makeMethodInfoSimulation(method));
+            types = types.Where(type => !type.GetMethod("Invoke").GetParameters().Any(paramInfo => paramInfo.ParameterType.IsGenericParameter));
+            var delegates = types.Select(delegate_type => makeMethodInfoSimulation(delegate_type.GetMethod("Invoke")));
             var hotfxDelegates = new List<MethodInfoSimulation>();
             foreach (var type in (from type in hotfix_check_types where type.IsDefined(typeof(HotfixAttribute), false) select type))
             {
