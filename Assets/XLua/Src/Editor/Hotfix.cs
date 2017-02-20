@@ -285,7 +285,7 @@ namespace XLua
                 assembly.MainModule.Types.Add(new TypeDefinition("__XLUA_GEN", "__XLUA_GEN_FLAG", Mono.Cecil.TypeAttributes.Class,
                     objType));
 
-                CSObjectWrapEditor.Generator.GetGenConfig();
+                CSObjectWrapEditor.Generator.GetGenConfig(Utils.GetAllTypes());
                 hotfixCfg = CSObjectWrapEditor.Generator.HotfixCfg.ToDictionary(kv => kv.Key.FullName.Replace('+', '/'), kv => kv.Value);
 
                 var hotfixDelegateAttributeType = assembly.MainModule.Types.Single(t => t.FullName == "XLua.HotfixDelegateAttribute");
