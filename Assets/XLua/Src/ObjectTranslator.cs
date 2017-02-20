@@ -1055,6 +1055,12 @@ namespace XLua
             }
             else if (objects.TryGetValue(udata, out obj))
             {
+#if !UNITY_5 && !XLUA_GENERAL
+                if (obj != null && obj is UnityEngine.Object && ((obj as UnityEngine.Object) == null))
+                {
+                    throw new UnityEngine.MissingReferenceException("The object of type '"+ obj.GetType().Name +"' has been destroyed but you are still trying to access it.");
+                }
+#endif
                 return obj;
             }
             return null;
@@ -1067,16 +1073,7 @@ namespace XLua
 
 		internal object FastGetCSObj(RealStatePtr L,int index)
 		{
-#if UNITY_5 || XLUA_GENERAL
             return getCsObj(L, index, LuaAPI.xlua_tocsobj_fast(L,index));
-#else
-            var obj = getCsObj(L, index, LuaAPI.xlua_tocsobj_fast(L, index));
-            if (obj != null && obj is UnityEngine.Object && ((obj as UnityEngine.Object) == null))
-            {
-                throw new UnityEngine.MissingReferenceException("The object of type '"+ obj.GetType().Name +"' has been destroyed but you are still trying to access it.");
-            }
-            return obj;
-#endif
         }
 
         List<LuaCSFunction> fix_cs_functions = new List<LuaCSFunction>();
