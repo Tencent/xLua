@@ -294,7 +294,8 @@ namespace XLua
                 }
                 IEnumerable<IGrouping<MethodInfo, Type>> groups = (from type in cs_call_lua
                               where typeof(Delegate).IsAssignableFrom(type)
-                              select type).GroupBy(t => t.GetMethod("Invoke"), new CompareByArgRet());
+                              where !type.GetMethod("Invoke").GetParameters().Any(paramInfo => paramInfo.ParameterType.IsGenericParameter)
+                               select type).GroupBy(t => t.GetMethod("Invoke"), new CompareByArgRet());
 
                 ce.SetGenInterfaces(cs_call_lua.Where(type=>type.IsInterface).ToList());
                 delegate_birdge_type = ce.EmitDelegateImpl(groups);
