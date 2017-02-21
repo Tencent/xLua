@@ -7,6 +7,7 @@
 */
 
 #if HOTFIX_ENABLE
+#if (UNITY_5 || XLUA_GENERAL) && !INJECT_BY_TOOL
 #if !XLUA_GENERAL
 using UnityEngine;
 using UnityEditor.Callbacks;
@@ -286,7 +287,7 @@ namespace XLua
 #if !XLUA_GENERAL
         [DidReloadScripts]
         [PostProcessScene]
-        //[UnityEditor.MenuItem("XLua/Hotfix Inject In Editor", false, 3)]
+        [UnityEditor.MenuItem("XLua/Hotfix Inject In Editor", false, 3)]
         public static void HotfixInject()
         {
             HotfixInject(INTERCEPT_ASSEMBLY_PATH, null, Utils.GetAllTypes());
@@ -801,4 +802,57 @@ namespace XLua
         }
     }
 }
+#else
+using UnityEngine;
+using UnityEditor.Callbacks;
+using System.Collections.Generic;
+using System;
+using System.Reflection;
+using System.Linq;
+using System.Diagnostics;
+using System.IO;
+
+namespace XLua
+{
+    public static class Hotfix
+    {
+        [DidReloadScripts]
+        [PostProcessScene]
+        [UnityEditor.MenuItem("XLua/Hotfix Inject In Editor", false, 3)]
+        public static void HotfixInject()
+        {
+            var mono_path = Path.Combine(Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName),
+                "Data/Mono/bin/mono.exe");
+            var inject_tool_path = "./Tools/XLuaHotfixInject.exe";
+            var assembly_csharp_path = "./Library/ScriptAssemblies/Assembly-CSharp.dll";
+
+            List<string> args = new List<string>() { inject_tool_path, assembly_csharp_path};
+
+            foreach (var path in
+                (from asm in AppDomain.CurrentDomain.GetAssemblies() select asm.ManifestModule.FullyQualifiedName)
+                 .Distinct())
+            {
+                try
+                {
+                    args.Add(System.IO.Path.GetDirectoryName(path));
+                }
+                catch (Exception)
+                {
+
+                }
+            }
+
+            Process hotfix_injection = new Process();
+            hotfix_injection.StartInfo.FileName = mono_path;
+            hotfix_injection.StartInfo.Arguments = "\"" + String.Join("\" \"", args.ToArray()) + "\"";
+            hotfix_injection.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+            hotfix_injection.StartInfo.RedirectStandardOutput = true;
+            hotfix_injection.StartInfo.UseShellExecute = false;
+            hotfix_injection.Start();
+            hotfix_injection.WaitForExit();
+            UnityEngine.Debug.Log(hotfix_injection.StandardOutput.ReadToEnd());
+        }
+    }
+}
+#endif
 #endif
