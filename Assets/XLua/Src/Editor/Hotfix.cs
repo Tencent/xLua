@@ -286,6 +286,10 @@ namespace XLua
         [UnityEditor.MenuItem("XLua/Hotfix Inject In Editor", false, 3)]
         public static void HotfixInject()
         {
+            if (EditorApplication.isCompiling || Application.isPlaying)
+            {
+                return;
+            }
             HotfixInject("./Library/ScriptAssemblies/Assembly-CSharp.dll", null, Utils.GetAllTypes());
         }
 #endif
@@ -800,6 +804,7 @@ namespace XLua
 }
 #else
 using UnityEngine;
+using UnityEditor;
 using UnityEditor.Callbacks;
 using System.Collections.Generic;
 using System;
@@ -812,11 +817,17 @@ namespace XLua
 {
     public static class Hotfix
     {
-        [DidReloadScripts]
+#if UNITY_5
         [PostProcessScene]
-        [UnityEditor.MenuItem("XLua/Hotfix Inject In Editor", false, 3)]
+#endif
+        [MenuItem("XLua/Hotfix Inject In Editor", false, 3)]
         public static void HotfixInject()
         {
+            if (EditorApplication.isCompiling || Application.isPlaying)
+            {
+                return;
+            }
+
 #if UNITY_EDITOR_OSX
 			var mono_path = Path.Combine(Path.GetDirectoryName(typeof(UnityEngine.Debug).Module.FullyQualifiedName),
 				"../MonoBleedingEdge/bin/mono");
