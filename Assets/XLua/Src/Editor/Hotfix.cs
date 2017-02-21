@@ -23,10 +23,6 @@ namespace XLua
 {
     public static class Hotfix
     {
-#if !XLUA_GENERAL
-        static readonly string INTERCEPT_ASSEMBLY_PATH = "./Library/ScriptAssemblies/Assembly-CSharp.dll";
-#endif
-
         static TypeReference objType = null;
         static TypeReference luaTableType = null;
 
@@ -290,7 +286,7 @@ namespace XLua
         [UnityEditor.MenuItem("XLua/Hotfix Inject In Editor", false, 3)]
         public static void HotfixInject()
         {
-            HotfixInject(INTERCEPT_ASSEMBLY_PATH, null, Utils.GetAllTypes());
+            HotfixInject("./Library/ScriptAssemblies/Assembly-CSharp.dll", null, Utils.GetAllTypes());
         }
 #endif
 
@@ -826,7 +822,7 @@ namespace XLua
 				"../MonoBleedingEdge/bin/mono");
 #elif UNITY_EDITOR_WIN
             var mono_path = Path.Combine(Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName),
-                "Data/Mono/bin/mono.exe");
+                "Data/MonoBleedingEdge/bin/mono.exe");
 #endif
             var inject_tool_path = "./Tools/XLuaHotfixInject.exe";
             var assembly_csharp_path = "./Library/ScriptAssemblies/Assembly-CSharp.dll";
