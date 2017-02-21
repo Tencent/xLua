@@ -821,8 +821,13 @@ namespace XLua
         [UnityEditor.MenuItem("XLua/Hotfix Inject In Editor", false, 3)]
         public static void HotfixInject()
         {
+#if UNITY_EDITOR_OSX
+			var mono_path = Path.Combine(Path.GetDirectoryName(typeof(UnityEngine.Debug).Module.FullyQualifiedName),
+				"../MonoBleedingEdge/bin/mono");
+#elif UNITY_EDITOR_WIN
             var mono_path = Path.Combine(Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName),
                 "Data/Mono/bin/mono.exe");
+#endif
             var inject_tool_path = "./Tools/XLuaHotfixInject.exe";
             var assembly_csharp_path = "./Library/ScriptAssemblies/Assembly-CSharp.dll";
 
@@ -844,7 +849,7 @@ namespace XLua
 
             Process hotfix_injection = new Process();
             hotfix_injection.StartInfo.FileName = mono_path;
-            hotfix_injection.StartInfo.Arguments = "\"" + String.Join("\" \"", args.ToArray()) + "\"";
+			hotfix_injection.StartInfo.Arguments = "\"" + String.Join("\" \"", args.Distinct().ToArray()) + "\"";
             hotfix_injection.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
             hotfix_injection.StartInfo.RedirectStandardOutput = true;
             hotfix_injection.StartInfo.UseShellExecute = false;
