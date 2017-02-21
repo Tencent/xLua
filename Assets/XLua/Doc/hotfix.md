@@ -1,12 +1,18 @@
-## 约束
+## 使用方式
 
-为了不影响开发，这个特性默认是关闭的，需要添加HOTFIX_ENABLE宏打开（在Unity3D的File->Build Setting->Scripting Define Symbols下添加）。使用该特性的切记build手机版本时不要忘记了！
+1、这个特性默认是关闭的，需要添加HOTFIX_ENABLE宏打开（在Unity3D的File->Build Setting->Scripting Define Symbols下添加）。使用该特性的切记build手机版本时不要忘记了！
 
-热补丁特性依赖Cecil，添加HOTFIX_ENABLE宏之后，可能会报找不到Cecil。这时你需要到Unity安装目录下找到Mono.Cecil.dll，Mono.Cecil.Pdb.dll，Mono.Cecil.Mdb.dll，拷贝到项目里头。
+2、目前版本依赖代码生成 ，热补丁需要执行XLua/Generate Code才能正常运行。（建议的开发方式是平时不打开HOTFIX_ENABLE，这样不用生成代码，开发更便捷，build手机版本或者要在编译器下开发补丁时打开HOTFIX_ENABLE）
+
+3、编辑器下需要执行"XLua/Hotfix Inject In Editor"，如果打印“hotfix inject finish!”或者“had injected!”，那表示已经注入成功，可以进行补丁调试（手机版本打包无需该步骤）；
+
+## 内嵌模式
+
+默认通过小工具执行代码注入，也可以采用内嵌到编辑器的方式，定义INJECT_WITHOUT_TOOL宏即可。
+
+定义INJECT_WITHOUT_TOOL宏后，热补丁特性依赖Cecil，添加HOTFIX_ENABLE宏之后，可能会报找不到Cecil。这时你需要到Unity安装目录下找到Mono.Cecil.dll，Mono.Cecil.Pdb.dll，Mono.Cecil.Mdb.dll，拷贝到项目里头。
 
 注意：如果你的Unity安装目录没有Mono.Cecil.Pdb.dll，Mono.Cecil.Mdb.dll（往往是一些老版本），那就只拷贝Mono.Cecil.dll（你从别的版本的Unity拷贝一套可能会导致编辑器不稳定），这时你需要定义HOTFIX_SYMBOLS_DISABLE，这会导致C#代码没法调试以及Log的栈源文件及行号错乱（所以赶紧升级Unity）。
-
-热补丁需要执行XLua/Generate Code才能正常运行。（建议的开发方式是平时不打开HOTFIX_ENABLE，这样不用生成代码，开发更便捷，build手机版本或者要在编译器下开发补丁时打开HOTFIX_ENABLE）
 
 参考命令（可能Unity版本不同会略有不同）：
 
@@ -15,11 +21,11 @@ OSX命令行 cp /Applications/Unity/Unity.app/Contents/Managed/Mono.Cecil.* Proj
 Win命令行 copy UnityPath\Editor\Data\Managed\Mono.Cecil.* Project\Assets\XLua\Src\Editor\
 ```
 
+## 约束
+
 不支持静态构造函数。
 
 目前只支持Assets下代码的热补丁，不支持引擎，c#系统库的热补丁。
-
-注意：要等打印了hotfix inject finish!后才运行例子，否则会类似xlua.access, no field __Hitfix0_Update的错误
 
 ## API
 xlua.hotfix(class, [method_name], fix)

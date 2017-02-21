@@ -7,7 +7,7 @@
 */
 
 #if HOTFIX_ENABLE
-#if (UNITY_5 || XLUA_GENERAL) && !INJECT_BY_TOOL
+#if XLUA_GENERAL || INJECT_WITHOUT_TOOL
 #if !XLUA_GENERAL
 using UnityEngine;
 using UnityEditor.Callbacks;
@@ -281,7 +281,6 @@ namespace XLua
         }
 
 #if !XLUA_GENERAL
-        [DidReloadScripts]
         [PostProcessScene]
         [UnityEditor.MenuItem("XLua/Hotfix Inject In Editor", false, 3)]
         public static void HotfixInject()
@@ -817,9 +816,7 @@ namespace XLua
 {
     public static class Hotfix
     {
-#if UNITY_5
         [PostProcessScene]
-#endif
         [MenuItem("XLua/Hotfix Inject In Editor", false, 3)]
         public static void HotfixInject()
         {
