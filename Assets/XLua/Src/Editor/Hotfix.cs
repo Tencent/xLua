@@ -857,6 +857,7 @@ namespace XLua
             hotfix_injection.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
             hotfix_injection.StartInfo.RedirectStandardOutput = true;
             hotfix_injection.StartInfo.UseShellExecute = false;
+            hotfix_injection.StartInfo.CreateNoWindow = true;
             hotfix_injection.Start();
             hotfix_injection.WaitForExit();
             UnityEngine.Debug.Log(hotfix_injection.StandardOutput.ReadToEnd());
