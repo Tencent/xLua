@@ -649,10 +649,7 @@ namespace XLua
 #else
                 if (File.Exists(filepath))
                 {
-                    Stream stream = File.Open(filepath, FileMode.Open, FileAccess.Read);
-                    StreamReader reader = new StreamReader(stream);
-                    string text = reader.ReadToEnd();
-                    stream.Close();
+                    string text = File.ReadAllText(filepath);
 
                     UnityEngine.Debug.LogWarning("load lua file from StreamingAssets is obsolete, filename:" + filename);
                     if (LuaAPI.luaL_loadbuffer(L, text, "@" + filename) != 0)
