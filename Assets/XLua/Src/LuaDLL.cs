@@ -230,6 +230,12 @@ namespace XLua.LuaDLL
             IntPtr str = lua_tolstring(L, index, out strlen);
             if (str != IntPtr.Zero)
 			{
+#if XLUA_GENERAL
+                int len = strlen.ToInt32();
+                byte[] buffer = new byte[len];
+                Marshal.Copy(str, buffer, 0, len);
+                return Encoding.UTF8.GetString(buffer);
+#else
                 string ret = Marshal.PtrToStringAnsi(str, strlen.ToInt32());
                 if (ret == null)
                 {
@@ -239,7 +245,8 @@ namespace XLua.LuaDLL
                     return Encoding.ASCII.GetString(buffer);
                 }
                 return ret;
-			}
+#endif
+            }
             else
 			{
                 return null;

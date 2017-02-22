@@ -100,29 +100,29 @@
     <Compile Include="..\..\Assets\XLua\Src\Utils.cs">
       <Link>Assets\XLua\Src\Utils.cs</Link>
     </Compile>
-    <Compile Include="..\Gen\AccessByGenGodeWrap.cs">
-      <Link>Gen\AccessByGenGodeWrap.cs</Link>
+    <Compile Include="..\Gen1\AccessByGenGodeWrap.cs">
+      <Link>Gen1\AccessByGenGodeWrap.cs</Link>
     </Compile>
-    <Compile Include="..\Gen\CalcWrap.cs">
-      <Link>Gen\CalcWrap.cs</Link>
+    <Compile Include="..\Gen1\CalcWrap.cs">
+      <Link>Gen1\CalcWrap.cs</Link>
     </Compile>
-    <Compile Include="..\Gen\DelegatesGensBridge.cs">
-      <Link>Gen\DelegatesGensBridge.cs</Link>
+    <Compile Include="..\Gen1\DelegatesGensBridge.cs">
+      <Link>Gen1\DelegatesGensBridge.cs</Link>
     </Compile>
-    <Compile Include="..\Gen\EnumWrap.cs">
-      <Link>Gen\EnumWrap.cs</Link>
+    <Compile Include="..\Gen1\EnumWrap.cs">
+      <Link>Gen1\EnumWrap.cs</Link>
     </Compile>
-    <Compile Include="..\Gen\PackUnpack.cs">
-      <Link>Gen\PackUnpack.cs</Link>
+    <Compile Include="..\Gen1\PackUnpack.cs">
+      <Link>Gen1\PackUnpack.cs</Link>
     </Compile>
-    <Compile Include="..\Gen\PointWrap.cs">
-      <Link>Gen\PointWrap.cs</Link>
+    <Compile Include="..\Gen1\PointWrap.cs">
+      <Link>Gen1\PointWrap.cs</Link>
     </Compile>
-    <Compile Include="..\Gen\WrapPusher.cs">
-      <Link>Gen\WrapPusher.cs</Link>
+    <Compile Include="..\Gen1\WrapPusher.cs">
+      <Link>Gen1\WrapPusher.cs</Link>
     </Compile>
-    <Compile Include="..\Gen\XLuaGenAutoRegister.cs">
-      <Link>Gen\XLuaGenAutoRegister.cs</Link>
+    <Compile Include="..\Gen1\XLuaGenAutoRegister.cs">
+      <Link>Gen1\XLuaGenAutoRegister.cs</Link>
     </Compile>
     <Compile Include="..\Src\XLuaTest.cs">
       <Link>Src\XLuaTest.cs</Link>

@@ -163,6 +163,7 @@ end
 
 function CMyTestCaseLuaCallCS.CaseGetType3(self)
     self.count = 1 + self.count
+    if CS.LuaTestCommon.IsXLuaGeneral() then return end
 	local ret = CS.LuaTestObj.TestGetType(typeof(CS.UnityEngine.Vector3))
 	ASSERT_EQ(ret, "UnityEngine.Vector3")
 end
@@ -2273,6 +2274,7 @@ end
 
 function CMyTestCaseLuaCallCS.CaseTestImplicit(self)
 	self.count = 1 + self.count
+    if CS.LuaTestCommon.IsXLuaGeneral() then return end
 	local ret = CS.LuaTestObj.TestImplicit():GetType()
 	ASSERT_EQ(ret, typeof(CS.UnityEngine.LayerMask))
 end

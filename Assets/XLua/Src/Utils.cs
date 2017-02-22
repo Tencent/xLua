@@ -49,7 +49,7 @@ namespace XLua
         public static IEnumerable<Type> GetAllTypes(bool exclude_generic_definition = true)
         {
             return from assembly in AppDomain.CurrentDomain.GetAssemblies()
-#if UNITY_EDITOR
+#if UNITY_EDITOR || XLUA_GENERAL
                                           where !(assembly.ManifestModule is System.Reflection.Emit.ModuleBuilder)
 #endif
                                           from type in assembly.GetTypes()
@@ -359,7 +359,7 @@ namespace XLua
                     Type type = enumerator.Current;
                     if (type.IsDefined(typeof(ExtensionAttribute), false)  && (
                             type.IsDefined(typeof(ReflectionUseAttribute), false)
-#if UNITY_EDITOR
+#if UNITY_EDITOR || XLUA_GENERAL
                             || type.IsDefined(typeof(LuaCallCSharpAttribute), false)
 #endif
                         ))
@@ -375,7 +375,7 @@ namespace XLua
                                 .Where(t => t.IsDefined(typeof(ExtensionAttribute), false)));
                         }
                     }
-#if UNITY_EDITOR
+#if UNITY_EDITOR || XLUA_GENERAL
                     else if (!type.IsInterface && typeof(GenConfig).IsAssignableFrom(type))
                     {
                         var tmp = (Activator.CreateInstance(type) as GenConfig).CSharpCallLua;
@@ -393,7 +393,7 @@ namespace XLua
                     {
                         var field = fields[i];
                         if ((field.IsDefined(typeof(ReflectionUseAttribute), false)
-#if UNITY_EDITOR
+#if UNITY_EDITOR || XLUA_GENERAL
                             || field.IsDefined(typeof(LuaCallCSharpAttribute), false)
 #endif
                             ) && (typeof(IEnumerable<Type>)).IsAssignableFrom(field.FieldType))
@@ -408,7 +408,7 @@ namespace XLua
                     {
                         var prop = props[i];
                         if ((prop.IsDefined(typeof(ReflectionUseAttribute), false)
-#if UNITY_EDITOR
+#if UNITY_EDITOR || XLUA_GENERAL
                             || prop.IsDefined(typeof(LuaCallCSharpAttribute), false)
 #endif
                             ) && (typeof(IEnumerable<Type>)).IsAssignableFrom(prop.PropertyType))

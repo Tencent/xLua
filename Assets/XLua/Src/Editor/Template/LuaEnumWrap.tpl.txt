@@ -18,7 +18,7 @@ namespace CSObjectWrap
 {
     using Utils = XLua.Utils;
     <%ForEachCsList(types, function(type)
-	local fields = type:GetFields()
+	local fields = g_enum_get_fields_flag and type:GetFields(g_enum_get_fields_flag) or type:GetFields()
 	%>
     public class <%=CSVariableName(type)%>Wrap
     {

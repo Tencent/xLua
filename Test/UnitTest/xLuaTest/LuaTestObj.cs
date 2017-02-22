@@ -1,6 +1,8 @@
 using XLua;
 using System;
+#if !XLUA_GENERAL
 using UnityEngine;
+#endif
 
 [LuaCallCSharp]
 public class LongStatic
@@ -459,7 +461,7 @@ public class LuaTestObj
 
 	public void GenericMethod<T>()
 	{
-		Debug.Log("GenericMethod<" + typeof(T) +">");
+		LuaTestCommon.Log("GenericMethod<" + typeof(T) +">");
 	}
 
     public IntPtr ptr = System.Runtime.InteropServices.Marshal.AllocHGlobal(100);
@@ -473,10 +475,10 @@ public class LuaTestObj
 
     public byte PrintPtr(IntPtr p)
     {
-        Debug.Log("p == ptr?" + (p == ptr));
+        LuaTestCommon.Log("p == ptr?" + (p == ptr));
         byte[] abc = new byte[] { 0, 0, 0 };
         System.Runtime.InteropServices.Marshal.Copy(p, abc, 0, abc.Length);
-        Debug.Log(string.Format("{0},{1},{2}", abc[0], abc[1], abc[2]));
+        LuaTestCommon.Log(string.Format("{0},{1},{2}", abc[0], abc[1], abc[2]));
         return abc[0];
     }
 
@@ -514,10 +516,12 @@ public class LuaTestObj
         return abc;
     }
 
+#if !XLUA_GENERAL
     public static LayerMask TestImplicit()
     {
         return new LayerMask();
     }
+#endif
 
     public static int VariableParamFunc(int i, params int[] strs)
     {
@@ -546,7 +550,7 @@ public class LuaTestObj
         end";
         luaEnv.DoString(luaScript);
 		LuaFunction f1 = luaEnv.Global.Get<LuaFunction>("first_push");
-        Debug.Log("LuaFunction<" + f1);
+        LuaTestCommon.Log("LuaFunction<" + f1);
         object[] ret = f1.Call(i, FirstPushEnum.E1);
         return ret[0].ToString();
 	}
@@ -938,26 +942,26 @@ public class NoGenCodeBaseClass
 		struct_var.IncludeStruct = new ConStruct(var.IncludeStruct.x, var.IncludeStruct.y, var.IncludeStruct.z);
 		add = struct_var.Add (var.IntVar1, var.IntVar2);
 		value = struct_var;
-		Debug.Log ("NoGenCodeStruct Byte:" + struct_var.Byte);
-		Debug.Log ("NoGenCodeStruct Char:" + struct_var.Char);
-		Debug.Log ("NoGenCodeStruct Decimal:" + struct_var.Decimal);
-		Debug.Log ("NoGenCodeStruct Double:" + struct_var.Double);
-		Debug.Log ("NoGenCodeStruct Float:" + struct_var.Float);
-		Debug.Log ("NoGenCodeStruct IntVar1:" + struct_var.IntVar1);
-		Debug.Log ("NoGenCodeStruct IntVar2:" + struct_var.IntVar2);
-		Debug.Log ("NoGenCodeStruct Long:" + struct_var.Long);
-		Debug.Log ("NoGenCodeStruct ULong:" + struct_var.ULong);
-		Debug.Log ("NoGenCodeStruct Short:" + struct_var.Short);
-		Debug.Log ("NoGenCodeStruct String:" + struct_var.String);
-		Debug.Log ("NoGenCodeStruct UInt:" + struct_var.UInt);
-		Debug.Log ("NoGenCodeStruct UShort:" + struct_var.UShort);
-		Debug.Log ("NoGenCodeStruct IncludeStruct.x:" + struct_var.IncludeStruct.x + ", IncludeStruct.y:" 
+		LuaTestCommon.Log ("NoGenCodeStruct Byte:" + struct_var.Byte);
+		LuaTestCommon.Log ("NoGenCodeStruct Char:" + struct_var.Char);
+		LuaTestCommon.Log ("NoGenCodeStruct Decimal:" + struct_var.Decimal);
+		LuaTestCommon.Log ("NoGenCodeStruct Double:" + struct_var.Double);
+		LuaTestCommon.Log ("NoGenCodeStruct Float:" + struct_var.Float);
+		LuaTestCommon.Log ("NoGenCodeStruct IntVar1:" + struct_var.IntVar1);
+		LuaTestCommon.Log ("NoGenCodeStruct IntVar2:" + struct_var.IntVar2);
+		LuaTestCommon.Log ("NoGenCodeStruct Long:" + struct_var.Long);
+		LuaTestCommon.Log ("NoGenCodeStruct ULong:" + struct_var.ULong);
+		LuaTestCommon.Log ("NoGenCodeStruct Short:" + struct_var.Short);
+		LuaTestCommon.Log ("NoGenCodeStruct String:" + struct_var.String);
+		LuaTestCommon.Log ("NoGenCodeStruct UInt:" + struct_var.UInt);
+		LuaTestCommon.Log ("NoGenCodeStruct UShort:" + struct_var.UShort);
+		LuaTestCommon.Log ("NoGenCodeStruct IncludeStruct.x:" + struct_var.IncludeStruct.x + ", IncludeStruct.y:" 
 		           + struct_var.IncludeStruct.y + ", IncludeStruct.z:" + struct_var.IncludeStruct.z);
 	}
 
 	public static NoGenCodeStruct GetStaticVar()
 	{
-		Debug.Log ("static struct byte:" + struct_var1.Byte);
+		LuaTestCommon.Log ("static struct byte:" + struct_var1.Byte);
 		return struct_var1;
 	}
 
@@ -1208,20 +1212,20 @@ public class GenCodeBaseClass
 		struct_var.IncludeStruct = new HasConstructStruct(var.IncludeStruct.x, var.IncludeStruct.y, var.IncludeStruct.z);
 		add = struct_var.Add (var.IntVar1, var.IntVar2);
 		value = struct_var;
-		Debug.Log ("GenCodeStruct Byte:" + struct_var.Byte);
-		Debug.Log ("GenCodeStruct Char:" + struct_var.Char);
-		Debug.Log ("GenCodeStruct Decimal:" + struct_var.Decimal);
-		Debug.Log ("GenCodeStruct Double:" + struct_var.Double);
-		Debug.Log ("GenCodeStruct Float:" + struct_var.Float);
-		Debug.Log ("GenCodeStruct IntVar1:" + struct_var.IntVar1);
-		Debug.Log ("GenCodeStruct IntVar2:" + struct_var.IntVar2);
-		Debug.Log ("GenCodeStruct Long:" + struct_var.Long);
-		Debug.Log ("GenCodeStruct ULong:" + struct_var.ULong);
-		Debug.Log ("GenCodeStruct Short:" + struct_var.Short);
-		Debug.Log ("GenCodeStruct String:" + struct_var.String);
-		Debug.Log ("GenCodeStruct UInt:" + struct_var.UInt);
-		Debug.Log ("GenCodeStruct UShort:" + struct_var.UShort);
-		Debug.Log ("GenCodeStruct IncludeStruct.x:" + struct_var.IncludeStruct.x + ", IncludeStruct.y:" 
+		LuaTestCommon.Log ("GenCodeStruct Byte:" + struct_var.Byte);
+		LuaTestCommon.Log ("GenCodeStruct Char:" + struct_var.Char);
+		LuaTestCommon.Log ("GenCodeStruct Decimal:" + struct_var.Decimal);
+		LuaTestCommon.Log ("GenCodeStruct Double:" + struct_var.Double);
+		LuaTestCommon.Log ("GenCodeStruct Float:" + struct_var.Float);
+		LuaTestCommon.Log ("GenCodeStruct IntVar1:" + struct_var.IntVar1);
+		LuaTestCommon.Log ("GenCodeStruct IntVar2:" + struct_var.IntVar2);
+		LuaTestCommon.Log ("GenCodeStruct Long:" + struct_var.Long);
+		LuaTestCommon.Log ("GenCodeStruct ULong:" + struct_var.ULong);
+		LuaTestCommon.Log ("GenCodeStruct Short:" + struct_var.Short);
+		LuaTestCommon.Log ("GenCodeStruct String:" + struct_var.String);
+		LuaTestCommon.Log ("GenCodeStruct UInt:" + struct_var.UInt);
+		LuaTestCommon.Log ("GenCodeStruct UShort:" + struct_var.UShort);
+		LuaTestCommon.Log ("GenCodeStruct IncludeStruct.x:" + struct_var.IncludeStruct.x + ", IncludeStruct.y:" 
 		           + struct_var.IncludeStruct.y + ", IncludeStruct.z:" + struct_var.IncludeStruct.z);
 	}
 
@@ -1333,7 +1337,7 @@ public class BClass:CClass
 		outvar = invar;
 		outvar.x = invar.x - refvar.x;
 		refvar.x = invar.x;
-		Debug.Log ("refvar.x:" + refvar.x + ",refvar.y:" + refvar.y + ", refvar.z:" + refvar.z);
+		LuaTestCommon.Log ("refvar.x:" + refvar.x + ",refvar.y:" + refvar.y + ", refvar.z:" + refvar.z);
 	}
 	
 	private HasConstructStruct b_struct;
@@ -1344,7 +1348,7 @@ public class AClass:BClass
 {
 	public AClass(int x, int y , string z):base(x, y, z)
 	{
-		Debug.Log ("AClass Constructor");
+		LuaTestCommon.Log ("AClass Constructor");
 	}
 
     public int Div(int x, int y)
@@ -1721,7 +1725,7 @@ namespace TestExtensionMethod
 	{
 		public static void PrintSalary(this Employeestruct i)
 		{
-			Debug.Log("Salary:" + i.Salary);
+			LuaTestCommon.Log("Salary:" + i.Salary);
 		}
 		
 		public static int GetIncomeForOneYear(this Employeestruct i)
@@ -1739,8 +1743,8 @@ namespace TestExtensionMethod
 			e = d;
 			e.Salary = 10000;
 			a.Salary = i.Salary - d.Salary;
-			Debug.Log ("e.name:" + e.Name +", e.salary:"+ e.Salary);
-			Debug.Log ("a.name:" + a.Name +", a.salary:"+ a.Salary);
+			LuaTestCommon.Log ("e.name:" + e.Name +", e.salary:"+ e.Salary);
+			LuaTestCommon.Log ("a.name:" + a.Name +", a.salary:"+ a.Salary);
 
 
 		}
@@ -1751,7 +1755,7 @@ namespace TestExtensionMethod
 	{
 		public static void PrintAllString(this TestChineseString i)
 		{
-			Debug.Log("GetLongChineString:" + i.GetLongChineString());
+			LuaTestCommon.Log("GetLongChineString:" + i.GetLongChineString());
 		}
 
 		public static int GetLongStringLength(this TestChineseString i)

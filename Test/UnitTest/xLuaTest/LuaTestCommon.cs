@@ -1,5 +1,7 @@
 using XLua;
+#if !XLUA_GENERAL
 using UnityEngine;
+#endif
 
 using System.Collections.Generic;
 using System;
@@ -13,9 +15,12 @@ public class LuaEnvSingleton  {
 			if(instance == null)
 			{
 				instance = new LuaEnv();
-			}
-			
-			return instance;
+#if XLUA_GENERAL
+                instance.DoString("package.path = package.path..';../Test/UnitTest/xLuaTest/CSharpCallLua/Resources/?.lua.txt;../Test/UnitTest/StreamingAssets/?.lua'");
+#endif
+            }
+
+            return instance;
 		}
 	}
 }
@@ -38,10 +43,22 @@ public class LuaTestCommon
 	public static string xxxtdrfilepath = Application.dataPath + "/StreamingAssets" + "/testxxx.tdr";
 	public static string xxxtdr2filepath = Application.dataPath + "/StreamingAssets" + "/testxxx2.tdr";
 	public static bool android_platform = false;
-#else
+#elif XLUA_GENERAL
+    public static string resultPath = ".";
+    public static bool android_platform = false;
+    public static string xxxtdrfilepath = "../Test/UnitTest/StreamingAssets" + "/testxxx.tdr";
 #endif
-	
-	public static bool IsMacPlatform()
+
+    public static bool IsXLuaGeneral()
+    {
+#if XLUA_GENERAL
+        return true;
+#else
+        return false;
+#endif
+    }
+
+    public static bool IsMacPlatform()
 	{
 #if UNITY_EDITOR
         string os = System.Environment.OSVersion.ToString();
@@ -66,8 +83,18 @@ public class LuaTestCommon
 		return false;
 #endif
 	}
+
+    public static void Log(string str)
+    {
+#if XLUA_GENERAL
+        System.Console.WriteLine(str);
+#else
+        UnityEngine.Debug.Log(str);
+#endif
+    }
 }
 
+#if !XLUA_GENERAL
 //注意：用户自己代码不建议在这里配置，建议通过标签来声明!!
 public class TestCaseGenConfig : XLua.GenConfig
 {
@@ -101,4 +128,4 @@ public class TestCaseGenConfig : XLua.GenConfig
         }
     }
 }
-
+#endif

@@ -1,6 +1,8 @@
 using XLua;
 using System;
+#if !XLUA_GENERAL
 using UnityEngine;
+#endif
 
 public enum LuaTestTypeReflect
 {
@@ -447,7 +449,7 @@ public class LuaTestObjReflect
 
 	public void GenericMethod<T>()
 	{
-		Debug.Log("GenericMethod<" + typeof(T) +">");
+		LuaTestCommon.Log("GenericMethod<" + typeof(T) +">");
 	}
 
     public IntPtr ptr = System.Runtime.InteropServices.Marshal.AllocHGlobal(100);
@@ -461,10 +463,10 @@ public class LuaTestObjReflect
 
     public byte PrintPtr(IntPtr p)
     {
-        Debug.Log("p == ptr?" + (p == ptr));
+        LuaTestCommon.Log("p == ptr?" + (p == ptr));
         byte[] abc = new byte[] { 0, 0, 0 };
         System.Runtime.InteropServices.Marshal.Copy(p, abc, 0, abc.Length);
-        Debug.Log(string.Format("{0},{1},{2}", abc[0], abc[1], abc[2]));
+        LuaTestCommon.Log(string.Format("{0},{1},{2}", abc[0], abc[1], abc[2]));
         return abc[0];
     }
     public int VariableParamFuncDefault(int d, int i = 1, params string[] strs)
@@ -500,10 +502,13 @@ public class LuaTestObjReflect
         int abc = 97;
         return abc;
     }
+
+#if !XLUA_GENERAL
     public static LayerMask TestImplicit()
     {
         return new LayerMask();
     }
+#endif
 
     public static int VariableParamFunc(int i, params int[] strs)
     {
@@ -532,7 +537,7 @@ public class LuaTestObjReflect
         end";
         luaEnv.DoString(luaScript);
 		LuaFunction f1 = luaEnv.Global.Get<LuaFunction>("first_push_reflect");
-        Debug.Log("LuaFunction<" + f1);
+        LuaTestCommon.Log("LuaFunction<" + f1);
 		object[] ret = f1.Call(i, FirstPushEnumReflect.E1);
 		return ret[0].ToString();
 	}
@@ -755,7 +760,7 @@ public class BClassReflect:CClassReflect
 		outvar = invar;
 		outvar.x = invar.x - refvar.x;
 		refvar.x = invar.x;
-		Debug.Log ("refvar.x:" + refvar.x + ",refvar.y:" + refvar.y + ", refvar.z:" + refvar.z);
+		LuaTestCommon.Log ("refvar.x:" + refvar.x + ",refvar.y:" + refvar.y + ", refvar.z:" + refvar.z);
 	}
 	
 	private HasConstructStructReflect b_struct;
@@ -765,7 +770,7 @@ public class AClassReflect:BClassReflect
 {
 	public AClassReflect(int x, int y , string z):base(x, y, z)
 	{
-		Debug.Log ("AClass Constructor");
+		LuaTestCommon.Log ("AClass Constructor");
 	}
 
     public int Div(int x, int y)
@@ -787,7 +792,7 @@ namespace TestExtensionMethodReflect
 	{
 		public static void PrintSalary(this EmployeestructReflect i)
 		{
-			Debug.Log("Salary:" + i.Salary);
+			LuaTestCommon.Log("Salary:" + i.Salary);
 		}
 		
 		public static int GetIncomeForOneYear(this EmployeestructReflect i)
@@ -805,8 +810,8 @@ namespace TestExtensionMethodReflect
 			e = d;
 			e.Salary = 10000;
 			a.Salary = i.Salary - d.Salary;
-			Debug.Log ("e.name:" + e.Name +", e.salary:"+ e.Salary);
-			Debug.Log ("a.name:" + a.Name +", a.salary:"+ a.Salary);
+			LuaTestCommon.Log ("e.name:" + e.Name +", e.salary:"+ e.Salary);
+			LuaTestCommon.Log ("a.name:" + a.Name +", a.salary:"+ a.Salary);
 		}
 	}
 	
@@ -815,7 +820,7 @@ namespace TestExtensionMethodReflect
 	{
 		public static void PrintAllString(this TestChineseStringReflect i)
 		{
-			Debug.Log("GetLongChineString:" + i.GetLongChineString());
+			LuaTestCommon.Log("GetLongChineString:" + i.GetLongChineString());
 		}
 
 		public static int GetLongStringLength(this TestChineseStringReflect i)

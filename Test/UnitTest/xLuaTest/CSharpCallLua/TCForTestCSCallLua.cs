@@ -1,4 +1,6 @@
+#if !XLUA_GENERAL
 using UnityEngine;
+#endif
 using System.Collections;
 using System.Collections.Generic;
 using XLua;
@@ -15,7 +17,10 @@ public class LuaEnvSingletonForTest  {
 			if(instance == null)
 			{
 				instance = new LuaEnv();
-			}
+#if XLUA_GENERAL
+                instance.DoString("package.path = package.path..';../Test/UnitTest/xLuaTest/CSharpCallLua/Resources/?.lua.txt;../Test/UnitTest/StreamingAssets/?.lua'");
+#endif
+            }
 			
 			return instance;
 		}
@@ -591,8 +596,8 @@ public class TCForTestCSCallLua{
 		{  
 			setResult(false, e.Message , out result);
 		}
-		Debug.Log ("InMemory.ccc=" + luaEnv.Global.Get<int> ("inmemory"));
-        Debug.Log("InFile.filestring=" + luaEnv.Global.Get<string>("filestring"));
+		LuaTestCommon.Log ("InMemory.ccc=" + luaEnv.Global.Get<int> ("inmemory"));
+        LuaTestCommon.Log("InFile.filestring=" + luaEnv.Global.Get<string>("filestring"));
 
 		LOG (caseName + result.ToString());
 		return result;
@@ -670,7 +675,7 @@ public class TCForTestCSCallLua{
         {
             setResult(false, "shoulde load loader defined, but loadfile in Resources.", out result);
 		}
-		Debug.Log ("InFile.filestring=" + filestring);
+		LuaTestCommon.Log ("InFile.filestring=" + filestring);
 		
 		LOG (caseName + result.ToString());
 		return result;
@@ -977,7 +982,7 @@ public class TCForTestCSCallLua{
 		long longValue2 = luaEnv.Global.Get<long> ("longValue2");
 		
 		LOG ("longValue=" + longValue + "; longValue2=" + longValue2);
-        Debug.LogWarning("longValue=" + longValue + "; longValue2=" + longValue2);
+        LuaTestCommon.Log("longValue=" + longValue + "; longValue2=" + longValue2);
 		
 		if (longValue == 42949672960) {
 			setResult (true, "pass", out result);
@@ -2382,7 +2387,7 @@ public class TCForTestCSCallLua{
 		FuncReturnObjectDelegate delegate1 = luaEnv.Global.Get<FuncReturnObjectDelegate> ("func_return_object");
 		System.Object ret = delegate1(0);
 		
-		Debug.Log ("ret= " + ret );
+		LuaTestCommon.Log ("ret= " + ret );
 		
 		if ( ret == null){
 			setResult (true, "pass", out result);
@@ -2406,7 +2411,7 @@ public class TCForTestCSCallLua{
 		FuncReturnObjectDelegate delegate1 = luaEnv.Global.Get<FuncReturnObjectDelegate> ("func_return_object");
 		System.Object ret = delegate1(1);
 		
-		Debug.Log ("ret= " + ret );
+		LuaTestCommon.Log ("ret= " + ret );
 		
 		if ( Convert.ToInt64(ret)== System.Int64.MaxValue){
 			setResult (true, "pass", out result);
@@ -2430,7 +2435,7 @@ public class TCForTestCSCallLua{
 		FuncReturnObjectDelegate delegate1 = luaEnv.Global.Get<FuncReturnObjectDelegate> ("func_return_object");
 		System.Object ret = delegate1(2);
 		
-		Debug.Log ("ret= " + ret );
+		LuaTestCommon.Log ("ret= " + ret );
 		
 		//if ( Convert.ToUInt64(ret) == System.UInt64.MaxValue){
 		if ( Convert.ToInt64(ret) == -1){
@@ -2454,7 +2459,7 @@ public class TCForTestCSCallLua{
 
         int ret = luaEnv.Global.Get<int>("intValueMax");
 
-        Debug.Log("ret= " + ret);
+        LuaTestCommon.Log("ret= " + ret);
 
         if (ret == System.Int32.MaxValue)
         {
@@ -2467,7 +2472,7 @@ public class TCForTestCSCallLua{
         luaEnv.Global.Set("intValueMax", 12345);
         ret = luaEnv.Global.Get<int>("intValueMax");
 
-        Debug.Log("ret= " + ret);
+        LuaTestCommon.Log("ret= " + ret);
 
         if (ret == 12345)
         {
@@ -2479,7 +2484,7 @@ public class TCForTestCSCallLua{
         }
         ret = 0;
         luaEnv.Global.Get("intValueMax", out ret);
-        Debug.Log("out ret= " + ret);
+        LuaTestCommon.Log("out ret= " + ret);
         if (ret == 12345)
         {
             updateResult(true, "pass", ref result);
@@ -2505,7 +2510,7 @@ public class TCForTestCSCallLua{
         luaEnv.Global.Set(123, 12345);
         ret = luaEnv.Global.Get<int>(123);
 
-        Debug.Log("ret= " + ret);
+        LuaTestCommon.Log("ret= " + ret);
 
         if (ret == 12345)
         {
@@ -2517,7 +2522,7 @@ public class TCForTestCSCallLua{
         }
         ret = 0;
         luaEnv.Global.Get(123, out ret);
-        Debug.Log("out ret= " + ret);
+        LuaTestCommon.Log("out ret= " + ret);
         if (ret == 12345)
         {
             updateResult(true, "pass", ref result);
@@ -2543,7 +2548,7 @@ public class TCForTestCSCallLua{
         luaEnv.Global.Set("strValueChin", "中文字符串mix12345587");
         luaEnv.Global.Get("strValueChin", out ret);
 
-        Debug.Log("ret= " + ret);
+        LuaTestCommon.Log("ret= " + ret);
 
         if (ret == "中文字符串mix12345587")
         {
@@ -2571,7 +2576,7 @@ public class TCForTestCSCallLua{
         luaEnv.Global.Set((sbyte)12, (sbyte)23);
         luaEnv.Global.Get((sbyte)12, out ret);
 
-        Debug.Log("ret= " + ret);
+        LuaTestCommon.Log("ret= " + ret);
 
         if (ret == (sbyte)23)
         {
@@ -2607,7 +2612,7 @@ public class TCForTestCSCallLua{
         luaEnv.Global.Set((byte)255, (byte)23);
         luaEnv.Global.Get((byte)255, out ret);
 
-        Debug.Log("ret= " + ret);
+        LuaTestCommon.Log("ret= " + ret);
 
         if (ret == (byte)23)
         {
@@ -2643,7 +2648,7 @@ public class TCForTestCSCallLua{
         luaEnv.Global.Set((short)256, (short)512);
         luaEnv.Global.Get((short)256, out ret);
 
-        Debug.Log("ret= " + ret);
+        LuaTestCommon.Log("ret= " + ret);
 
         if (ret == 512)
         {
@@ -2679,7 +2684,7 @@ public class TCForTestCSCallLua{
         luaEnv.Global.Set((ushort)1024, (ushort)32768);
         luaEnv.Global.Get((ushort)1024, out ret);
 
-        Debug.Log("ret= " + ret);
+        LuaTestCommon.Log("ret= " + ret);
 
         if (ret == 32768)
         {
@@ -2715,7 +2720,7 @@ public class TCForTestCSCallLua{
         luaEnv.Global.Set("test", (long)3276800000);
         luaEnv.Global.Get("test", out ret);
 
-        Debug.Log("ret= " + ret);
+        LuaTestCommon.Log("ret= " + ret);
 
         if (ret == 3276800000)
         {
@@ -2751,7 +2756,7 @@ public class TCForTestCSCallLua{
         luaEnv.Global.Set("test", (ulong)42949672960);
         luaEnv.Global.Get("test", out ret);
 
-        Debug.Log("ret= " + ret);
+        LuaTestCommon.Log("ret= " + ret);
 
         if (ret == 42949672960)
         {
@@ -2786,7 +2791,7 @@ public class TCForTestCSCallLua{
         luaEnv.Global.Set((double)0.0000001, (double)1.000124587);
         luaEnv.Global.Get((double)0.0000001, out ret);
 
-        Debug.Log("ret= " + ret);
+        LuaTestCommon.Log("ret= " + ret);
 
         if (ret == 1.000124587)
         {
@@ -2822,7 +2827,7 @@ public class TCForTestCSCallLua{
         luaEnv.Global.Set((float)3.14, (float)3.15);
         luaEnv.Global.Get((float)3.14, out ret);
 
-        Debug.Log("ret= " + ret);
+        LuaTestCommon.Log("ret= " + ret);
 
         if (System.Math.Abs(ret - 3.15) < 0.000001)
         {
@@ -2859,7 +2864,7 @@ public class TCForTestCSCallLua{
         luaEnv.Global.Set('a', 'b');
         luaEnv.Global.Get('a', out ret);
 
-        Debug.Log("ret= " + ret);
+        LuaTestCommon.Log("ret= " + ret);
 
         if (ret == 'b')
         {
@@ -2897,7 +2902,7 @@ public class TCForTestCSCallLua{
         luaEnv.Global.Set(123.01, value);
         luaEnv.Global.Get(123.01, out ret);
 
-        Debug.Log("ret= " + ret);
+        LuaTestCommon.Log("ret= " + ret);
 
         if (ret == value)
         {
@@ -2934,7 +2939,7 @@ public class TCForTestCSCallLua{
         luaEnv.Global.Set(123, mystruct);
         luaEnv.Global.Get(123, out mystruct2);
 
-        Debug.Log("ret= " + mystruct2);
+        LuaTestCommon.Log("ret= " + mystruct2);
 
         if (mystruct.a == mystruct2.a)
         {
