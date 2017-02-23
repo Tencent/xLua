@@ -33,6 +33,10 @@ LUA_API int xlua_get_registry_index() {
 	return LUA_REGISTRYINDEX;
 }
 
+LUA_API int xlua_get_lib_version() {
+	return 100;
+}
+
 LUA_API int xlua_tocsobj_safe(lua_State *L,int index) {
 	int *udata = (int *)lua_touserdata (L,index);
 	if (udata != NULL) {
@@ -302,9 +306,11 @@ static int c_lua_setglobal(lua_State* L) {
 }
 
 LUA_API int xlua_setglobal (lua_State *L, const char *name) {
+	int top = lua_gettop(L);
 	lua_pushcfunction(L, c_lua_setglobal);
 	lua_pushstring(L, name);
-	lua_pushvalue(L, -3);
+	lua_pushvalue(L, top);
+	lua_remove(L, top);
 	return lua_pcall(L, 2, 0, 0);
 }
 

@@ -36,8 +36,16 @@ namespace XLua
         internal object luaEnvLock = new object();
 #endif
 
+        const int LIB_VERSION_EXPECT = 100;
+
         public LuaEnv()
         {
+            if (LuaAPI.xlua_get_lib_version() != LIB_VERSION_EXPECT)
+            {
+                throw new InvalidProgramException("wrong lib version expect:"
+                    + LIB_VERSION_EXPECT + " but got:" + LuaAPI.xlua_get_lib_version());
+            }
+
 #if THREAD_SAFT || HOTFIX_ENABLE
             lock(luaEnvLock)
             {
