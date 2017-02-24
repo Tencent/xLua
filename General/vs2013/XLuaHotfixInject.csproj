@@ -20,7 +20,7 @@
     <OutputPath>..\Tools\</OutputPath>
     <BaseIntermediateOutputPath>obj\Any CPU\Debug\XLuaHotfixInject\</BaseIntermediateOutputPath>
     <IntermediateOutputPath>$(BaseIntermediateOutputPath)</IntermediateOutputPath>
-    <DefineConstants>_DEBUG;DEBUG;TRACE;;HOTFIX_ENABLE;XLUA_GENERAL;UNITY_STANDALONE_WIN</DefineConstants>
+    <DefineConstants>_DEBUG;DEBUG;TRACE;;HOTFIX_ENABLE;XLUA_GENERAL</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -31,7 +31,7 @@
     <OutputPath>..\Tools\</OutputPath>
     <BaseIntermediateOutputPath>obj\Any CPU\Release\XLuaHotfixInject\</BaseIntermediateOutputPath>
     <IntermediateOutputPath>$(BaseIntermediateOutputPath)</IntermediateOutputPath>
-    <DefineConstants>;HOTFIX_ENABLE;XLUA_GENERAL;UNITY_STANDALONE_WIN</DefineConstants>
+    <DefineConstants>;HOTFIX_ENABLE;XLUA_GENERAL</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>

@@ -33,7 +33,6 @@ files
 defines
 {
 	"XLUA_GENERAL",
-	"UNITY_STANDALONE_WIN",
 }
 
 links
@@ -58,7 +57,6 @@ files
 defines
 {
     "XLUA_GENERAL",
-    "UNITY_STANDALONE_WIN",
 }
 
 links
@@ -84,7 +82,6 @@ defines
 {
     "HOTFIX_ENABLE",
     "XLUA_GENERAL",
-    "UNITY_STANDALONE_WIN",
 }
 
 links
@@ -111,7 +108,6 @@ files
 defines
 {
     "XLUA_GENERAL",
-    "UNITY_STANDALONE_WIN",
 }
 
 links
@@ -139,7 +135,6 @@ defines
 {
     "XLUA_GENERAL",
     "HOTFIX_ENABLE",
-    "UNITY_STANDALONE_WIN",
 }
 
 links
@@ -165,7 +160,6 @@ files
 defines
 {
     "XLUA_GENERAL",
-    "UNITY_STANDALONE_WIN",
 }
 
 links
@@ -193,7 +187,6 @@ files
 defines
 {
     "XLUA_GENERAL",
-    "UNITY_STANDALONE_WIN",
 }
 
 links
