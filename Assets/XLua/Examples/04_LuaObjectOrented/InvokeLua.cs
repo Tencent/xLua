@@ -20,7 +20,7 @@ public class InvokeLua : MonoBehaviour
     }
 
     [CSharpCallLua]
-    public delegate ICalc CalcNew(int mult, params string[] arg);
+    public delegate ICalc CalcNew(int mult);
 
     private string script = @"
                 local calc_mt = {
@@ -33,7 +33,7 @@ public class InvokeLua : MonoBehaviour
 
                 Calc = {
 	                New = function (mult, ...)
-                        print(...)
+                        --print(...)
                         return setmetatable({Mult = mult}, calc_mt)
                     end
                 }
@@ -44,10 +44,11 @@ public class InvokeLua : MonoBehaviour
         LuaEnv luaenv = new LuaEnv();
         luaenv.DoString(script);
         CalcNew calc_new = luaenv.Global.GetInPath<CalcNew>("Calc.New");
-        ICalc calc = calc_new(10, "hi", "john"); //constructor
+        ICalc calc = calc_new(10); //constructor
         Debug.Log("sum(*10) =" + calc.Add(1, 2));
         calc.Mult = 100;
         Debug.Log("sum(*100)=" + calc.Add(1, 2));
+        calc_new = null;
         luaenv.Dispose();
     }
 	

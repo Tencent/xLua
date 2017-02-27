@@ -322,8 +322,7 @@ namespace XLua
                     && (!type.IsGenericType || type.IsGenericTypeDefinition))
                 {
                     string key = type.FullName.Replace('+', '/');
-                    if (!hotfixCfg.ContainsKey(key) && type.Namespace != "CSObjectWrap"
-                        && type.Namespace != "XLua")
+                    if (!hotfixCfg.ContainsKey(key) && (type.Namespace == null || !type.Namespace.StartsWith("XLua.")))
                     {
                         hotfixCfg.Add(key, hotfixType);
                     }
@@ -397,6 +396,10 @@ namespace XLua
                 assembly.Write(inject_assembly_path, writerParameters);
                 Info("hotfix inject finish!");
 #endif
+            }
+            catch(Exception e)
+            {
+                Error("Exception! " + e);
             }
             finally
             {

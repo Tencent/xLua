@@ -24,7 +24,7 @@ using System.Collections;
 using System.Text;
 using XLua;
 
-namespace TemplateEngine
+namespace XLua.TemplateEngine
 {
     public enum TokenType
     {

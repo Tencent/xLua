@@ -412,7 +412,7 @@ namespace CSObjectWrapEditor
             LuaFunction template;
             if (!templateCache.TryGetValue(templateAsset.name, out template))
             {
-                template = TemplateEngine.LuaTemplate.Compile(luaenv, templateAsset.text);
+                template = XLua.TemplateEngine.LuaTemplate.Compile(luaenv, templateAsset.text);
                 templateCache[templateAsset.name] = template;
             }
 
@@ -426,7 +426,7 @@ namespace CSObjectWrapEditor
 
             try
             {
-                string genCode = TemplateEngine.LuaTemplate.Execute(template, type_info);
+                string genCode = XLua.TemplateEngine.LuaTemplate.Execute(template, type_info);
                 //string filePath = save_path + type.ToString().Replace("+", "").Replace(".", "").Replace("`", "").Replace("&", "").Replace("[", "").Replace("]", "").Replace(",", "") + file_suffix + ".cs";
                 textWriter.Write(genCode);
                 textWriter.Flush();
@@ -1285,7 +1285,7 @@ namespace CSObjectWrapEditor
         {
             GetGenConfig(Utils.GetAllTypes());
 
-            LuaFunction template = TemplateEngine.LuaTemplate.Compile(luaenv,
+            LuaFunction template = XLua.TemplateEngine.LuaTemplate.Compile(luaenv,
                 template_src);
             foreach (var gen_task in get_tasks(luaenv, new UserConfig() {
                 LuaCallCSharp = LuaCallCSharp,
@@ -1300,7 +1300,7 @@ namespace CSObjectWrapEditor
 
                 try
                 {
-                    string genCode = TemplateEngine.LuaTemplate.Execute(template, gen_task.Data);
+                    string genCode = XLua.TemplateEngine.LuaTemplate.Execute(template, gen_task.Data);
                     gen_task.Output.Write(genCode);
                     gen_task.Output.Flush();
                 }
