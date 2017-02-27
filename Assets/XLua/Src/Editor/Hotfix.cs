@@ -322,7 +322,8 @@ namespace XLua
                     && (!type.IsGenericType || type.IsGenericTypeDefinition))
                 {
                     string key = type.FullName.Replace('+', '/');
-                    if (!hotfixCfg.ContainsKey(key))
+                    if (!hotfixCfg.ContainsKey(key) && type.Namespace != "CSObjectWrap"
+                        && type.Namespace != "XLua")
                     {
                         hotfixCfg.Add(key, hotfixType);
                     }

@@ -495,6 +495,9 @@ namespace CSObjectWrapEditor
             {
                 return ParameterInfos;
             }
+
+            public Type DeclaringType = null;
+            public string DeclaringTypeName = null;
         }
 
         static MethodInfoSimulation makeMethodInfoSimulation(MethodInfo method)
@@ -524,7 +527,8 @@ namespace CSObjectWrapEditor
             {
                 ReturnType = method.ReturnType,
                 HashCode = hashCode,
-                ParameterInfos = paramsExpect.ToArray()
+                ParameterInfos = paramsExpect.ToArray(),
+                DeclaringType = method.DeclaringType
             };
         }
 
@@ -666,7 +670,6 @@ namespace CSObjectWrapEditor
             string filePath = save_path + "DelegatesGensBridge.cs";
             StreamWriter textWriter = new StreamWriter(filePath, false, Encoding.UTF8);
             types = types.Where(type => !type.GetMethod("Invoke").GetParameters().Any(paramInfo => paramInfo.ParameterType.IsGenericParameter));
-            var delegates = types.Select(delegate_type => makeMethodInfoSimulation(delegate_type.GetMethod("Invoke")));
             var hotfxDelegates = new List<MethodInfoSimulation>();
             foreach (var type in (from type in hotfix_check_types where type.IsDefined(typeof(HotfixAttribute), false) select type))
             {
@@ -687,14 +690,18 @@ namespace CSObjectWrapEditor
                     .Where(method => !method.ContainsGenericParameters && !(kv.Key.IsGenericTypeDefinition && (method.IsConstructor || kv.Value == HotfixFlag.Stateless)))
                     .Select(method => makeHotfixMethodInfoSimulation(method, kv.Value)));
             }
-            hotfxDelegates = hotfxDelegates.Distinct(new MethodInfoSimulationComparer()).ToList();
+            var comparer = new MethodInfoSimulationComparer();
+            hotfxDelegates = hotfxDelegates.Distinct(comparer).ToList();
+            for(int i = 0; i < hotfxDelegates.Count; i++)
+            {
+                hotfxDelegates[i].DeclaringTypeName = "__Gen_Hotfix_Delegate" + i;
+            }
+            var delegates_groups = types.Select(delegate_type => makeMethodInfoSimulation(delegate_type.GetMethod("Invoke")))
+                .Concat(hotfxDelegates)
+                .GroupBy(d => d, comparer).Select((group) => new { Key = group.Key, Value = group.ToList()});
             GenOne(typeof(DelegateBridge), (type, type_info) =>
             {
-                type_info.Set("delegates", delegates
-                    .Concat(hotfxDelegates)
-                    .Distinct(new MethodInfoSimulationComparer())
-                    .ToList());
-                type_info.Set("types", types.ToList());
+                type_info.Set("delegates_groups", delegates_groups.ToList());
                 type_info.Set("hotfx_delegates", hotfxDelegates);
             }, templateRef.LuaDelegateBridge, textWriter);
             textWriter.Close();
