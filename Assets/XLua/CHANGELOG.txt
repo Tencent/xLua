@@ -8,6 +8,8 @@ v2.1.6 （未发布）
 6、在hotfix触发事件；
 7、LuaTable添加ForEach方法以及Length属性；
 8、cmake生成项目优化：保留源文件目录结构；
+9、对已经Dispose的LuaEnv的访问做保护；Dispose时检查callback是否已经都释放，没释放的话报错；
+10、支持释放Hotfix回调；
 
 变更
 1、构造函数改为执行原有逻辑后调用lua；
@@ -23,6 +25,7 @@ bug修复
 6、il2cpp下，如果不生成代码，会报ManifestModule不支持；
 7、规避Unity4的bug：访问一个已经被Distroy的UnityEngine.Object，编辑器下会崩溃，这个问题在Unity5，或者luajit版本都不会出现；
 8、修改上个版本引入的问题：xlua_setglobal会漏一个值在栈上，这会导致一些32位应用不稳定；
+9、当delegate参数只有ref和out的区别的话，报重载冲突；
 
 v2.1.5 2016年12月13日
 新增特性

@@ -47,7 +47,7 @@ namespace XLua
             lock (luaEnv.luaEnvLock)
             {
 #endif
-                RealStatePtr L = luaEnv.L;
+                RealStatePtr L = luaEnv.rawL;
                 int err_func =LuaAPI.load_error_func(L, errorFuncRef);
                 <%if CallNeedTranslator(delegate, "") then %>ObjectTranslator translator = luaEnv.translator;<%end%>
                 
