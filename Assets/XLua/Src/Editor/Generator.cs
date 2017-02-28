@@ -1009,6 +1009,7 @@ namespace CSObjectWrapEditor
                         if (!HotfixCfg.ContainsKey(type) && !isObsolete(type) 
                             && !type.IsEnum && !typeof(Delegate).IsAssignableFrom(type)
                             && (!type.IsGenericType || type.IsGenericTypeDefinition) 
+                            && (type.Namespace == null || (type.Namespace != "XLua" && !type.Namespace.StartsWith("XLua.")))
                             && (type.Module.Assembly.GetName().Name == "Assembly-CSharp"))
                         {
                             HotfixCfg.Add(type, hotfixType);

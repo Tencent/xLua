@@ -322,7 +322,7 @@ namespace XLua
                     && (!type.IsGenericType || type.IsGenericTypeDefinition))
                 {
                     string key = type.FullName.Replace('+', '/');
-                    if (!hotfixCfg.ContainsKey(key) && (type.Namespace == null || !type.Namespace.StartsWith("XLua.")))
+                    if (!hotfixCfg.ContainsKey(key) && (type.Namespace == null || (type.Namespace != "XLua" && !type.Namespace.StartsWith("XLua."))))
                     {
                         hotfixCfg.Add(key, hotfixType);
                     }
