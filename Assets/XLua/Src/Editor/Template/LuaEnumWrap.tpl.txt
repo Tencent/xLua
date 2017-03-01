@@ -14,7 +14,7 @@ using System.Collections.Generic;
 require "TemplateCommon"
 %>
 
-namespace CSObjectWrap
+namespace XLua.CSObjectWrap
 {
     using Utils = XLua.Utils;
     <%ForEachCsList(types, function(type)

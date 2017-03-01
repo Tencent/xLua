@@ -107,7 +107,6 @@ files
 
 defines
 {
-    "XLUA_GENERAL",
 }
 
 links
@@ -141,7 +140,6 @@ links
 {
     "System",
     "System.Core",
-    "../Assets/Plugins/x86_64/xlua.dll",
 }
 
 

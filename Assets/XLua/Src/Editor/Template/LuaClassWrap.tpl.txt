@@ -62,7 +62,7 @@ ForEachCsList(setters, function(setter)
 end)
 
 %>
-namespace CSObjectWrap
+namespace XLua.CSObjectWrap
 {
     using Utils = XLua.Utils;
     public class <%=CSVariableName(type)%>Wrap

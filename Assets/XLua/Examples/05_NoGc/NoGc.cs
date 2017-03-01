@@ -241,6 +241,15 @@ namespace XLuaTest
 
         void OnDestroy()
         {
+            f1 =  null;
+            f2 = null;
+            f3 = null;
+            f4 = null;
+            f5 = null;
+            farr = null;
+            flua = null;
+            ie = null;
+            add = null;
             luaenv.Dispose();
         }
     }

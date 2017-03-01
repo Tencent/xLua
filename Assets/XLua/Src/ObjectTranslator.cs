@@ -379,12 +379,16 @@ namespace XLua
             }
         }
 
-        public void RemoveDelegateBridge(int reference)
+        public bool AllDelegateBridgeReleased()
         {
-            if (delegate_bridges.ContainsKey(reference))
+            foreach (var kv in delegate_bridges)
             {
-                delegate_bridges.Remove(reference);
+                if (kv.Value.IsAlive)
+                {
+                    return false;
+                }
             }
+            return true;
         }
 
         public void ReleaseLuaBase(RealStatePtr L, int reference, bool is_delegate)

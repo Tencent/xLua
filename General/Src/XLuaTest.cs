@@ -116,12 +116,18 @@ public class XLuaTest
                 end)
             ");
             Console.WriteLine("2 + 4 =" + calc2.Add(2, 4));
+
+            // Õ∑≈hotfix
+            luaenv.DoString(@"
+                xlua.hotfix(CS.Calc, 'Add', nil)
+                xlua.hotfix(CS.CalcByConfig, 'Add', nil)
+            ");
         }
         catch(Exception e)
         {
             Console.WriteLine("Hotfix exception:" + e);
         }
-
+        max = null;
         luaenv.Dispose();
     }
 }
