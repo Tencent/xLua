@@ -22,7 +22,7 @@ ios和osx需要在mac下编译。
 
 ## 报类似“xlua.access, no field __Hitfix0_Update”的错误怎么解决？
 
-要等打印了hotfix inject finish!才点击运行
+按[Hotfix操作指南](hotfix.md)一步步操作。
 
 ## 报“This delegate/interface must add to CSharpCallLua : XXX”异常怎么解决？
 
@@ -38,7 +38,7 @@ ios和osx需要在mac下编译。
 
 ## 怎么对Unity Coroutine的实现函数打补丁？
 
-见hotfix.md相应章节。
+见[Hotfix操作指南](hotfix.md)相应章节。
 
 ## 支持NGUI（或者UGUI/DOTween等等）么？
 
