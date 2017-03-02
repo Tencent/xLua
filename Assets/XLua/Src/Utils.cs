@@ -1290,13 +1290,12 @@ namespace XLua
             return firstParameterConstraint;
         }
 
-        private static List<Type> preferIndexerTypes = null;
-
+        private static List<Type> prefer_indexer_types = null;
         private static bool isClassPreferIndexer(Type theType)
         {
-            if (preferIndexerTypes == null)
+            if (prefer_indexer_types == null)
             {
-                preferIndexerTypes = new List<Type>();
+                prefer_indexer_types = new List<Type>();
                 foreach (var type in GetAllTypes())
                 {
                     if (!type.IsInterface && typeof(GenConfig).IsAssignableFrom(type))
@@ -1304,12 +1303,12 @@ namespace XLua
                         var cfg = Activator.CreateInstance(type) as GenConfig;
                         if (cfg.PreferIndexerList != null)
                         {
-                            preferIndexerTypes.AddRange(cfg.PreferIndexerList);
+                            prefer_indexer_types.AddRange(cfg.PreferIndexerList);
                         }
                     }
                     else if (type.IsDefined(typeof(PreferIndexerAttribute), false))
                     {
-                        preferIndexerTypes.Add(type);
+                        prefer_indexer_types.Add(type);
                     }
 
                     if (!type.IsAbstract || !type.IsSealed) continue;
@@ -1320,7 +1319,7 @@ namespace XLua
                         var field = fields[i];
                         if (field.IsDefined(typeof(PreferIndexerAttribute), false) && (typeof(IEnumerable<Type>)).IsAssignableFrom(field.FieldType))
                         {
-                            preferIndexerTypes.AddRange(field.GetValue(null) as IEnumerable<Type>);
+                            prefer_indexer_types.AddRange(field.GetValue(null) as IEnumerable<Type>);
                         }
                     }
 
@@ -1330,13 +1329,13 @@ namespace XLua
                         var prop = props[i];
                         if (prop.IsDefined(typeof(PreferIndexerAttribute), false) && (typeof(IEnumerable<Type>)).IsAssignableFrom(prop.PropertyType))
                         {
-                            preferIndexerTypes.AddRange(prop.GetValue(null, null) as IEnumerable<Type>);
+                            prefer_indexer_types.AddRange(prop.GetValue(null, null) as IEnumerable<Type>);
                         }
                     }
                 }
             }
 
-            return preferIndexerTypes.Contains(theType);
+            return prefer_indexer_types.Contains(theType);
         }
     }
 }

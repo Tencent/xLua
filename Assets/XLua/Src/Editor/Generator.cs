@@ -850,11 +850,15 @@ namespace CSObjectWrapEditor
                                     from method in t.GetMethods(BindingFlags.Static | BindingFlags.Public)
                                     where !method.ContainsGenericParameters && method.IsDefined(typeof(ExtensionAttribute), false)
                                     select method;
+
+            var prefer_indexer_types = PreferIndexer;
+
             GenOne(typeof(DelegateBridgeBase), (type, type_info) =>
             {
                 type_info.Set("wraps", wraps.ToList());
                 type_info.Set("itf_bridges", itf_bridges.ToList());
                 type_info.Set("extension_methods", extension_methods.ToList());
+                type_info.Set("prefer_indexer_types", prefer_indexer_types.ToList());
             }, templateRef.LuaRegister, textWriter);
             textWriter.Close();
         }
