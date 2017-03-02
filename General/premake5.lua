@@ -51,7 +51,10 @@ targetdir "./Tools"
 files
 {
     "./Src/XLuaGenerate.cs",
+    "./Src/XLuaTemplates.Designer.cs",
+    "./Src/XLuaTemplates.resx",
     "../Assets/XLua/Src/Editor/Generator.cs",
+    "../Assets/XLua/Src/Editor/Template/*.txt",
 }
 
 defines
