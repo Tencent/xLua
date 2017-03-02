@@ -22,6 +22,9 @@ namespace XLua
 
         //黑名单
         List<List<string>> BlackList { get; }
+
+        //倾向于索引运算符的类型
+        List<Type> PreferIndexerList { get; }
     }
 
     public interface GCOptimizeConfig

@@ -74,6 +74,7 @@ namespace CSObjectWrapEditor
         public IEnumerable<Type> LuaCallCSharp;
         public IEnumerable<Type> CSharpCallLua;
         public IEnumerable<Type> ReflectionUse;
+        public IEnumerable<Type> PreferIndexer;
     }
 
     public class GenCodeMenuAttribute : Attribute
@@ -307,7 +308,7 @@ namespace CSObjectWrapEditor
                 .GroupBy(method => method.Name, (k, v) => new { Name = k, Overloads = v.Cast<MethodBase>().OrderBy(mb => mb.GetParameters().Length).ToList() }).ToList());
 
             parameters.Set("indexers", type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase | BindingFlags.DeclaredOnly)
-                .Where(method => method.Name == "get_Item" && method.GetParameters().Length == 1 && method.GetParameters()[0].ParameterType != typeof(string))
+                .Where(method => method.Name == "get_Item" && method.GetParameters().Length == 1 /*&& method.GetParameters()[0].ParameterType != typeof(string)*/ && isClassPreferIndexer(type))
                 .ToList());
 
             parameters.Set("newindexers", type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase | BindingFlags.DeclaredOnly)
@@ -403,6 +404,12 @@ namespace CSObjectWrapEditor
                 }
             }
             return false;
+        }
+
+        static bool isClassPreferIndexer(Type type)
+        {
+            if (type.IsDefined(typeof(PreferIndexerAttribute), false)) return true;
+            return PreferIndexer.Contains(type);
         }
 
         static Dictionary<string, LuaFunction> templateCache = new Dictionary<string, LuaFunction>();
@@ -961,6 +968,9 @@ namespace CSObjectWrapEditor
         public static List<Type> ReflectionUse = null;
 
         public static Dictionary<Type, HotfixFlag> HotfixCfg = null;
+        
+        //倾向于Indexer的类型
+        public static List<Type> PreferIndexer = null;
 
         static void AddToList(List<Type> list, Func<object> get)
         {
@@ -997,6 +1007,10 @@ namespace CSObjectWrapEditor
             if (test.IsDefined(typeof(ReflectionUseAttribute), false))
             {
                 AddToList(ReflectionUse, get_cfg);
+            }
+            if (test.IsDefined(typeof(PreferIndexerAttribute), false))
+            {
+                AddToList(PreferIndexer, get_cfg);
             }
             if (test.IsDefined(typeof(HotfixAttribute), false))
             {
@@ -1049,6 +1063,8 @@ namespace CSObjectWrapEditor
 
             ReflectionUse = new List<Type>();
 
+            PreferIndexer = new List<Type>();
+
             BlackList = new List<List<string>>()
             {
             };
@@ -1063,6 +1079,7 @@ namespace CSObjectWrapEditor
                     if (cfg.LuaCallCSharp != null) LuaCallCSharp.AddRange(cfg.LuaCallCSharp);
                     if (cfg.CSharpCallLua != null) CSharpCallLua.AddRange(cfg.CSharpCallLua);
                     if (cfg.BlackList != null) BlackList.AddRange(cfg.BlackList);
+                    if (cfg.PreferIndexerList != null) PreferIndexer.AddRange(cfg.PreferIndexerList);
                 }
                 else if (!t.IsInterface && typeof(GCOptimizeConfig).IsAssignableFrom(t))
                 {
@@ -1114,6 +1131,9 @@ namespace CSObjectWrapEditor
                 .Where(type =>/*type.IsPublic && */!isObsolete(type) && !type.IsGenericTypeDefinition)
                 .ToList();
             ReflectionUse = ReflectionUse.Distinct()
+                .Where(type =>/*type.IsPublic && */!isObsolete(type) && !type.IsGenericTypeDefinition)
+                .ToList();
+            PreferIndexer = PreferIndexer.Distinct()
                 .Where(type =>/*type.IsPublic && */!isObsolete(type) && !type.IsGenericTypeDefinition)
                 .ToList();
         }
@@ -1291,7 +1311,8 @@ namespace CSObjectWrapEditor
             foreach (var gen_task in get_tasks(luaenv, new UserConfig() {
                 LuaCallCSharp = LuaCallCSharp,
                 CSharpCallLua = CSharpCallLua,
-                ReflectionUse = ReflectionUse
+                ReflectionUse = ReflectionUse,
+                PreferIndexer = PreferIndexer
             }))
             {
                 LuaTable meta = luaenv.NewTable();
