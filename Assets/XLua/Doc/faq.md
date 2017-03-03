@@ -2,7 +2,7 @@
 
 ## xLua发布包怎么用？
 
-xLua目前以zip包形式发布，在Assets目录下解压即可。
+xLua目前以zip包形式发布，在工程目录下解压即可。
 
 ## xLua可以放别的目录吗？
 
@@ -23,6 +23,10 @@ ios和osx需要在mac下编译。
 ## 报类似“xlua.access, no field __Hitfix0_Update”的错误怎么解决？
 
 按[Hotfix操作指南](hotfix.md)一步步操作。
+
+## 报“please install the Tools”
+
+没有把Tools安装到Assets平级目录，安装包，或者master下都能找到这个目录。
 
 ## 报“This delegate/interface must add to CSharpCallLua : XXX”异常怎么解决？
 

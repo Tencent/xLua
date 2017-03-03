@@ -826,6 +826,7 @@ namespace XLua
         {
             if (EditorApplication.isCompiling || Application.isPlaying)
             {
+                UnityEngine.Debug.LogWarning("compiling.., skip this operation.");
                 return;
             }
 
@@ -837,6 +838,12 @@ namespace XLua
                 "Data/MonoBleedingEdge/bin/mono.exe");
 #endif
             var inject_tool_path = "./Tools/XLuaHotfixInject.exe";
+            if (!File.Exists(inject_tool_path))
+            {
+                UnityEngine.Debug.LogError("please install the Tools");
+                return;
+            }
+
             var assembly_csharp_path = "./Library/ScriptAssemblies/Assembly-CSharp.dll";
 
             List<string> args = new List<string>() { inject_tool_path, assembly_csharp_path};
