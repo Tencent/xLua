@@ -1,12 +1,16 @@
 ![](Assets/XLua/Doc/xLua.png)
 
 [![license](https://img.shields.io/badge/license-MIT-blue.png)](https://github.com/Tencent/xLua/blob/master/LICENSE.TXT)
-[![release](https://img.shields.io/badge/release-v2.1.5-blue.png)](https://github.com/Tencent/xLua/releases)
+[![release](https://img.shields.io/badge/release-v2.1.6-blue.png)](https://github.com/Tencent/xLua/releases)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-blue.png)](https://github.com/Tencent/xLua/pulls)
 
 ## Unity下Lua编程支持
 
 xLua为Unity增加Lua脚本编程的能力，进而提供代码逻辑增量更新的可能。当然不仅仅如此，在coco2dx上的实践告诉我们，以Lua为主打语言的游戏客户端编程是可行的。
+
+## C#下Lua编程支持
+
+xLua也支持非Unity下的C#环境使用，通用版本的介绍请看[这里](General/)。
 
 ## xLua的突破
 
@@ -20,7 +24,7 @@ xLua在功能、性能、易用性都有不少突破，这几方面分别最具�
 
 ## 安装
 
-直接解压到Assets下可用。第一次使用建议把例子包也安装，运行看看效果。
+直接解压工程下可用。第一次使用建议把例子包也安装，运行看看效果。
 
 如果希望安装到其它目录，请看[FAQ](Assets/XLua/Doc/faq.md)相关介绍。
 

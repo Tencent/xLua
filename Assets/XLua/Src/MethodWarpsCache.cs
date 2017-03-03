@@ -457,7 +457,7 @@ namespace XLua
                 if (mb == null)
                     continue;
 
-                if (mb.ContainsGenericParameters && !tryMakeGenericMethod(ref mb))
+                if (mb.IsGenericMethodDefinition && !tryMakeGenericMethod(ref mb))
                     continue;
 
                 var overload = new OverloadMethodWrap(translator, type, mb);
@@ -469,18 +469,25 @@ namespace XLua
 
         private static bool tryMakeGenericMethod(ref MethodBase method)
         {
-            var genericArguments = method.GetGenericArguments();
-            var constraintedArgumentTypes = new Type[genericArguments.Length];
-            for (var i = 0; i < genericArguments.Length; i++)
+            try
             {
-                var argumentType = genericArguments[i];
-                var parameterConstraints = argumentType.GetGenericParameterConstraints();
-                if (parameterConstraints.Length == 0 || !parameterConstraints[0].IsClass)
-                    return false;
-                constraintedArgumentTypes[i] = parameterConstraints[0];
+                var genericArguments = method.GetGenericArguments();
+                var constraintedArgumentTypes = new Type[genericArguments.Length];
+                for (var i = 0; i < genericArguments.Length; i++)
+                {
+                    var argumentType = genericArguments[i];
+                    var parameterConstraints = argumentType.GetGenericParameterConstraints();
+                    if (parameterConstraints.Length == 0 || !parameterConstraints[0].IsClass)
+                        return false;
+                    constraintedArgumentTypes[i] = parameterConstraints[0];
+                }
+                method = ((MethodInfo)method).MakeGenericMethod(constraintedArgumentTypes);
+                return true;
             }
-            method = ((MethodInfo)method).MakeGenericMethod(constraintedArgumentTypes);
-            return true;
+            catch (Exception)
+            {
+                return false;
+            }
         }
     }
 }

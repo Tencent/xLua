@@ -20,7 +20,7 @@
     <OutputPath>..\Bin\</OutputPath>
     <BaseIntermediateOutputPath>obj\Any CPU\Debug\XLuaTest\</BaseIntermediateOutputPath>
     <IntermediateOutputPath>$(BaseIntermediateOutputPath)</IntermediateOutputPath>
-    <DefineConstants>_DEBUG;DEBUG;TRACE;;XLUA_GENERAL</DefineConstants>
+    <DefineConstants>_DEBUG;DEBUG;TRACE;</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -31,7 +31,7 @@
     <OutputPath>..\Bin\</OutputPath>
     <BaseIntermediateOutputPath>obj\Any CPU\Release\XLuaTest\</BaseIntermediateOutputPath>
     <IntermediateOutputPath>$(BaseIntermediateOutputPath)</IntermediateOutputPath>
-    <DefineConstants>;XLUA_GENERAL</DefineConstants>
+    <DefineConstants></DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>

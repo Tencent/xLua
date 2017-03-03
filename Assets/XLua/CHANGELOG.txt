@@ -1,4 +1,4 @@
-v2.1.6 （未发布）
+﻿v2.1.6 2017年3月1日
 新增特性
 1、带约束的泛型支持（by forsakenyang）；
 2、非Unity的.net环境支持；
@@ -13,7 +13,7 @@ v2.1.6 （未发布）
 
 变更
 1、构造函数改为执行原有逻辑后调用lua；
-2、对string类型的[]操作符重载会影响到继承调用，去掉该特性的支持；
+2、this[string field]操作符重载会影响到继承调用，去掉该特性的支持；
 3、编辑器下的代码注入改为手动方式；
 
 bug修复
@@ -27,21 +27,26 @@ bug修复
 8、修改上个版本引入的问题：xlua_setglobal会漏一个值在栈上，这会导致一些32位应用不稳定；
 9、当delegate参数只有ref和out的区别的话，报重载冲突；
 
-v2.1.5 2016年12月13日
+v2.1.5 2017年1月13日
+
 新增特性
-1、新增更简便的配置方式，具体参见XLua\Doc下《XLua的配置.doc》；
-2、多虚拟机实例时的自动Dispose；
-3、内存优化：减少匿名闭包到delegate映射的内存占用；减少LuaFunction以及LuaTable内存占用；减少lua table映射C#interface的gc；
-4、生成代码速度优化；
-5、支持直接在lua侧clone C#结构体；
-6、LuaFunction新增无gc调用api；
+1、全平台热补丁；
+2、新增线程安全模式，可通过THREAD_SAFT宏打开；
+3、新增更简便的配置方式，具体参见XLua\Doc下《XLua的配置.doc》；
+4、多虚拟机实例时的自动Dispose；
+5、内存优化：减少匿名闭包到delegate映射的内存占用；减少LuaFunction以及LuaTable内存占用；减少lua table映射C#interface的gc；
+6、生成代码速度优化；
+7、支持直接在lua侧clone C#结构体；
+8、LuaFunction新增无gc调用api；
 
 变更
 1、delegate必须都加[CSharpCallLua]才支持C#到lua的回调（以前参数和返回值都相同的delegate只要其中一个加了就可以）；
+2、加回string/number到枚举的自动转换；
 
 bug修复
 1、枚举不生成代码时，第一次使用会产生两个不同的userdata；
 2、数组和System.Type的相互引用导致System.Type生成代码无法加载；
+3、更安全的异常处理，封装lua_setglobal,lua_getglobal的异常，C#回调保证所有C#异常都catch并转换到成lua error。
 
 
 v2.1.4 2016年11月29日

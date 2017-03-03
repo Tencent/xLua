@@ -25,6 +25,8 @@ Win命令行 copy UnityPath\Editor\Data\Managed\Mono.Cecil.* Project\Assets\XLua
 
 不支持静态构造函数。
 
+不支持在子类override函数通过base调用父类实现。
+
 目前只支持Assets下代码的热补丁，不支持引擎，c#系统库的热补丁。
 
 ## API
