@@ -826,7 +826,6 @@ namespace XLua
         {
             if (EditorApplication.isCompiling || Application.isPlaying)
             {
-                UnityEngine.Debug.LogWarning("compiling.., skip this operation.");
                 return;
             }
 
