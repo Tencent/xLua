@@ -48,6 +48,7 @@ namespace XLua
 	    <%
 		local type_to_methods = {}
 		local seq_tbl = {}
+
 		ForEachCsList(extension_methods, function(extension_method, idx)
 		    local parameters = extension_method:GetParameters()
 			local type = parameters[0].ParameterType
@@ -72,6 +73,13 @@ namespace XLua
 				<%  end%>
 				}},
 				<%end%>
+			};
+
+			prefer_indexer_types = new List<Type>()
+			{
+				<%ForEachCsList(prefer_indexer_types, function(type, idx)%>
+				typeof(<%=CsFullTypeName(type)%>),
+				<%end)%>
 			};
 		}
 	}

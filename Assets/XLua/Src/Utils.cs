@@ -235,7 +235,10 @@ namespace XLua
 
         static LuaCSFunction genItemGetter(Type type, PropertyInfo[] props)
         {
-            props = props.Where(prop => prop.GetIndexParameters()[0].ParameterType != typeof(string)).ToArray();
+            if (!isClassPreferIndexer(type))
+            {
+                props = props.Where(prop => prop.GetIndexParameters()[0].ParameterType != typeof(string)).ToArray();
+            }
             if (props.Length == 0)
             {
                 return null;
@@ -1285,6 +1288,54 @@ namespace XLua
             if (!firstParameterConstraint.IsClass)
                 throw new InvalidOperationException();
             return firstParameterConstraint;
+        }
+
+        private static List<Type> prefer_indexer_types = null;
+        private static bool isClassPreferIndexer(Type theType)
+        {
+            if (prefer_indexer_types == null)
+            {
+                prefer_indexer_types = new List<Type>();
+                foreach (var type in GetAllTypes())
+                {
+                    if (!type.IsInterface && typeof(GenConfig).IsAssignableFrom(type))
+                    {
+                        var cfg = Activator.CreateInstance(type) as GenConfig;
+                        if (cfg.PreferIndexerList != null)
+                        {
+                            prefer_indexer_types.AddRange(cfg.PreferIndexerList);
+                        }
+                    }
+                    else if (type.IsDefined(typeof(PreferIndexerAttribute), false))
+                    {
+                        prefer_indexer_types.Add(type);
+                    }
+
+                    if (!type.IsAbstract || !type.IsSealed) continue;
+
+                    var fields = type.GetFields(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
+                    for (int i = 0; i < fields.Length; i++)
+                    {
+                        var field = fields[i];
+                        if (field.IsDefined(typeof(PreferIndexerAttribute), false) && (typeof(IEnumerable<Type>)).IsAssignableFrom(field.FieldType))
+                        {
+                            prefer_indexer_types.AddRange(field.GetValue(null) as IEnumerable<Type>);
+                        }
+                    }
+
+                    var props = type.GetProperties(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
+                    for (int i = 0; i < props.Length; i++)
+                    {
+                        var prop = props[i];
+                        if (prop.IsDefined(typeof(PreferIndexerAttribute), false) && (typeof(IEnumerable<Type>)).IsAssignableFrom(prop.PropertyType))
+                        {
+                            prefer_indexer_types.AddRange(prop.GetValue(null, null) as IEnumerable<Type>);
+                        }
+                    }
+                }
+            }
+
+            return prefer_indexer_types.Contains(theType);
         }
     }
 }

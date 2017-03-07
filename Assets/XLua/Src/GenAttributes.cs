@@ -63,6 +63,12 @@ namespace XLua
 
     }
 
+    //如果希望某种类型更倾向于在Lua端使用Indexer的访问方式
+    public class PreferIndexerAttribute : Attribute
+    {
+
+    }
+
     public enum HotfixFlag
     {
         Stateless = 0,
