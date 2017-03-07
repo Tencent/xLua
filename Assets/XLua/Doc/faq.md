@@ -133,3 +133,10 @@ end)
 ## 编辑器下运行正常，打包的时候生成代码报“没有某方法/属性/字段定义”怎么办？
 
 往往是由于该方法/属性/字段是扩在条件编译里头，只在UNITY_EDITOR下有效，这是可以通过把这方法/属性/字段加到黑名单来解决，加了之后要等编译完成后重新执行代码生成。
+
+## this[string field]或者this[object field]操作符重载为什么在lua无法访问？（比如Dictionary\<string, xxx\>, Dictionary\<object, xxx\>在lua中无法通过dic['abc']或者dic.abc检索值）
+
+在2.1.5~2.1.6版本把这个特性去掉，因为：1、这个特性会导致基类定义的方法、属性、字段等无法访问（比如Animation无法访问到GetComponent方法）；2、key为当前类某方法、属性、字段的名字的数据无法检索，比如Dictionary类型，dic['TryGetValue']返回的是一个函数，指向Dictionary的TryGetValue方法。
+
+建议直接方法该操作符的等效方法，比如List的Get，Dictionary的TryGetValue，如果该方法没有提供，可以在C#那通过Extension method封装一个使用。
+
