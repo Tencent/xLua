@@ -218,7 +218,7 @@ namespace XLua
             return LoadString<LuaFunction>(chunk, chunkName, env);
         }
 
-        public object[] DoString(string chunk, string chunkName = "chunk", LuaTable env = null)
+        public object[] DoBytes(byte[] chunk, string chunkName = "chunk", LuaTable env = null)
         {
 #if THREAD_SAFT || HOTFIX_ENABLE
             lock (luaEnvLock)
@@ -227,7 +227,7 @@ namespace XLua
                 var _L = L;
                 int oldTop = LuaAPI.lua_gettop(_L);
                 int errFunc = LuaAPI.load_error_func(_L, errorFuncRef);
-                if (LuaAPI.luaL_loadbuffer(_L, chunk, chunkName) == 0)
+                if (LuaAPI.xluaL_loadbuffer(_L, chunk, chunk.Length, chunkName) == 0)
                 {
                     if (env != null)
                     {
@@ -250,6 +250,12 @@ namespace XLua
 #if THREAD_SAFT || HOTFIX_ENABLE
             }
 #endif
+        }
+
+        public object[] DoString(string chunk, string chunkName = "chunk", LuaTable env = null)
+        {
+            byte[] bytes = System.Text.Encoding.UTF8.GetBytes(chunk);
+            return DoBytes(bytes, chunkName, env);
         }
 
         private void AddSearcher(LuaCSFunction searcher, int index)
