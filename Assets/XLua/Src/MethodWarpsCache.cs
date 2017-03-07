@@ -197,7 +197,14 @@ namespace XLua
                 //UnityEngine.Debug.Log("inPos:" + inPosArray[i]);
                 if (luaStackPos > luaTop) //after check
                 {
-                    args[inPosArray[i]] = defaultValueArray[i];
+                    if (paramsType != null && i == castArray.Length - 1)
+                    {
+                        args[inPosArray[i]] = Array.CreateInstance(paramsType, 0);
+                    }
+                    else
+                    {
+                        args[inPosArray[i]] = defaultValueArray[i];
+                    }
                 }
                 else
                 {
