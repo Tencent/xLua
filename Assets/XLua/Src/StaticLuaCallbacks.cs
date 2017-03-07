@@ -600,7 +600,7 @@ namespace XLua
                 }
                 else
                 {
-                    if (LuaAPI.luaL_loadbuffer(L, file.text, "@" + filename) != 0)
+                    if (LuaAPI.xluaL_loadbuffer(L, file.bytes, file.bytes.Length, "@" + filename) != 0)
                     {
                         return LuaAPI.luaL_error(L, String.Format("error loading module {0} from resource, {1}",
                             LuaAPI.lua_tostring(L, 1), LuaAPI.lua_tostring(L, -1)));
@@ -637,7 +637,7 @@ namespace XLua
                         else
                         {
                             UnityEngine.Debug.LogWarning("load lua file from StreamingAssets is obsolete, filename:" + filename);
-                            if (LuaAPI.luaL_loadbuffer(L, www.text, "@" + filename) != 0)
+                            if (LuaAPI.xluaL_loadbuffer(L, www.bytes, www.bytes.Length , "@" + filename) != 0)
                             {
                                 return LuaAPI.luaL_error(L, String.Format("error loading module {0} from streamingAssetsPath, {1}",
                                     LuaAPI.lua_tostring(L, 1), LuaAPI.lua_tostring(L, -1)));
@@ -649,10 +649,11 @@ namespace XLua
 #else
                 if (File.Exists(filepath))
                 {
-                    string text = File.ReadAllText(filepath);
+                    // string text = File.ReadAllText(filepath);
+                    var bytes = File.ReadAllBytes(filepath);
 
                     UnityEngine.Debug.LogWarning("load lua file from StreamingAssets is obsolete, filename:" + filename);
-                    if (LuaAPI.luaL_loadbuffer(L, text, "@" + filename) != 0)
+                    if (LuaAPI.xluaL_loadbuffer(L, bytes, bytes.Length, "@" + filename) != 0)
                     {
                         return LuaAPI.luaL_error(L, String.Format("error loading module {0} from streamingAssetsPath, {1}",
                             LuaAPI.lua_tostring(L, 1), LuaAPI.lua_tostring(L, -1)));
