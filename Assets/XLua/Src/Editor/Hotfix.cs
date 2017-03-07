@@ -10,6 +10,7 @@
 #if XLUA_GENERAL || INJECT_WITHOUT_TOOL
 #if !XLUA_GENERAL
 using UnityEngine;
+using UnityEditor;
 using UnityEditor.Callbacks;
 #endif
 using System.Collections.Generic;
