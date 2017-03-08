@@ -8,6 +8,16 @@ xLua目前以zip包形式发布，在工程目录下解压即可。
 
 可以，但生成代码目录需要配置一下（默认放Assets\XLua\Gen目录），具体可以看《XLua的配置.doc》的GenPath配置介绍。
 
+## lua源码只能以txt后缀？
+
+什么后缀都可以。
+
+如果你想以TextAsset打包到安装包（比如放到Resources目录），Unity不认lua后缀，这是Unity的规则。
+
+如果你不打包到安装包，就没有后缀的限制：比如自行下载到某个目录（这也是热更的正确姿势），然后通过CustomLoader或者设置package.path去读这个目录。
+
+那为啥xLua本身带的lua源码（包括示例）为什么都是txt结尾呢？因为xLua本身就一个库，不含下载功能，也不方便运行时去某个地方下载代码，通过TextAsset是较简单的方式。
+
 ## Plugins源码在哪里可以找到，怎么使用？
 
 Plugins源码位于xLua_Project_Root/build下。
