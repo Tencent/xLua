@@ -38,37 +38,21 @@
 
 static void ll_unloadlib(void *lib)
 {
-#if defined(LJ_TARGET_IOS)
-  (void)(lib);
-#else
   dlclose(lib);
-#endif
 }
 
 static void *ll_load(lua_State *L, const char *path, int gl)
 {
-#if defined(LJ_TARGET_IOS)
-  (void)(path);
-  lua_pushstring(L, "dlopen is forbidden in ios");
-  return NULL;
-#else
   void *lib = dlopen(path, RTLD_NOW | (gl ? RTLD_GLOBAL : RTLD_LOCAL));
   if (lib == NULL) lua_pushstring(L, dlerror());
   return lib;
-#endif
 }
 
 static lua_CFunction ll_sym(lua_State *L, void *lib, const char *sym)
 {
-#if defined(LJ_TARGET_IOS)
-  (void)(lib);(void)(sym);
-  lua_pushstring(L, "dlsym is forbidden in ios");
-  return NULL;
-#else
   lua_CFunction f = (lua_CFunction)dlsym(lib, sym);
   if (f == NULL) lua_pushstring(L, dlerror());
   return f;
-#endif
 }
 
 static const char *ll_bcsym(void *lib, const char *sym)
@@ -78,12 +62,7 @@ static const char *ll_bcsym(void *lib, const char *sym)
 #elif LJ_TARGET_OSX || LJ_TARGET_BSD
   if (lib == NULL) lib = (void *)(intptr_t)-2;
 #endif
-#if defined(LJ_TARGET_IOS)
-  (void)(lib);(void)(sym);
-  return NULL;
-#else
   return (const char *)dlsym(lib, sym);
-#endif
 }
 
 #elif LJ_TARGET_WINDOWS

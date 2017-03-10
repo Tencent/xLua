@@ -54,7 +54,6 @@ LJ_NORET LJ_NOINLINE static void clib_error_(lua_State *L)
 #define CLIB_SOEXT	"%s.so"
 #endif
 
-#if !defined(LJ_TARGET_IOS)
 static const char *clib_extname(lua_State *L, const char *name)
 {
   if (!strchr(name, '/')
@@ -78,9 +77,7 @@ static const char *clib_extname(lua_State *L, const char *name)
   }
   return name;
 }
-#endif
 
-#if !defined(LJ_TARGET_IOS)
 /* Check for a recognized ld script line. */
 static const char *clib_check_lds(lua_State *L, const char *buf)
 {
@@ -93,9 +90,7 @@ static const char *clib_check_lds(lua_State *L, const char *buf)
   }
   return NULL;
 }
-#endif
 
-#if !defined(LJ_TARGET_IOS)
 /* Quick and dirty solution to resolve shared library name from ld script. */
 static const char *clib_resolve_lds(lua_State *L, const char *name)
 {
@@ -117,15 +112,9 @@ static const char *clib_resolve_lds(lua_State *L, const char *name)
   }
   return p;
 }
-#endif
 
 static void *clib_loadlib(lua_State *L, const char *name, int global)
 {
-#if defined(LJ_TARGET_IOS)
-  (void)(name);
-  lj_err_callermsg(L, "dlopen is forbidden in ios");
-  return NULL;
-#else
   void *h = dlopen(clib_extname(L, name),
 		   RTLD_LAZY | (global?RTLD_GLOBAL:RTLD_LOCAL));
   if (!h) {
@@ -139,28 +128,18 @@ static void *clib_loadlib(lua_State *L, const char *name, int global)
     lj_err_callermsg(L, err);
   }
   return h;
-#endif
 }
 
 static void clib_unloadlib(CLibrary *cl)
 {
-#if defined(LJ_TARGET_IOS)
-  (void)(cl);
-#else
   if (cl->handle && cl->handle != CLIB_DEFHANDLE)
     dlclose(cl->handle);
-#endif
 }
 
 static void *clib_getsym(CLibrary *cl, const char *name)
 {
-#if defined(LJ_TARGET_IOS)
-  (void)(cl);(void)(name);
-  return NULL;
-#else
   void *p = dlsym(cl->handle, name);
   return p;
-#endif
 }
 
 #elif LJ_TARGET_WINDOWS
