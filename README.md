@@ -4,20 +4,16 @@
 [![release](https://img.shields.io/badge/release-v2.1.6-blue.png)](https://github.com/Tencent/xLua/releases)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-blue.png)](https://github.com/Tencent/xLua/pulls)
 
-## Unity下Lua编程支持
-
-xLua为Unity增加Lua脚本编程的能力，进而提供代码逻辑增量更新的可能。当然不仅仅如此，在coco2dx上的实践告诉我们，以Lua为主打语言的游戏客户端编程是可行的。
-
 ## C#下Lua编程支持
 
-xLua也支持非Unity下的C#环境使用，通用版本的介绍请看[这里](General/)。
+xLua为Unity、 .Net、 Mono等C#环境增加Lua脚本编程的能力，借助xLua，这些Lua代码可以方便的和C#相互调用。
 
 ## xLua的突破
 
 xLua在功能、性能、易用性都有不少突破，这几方面分别最具代表性的是：
 
-* Unity全平台热补丁技术，可以运行时把C#实现（方法，操作符，属性，事件，构造函数，析构函数，支持泛化）替换成lua实现；
-* 自定义struct，枚举在Lua和C#间传递无C# gc alloc；
+* 可以运行时把C#实现（方法，操作符，属性，事件等等）替换成lua实现；
+* 出色的GC优化，自定义struct，枚举在Lua和C#间传递无C# gc alloc；
 * 编辑器下无需生成代码，开发更轻量；
 
 更详细的特性、平台支持介绍请看[这里](Assets/XLua/Doc/features.md)。
@@ -79,13 +75,16 @@ Debug.Log("max:" + max(32, 12));
 
 ## 热补丁
 
-xLua支持热补丁，这意味着你可以：
+xLua可以运行时把C#实现替换成lua实现，这意味着你可以：
 
 * 1、开发只用C#；
 * 2、运行也是C#，性能可以秒杀lua；
-* 3、出问题了才用Lua来改掉C#出问题的部位，下次整体更新时换回正确的C#；能做到用户不重启程序fix bug；
+* 3、出问题了可以用Lua来改掉C#出问题的部分；
 
-如果你仅仅希望用热更新来fix bug，这是强烈建议的做法。[这里](Assets/XLua/Doc/hotfix.md)是使用指南。
+注意！
+请遵从苹果的条款规定，该特性禁止在IOS系统下使用！
+
+[这里](Assets/XLua/Doc/hotfix.md)是使用指南。
 
 ## 更多示例
 
@@ -106,7 +105,7 @@ xLua支持热补丁，这意味着你可以：
 * [XLua增加删除第三方lua库.doc](Assets/XLua/Doc/XLua增加删除第三方lua库.doc)：如何增删第三方lua扩展库。
 * [XLua API.doc](Assets/XLua/Doc/XLua_API.doc)：API文档。
 * [生成引擎二次开发指南](Assets/XLua/Doc/custom_generate.md)：介绍如何做生成引擎的二次开发。
-* [Hotfix操作指南](Assets/XLua/Doc/hotfix.md)：介绍如何使用hotfix特性。
+* [热补丁操作指南](Assets/XLua/Doc/hotfix.md)：介绍如何使用热补丁特性。
 
 ## 技术支持
 
