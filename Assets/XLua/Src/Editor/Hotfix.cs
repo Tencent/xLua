@@ -199,12 +199,7 @@ namespace XLua
                         }
                     }
                 }
-                var scope = type.Scope;
-                if (type.Scope.MetadataScopeType == MetadataScopeType.AssemblyNameReference
-                    && ((AssemblyNameReference)scope).Name != assembly.MainModule.FullyQualifiedName) // other assembly must be public
-                {
-                    return false;
-                }
+
                 var resolveType = type.Resolve();
                 if ((!type.IsNested && !resolveType.IsPublic) || (type.IsNested && !resolveType.IsNestedPublic))
                 {
