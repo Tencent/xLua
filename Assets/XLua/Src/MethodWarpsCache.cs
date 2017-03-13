@@ -327,7 +327,43 @@ namespace XLua
                 }
                 else
                 {
-                    constructorCache[type] = _GenMethodWrap(type, ".ctor", constructors).Call;
+                    LuaCSFunction ctor = _GenMethodWrap(type, ".ctor", constructors).Call;
+                    
+                    if (type.IsValueType)
+                    {
+                        bool hasZeroParamsCtor = false;
+                        for (int i = 0; i < constructors.Length; i++)
+                        {
+                            if (constructors[i].GetParameters().Length == 0)
+                            {
+                                hasZeroParamsCtor = true;
+                                break;
+                            }
+                        }
+                        if (hasZeroParamsCtor)
+                        {
+                            constructorCache[type] = ctor;
+                        }
+                        else
+                        {
+                            constructorCache[type] = (L) =>
+                            {
+                                if (LuaAPI.lua_gettop(L) == 1)
+                                {
+                                    translator.PushAny(L, Activator.CreateInstance(type));
+                                    return 1;
+                                }
+                                else
+                                {
+                                    return ctor(L);
+                                }
+                            };
+                        }
+                    }
+                    else
+                    {
+                        constructorCache[type] = ctor;
+                    }
                 }
             }
             return constructorCache[type];

@@ -103,20 +103,18 @@ namespace XLua.CSObjectWrap
         static int __CreateInstance(RealStatePtr L)
         {
             <% 
-            if constructors.Count == 0  then 
-			   if type.IsValueType then
-			%>ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
-			<%=GetPushStatement(type, "default(" .. CsFullTypeName(type).. ")")%>;
-			return 1;
-			<%
-			   else
+            if constructors.Count == 0 and (not type.IsValueType)  then 
             %>return LuaAPI.luaL_error(L, "<%=CsFullTypeName(type)%> does not have a constructor!");<% 
-			   end
             else %>
             ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
 			try {
-				<% ForEachCsList(constructors, function(constructor, ci)
+				<% 
+				local hasZeroParamsCtor = false
+				ForEachCsList(constructors, function(constructor, ci)
 					local parameters = constructor:GetParameters()
+					if parameters.Length == 0 then
+					    hasZeroParamsCtor = true
+					end
 					local def_count = constructor_def_vals[ci]
 					local param_count = parameters.Length
 					local real_param_count = param_count - def_count
@@ -135,7 +133,15 @@ namespace XLua.CSObjectWrap
 					<%=GetPushStatement(type, "__cl_gen_ret")%>;
 					return 1;
 				}
-				<%end)%>
+				<%end)
+				if (not hasZeroParamsCtor) and type.IsValueType then
+				%>
+				if (LuaAPI.lua_gettop(L) == 1)
+				{
+				    <%=GetPushStatement(type, "default(" .. CsFullTypeName(type).. ")")%>;
+			        return 1;
+				}
+				<%end%>
 			}
 			catch(System.Exception __gen_e) {
 				return LuaAPI.luaL_error(L, "c# exception:" + __gen_e);
