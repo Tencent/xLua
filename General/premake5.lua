@@ -97,6 +97,49 @@ links
     "Lib/Mono.Cecil.Pdb.dll",
 }
 
+
+project "KeyPairsGen"
+language "C#"
+kind "ConsoleApp"
+framework "3.5"
+targetdir "./Tools"
+
+files
+{
+    "./Src/KeyPairsGen.cs",
+}
+
+defines
+{
+}
+
+links
+{
+    "System",
+    "System.Core",
+}
+
+project "FilesSignature"
+language "C#"
+kind "ConsoleApp"
+framework "3.5"
+targetdir "./Tools"
+
+files
+{
+    "./Src/FilesSignature.cs",
+}
+
+defines
+{
+}
+
+links
+{
+    "System",
+    "System.Core",
+}
+
 project "XLuaTest"
 language "C#"
 kind "ConsoleApp"
