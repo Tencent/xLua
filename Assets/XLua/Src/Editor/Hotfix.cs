@@ -10,6 +10,7 @@
 #if XLUA_GENERAL || INJECT_WITHOUT_TOOL
 #if !XLUA_GENERAL
 using UnityEngine;
+using UnityEditor;
 using UnityEditor.Callbacks;
 #endif
 using System.Collections.Generic;
@@ -198,12 +199,7 @@ namespace XLua
                         }
                     }
                 }
-                var scope = type.Scope;
-                if (type.Scope.MetadataScopeType == MetadataScopeType.AssemblyNameReference
-                    && ((AssemblyNameReference)scope).Name != assembly.MainModule.FullyQualifiedName) // other assembly must be public
-                {
-                    return false;
-                }
+
                 var resolveType = type.Resolve();
                 if ((!type.IsNested && !resolveType.IsPublic) || (type.IsNested && !resolveType.IsNestedPublic))
                 {
@@ -837,6 +833,12 @@ namespace XLua
                 "Data/MonoBleedingEdge/bin/mono.exe");
 #endif
             var inject_tool_path = "./Tools/XLuaHotfixInject.exe";
+            if (!File.Exists(inject_tool_path))
+            {
+                UnityEngine.Debug.LogError("please install the Tools");
+                return;
+            }
+
             var assembly_csharp_path = "./Library/ScriptAssemblies/Assembly-CSharp.dll";
 
             List<string> args = new List<string>() { inject_tool_path, assembly_csharp_path};

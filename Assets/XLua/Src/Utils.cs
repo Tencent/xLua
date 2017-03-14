@@ -235,7 +235,7 @@ namespace XLua
 
         static LuaCSFunction genItemGetter(Type type, PropertyInfo[] props)
         {
-            props = props.Where(prop => prop.GetIndexParameters()[0].ParameterType != typeof(string)).ToArray();
+            props = props.Where(prop => !prop.GetIndexParameters()[0].ParameterType.IsAssignableFrom(typeof(string))).ToArray();
             if (props.Length == 0)
             {
                 return null;

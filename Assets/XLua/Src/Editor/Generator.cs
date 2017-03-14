@@ -128,7 +128,7 @@ namespace CSObjectWrapEditor
                 PackUnpack = { name = template_ref.PackUnpack.name, text = template_ref.PackUnpack.text },
                 TemplateCommon = { name = template_ref.TemplateCommon.name, text = template_ref.TemplateCommon.text },
             };
-
+#endif
             luaenv.AddLoader((ref string filepath) =>
             {
                 if (filepath == "TemplateCommon")
@@ -140,7 +140,6 @@ namespace CSObjectWrapEditor
                     return null;
                 }
             });
-#endif
         }
 
         static int OverloadCosting(MethodBase mi)
@@ -307,7 +306,7 @@ namespace CSObjectWrapEditor
                 .GroupBy(method => method.Name, (k, v) => new { Name = k, Overloads = v.Cast<MethodBase>().OrderBy(mb => mb.GetParameters().Length).ToList() }).ToList());
 
             parameters.Set("indexers", type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase | BindingFlags.DeclaredOnly)
-                .Where(method => method.Name == "get_Item" && method.GetParameters().Length == 1 && method.GetParameters()[0].ParameterType != typeof(string))
+                .Where(method => method.Name == "get_Item" && method.GetParameters().Length == 1 && !method.GetParameters()[0].ParameterType.IsAssignableFrom(typeof(string)))
                 .ToList());
 
             parameters.Set("newindexers", type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase | BindingFlags.DeclaredOnly)
@@ -1200,39 +1199,12 @@ namespace CSObjectWrapEditor
         }
 
 #if XLUA_GENERAL
-        static XLuaTemplate loadTemplate(string templatePath, string templateName)
-        {
-            return new XLuaTemplate()
-            {
-                name = templateName,
-                text = System.IO.File.ReadAllText(templatePath + templateName)
-            };
-        }
-
-        static XLuaTemplates loadTemplates(string templatePath)
-        {
-            return new XLuaTemplates()
-            {
-                LuaClassWrap = loadTemplate(templatePath, "LuaClassWrap.tpl.txt"),
-                LuaDelegateBridge = loadTemplate(templatePath, "LuaDelegateBridge.tpl.txt"),
-                LuaDelegateWrap = loadTemplate(templatePath, "LuaDelegateWrap.tpl.txt"),
-                LuaEnumWrap = loadTemplate(templatePath, "LuaEnumWrap.tpl.txt"),
-                LuaInterfaceBridge = loadTemplate(templatePath, "LuaInterfaceBridge.tpl.txt"),
-                LuaRegister = loadTemplate(templatePath, "LuaRegister.tpl.txt"),
-                LuaWrapPusher = loadTemplate(templatePath, "LuaWrapPusher.tpl.txt"),
-                PackUnpack = loadTemplate(templatePath, "PackUnpack.tpl.txt"),
-                TemplateCommon = loadTemplate(templatePath, "TemplateCommon.lua.txt"),
-            };
-        }
-
-
-        public static void GenAll(string templatePath, IEnumerable<Type> all_types)
+        public static void GenAll(XLuaTemplates templates, IEnumerable<Type> all_types)
         {
             var start = DateTime.Now;
             Directory.CreateDirectory(GeneratorConfig.common_path);
-            templateRef = loadTemplates(templatePath);
+            templateRef = templates;
             GetGenConfig(all_types.Where(type => !type.IsGenericTypeDefinition));
-            luaenv.DoString("package.path = package.path..';" + templatePath + "?.lua.txt;'");
             luaenv.DoString("require 'TemplateCommon'");
             var gen_push_types_setter = luaenv.Global.Get<LuaFunction>("SetGenPushAndUpdateTypes");
             gen_push_types_setter.Call(GCOptimizeList.Where(t => !t.IsPrimitive && SizeOf(t) != -1).Concat(LuaCallCSharp.Where(t => t.IsEnum)).Distinct().ToList());

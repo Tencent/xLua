@@ -197,7 +197,14 @@ namespace XLua
                 //UnityEngine.Debug.Log("inPos:" + inPosArray[i]);
                 if (luaStackPos > luaTop) //after check
                 {
-                    args[inPosArray[i]] = defaultValueArray[i];
+                    if (paramsType != null && i == castArray.Length - 1)
+                    {
+                        args[inPosArray[i]] = Array.CreateInstance(paramsType, 0);
+                    }
+                    else
+                    {
+                        args[inPosArray[i]] = defaultValueArray[i];
+                    }
                 }
                 else
                 {
@@ -320,7 +327,43 @@ namespace XLua
                 }
                 else
                 {
-                    constructorCache[type] = _GenMethodWrap(type, ".ctor", constructors).Call;
+                    LuaCSFunction ctor = _GenMethodWrap(type, ".ctor", constructors).Call;
+                    
+                    if (type.IsValueType)
+                    {
+                        bool hasZeroParamsCtor = false;
+                        for (int i = 0; i < constructors.Length; i++)
+                        {
+                            if (constructors[i].GetParameters().Length == 0)
+                            {
+                                hasZeroParamsCtor = true;
+                                break;
+                            }
+                        }
+                        if (hasZeroParamsCtor)
+                        {
+                            constructorCache[type] = ctor;
+                        }
+                        else
+                        {
+                            constructorCache[type] = (L) =>
+                            {
+                                if (LuaAPI.lua_gettop(L) == 1)
+                                {
+                                    translator.PushAny(L, Activator.CreateInstance(type));
+                                    return 1;
+                                }
+                                else
+                                {
+                                    return ctor(L);
+                                }
+                            };
+                        }
+                    }
+                    else
+                    {
+                        constructorCache[type] = ctor;
+                    }
                 }
             }
             return constructorCache[type];
@@ -457,7 +500,7 @@ namespace XLua
                 if (mb == null)
                     continue;
 
-                if (mb.ContainsGenericParameters && !tryMakeGenericMethod(ref mb))
+                if (mb.IsGenericMethodDefinition && !tryMakeGenericMethod(ref mb))
                     continue;
 
                 var overload = new OverloadMethodWrap(translator, type, mb);
@@ -469,18 +512,25 @@ namespace XLua
 
         private static bool tryMakeGenericMethod(ref MethodBase method)
         {
-            var genericArguments = method.GetGenericArguments();
-            var constraintedArgumentTypes = new Type[genericArguments.Length];
-            for (var i = 0; i < genericArguments.Length; i++)
+            try
             {
-                var argumentType = genericArguments[i];
-                var parameterConstraints = argumentType.GetGenericParameterConstraints();
-                if (parameterConstraints.Length == 0 || !parameterConstraints[0].IsClass)
-                    return false;
-                constraintedArgumentTypes[i] = parameterConstraints[0];
+                var genericArguments = method.GetGenericArguments();
+                var constraintedArgumentTypes = new Type[genericArguments.Length];
+                for (var i = 0; i < genericArguments.Length; i++)
+                {
+                    var argumentType = genericArguments[i];
+                    var parameterConstraints = argumentType.GetGenericParameterConstraints();
+                    if (parameterConstraints.Length == 0 || !parameterConstraints[0].IsClass)
+                        return false;
+                    constraintedArgumentTypes[i] = parameterConstraints[0];
+                }
+                method = ((MethodInfo)method).MakeGenericMethod(constraintedArgumentTypes);
+                return true;
             }
-            method = ((MethodInfo)method).MakeGenericMethod(constraintedArgumentTypes);
-            return true;
+            catch (Exception)
+            {
+                return false;
+            }
         }
     }
 }

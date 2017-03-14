@@ -51,7 +51,10 @@ targetdir "./Tools"
 files
 {
     "./Src/XLuaGenerate.cs",
+    "./Src/XLuaTemplates.Designer.cs",
+    "./Src/XLuaTemplates.resx",
     "../Assets/XLua/Src/Editor/Generator.cs",
+    "../Assets/XLua/Src/Editor/Template/*.txt",
 }
 
 defines
@@ -92,6 +95,49 @@ links
     "Lib/Mono.Cecil.dll",
     "Lib/Mono.Cecil.Mdb.dll",
     "Lib/Mono.Cecil.Pdb.dll",
+}
+
+
+project "KeyPairsGen"
+language "C#"
+kind "ConsoleApp"
+framework "3.5"
+targetdir "./Tools"
+
+files
+{
+    "./Src/KeyPairsGen.cs",
+}
+
+defines
+{
+}
+
+links
+{
+    "System",
+    "System.Core",
+}
+
+project "FilesSignature"
+language "C#"
+kind "ConsoleApp"
+framework "3.5"
+targetdir "./Tools"
+
+files
+{
+    "./Src/FilesSignature.cs",
+}
+
+defines
+{
+}
+
+links
+{
+    "System",
+    "System.Core",
 }
 
 project "XLuaTest"

@@ -2,11 +2,21 @@
 
 ## xLua发布包怎么用？
 
-xLua目前以zip包形式发布，在Assets目录下解压即可。
+xLua目前以zip包形式发布，在工程目录下解压即可。
 
 ## xLua可以放别的目录吗？
 
 可以，但生成代码目录需要配置一下（默认放Assets\XLua\Gen目录），具体可以看《XLua的配置.doc》的GenPath配置介绍。
+
+## lua源码只能以txt后缀？
+
+什么后缀都可以。
+
+如果你想以TextAsset打包到安装包（比如放到Resources目录），Unity不认lua后缀，这是Unity的规则。
+
+如果你不打包到安装包，就没有后缀的限制：比如自行下载到某个目录（这也是热更的正确姿势），然后通过CustomLoader或者设置package.path去读这个目录。
+
+那为啥xLua本身带的lua源码（包括示例）为什么都是txt结尾呢？因为xLua本身就一个库，不含下载功能，也不方便运行时去某个地方下载代码，通过TextAsset是较简单的方式。
 
 ## Plugins源码在哪里可以找到，怎么使用？
 
@@ -23,6 +33,10 @@ ios和osx需要在mac下编译。
 ## 报类似“xlua.access, no field __Hitfix0_Update”的错误怎么解决？
 
 按[Hotfix操作指南](hotfix.md)一步步操作。
+
+## 报“please install the Tools”
+
+没有把Tools安装到Assets平级目录，安装包，或者master下都能找到这个目录。
 
 ## 报“This delegate/interface must add to CSharpCallLua : XXX”异常怎么解决？
 
@@ -129,3 +143,10 @@ end)
 ## 编辑器下运行正常，打包的时候生成代码报“没有某方法/属性/字段定义”怎么办？
 
 往往是由于该方法/属性/字段是扩在条件编译里头，只在UNITY_EDITOR下有效，这是可以通过把这方法/属性/字段加到黑名单来解决，加了之后要等编译完成后重新执行代码生成。
+
+## this[string field]或者this[object field]操作符重载为什么在lua无法访问？（比如Dictionary\<string, xxx\>, Dictionary\<object, xxx\>在lua中无法通过dic['abc']或者dic.abc检索值）
+
+在2.1.5~2.1.6版本把这个特性去掉，因为：1、这个特性会导致基类定义的方法、属性、字段等无法访问（比如Animation无法访问到GetComponent方法）；2、key为当前类某方法、属性、字段的名字的数据无法检索，比如Dictionary类型，dic['TryGetValue']返回的是一个函数，指向Dictionary的TryGetValue方法。
+
+建议直接方法该操作符的等效方法，比如List的Get，Dictionary的TryGetValue，如果该方法没有提供，可以在C#那通过Extension method封装一个使用。
+

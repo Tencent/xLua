@@ -43,9 +43,48 @@
     <Compile Include="..\..\Assets\XLua\Src\Editor\Generator.cs">
       <Link>Assets\XLua\Src\Editor\Generator.cs</Link>
     </Compile>
+    <None Include="..\..\Assets\XLua\Src\Editor\Template\LuaClassWrap.tpl.txt">
+      <Link>Assets\XLua\Src\Editor\Template\LuaClassWrap.tpl.txt</Link>
+    </None>
+    <None Include="..\..\Assets\XLua\Src\Editor\Template\LuaDelegateBridge.tpl.txt">
+      <Link>Assets\XLua\Src\Editor\Template\LuaDelegateBridge.tpl.txt</Link>
+    </None>
+    <None Include="..\..\Assets\XLua\Src\Editor\Template\LuaDelegateWrap.tpl.txt">
+      <Link>Assets\XLua\Src\Editor\Template\LuaDelegateWrap.tpl.txt</Link>
+    </None>
+    <None Include="..\..\Assets\XLua\Src\Editor\Template\LuaEnumWrap.tpl.txt">
+      <Link>Assets\XLua\Src\Editor\Template\LuaEnumWrap.tpl.txt</Link>
+    </None>
+    <None Include="..\..\Assets\XLua\Src\Editor\Template\LuaInterfaceBridge.tpl.txt">
+      <Link>Assets\XLua\Src\Editor\Template\LuaInterfaceBridge.tpl.txt</Link>
+    </None>
+    <None Include="..\..\Assets\XLua\Src\Editor\Template\LuaRegister.tpl.txt">
+      <Link>Assets\XLua\Src\Editor\Template\LuaRegister.tpl.txt</Link>
+    </None>
+    <None Include="..\..\Assets\XLua\Src\Editor\Template\LuaWrapPusher.tpl.txt">
+      <Link>Assets\XLua\Src\Editor\Template\LuaWrapPusher.tpl.txt</Link>
+    </None>
+    <None Include="..\..\Assets\XLua\Src\Editor\Template\PackUnpack.tpl.txt">
+      <Link>Assets\XLua\Src\Editor\Template\PackUnpack.tpl.txt</Link>
+    </None>
+    <None Include="..\..\Assets\XLua\Src\Editor\Template\TemplateCommon.lua.txt">
+      <Link>Assets\XLua\Src\Editor\Template\TemplateCommon.lua.txt</Link>
+    </None>
     <Compile Include="..\Src\XLuaGenerate.cs">
       <Link>Src\XLuaGenerate.cs</Link>
     </Compile>
+    <Compile Include="..\Src\XLuaTemplates.Designer.cs">
+      <Link>Src\XLuaTemplates.Designer.cs</Link>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>XLuaTemplates.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
+    </Compile>
+    <EmbeddedResource Include="..\Src\XLuaTemplates.resx">
+      <Link>Src\XLuaTemplates.resx</Link>
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>XLuaTemplates.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="XLua.Mini.csproj">
