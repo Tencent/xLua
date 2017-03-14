@@ -20,7 +20,9 @@ namespace XLua
         <%ForEachCsList(type_infos, function(type_info)
         local full_type_name = CsFullTypeName(type_info.Type)
         %>
-		<%if type_info.IsRoot then%>
+		<%if type_info.IsRoot then
+		ForEachCsList(type_info.FieldInfos, function(fieldInfo) fieldInfo.Name = UnK(fieldInfo.Name) end)
+		%>
 		public static void UnPack(ObjectTranslator translator, RealStatePtr L, int idx, out <%=full_type_name%> val)
 		{
 		    val = new <%=full_type_name%>();

@@ -32,7 +32,7 @@ namespace XLua.CSObjectWrap
             <% ForEachCsList(fields, function(field) 
 			if field.Name == "value__" or IsObsolute(field) then return end
 			%>
-            Utils.RegisterObject(L, translator, Utils.CLS_IDX, "<%=field.Name%>", <%=CsFullTypeName(type)%>.<%=field.Name%>);
+            Utils.RegisterObject(L, translator, Utils.CLS_IDX, "<%=field.Name%>", <%=CsFullTypeName(type)%>.<%=UnK(field.Name)%>);
             <%end)%>
             Utils.RegisterObject(L, translator, Utils.CLS_IDX, "UnderlyingSystemType", typeof(<%=CsFullTypeName(type)%>));
 			Utils.RegisterFunc(L, Utils.CLS_IDX, "__CastFrom", __CastFrom);
@@ -57,7 +57,7 @@ namespace XLua.CSObjectWrap
 			        if field.Name == "value__" or IsObsolute(field) then return end
 			    %><%=(is_first and "" or "else ")%>if (LuaAPI.xlua_is_eq_str(L, 1, "<%=field.Name%>"))
                 {
-                    translator.Push<%=CSVariableName(type)%>(L, <%=CsFullTypeName(type)%>.<%=field.Name%>);
+                    translator.Push<%=CSVariableName(type)%>(L, <%=CsFullTypeName(type)%>.<%=UnK(field.Name)%>);
                 }
 				<%
 				is_first = false
