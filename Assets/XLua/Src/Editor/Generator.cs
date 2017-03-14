@@ -775,15 +775,8 @@ namespace CSObjectWrapEditor
 #if !XLUA_GENERAL
         static void clear(string path)
         {
-            try
-            {
-                System.IO.Directory.Delete(path, true);
-                AssetDatabase.DeleteAsset(path.Substring(path.IndexOf("Assets") + "Assets".Length));
-            }
-            catch
-            {
-
-            }
+            System.IO.Directory.Delete(path, true);
+            AssetDatabase.DeleteAsset(path.Substring(path.IndexOf("Assets") + "Assets".Length));
 
             AssetDatabase.Refresh();
         }
