@@ -175,77 +175,87 @@ namespace XLua
 
         public int Call(RealStatePtr L)
         {
-            object target = null;
-            MethodBase toInvoke = method;
-
-            if (luaStackPosStart > 1)
+            try
             {
-                target = translator.FastGetCSObj(L, 1);
-                if (target is Delegate)
+                object target = null;
+                MethodBase toInvoke = method;
+
+                if (luaStackPosStart > 1)
                 {
-                    Delegate delegateInvoke = (Delegate)target;
-                    toInvoke = delegateInvoke.Method;
-                }
-            }
-
-
-            int luaTop = LuaAPI.lua_gettop(L);
-            int luaStackPos = luaStackPosStart;
-
-            for (int i = 0; i < castArray.Length; i++)
-            {
-                //UnityEngine.Debug.Log("inPos:" + inPosArray[i]);
-                if (luaStackPos > luaTop) //after check
-                {
-                    if (paramsType != null && i == castArray.Length - 1)
+                    target = translator.FastGetCSObj(L, 1);
+                    if (target is Delegate)
                     {
-                        args[inPosArray[i]] = Array.CreateInstance(paramsType, 0);
+                        Delegate delegateInvoke = (Delegate)target;
+                        toInvoke = delegateInvoke.Method;
+                    }
+                }
+
+
+                int luaTop = LuaAPI.lua_gettop(L);
+                int luaStackPos = luaStackPosStart;
+
+                for (int i = 0; i < castArray.Length; i++)
+                {
+                    //UnityEngine.Debug.Log("inPos:" + inPosArray[i]);
+                    if (luaStackPos > luaTop) //after check
+                    {
+                        if (paramsType != null && i == castArray.Length - 1)
+                        {
+                            args[inPosArray[i]] = Array.CreateInstance(paramsType, 0);
+                        }
+                        else
+                        {
+                            args[inPosArray[i]] = defaultValueArray[i];
+                        }
                     }
                     else
                     {
-                        args[inPosArray[i]] = defaultValueArray[i];
+                        if (paramsType != null && i == castArray.Length - 1)
+                        {
+                            args[inPosArray[i]] = translator.GetParams(L, luaStackPos, paramsType);
+                        }
+                        else
+                        {
+                            args[inPosArray[i]] = castArray[i](L, luaStackPos, null);
+                        }
+                        luaStackPos++;
                     }
+                    //UnityEngine.Debug.Log("value:" + args[inPosArray[i]]);
                 }
-                else
+
+                object ret = null;
+
+
+                ret = toInvoke.IsConstructor ? ((ConstructorInfo)method).Invoke(args) : method.Invoke(targetNeeded ? target : null, args);
+
+                int nRet = 0;
+
+                if (!isVoid)
                 {
-                    if (paramsType != null && i == castArray.Length - 1)
-                    {
-                        args[inPosArray[i]] = translator.GetParams(L, luaStackPos, paramsType);
-                    }
-                    else
-                    {
-                        args[inPosArray[i]] = castArray[i](L, luaStackPos, null);
-                    }
-                    luaStackPos++;
+                    //UnityEngine.Debug.Log(toInvoke.ToString() + " ret:" + ret);
+                    translator.PushAny(L, ret);
+                    nRet++;
                 }
-                //UnityEngine.Debug.Log("value:" + args[inPosArray[i]]);
-            }
 
-            object ret = null;
-
-
-            ret = toInvoke.IsConstructor ? ((ConstructorInfo)method).Invoke(args) : method.Invoke(targetNeeded ? target : null, args);
-
-            int nRet = 0;
-
-            if (!isVoid)
-            {
-                //UnityEngine.Debug.Log(toInvoke.ToString() + " ret:" + ret);
-                translator.PushAny(L, ret);
-                nRet++;
-            }
-
-            for (int i = 0; i < outPosArray.Length; i++)
-            {
-                if (refPos[outPosArray[i]] != -1)
+                for (int i = 0; i < outPosArray.Length; i++)
                 {
-                    translator.Update(L, luaStackPosStart + refPos[outPosArray[i]], args[outPosArray[i]]);
+                    if (refPos[outPosArray[i]] != -1)
+                    {
+                        translator.Update(L, luaStackPosStart + refPos[outPosArray[i]], args[outPosArray[i]]);
+                    }
+                    translator.PushAny(L, args[outPosArray[i]]);
+                    nRet++;
                 }
-                translator.PushAny(L, args[outPosArray[i]]);
-                nRet++;
-            }
 
-            return nRet;
+                return nRet;
+            }
+            finally
+            {
+                for(int i = 0; i < args.Length; i++)
+                {
+                    args[i] = null;
+                }
+            }
         }
     }
 
