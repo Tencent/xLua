@@ -73,6 +73,13 @@ public static class HotfixCfg
 }
 ~~~
 
+## 使用建议
+
+* 对所有较大可能变动的类型加上Hotfix标识；
+* 建议用反射找出所有函数参数、字段、属性、事件涉及的delegate类型，标注CSharpCallLua；
+* 业务代码、引擎API、系统API，需要在Lua补丁里头高性能访问的类型，加上LuaCallCSharp；
+* 引擎API、系统API可能被代码剪裁调（C#无引用的地方都会被剪裁），如果觉得可能会新增C#代码之外的API调用，这些API所在的类型要么加LuaCallCSharp，要么加ReflectionUse；
+
 ## Stateless和Stateful
 
 打Hotfix标签时，默认是Stateless方式，你也可以选Stateful方式，我们先说区别，再说使用场景。
