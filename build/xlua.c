@@ -1160,11 +1160,12 @@ LUA_API int gen_css_access(lua_State *L) {
 
 LUA_API int css_clone(lua_State *L) {
 	CSharpStruct *from = (CSharpStruct *)lua_touserdata(L, 1);
+	CSharpStruct *to = NULL;
 	if (!is_cs_data(L, 1) || from->fake_id != -1) {
 		return luaL_error(L, "invalid c# struct!");
 	}
 	
-	CSharpStruct *to = (CSharpStruct *)lua_newuserdata(L, from->len + sizeof(int) + sizeof(unsigned int));
+	to = (CSharpStruct *)lua_newuserdata(L, from->len + sizeof(int) + sizeof(unsigned int));
 	to->fake_id = -1;
 	to->len = from->len;
 	memcpy(&(to->data[0]), &(from->data[0]), from->len);
