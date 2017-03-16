@@ -557,6 +557,26 @@ namespace CSObjectWrapEditor
             }
         }
 
+        static bool hasGenericParameter(Type type)
+        {
+            if (type.IsByRef || type.IsArray)
+            {
+                return hasGenericParameter(type.GetElementType());
+            }
+            if (type.IsGenericType)
+            {
+                foreach (var typeArg in type.GetGenericArguments())
+                {
+                    if (hasGenericParameter(typeArg))
+                    {
+                        return true;
+                    }
+                }
+                return false;
+            }
+            return type.IsGenericParameter;
+        }
+
         static MethodInfoSimulation makeHotfixMethodInfoSimulation(MethodBase hotfixMethod, HotfixFlag hotfixType)
         {
             Type retTypeExpect = (hotfixType == HotfixFlag.Stateful && hotfixMethod.IsConstructor && !hotfixMethod.IsStatic)
@@ -654,12 +674,12 @@ namespace CSObjectWrapEditor
             }
         }
 
-        static bool hasNotPublicTypeRetOrParam(MethodInfo method)
+        static bool injectByGeneric(MethodInfo method)
         {
-            if (isNotPublic(method.ReturnType)) return true;
+            if (isNotPublic(method.ReturnType) || hasGenericParameter(method.ReturnType)) return true;
             foreach(var param in method.GetParameters())
             {
-                if (isNotPublic(param.ParameterType)) return true;
+                if (isNotPublic(param.ParameterType) || hasGenericParameter(param.ParameterType)) return true;
             }
             return false;
         }
@@ -674,19 +694,17 @@ namespace CSObjectWrapEditor
             {
                 var hotfixType = ((type.GetCustomAttributes(typeof(HotfixAttribute), false)[0]) as HotfixAttribute).Flag;
                 hotfxDelegates.AddRange(type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly | BindingFlags.NonPublic)
-                    .Where(method => !hasNotPublicTypeRetOrParam(method))
+                    .Where(method => !injectByGeneric(method))
                     .Cast<MethodBase>()
                     .Concat(type.GetConstructors(BindingFlags.Instance | BindingFlags.Public).Cast<MethodBase>())
-                    .Where(method => !method.ContainsGenericParameters && !(type.IsGenericTypeDefinition && (method.IsConstructor || hotfixType == HotfixFlag.Stateless)))
                     .Select(method => makeHotfixMethodInfoSimulation(method, hotfixType)));
             }
             foreach (var kv in HotfixCfg)
             {
                 hotfxDelegates.AddRange(kv.Key.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly | BindingFlags.NonPublic)
-                    .Where(method => !hasNotPublicTypeRetOrParam(method))
+                    .Where(method => !injectByGeneric(method))
                     .Cast<MethodBase>()
                     .Concat(kv.Key.GetConstructors(BindingFlags.Instance | BindingFlags.Public).Cast<MethodBase>())
-                    .Where(method => !method.ContainsGenericParameters && !(kv.Key.IsGenericTypeDefinition && (method.IsConstructor || kv.Value == HotfixFlag.Stateless)))
                     .Select(method => makeHotfixMethodInfoSimulation(method, kv.Value)));
             }
             var comparer = new MethodInfoSimulationComparer();
