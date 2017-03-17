@@ -553,6 +553,25 @@ namespace CSObjectWrapEditor
                         }
                     }
                 }
+                if (type.IsNested)
+                {
+                    var parent = type.DeclaringType;
+                    while (parent != null)
+                    {
+                        if ((!parent.IsNested && !parent.IsPublic) || (parent.IsNested && !parent.IsNestedPublic))
+                        {
+                            return true;
+                        }
+                        if (parent.IsNested)
+                        {
+                            parent = parent.DeclaringType;
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
+                }
                 return false;
             }
         }
@@ -674,12 +693,19 @@ namespace CSObjectWrapEditor
             }
         }
 
-        static bool injectByGeneric(MethodInfo method)
+        static bool injectByGeneric(MethodInfo method, HotfixFlag hotfixType)
         {
             if (isNotPublic(method.ReturnType) || hasGenericParameter(method.ReturnType)) return true;
-            foreach(var param in method.GetParameters())
+
+            if (!method.IsStatic &&  (hotfixType == HotfixFlag.Stateless || method.IsConstructor)
+                &&((method.DeclaringType.IsValueType && isNotPublic(method.DeclaringType)) || hasGenericParameter(method.DeclaringType)))
             {
-                if (isNotPublic(param.ParameterType) || hasGenericParameter(param.ParameterType)) return true;
+                return true;
+            }
+
+            foreach (var param in method.GetParameters())
+            {
+                if (((param.ParameterType.IsValueType || param.ParameterType.IsByRef) && isNotPublic(param.ParameterType)) || hasGenericParameter(param.ParameterType)) return true;
             }
             return false;
         }
@@ -694,7 +720,7 @@ namespace CSObjectWrapEditor
             {
                 var hotfixType = ((type.GetCustomAttributes(typeof(HotfixAttribute), false)[0]) as HotfixAttribute).Flag;
                 hotfxDelegates.AddRange(type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly | BindingFlags.NonPublic)
-                    .Where(method => !injectByGeneric(method))
+                    .Where(method => !injectByGeneric(method, hotfixType))
                     .Cast<MethodBase>()
                     .Concat(type.GetConstructors(BindingFlags.Instance | BindingFlags.Public).Cast<MethodBase>())
                     .Select(method => makeHotfixMethodInfoSimulation(method, hotfixType)));
@@ -702,7 +728,7 @@ namespace CSObjectWrapEditor
             foreach (var kv in HotfixCfg)
             {
                 hotfxDelegates.AddRange(kv.Key.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly | BindingFlags.NonPublic)
-                    .Where(method => !injectByGeneric(method))
+                    .Where(method => !injectByGeneric(method, kv.Value))
                     .Cast<MethodBase>()
                     .Concat(kv.Key.GetConstructors(BindingFlags.Instance | BindingFlags.Public).Cast<MethodBase>())
                     .Select(method => makeHotfixMethodInfoSimulation(method, kv.Value)));
