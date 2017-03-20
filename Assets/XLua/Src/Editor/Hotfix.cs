@@ -511,7 +511,7 @@ namespace XLua
                 return false;
             }
 
-            bool isFinalize = method.Name == "Finalize";
+            bool isFinalize = (method.Name == "Finalize" && method.IsSpecialName);
 
             TypeReference delegateType = null;
             MethodReference invoke = null;
@@ -598,6 +598,10 @@ namespace XLua
 
             if (isFinalize)
             {
+                if (method.Body.ExceptionHandlers.Count == 0)
+                {
+                    throw new InvalidProgramException("Finalize has not try-catch? Type :" + method.DeclaringType);
+                }
                 method.Body.ExceptionHandlers[0].TryStart = method.Body.Instructions[0];
             }
 
