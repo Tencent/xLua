@@ -77,7 +77,6 @@
       <Link>Src\XLuaTemplates.Designer.cs</Link>
       <AutoGen>True</AutoGen>
       <DependentUpon>XLuaTemplates.resx</DependentUpon>
-      <DesignTime>True</DesignTime>
     </Compile>
     <EmbeddedResource Include="..\Src\XLuaTemplates.resx">
       <Link>Src\XLuaTemplates.resx</Link>

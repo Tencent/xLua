@@ -23,11 +23,11 @@ namespace XLua
         {
 #if !UNITY_WSA || UNITY_EDITOR
             rsa = new RSACryptoServiceProvider();
-            rsa.FromXmlString(publicKey);
+            rsa.ImportCspBlob(Convert.FromBase64String(publicKey));
             sha = new SHA1CryptoServiceProvider();
 #else
             rsa = AsymmetricKeyAlgorithmProvider.OpenAlgorithm(AsymmetricAlgorithmNames.RsaSignPkcs1Sha1);
-            key = rsa.ImportPublicKey(CryptographicBuffer.DecodeFromBase64String(publicKey), CryptographicPublicKeyBlobType.X509SubjectPublicKeyInfo);
+            key = rsa.ImportPublicKey(CryptographicBuffer.DecodeFromBase64String(publicKey), CryptographicPublicKeyBlobType.Capi1PublicKey);
 #endif
             userLoader = loader;
         }
