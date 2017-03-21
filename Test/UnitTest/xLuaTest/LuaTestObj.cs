@@ -1795,13 +1795,13 @@ public class Manager : EmployeeTemplate
 {
 	public override int GetBasicSalary()
 	{
-		Console.WriteLine("Get Manager Basic Salary");
+		//Console.WriteLine("Get Manager Basic Salary");
 		return 1;
 	}
 	
 	public override int AddBonus()
 	{
-		Console.WriteLine("Add Manager Bonus");
+		//Console.WriteLine("Add Manager Bonus");
 		return 2;
 	}
 }
