@@ -710,6 +710,9 @@ namespace XLua
         [MonoPInvokeCallback(typeof(LuaCSFunction))]
         public static int LoadAssembly(RealStatePtr L)
         {
+#if UNITY_WSA && !UNITY_EDITOR
+            return LuaAPI.luaL_error(L, "xlua.load_assembly no support in uwp!");
+#else
             try
             {
                 ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
@@ -741,6 +744,7 @@ namespace XLua
             {
                 return LuaAPI.luaL_error(L, "c# exception in xlua.load_assembly:" + e);
             }
+#endif
         }
 
 

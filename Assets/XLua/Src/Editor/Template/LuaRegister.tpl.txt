@@ -68,7 +68,12 @@ namespace XLua
 			    <%for _, methods_info in ipairs(seq_tbl) do%>
 				{typeof(<%=CsFullTypeName(methods_info.type)%>), new List<MethodInfo>(){
 				<%  for _, method_info in ipairs(methods_info) do%>
-				  new __GEN_DELEGATE<%=method_info.index%>(<%=CsFullTypeName(method_info.method.DeclaringType)%>.<%=method_info.method.Name%>).Method,
+				  new __GEN_DELEGATE<%=method_info.index%>(<%=CsFullTypeName(method_info.method.DeclaringType)%>.<%=method_info.method.Name%>)
+#if UNITY_WSA && !UNITY_EDITOR
+                                      .GetMethodInfo(),
+#else
+                                      .Method,
+#endif
 				<%  end%>
 				}},
 				<%end%>

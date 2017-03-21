@@ -14,7 +14,7 @@ namespace XLua.LuaDLL
     using System.Text;
     using XLua;
 
-#if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN || XLUA_GENERAL
+#if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN || XLUA_GENERAL || (UNITY_WSA && !UNITY_EDITOR)
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 #endif
     public delegate int lua_CSFunction(IntPtr L);
@@ -198,7 +198,7 @@ namespace XLua.LuaDLL
 
 		public static void lua_pushstdcallcfunction(IntPtr L, lua_CSFunction function, int n = 0)//[-0, +1, m]
         {
-#if XLUA_GENERAL
+#if XLUA_GENERAL || (UNITY_WSA && !UNITY_EDITOR)
             GCHandle.Alloc(function);
 #endif
             IntPtr fn = Marshal.GetFunctionPointerForDelegate(function);
@@ -233,7 +233,7 @@ namespace XLua.LuaDLL
             IntPtr str = lua_tolstring(L, index, out strlen);
             if (str != IntPtr.Zero)
 			{
-#if XLUA_GENERAL
+#if XLUA_GENERAL || (UNITY_WSA && !UNITY_EDITOR)
                 int len = strlen.ToInt32();
                 byte[] buffer = new byte[len];
                 Marshal.Copy(str, buffer, 0, len);

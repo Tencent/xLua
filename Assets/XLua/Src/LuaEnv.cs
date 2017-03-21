@@ -21,6 +21,7 @@ namespace XLua
 {
     using System;
     using System.Collections.Generic;
+    using System.Reflection;
 
     public class LuaEnv : IDisposable
     {
@@ -135,11 +136,11 @@ namespace XLua
                 LuaAPI.xlua_pushasciistring(rawL, "xlua_main_thread");
                 LuaAPI.lua_pushthread(rawL);
                 LuaAPI.lua_rawset(rawL, LuaIndexes.LUA_REGISTRYINDEX);
-#if !XLUA_GENERAL
+#if !XLUA_GENERAL && (!UNITY_WSA || UNITY_EDITOR)
                 translator.Alias(typeof(Type), "System.MonoType");
 #endif
 
-                if (0 != LuaAPI.xlua_getglobal(rawL, "_G"))
+            if (0 != LuaAPI.xlua_getglobal(rawL, "_G"))
                 {
                     throw new Exception("call xlua_getglobal fail!");
                 }
@@ -550,7 +551,7 @@ namespace XLua
 
         public void AddBuildin(string name, LuaCSFunction initer)
         {
-            if (!initer.Method.IsStatic || !Attribute.IsDefined(initer.Method, typeof(MonoPInvokeCallbackAttribute)))
+            if (!Utils.IsStaticPInvokeCSFunction(initer))
             {
                 throw new Exception("initer must be static and has MonoPInvokeCallback Attribute!");
             }

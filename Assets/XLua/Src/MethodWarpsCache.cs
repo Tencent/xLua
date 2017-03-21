@@ -186,7 +186,11 @@ namespace XLua
                     if (target is Delegate)
                     {
                         Delegate delegateInvoke = (Delegate)target;
+#if UNITY_WSA && !UNITY_EDITOR
+                        toInvoke = delegateInvoke.GetMethodInfo();
+#else
                         toInvoke = delegateInvoke.Method;
+#endif
                     }
                 }
 
@@ -320,9 +324,9 @@ namespace XLua
             if (!constructorCache.ContainsKey(type))
             {
                 var constructors = type.GetConstructors();
-                if (type.IsAbstract || constructors == null || constructors.Length == 0)
+                if (type.IsAbstract() || constructors == null || constructors.Length == 0)
                 {
-                    if (type.IsValueType)
+                    if (type.IsValueType())
                     {
                         constructorCache[type] = (L) =>
                         {
@@ -339,7 +343,7 @@ namespace XLua
                 {
                     LuaCSFunction ctor = _GenMethodWrap(type, ".ctor", constructors).Call;
                     
-                    if (type.IsValueType)
+                    if (type.IsValueType())
                     {
                         bool hasZeroParamsCtor = false;
                         for (int i = 0; i < constructors.Length; i++)
@@ -390,7 +394,13 @@ namespace XLua
             if (!methodsOfType.ContainsKey(methodName))
             {
                 MemberInfo[] methods = type.GetMember(methodName, BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public | BindingFlags.IgnoreCase);
-                if (methods == null || methods.Length == 0 || methods[0].MemberType != MemberTypes.Method)
+                if (methods == null || methods.Length == 0 ||
+#if UNITY_WSA && !UNITY_EDITOR
+                    methods[0] is MethodBase
+#else
+                    methods[0].MemberType != MemberTypes.Method
+#endif
+                    )
                 {
                     return null;
                 }
@@ -530,7 +540,7 @@ namespace XLua
                 {
                     var argumentType = genericArguments[i];
                     var parameterConstraints = argumentType.GetGenericParameterConstraints();
-                    if (parameterConstraints.Length == 0 || !parameterConstraints[0].IsClass)
+                    if (parameterConstraints.Length == 0 || !parameterConstraints[0].IsClass())
                         return false;
                     constraintedArgumentTypes[i] = parameterConstraints[0];
                 }
