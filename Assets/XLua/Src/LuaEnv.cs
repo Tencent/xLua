@@ -363,6 +363,7 @@ namespace XLua
 
         public void Dispose()
         {
+            FullGc();
             System.GC.Collect();
             System.GC.WaitForPendingFinalizers();
 
