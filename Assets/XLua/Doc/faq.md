@@ -150,3 +150,37 @@ end)
 
 建议直接方法该操作符的等效方法，比如List的Get，Dictionary的TryGetValue，如果该方法没有提供，可以在C#那通过Extension method封装一个使用。
 
+## 有的Unity对象，在C#为null，在lua为啥不为nil呢？比如一个已经Destroy的GameObject
+
+其实那C#对象并不为null，是UnityEngine.Object重载的==操作符，当一个对象被Destroy，未初始化等情况，obj == null返回true，但这C#对象并不为null，可以通过System.Object.ReferenceEquals(null, obj)来验证下。
+
+对应这种情况，可以为UnityEngine.Object写一个扩展方法：
+
+~~~csharp
+[LuaCallCSharp]
+[ReflectionUse]
+public static class UnityEngineObjectExtention
+{
+    public static bool IsNull(this UnityEngine.Object o) // 或者名字叫IsDestroyed等等
+    {
+        return o == null;
+    }
+}
+~~~
+
+然后在lua那你对所有UnityEngine.Object实例都使用IsNull判断
+
+~~~lua
+print(go:GetComponent('Animator'):IsNull())
+~~~
+
+## 泛型实例怎么构造
+
+泛型实例的构造和普通类型是一样的，都是CS.namespace.typename()，可能比较特殊的是typename的表达，泛型实例的typename的表达包含了标识符非法符号，最后一部分要换成["typename"]，以List<string>为例
+
+~~~lua
+local lst = CS.System.Collections.Generic["List`1[System.String]"]()
+~~~
+
+如果某个泛型实例的typename不确定，可以在C#测打印下typeof(不确定的类型).ToString()
+

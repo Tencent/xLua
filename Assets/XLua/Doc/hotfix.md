@@ -4,7 +4,7 @@
 
 2、目前版本依赖代码生成 ，热补丁需要执行XLua/Generate Code才能正常运行。（建议的开发方式是平时不打开HOTFIX_ENABLE，这样不用生成代码，开发更便捷，build手机版本或者要在编译器下开发补丁时打开HOTFIX_ENABLE）
 
-3、编辑器下需要执行"XLua/Hotfix Inject In Editor"，如果打印“hotfix inject finish!”或者“had injected!”，那表示已经注入成功，可以进行补丁调试（手机版本打包无需该步骤）；
+3、编辑器下需要执行"XLua/Hotfix Inject In Editor"，如果打印“hotfix inject finish!”或者“had injected!”，那表示已经注入成功，可以进行补丁调试（手机版本打包无需该步骤）；如果是自动化打包，要注意在代码里头用API设置的宏是不生效的，需要在编辑器对应的平台也设置上。
 
 ## 内嵌模式
 
