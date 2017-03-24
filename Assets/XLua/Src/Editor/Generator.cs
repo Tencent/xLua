@@ -693,9 +693,9 @@ namespace CSObjectWrapEditor
             }
         }
 
-        static bool injectByGeneric(MethodInfo method, HotfixFlag hotfixType)
+        static bool injectByGeneric(MethodBase method, HotfixFlag hotfixType)
         {
-            if (isNotPublic(method.ReturnType) || hasGenericParameter(method.ReturnType)) return true;
+            if (!method.IsConstructor && (isNotPublic((method as MethodInfo).ReturnType) || hasGenericParameter((method as MethodInfo).ReturnType))) return true;
 
             if (!method.IsStatic &&  (hotfixType == HotfixFlag.Stateless || method.IsConstructor)
                 &&((method.DeclaringType.IsValueType && isNotPublic(method.DeclaringType)) || hasGenericParameter(method.DeclaringType)))
@@ -720,17 +720,17 @@ namespace CSObjectWrapEditor
             {
                 var hotfixType = ((type.GetCustomAttributes(typeof(HotfixAttribute), false)[0]) as HotfixAttribute).Flag;
                 hotfxDelegates.AddRange(type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly | BindingFlags.NonPublic)
-                    .Where(method => !injectByGeneric(method, hotfixType))
                     .Cast<MethodBase>()
                     .Concat(type.GetConstructors(BindingFlags.Instance | BindingFlags.Public).Cast<MethodBase>())
+                    .Where(method => !injectByGeneric(method, hotfixType))
                     .Select(method => makeHotfixMethodInfoSimulation(method, hotfixType)));
             }
             foreach (var kv in HotfixCfg)
             {
                 hotfxDelegates.AddRange(kv.Key.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly | BindingFlags.NonPublic)
-                    .Where(method => !injectByGeneric(method, kv.Value))
                     .Cast<MethodBase>()
                     .Concat(kv.Key.GetConstructors(BindingFlags.Instance | BindingFlags.Public).Cast<MethodBase>())
+                    .Where(method => !injectByGeneric(method, kv.Value))
                     .Select(method => makeHotfixMethodInfoSimulation(method, kv.Value)));
             }
             var comparer = new MethodInfoSimulationComparer();
