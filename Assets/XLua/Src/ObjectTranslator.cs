@@ -889,10 +889,6 @@ namespace XLua
             {
                 PushDecimal(L, (decimal)o);
             }
-            else if (o is Delegate && (o as Delegate).Target is DelegateBridgeBase)
-            {
-                ((o as Delegate).Target as DelegateBridgeBase).push(L);
-            }
             else if (o is LuaBase)
             {
                 ((LuaBase)o).push(L);
