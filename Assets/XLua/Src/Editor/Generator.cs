@@ -716,20 +716,22 @@ namespace CSObjectWrapEditor
             StreamWriter textWriter = new StreamWriter(filePath, false, Encoding.UTF8);
             types = types.Where(type => !type.GetMethod("Invoke").GetParameters().Any(paramInfo => paramInfo.ParameterType.IsGenericParameter));
             var hotfxDelegates = new List<MethodInfoSimulation>();
+            var bindingAttrOfMethod = BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly | BindingFlags.NonPublic;
+            var bindingAttrOfConstructor = BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly | BindingFlags.NonPublic;
             foreach (var type in (from type in hotfix_check_types where type.IsDefined(typeof(HotfixAttribute), false) select type))
             {
                 var hotfixType = ((type.GetCustomAttributes(typeof(HotfixAttribute), false)[0]) as HotfixAttribute).Flag;
-                hotfxDelegates.AddRange(type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly | BindingFlags.NonPublic)
+                hotfxDelegates.AddRange(type.GetMethods(bindingAttrOfMethod)
                     .Cast<MethodBase>()
-                    .Concat(type.GetConstructors(BindingFlags.Instance | BindingFlags.Public).Cast<MethodBase>())
+                    .Concat(type.GetConstructors(bindingAttrOfConstructor).Cast<MethodBase>())
                     .Where(method => !injectByGeneric(method, hotfixType))
                     .Select(method => makeHotfixMethodInfoSimulation(method, hotfixType)));
             }
             foreach (var kv in HotfixCfg)
             {
-                hotfxDelegates.AddRange(kv.Key.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly | BindingFlags.NonPublic)
+                hotfxDelegates.AddRange(kv.Key.GetMethods(bindingAttrOfMethod)
                     .Cast<MethodBase>()
-                    .Concat(kv.Key.GetConstructors(BindingFlags.Instance | BindingFlags.Public).Cast<MethodBase>())
+                    .Concat(kv.Key.GetConstructors(bindingAttrOfConstructor).Cast<MethodBase>())
                     .Where(method => !injectByGeneric(method, kv.Value))
                     .Select(method => makeHotfixMethodInfoSimulation(method, kv.Value)));
             }
