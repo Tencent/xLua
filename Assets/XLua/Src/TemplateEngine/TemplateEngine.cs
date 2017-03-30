@@ -153,16 +153,16 @@ namespace XLua.TemplateEngine
         {
             StringBuilder code = new StringBuilder();
 
-            code.Append("local __text_gen = ''\r\n");
+            code.Append("local __text_gen = {}\r\n");
             foreach (var chunk in chunks)
             {
                 switch (chunk.Type)
                 {
                     case TokenType.Text:
-                        code.Append("__text_gen = __text_gen .. \"" + chunk.Text + "\"\r\n");
+                        code.Append("table.insert(__text_gen, \"" + chunk.Text + "\")\r\n");
                         break;
                     case TokenType.Eval:
-                        code.Append("__text_gen = __text_gen .. (" + chunk.Text + ")\r\n");
+                        code.Append("table.insert(__text_gen, tostring(" + chunk.Text + "))\r\n");
                         break;
                     case TokenType.Code:
                         code.Append(chunk.Text + "\r\n");
@@ -170,7 +170,7 @@ namespace XLua.TemplateEngine
                 }
             }
 
-            code.Append("return __text_gen\r\n");
+            code.Append("return table.concat(__text_gen)\r\n");
             //UnityEngine.Debug.Log("code compose:"+code.ToString());
             return code.ToString();
         }
