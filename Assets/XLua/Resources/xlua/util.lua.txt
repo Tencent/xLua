@@ -67,8 +67,18 @@ local function cs_generator(func)
     return generator
 end
 
+local function loadpackage(...)
+    for _, loader in ipairs(package.searchers) do
+        local func = loader(...)
+        if type(func) == 'function' then
+            return func
+        end
+    end
+end
+
 return {
     async_to_sync = async_to_sync,
     coroutine_call = coroutine_call,
     cs_generator = cs_generator,
+    loadpackage = loadpackage,
 }
