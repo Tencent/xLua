@@ -530,7 +530,7 @@ namespace XLua
                     xlua.access(cs, cflag .. '__Hitfix0_'..k, f) -- at least one
                     pcall(function()
                         for i = 1, 99 do
-                            xlua.access(cs, '__Hitfix'..i..'_'..k, f)
+                            xlua.access(cs, cflag .. '__Hitfix'..i..'_'..k, f)
                         end
                     end)
                 end
