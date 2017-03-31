@@ -178,8 +178,43 @@ namespace CSObjectWrapEditor
             return from type in type_has_extension_methods
                    where type.IsSealed && !type.IsGenericType && !type.IsNested
                         from method in type.GetMethods(BindingFlags.Static | BindingFlags.Public)
-                        where Utils.IsSupportedExtensionMethod(method, extendedType)
+                        where IsSupportedExtensionMethod(method, extendedType)
                         select method;
+        }
+
+        public static bool IsSupportedExtensionMethod(MethodBase method, Type extendedType)
+        {
+            if (!method.IsDefined(typeof(ExtensionAttribute), false))
+                return false;
+            var methodParameters = method.GetParameters();
+            if (methodParameters.Length < 1)
+                return false;
+
+            var hasValidGenericParameter = false;
+            for (var i = 0; i < methodParameters.Length; i++)
+            {
+                var parameterType = methodParameters[i].ParameterType;
+                if (i == 0)
+                {
+                    if (parameterType.IsGenericParameter)
+                    {
+                        var parameterConstraints = parameterType.GetGenericParameterConstraints();
+                        if (parameterConstraints.Length == 0 || !parameterConstraints[0].IsAssignableFrom(extendedType))
+                            return false;
+                        hasValidGenericParameter = true;
+                    }
+                    else if (parameterType != extendedType)
+                        return false;
+                }
+                else if (parameterType.IsGenericParameter)
+                {
+                    var parameterConstraints = parameterType.GetGenericParameterConstraints();
+                    if (parameterConstraints.Length == 0 || !parameterConstraints[0].IsClass())
+                        return false;
+                    hasValidGenericParameter = true;
+                }
+            }
+            return hasValidGenericParameter || !method.ContainsGenericParameters;
         }
 
         static void getClassInfo(Type type, LuaTable parameters)
