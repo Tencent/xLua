@@ -731,9 +731,12 @@ namespace XLua
 #if UNITY_EDITOR
         public void PushParams(RealStatePtr L, Array ary)
         {
-            for(int i = 0; i < ary.Length; i++)
+            if (ary != null)
             {
-                PushAny(L, ary.GetValue(i));
+                for (int i = 0; i < ary.Length; i++)
+                {
+                    PushAny(L, ary.GetValue(i));
+                }
             }
         }
 #endif

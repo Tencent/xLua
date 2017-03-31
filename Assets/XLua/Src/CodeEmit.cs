@@ -189,9 +189,15 @@ namespace XLua
                 g.Emit(OpCodes.Ldc_I4, in_param_count);
                 if (has_params)
                 {
+                    Label l1 = g.DefineLabel();
+
+                    g.Emit(OpCodes.Ldarg, (short)parameters.Length);
+                    g.Emit(OpCodes.Brfalse, l1);
+
                     g.Emit(OpCodes.Ldarg, (short)parameters.Length);
                     g.Emit(OpCodes.Ldlen);
                     g.Emit(OpCodes.Add);
+                    g.MarkLabel(l1);
                 }
                 g.Emit(OpCodes.Ldc_I4, out_param_count + (has_return ? 1 : 0));
                 g.Emit(OpCodes.Ldloc_1);
@@ -492,9 +498,15 @@ namespace XLua
                     g.Emit(OpCodes.Ldc_I4, in_param_count + 1);
                     if (has_params)
                     {
+                        Label l1 = g.DefineLabel();
+
+                        g.Emit(OpCodes.Ldarg, (short)parameters.Length);
+                        g.Emit(OpCodes.Brfalse, l1);
+
                         g.Emit(OpCodes.Ldarg, (short)parameters.Length);
                         g.Emit(OpCodes.Ldlen);
                         g.Emit(OpCodes.Add);
+                        g.MarkLabel(l1);
                     }
                     g.Emit(OpCodes.Ldc_I4, out_param_count + (has_return ? 1 : 0));
                     g.Emit(OpCodes.Ldloc_1);

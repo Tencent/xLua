@@ -320,7 +320,7 @@ end
 function GetPushStatement(t, variable, is_v_params)
     if is_v_params then
 	    local item_push = GetPushStatement(t:GetElementType(), variable..'[__gen_i]')
-		return 'for (int __gen_i = 0; __gen_i < ' .. variable .. '.Length; ++__gen_i) ' .. item_push
+		return 'if ('.. variable ..' != null)  { for (int __gen_i = 0; __gen_i < ' .. variable .. '.Length; ++__gen_i) ' .. item_push .. '; }'
 	end
     
     local testname = getSafeFullName(t)
