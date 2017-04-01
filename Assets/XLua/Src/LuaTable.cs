@@ -200,11 +200,14 @@ namespace XLua
                     LuaAPI.lua_pushnil(L);
                     while (LuaAPI.lua_next(L, -2) != 0)
                     {
-                        TKey key;
-                        TValue val;
-                        translator.Get(L, -2, out key);
-                        translator.Get(L, -1, out val);
-                        action(key, val);
+                        if (translator.Assignable<TKey>(L, -2))
+                        {
+                            TKey key;
+                            TValue val;
+                            translator.Get(L, -2, out key);
+                            translator.Get(L, -1, out val);
+                            action(key, val);
+                        }
                         LuaAPI.lua_pop(L, 1);
                     }
                 }
