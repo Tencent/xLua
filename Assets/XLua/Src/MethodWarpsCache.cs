@@ -112,7 +112,7 @@ namespace XLua
                     {
                         if (defalutValue != null && defalutValue.GetType() != paramInfos[i].ParameterType)
                         {
-                            defalutValue = defalutValue.GetType() == typeof(Missing) ? (paramInfos[i].ParameterType.IsValueType ? Activator.CreateInstance(paramInfos[i].ParameterType) : null) 
+                            defalutValue = defalutValue.GetType() == typeof(Missing) ? (paramInfos[i].ParameterType.IsValueType ? Activator.CreateInstance(paramInfos[i].ParameterType) : Missing.Value) 
                                 : Convert.ChangeType(defalutValue, paramInfos[i].ParameterType);
                         }
                         HasDefalutValue = true;
