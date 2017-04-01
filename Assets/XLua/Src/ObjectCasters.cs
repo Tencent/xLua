@@ -234,57 +234,57 @@ namespace XLua
 
         private static object charCaster(RealStatePtr L, int idx, object target)
         {
-            return LuaAPI.lua_type(L, idx) == LuaTypes.LUA_TNUMBER ? (object)(char)LuaAPI.xlua_tointeger(L, idx) : null;
+            return (char)LuaAPI.xlua_tointeger(L, idx);
         }
 
         private static object sbyteCaster(RealStatePtr L, int idx, object target)
         {
-            return LuaAPI.lua_type(L, idx) == LuaTypes.LUA_TNUMBER ? (object)(sbyte)LuaAPI.xlua_tointeger(L, idx) : null;
+            return (sbyte)LuaAPI.xlua_tointeger(L, idx);
         }
 
         private static object byteCaster(RealStatePtr L, int idx, object target)
         {
-            return LuaAPI.lua_type(L, idx) == LuaTypes.LUA_TNUMBER ? (object)(byte)LuaAPI.xlua_tointeger(L, idx) : null;
+            return (byte)LuaAPI.xlua_tointeger(L, idx);
         }
 
         private static object shortCaster(RealStatePtr L, int idx, object target)
         {
-            return LuaAPI.lua_type(L, idx) == LuaTypes.LUA_TNUMBER ? (object)(short)LuaAPI.xlua_tointeger(L, idx) : null;
+            return (short)LuaAPI.xlua_tointeger(L, idx);
         }
 
         private static object ushortCaster(RealStatePtr L, int idx, object target)
         {
-            return LuaAPI.lua_type(L, idx) == LuaTypes.LUA_TNUMBER ? (object)(ushort)LuaAPI.xlua_tointeger(L, idx) : null;
+            return (ushort)LuaAPI.xlua_tointeger(L, idx);
         }
 
         private static object intCaster(RealStatePtr L, int idx, object target)
         {
-            return LuaAPI.lua_type(L, idx) == LuaTypes.LUA_TNUMBER ? (object)LuaAPI.xlua_tointeger(L, idx) : null;
+            return LuaAPI.xlua_tointeger(L, idx);
         }
 
         private static object uintCaster(RealStatePtr L, int idx, object target)
         {
-            return LuaAPI.lua_type(L, idx) == LuaTypes.LUA_TNUMBER ? (object)LuaAPI.xlua_touint(L, idx) : null;
+            return LuaAPI.xlua_touint(L, idx);
         }
 
         private static object longCaster(RealStatePtr L, int idx, object target)
         {
-            return (LuaAPI.lua_type(L, idx) == LuaTypes.LUA_TNUMBER || LuaAPI.lua_isint64(L, idx)) ? (object)LuaAPI.lua_toint64(L, idx) : null;
+            return LuaAPI.lua_toint64(L, idx);
         }
 
         private static object ulongCaster(RealStatePtr L, int idx, object target)
         {
-            return (LuaAPI.lua_type(L, idx) == LuaTypes.LUA_TNUMBER || LuaAPI.lua_isuint64(L, idx)) ? (object)LuaAPI.lua_touint64(L, idx) : null;
+            return LuaAPI.lua_touint64(L, idx);
         }
 
         private static object getDouble(RealStatePtr L, int idx, object target)
         {
-            return LuaAPI.lua_type(L, idx) == LuaTypes.LUA_TNUMBER ? (object)LuaAPI.lua_tonumber(L, idx) : null;
+            return LuaAPI.lua_tonumber(L, idx);
         }
 
         private static object floatCaster(RealStatePtr L, int idx, object target)
         {
-            return LuaAPI.lua_type(L, idx) == LuaTypes.LUA_TNUMBER ? (object)(float)LuaAPI.lua_tonumber(L, idx) : null;
+            return (float)LuaAPI.lua_tonumber(L, idx);
         }
 
         private object decimalCaster(RealStatePtr L, int idx, object target)
@@ -296,12 +296,12 @@ namespace XLua
 
         private static object getBoolean(RealStatePtr L, int idx, object target)
         {
-            return LuaAPI.lua_type(L, idx) == LuaTypes.LUA_TBOOLEAN ? (object)LuaAPI.lua_toboolean(L, idx) : null;
+            return LuaAPI.lua_toboolean(L, idx);
         }
 
         private static object getString(RealStatePtr L, int idx, object target)
         {
-            return LuaAPI.lua_type(L, idx) == LuaTypes.LUA_TSTRING ? LuaAPI.lua_tostring(L, idx) : null;
+            return LuaAPI.lua_tostring(L, idx);
         }
 
         private object getBytes(RealStatePtr L, int idx, object target)
@@ -514,7 +514,8 @@ namespace XLua
             }
             else if (typeof(IList).IsAssignableFrom(type) && type.IsGenericType())
             {
-                ObjectCast elementCaster = GetCaster(type.GetGenericArguments()[0]);
+                Type elementType = type.GetGenericArguments()[0];
+                ObjectCast elementCaster = GetCaster(elementType);
 
                 return (RealStatePtr L, int idx, object target) =>
                 {
@@ -543,18 +544,16 @@ namespace XLua
                         LuaAPI.lua_rawget(L, idx);
                         if (i < list.Count && target != null)
                         {
-                            var item = elementCaster(L, n + 1, list[i]);
-                            if (item != null)
+                            if (translator.Assignable(L, n + 1, elementType))
                             {
-                                list[i] = item;
+                                list[i] = elementCaster(L, n + 1, list[i]); ;
                             }
                         }
                         else
                         {
-                            var item = elementCaster(L, n + 1, null);
-                            if (item != null)
+                            if (translator.Assignable(L, n + 1, elementType))
                             {
-                                list.Add(item);
+                                list.Add(elementCaster(L, n + 1, null));
                             }
                         }
                         LuaAPI.lua_pop(L, 1);
@@ -564,8 +563,10 @@ namespace XLua
             }
             else if (typeof(IDictionary).IsAssignableFrom(type) && type.IsGenericType())
             {
-                ObjectCast keyCaster = GetCaster(type.GetGenericArguments()[0]);
-                ObjectCast valueCaster = GetCaster(type.GetGenericArguments()[1]);
+                Type keyType = type.GetGenericArguments()[0];
+                ObjectCast keyCaster = GetCaster(keyType);
+                Type valueType = type.GetGenericArguments()[1];
+                ObjectCast valueCaster = GetCaster(valueType);
 
                 return (RealStatePtr L, int idx, object target) =>
                 {
@@ -588,14 +589,10 @@ namespace XLua
                     }
                     while (LuaAPI.lua_next(L, idx) != 0)
                     {
-                        object k = keyCaster(L, n + 1, null); // -2:key
-                        if (k != null)
+                        if (translator.Assignable(L, n + 1, keyType) && translator.Assignable(L, n + 2, valueType))
                         {
-                            object v = valueCaster(L, n + 2, !dic.Contains(k) ? null : dic[k]);
-                            if (v != null)
-                            {
-                                dic[k] = v; // -1:value
-                            }
+                            object k = keyCaster(L, n + 1, null);
+                            dic[k] = valueCaster(L, n + 2, !dic.Contains(k) ? null : dic[k]);
                         }
                         LuaAPI.lua_pop(L, 1); // removes value, keeps key for next iteration
                     }
