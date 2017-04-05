@@ -533,7 +533,7 @@ namespace XLua
                     IList list = obj as IList;
 
 
-                    uint len = LuaAPI.xlua_objlen(L, n);
+                    uint len = LuaAPI.xlua_objlen(L, idx);
                     if (!LuaAPI.lua_checkstack(L, 1))
                     {
                         throw new Exception("stack overflow while cast to IList");
