@@ -755,8 +755,13 @@ namespace CSObjectWrapEditor
             var bindingAttrOfConstructor = BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly | BindingFlags.NonPublic;
             foreach (var type in (from type in hotfix_check_types where type.IsDefined(typeof(HotfixAttribute), false) select type))
             {
+                if (type.Name.Contains("<"))
+                {
+                    continue;
+                }
                 var hotfixType = ((type.GetCustomAttributes(typeof(HotfixAttribute), false)[0]) as HotfixAttribute).Flag;
                 hotfxDelegates.AddRange(type.GetMethods(bindingAttrOfMethod)
+                    .Where(method => !method.Name.Contains("<"))
                     .Cast<MethodBase>()
                     .Concat(type.GetConstructors(bindingAttrOfConstructor).Cast<MethodBase>())
                     .Where(method => !injectByGeneric(method, hotfixType))
@@ -764,7 +769,12 @@ namespace CSObjectWrapEditor
             }
             foreach (var kv in HotfixCfg)
             {
+                if (kv.Key.Name.Contains("<"))
+                {
+                    continue;
+                }
                 hotfxDelegates.AddRange(kv.Key.GetMethods(bindingAttrOfMethod)
+                    .Where(method => !method.Name.Contains("<"))
                     .Cast<MethodBase>()
                     .Concat(kv.Key.GetConstructors(bindingAttrOfConstructor).Cast<MethodBase>())
                     .Where(method => !injectByGeneric(method, kv.Value))

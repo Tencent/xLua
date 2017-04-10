@@ -262,6 +262,10 @@ namespace XLua
                     return false;
                 }
             }
+            if (type.Name.Contains("<")) // skip anonymous type
+            {
+                return true;
+            }
             CustomAttribute hotfixAttr = type.CustomAttributes.FirstOrDefault(ca => ca.AttributeType == hotfixAttributeType);
             int hotfixType;
             if (hotfixAttr != null)
@@ -290,7 +294,7 @@ namespace XLua
             }
             foreach (var method in type.Methods)
             {
-                if (method.Name != ".cctor" && !method.IsAbstract && !method.IsPInvokeImpl && method.Body != null)
+                if (method.Name != ".cctor" && !method.IsAbstract && !method.IsPInvokeImpl && method.Body != null && !method.Name.Contains("<"))
                 {
                     if ((method.HasGenericParameters || genericInOut(assembly, method, hotfixType)) ? !injectGenericMethod(assembly, method, hotfixType, stateTable) :
                         !injectMethod(assembly, method, hotfixType, stateTable))
