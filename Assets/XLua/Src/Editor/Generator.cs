@@ -1192,6 +1192,7 @@ namespace CSObjectWrapEditor
                 .ToList();//public的内嵌Enum（其它类型未测试），IsPublic为false，像是mono的bug
             CSharpCallLua = CSharpCallLua.Distinct()
                 .Where(type =>/*type.IsPublic && */!isObsolete(type) && !type.IsGenericTypeDefinition)
+                .Where(type => type != typeof(Delegate) && type != typeof(MulticastDelegate))
                 .ToList();
             GCOptimizeList = GCOptimizeList.Distinct()
                 .Where(type =>/*type.IsPublic && */!isObsolete(type) && !type.IsGenericTypeDefinition)

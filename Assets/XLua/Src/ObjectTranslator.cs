@@ -298,7 +298,7 @@ namespace XLua
                     }
                 }
                 IEnumerable<IGrouping<MethodInfo, Type>> groups = (from type in cs_call_lua
-                              where typeof(Delegate).IsAssignableFrom(type)
+                              where typeof(Delegate).IsAssignableFrom(type) && type != typeof(Delegate) && type != typeof(MulticastDelegate)
                               where !type.GetMethod("Invoke").GetParameters().Any(paramInfo => paramInfo.ParameterType.IsGenericParameter)
                                select type).GroupBy(t => t.GetMethod("Invoke"), new CompareByArgRet());
 
