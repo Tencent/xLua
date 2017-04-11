@@ -563,6 +563,10 @@ namespace XLua
                     {
                         processor.InsertBefore(insertPoint, processor.Create(ldargs[i]));
                     }
+                    else if (i < 256)
+                    {
+                        processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldarg_S, (byte)i));
+                    }
                     else
                     {
                         processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldarg, (short)i));
@@ -733,6 +737,10 @@ namespace XLua
                             {
                                 processor.InsertBefore(insertPoint, processor.Create(ldargs[i]));
                             }
+                            else if (i < 256)
+                            {
+                                processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldarg_S, (byte)i));
+                            }
                             else
                             {
                                 processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldarg, (short)i));
@@ -781,6 +789,10 @@ namespace XLua
                         if (arg_pos < ldargs.Length)
                         {
                             processor.InsertBefore(insertPoint, processor.Create(ldargs[arg_pos]));
+                        }
+                        else if (arg_pos < 256)
+                        {
+                            processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldarg_S, (byte)arg_pos));
                         }
                         else
                         {
