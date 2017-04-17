@@ -522,10 +522,16 @@ namespace XLua
 		
 		internal Type FindType(string className, bool isQualifiedName = false)
 		{
-			foreach(Assembly assembly in assemblies)
+            Type klass = Type.GetType(className);
+            if (klass != null)
+            {
+                return klass;
+            }
+            foreach (Assembly assembly in assemblies)
 			{
-                Type klass = assembly.GetType(className);
-				if(klass!=null)
+                klass = assembly.GetType(className);
+
+                if (klass!=null)
 				{
 					return klass;
 				}
