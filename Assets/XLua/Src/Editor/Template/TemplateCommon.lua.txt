@@ -350,7 +350,7 @@ function CallNeedTranslator(overload, isdelegate)
 	local ret_type_name = getSafeFullName(overload.ReturnType)
     if not notranslator[ret_type_name] then return true end 
     local parameters = overload:GetParameters()
-    return IfAny(overload:GetParameters(), function(parameter) return not notranslator[parameter.ParameterType.FullName:gsub("&", "")] end)
+    return IfAny(overload:GetParameters(), function(parameter) return not notranslator[getSafeFullName(parameter.ParameterType)] end)
 end
 
 function MethodCallNeedTranslator(method)
