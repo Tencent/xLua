@@ -182,6 +182,18 @@ namespace XLua
 
         public int cacheRef;
 
+        void addAssemblieByName(IEnumerable<Assembly> assemblies_usorted, string name)
+        {
+            foreach(var assemblie in assemblies_usorted)
+            {
+                if (assemblie.FullName.StartsWith(name) && !assemblies.Contains(assemblie))
+                {
+                    assemblies.Add(assemblie);
+                    break;
+                }
+            }
+        }
+
         public ObjectTranslator(LuaEnv luaenv,RealStatePtr L)
 		{
 #if XLUA_GENERAL  || (UNITY_WSA && !UNITY_EDITOR)
@@ -191,17 +203,24 @@ namespace XLua
                 dumb_field.GetValue(null);
             }
 #endif
+            assemblies = new List<Assembly>();
+            assemblies.Add(Assembly.GetExecutingAssembly());
 
 #if UNITY_WSA && !UNITY_EDITOR
-            assemblies = Utils.GetAssemblies();
+            var assemblies_usorted = Utils.GetAssemblies();
 #else
-            assemblies = new List<Assembly>();
-
-            foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
-            {
-                assemblies.Add(assembly);
-            }
+            var assemblies_usorted = AppDomain.CurrentDomain.GetAssemblies();
 #endif
+            addAssemblieByName(assemblies_usorted, "mscorlib,");
+            addAssemblieByName(assemblies_usorted, "System,");
+            addAssemblieByName(assemblies_usorted, "System.Core,");
+            foreach (Assembly assembly in assemblies_usorted)
+            {
+                if (!assemblies.Contains(assembly))
+                {
+                    assemblies.Add(assembly);
+                }
+            }
 
             this.luaEnv=luaenv;
             objectCasters = new ObjectCasters(this);
@@ -522,14 +541,9 @@ namespace XLua
 		
 		internal Type FindType(string className, bool isQualifiedName = false)
 		{
-            Type klass = Type.GetType(className);
-            if (klass != null)
-            {
-                return klass;
-            }
             foreach (Assembly assembly in assemblies)
 			{
-                klass = assembly.GetType(className);
+                Type klass = assembly.GetType(className);
 
                 if (klass!=null)
 				{

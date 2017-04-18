@@ -232,7 +232,6 @@ function GetCheckStatement(t, idx, is_v_params)
 end
 
 local delegateType = typeof(CS.System.Delegate)
-xlua.import_type("System.Runtime.CompilerServices.ExtensionAttribute,System.Core")
 local ExtensionAttribute = typeof(CS.System.Runtime.CompilerServices.ExtensionAttribute)
 function MethodParameters(method)
     if not method:IsDefined(ExtensionAttribute, false) then
