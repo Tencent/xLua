@@ -34,7 +34,7 @@ LUA_API int xlua_get_registry_index() {
 }
 
 LUA_API int xlua_get_lib_version() {
-	return 100;
+	return 101;
 }
 
 LUA_API int xlua_tocsobj_safe(lua_State *L,int index) {
@@ -164,8 +164,23 @@ LUA_API void xlua_rawgeti (lua_State *L, int idx, int64_t n) {
 	lua_rawgeti(L, idx, (lua_Integer)n);
 }
 
-LUA_API void xlua_rawseti (lua_State *L, int idx, lua_Integer n) {
+LUA_API void xlua_rawseti (lua_State *L, int idx, int64_t n) {
 	lua_rawseti(L, idx, (lua_Integer)n);
+}
+
+LUA_API int xlua_ref_indirect(lua_State *L, int indirectRef) {
+	int ret = 0;
+	lua_rawgeti(L, LUA_REGISTRYINDEX, indirectRef);
+	lua_pushvalue(L, -2);
+	ret = luaL_ref(L, -2);
+	lua_pop(L, 2);
+	return ret;
+}
+
+LUA_API void xlua_getref_indirect(lua_State *L, int indirectRef, int reference) {
+	lua_rawgeti(L, LUA_REGISTRYINDEX, indirectRef);
+	lua_rawgeti(L, -1, reference);
+	lua_remove(L, -2);
 }
 
 LUA_API int xlua_tointeger (lua_State *L, int idx) {
