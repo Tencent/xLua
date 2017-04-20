@@ -192,4 +192,17 @@ dic:Add('a', CS.UnityEngine.Vector3(1, 2, 3))
 print(dic:TryGetValue('a'))
 ~~~
 
+## 调用LuaEnv.Dispose时，报“try to dispose a LuaEnv with C# callback!”错是什么原因？
+
+这是由于C#还存在指向lua虚拟机里头某个函数的delegate，为了防止业务在虚拟机释放后调用这些无效（因为其引用的lua函数所在虚拟机都释放了）delegate导致的异常甚至崩溃，做了这个检查。
+
+怎么解决？释放这些delegate即可，所谓释放，在C#中，就是没有引用：
+
+你是在C#通过LuaTable.Get获取并保存到对象成员，赋值该成员为null；
+
+你是在lua那把lua函数注册到一些事件事件回调，反注册这些回调；
+
+如果你是通过xlua.hotfix(class, method, func)注入到C#，则通过xlua.hotfix(class, method, nil)删除；
+
+要注意以上操作在Dispose之前完成。
 
