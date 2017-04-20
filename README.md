@@ -20,7 +20,7 @@ xLua在功能、性能、易用性都有不少突破，这几方面分别最具�
 
 ## 安装
 
-直接解压工程下可用。第一次使用建议把例子包也安装，运行看看效果。
+打开zip包，你会看到一个Assets目录，这目录就对应Unity工程的Assets目录，保持这目录结构放到你的Unity工程。
 
 如果希望安装到其它目录，请看[FAQ](Assets/XLua/Doc/faq.md)相关介绍。
 
@@ -38,7 +38,7 @@ lua5.3的特性更丰富些，比如支持原生64位整数，支持苹果bitcod
 
 一个完整的例子仅需3行代码：
 
-下载xLua后解压到Unity工程Assets目录下，建一个MonoBehaviour拖到场景，在Start加入如下代码：
+安装好xLua，建一个MonoBehaviour拖到场景，在Start加入如下代码：
 
 ```csharp
 XLua.LuaEnv luaenv = new XLua.LuaEnv();
