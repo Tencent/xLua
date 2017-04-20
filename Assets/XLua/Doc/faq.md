@@ -176,11 +176,20 @@ print(go:GetComponent('Animator'):IsNull())
 
 ## 泛型实例怎么构造
 
-泛型实例的构造和普通类型是一样的，都是CS.namespace.typename()，可能比较特殊的是typename的表达，泛型实例的typename的表达包含了标识符非法符号，最后一部分要换成["typename"]，以List<string>为例
+涉及的类型都在mscorlib，Assembly-CSharp程序集的话，泛型实例的构造和普通类型是一样的，都是CS.namespace.typename()，可能比较特殊的是typename的表达，泛型实例的typename的表达包含了标识符非法符号，最后一部分要换成["typename"]，以List<string>为例
 
 ~~~lua
 local lst = CS.System.Collections.Generic["List`1[System.String]"]()
 ~~~
 
 如果某个泛型实例的typename不确定，可以在C#测打印下typeof(不确定的类型).ToString()
+
+如果涉及mscorlib，Assembly-CSharp程序集之外的类型的话，可以用C#的反射来做：
+
+~~~lua
+local dic = CS.System.Activator.CreateInstance(CS.System.Type.GetType('System.Collections.Generic.Dictionary`2[[System.String, mscorlib],[UnityEngine.Vector3, UnityEngine]],mscorlib'))
+dic:Add('a', CS.UnityEngine.Vector3(1, 2, 3))
+print(dic:TryGetValue('a'))
+~~~
+
 
