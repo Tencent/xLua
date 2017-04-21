@@ -117,6 +117,7 @@ namespace XLua.CSObjectWrap
 					end
 					local def_count = constructor_def_vals[ci]
 					local param_count = parameters.Length
+                    local out_num = CalcCsList(parameters, function(p) return p.IsOut or p.ParameterType.IsByRef end)
 					local real_param_count = param_count - def_count
                     local has_v_params = param_count > 0 and IsParams(parameters[param_count - 1])
 				%>if(LuaAPI.lua_gettop(L) <%=has_v_params and ">=" or "=="%> <%=parameters.Length + 1 - def_count - (has_v_params and 1 or 0)%><%ForEachCsList(parameters, function(parameter, pi) 
@@ -131,7 +132,22 @@ namespace XLua.CSObjectWrap
 					<%end)%>
 					<%=CsFullTypeName(type)%> __cl_gen_ret = new <%=CsFullTypeName(type)%>(<%ForEachCsList(parameters, function(parameter, pi) if pi >= real_param_count then return end; if pi ~=0 then %><%=', '%><% end ;if parameter.IsOut and parameter.ParameterType.IsByRef then %>out <% elseif parameter.ParameterType.IsByRef then %>ref <% end %><%=parameter.Name%><% end)%>);
 					<%=GetPushStatement(type, "__cl_gen_ret")%>;
-					return 1;
+                    <%local in_pos = 0
+                    ForEachCsList(parameters, function(parameter, pi)
+                        if pi >= real_param_count then return end
+                        if parameter.IsIn or not parameter.IsOut then 
+                            in_pos = in_pos + 1
+                        end
+                        if parameter.ParameterType.IsByRef then
+                        %><%=GetPushStatement(parameter.ParameterType:GetElementType(), parameter.Name)%>;
+                        <%if not parameter.IsOut and parameter.ParameterType.IsByRef and NeedUpdate(parameter.ParameterType) then 
+                  %><%=GetUpdateStatement(parameter.ParameterType:GetElementType(), in_pos+1, parameter.Name)%>;
+                        <%end%>
+                    <%
+                        end
+                    end)
+                    %>
+					return <%=out_num + 1%>;
 				}
 				<%end)
 				if (not hasZeroParamsCtor) and type.IsValueType then
