@@ -1,4 +1,44 @@
-﻿v2.1.6 2017年3月1日
+﻿[v2.1.7 待发布]
+新增特性
+1、支持发布UWP（含HoloLens，Xbox one，Win10 Mobile、Win10 PC）应用；
+2、支持对lua源代码ras+sha1签名；
+3、如果没安装Tools提示“please install the Tools”；
+4、linxu版本的支持；
+5、支持bitcode打包；
+6、对所有struct新增无参数构造函数；
+7、delegate的参数名改为p0到pn，防止hotfix时业务代码变量和生成代码冲突；
+8、支持对成员名为C#关键字的情况；
+9、新增util.loadpackage，和require类似，通过searcher加载文件，不同的是，它不执行，而且也不会cache到package.loaded；
+10、优化模版引擎大文件的生成性能；
+11、新增不需要生成代码的注入方式；
+12、支持构造函数参数带ref和out修饰符；
+
+变更
+1、this[object field]操作符重载；
+2、反射的数据转换规则改成和生成代码一致；
+3、忽略掉匿名类及匿名函数的注入；
+
+bug修复
+1、规避Unity的bug：List<CustomType>，CustomType是当前执行程序集的类型，这在.Net是不需要指明程序集就可以通过Type.GetType得到，但Unity下不行。
+2、解决反射下，可变参数不提供时，传null的问题；
+3、继承了另外一个程序集的类型，使用了protected类型会导致注入失败；
+4、luajit去掉dlopen和dlsym的调用；
+5、解决通用版本的生成代码工具找不到模版的问题；
+6、修复通用版本反射导入泛化类型的问题；
+7、反射调用含delegate参数的的api，会因为缓存而导致调用LuaEnv.Dispose失败；
+8、兼容老版本的C编译器，声明要放开头；
+9、生成代码对hotfix的检测算法和注入工具不一致导致的注入失败；
+10、注入的nested类型是public，但其的外层类型非public，生成代码报错；
+11、析构函数只判断名字可能出现误判；
+12、构造函数是非public的，可能会导致找不到适配delegate而注入失败；
+13、修正Extension method会在所有子类都生成代码的bug（2.1.6泛化特性引入）；
+14、构造函数重载，只有一个能hotfix成功；
+15、规避一个可能是il2cpp的bug（unity5.4）：字符串参数默认值是""，ios下在反射的default value也是Reflection.Missing；
+16、将一个table传到List<>，取了最后一个参数，而不是那个table的长度；
+17、ldarg指令在这种场景下il2cpp转换时会出现异常：1、采用模版注入；2、从4到255间有一个输出参数；改为兼容性更好的ldarg.s；
+18、解决配置了System.Delegate到CSCallLua，执行生成代码会编辑器会crash的问题；
+
+v2.1.6 2017年3月1日
 新增特性
 1、带约束的泛型支持（by forsakenyang）；
 2、非Unity的.net环境支持；
