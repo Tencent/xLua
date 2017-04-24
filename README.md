@@ -1,6 +1,6 @@
 ![](Assets/XLua/Doc/xLua.png)
 
-[![license](https://img.shields.io/badge/license-MIT-blue.png)](https://github.com/Tencent/xLua/blob/master/LICENSE.TXT)
+[![license](http://img.shields.io/badge/license-MIT-blue.png)](https://github.com/Tencent/xLua/blob/master/LICENSE.TXT)
 [![release](https://img.shields.io/badge/release-v2.1.6-blue.png)](https://github.com/Tencent/xLua/releases)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-blue.png)](https://github.com/Tencent/xLua/pulls)
 
