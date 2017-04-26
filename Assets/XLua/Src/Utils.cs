@@ -618,6 +618,27 @@ namespace XLua
                 }
             }
 
+
+            IEnumerable<MethodInfo> extend_methods = GetExtensionMethodsOf(type);
+            if (extend_methods != null)
+            {
+                foreach (var extend_method in extend_methods)
+                {
+                    MethodKey method_key = new MethodKey { Name = extend_method.Name, IsStatic = false };
+                    List<MemberInfo> overloads;
+                    if (pending_methods.TryGetValue(method_key, out overloads))
+                    {
+                        overloads.Add(extend_method);
+                        continue;
+                    }
+                    else
+                    {
+                        overloads = new List<MemberInfo>() { extend_method };
+                        pending_methods.Add(method_key, overloads);
+                    }
+                }
+            }
+
             foreach (var kv in pending_methods)
             {
                 if (kv.Key.Name.StartsWith("op_")) // 操作符
@@ -633,17 +654,6 @@ namespace XLua
                     translator.PushFixCSFunction(L,
                         new LuaCSFunction(translator.methodWrapsCache._GenMethodWrap(type, kv.Key.Name, kv.Value.ToArray()).Call));
                     LuaAPI.lua_rawset(L, kv.Key.IsStatic ? cls_field : obj_field);
-                }
-            }
-
-            IEnumerable<MethodInfo> extend_methods = GetExtensionMethodsOf(type);
-            if (extend_methods != null)
-            {
-                foreach (var kv in (from extend_method in extend_methods select (MemberInfo)extend_method into member group member by member.Name))
-                {
-                    LuaAPI.xlua_pushasciistring(L, kv.Key);
-                    translator.PushFixCSFunction(L, new LuaCSFunction(translator.methodWrapsCache._GenMethodWrap(type, kv.Key, kv).Call));
-                    LuaAPI.lua_rawset(L, obj_field);
                 }
             }
         }
