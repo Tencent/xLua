@@ -155,6 +155,10 @@ namespace XLua
 
         static bool hasGenericParameter(TypeReference type)
         {
+            if (type.HasGenericParameters)
+            {
+                return true;
+            }
             if (type.IsByReference)
             {
                 return hasGenericParameter(((ByReferenceType)type).ElementType);
