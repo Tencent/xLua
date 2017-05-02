@@ -245,7 +245,7 @@ namespace XLua.LuaDLL
                     int len = strlen.ToInt32();
                     byte[] buffer = new byte[len];
                     Marshal.Copy(str, buffer, 0, len);
-                    return Encoding.ASCII.GetString(buffer);
+                    return Encoding.UTF8.GetString(buffer);
                 }
                 return ret;
 #endif
