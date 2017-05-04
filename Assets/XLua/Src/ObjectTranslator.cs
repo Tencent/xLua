@@ -748,7 +748,7 @@ namespace XLua
             }
             return ret;
         }
-#if UNITY_EDITOR
+#if UNITY_EDITOR || XLUA_GENERAL
         public void PushParams(RealStatePtr L, Array ary)
         {
             if (ary != null)
