@@ -6,7 +6,7 @@
 
 2、执行XLua/Generate Code菜单。
 
-3、注入，构建手机包这个步骤会在构建时自动进行，编辑器下开发补丁需要手动执行"XLua/Hotfix Inject In Editor"菜单。注入成功会“hotfix inject finish!”或者“had injected!”。
+3、注入，构建手机包这个步骤会在构建时自动进行，编辑器下开发补丁需要手动执行"XLua/Hotfix Inject In Editor"菜单。注入成功会打印“hotfix inject finish!”或者“had injected!”。
 
 ## 内嵌模式
 
