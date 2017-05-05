@@ -21,7 +21,7 @@ namespace XLua
             {
                 byte[] filecontent = File.ReadAllBytes(filename);
                 byte[] sig = rsa.SignData(filecontent, sha);
-                FileStream fs = new FileStream(to + "\\" + Path.GetFileName(filename), FileMode.Create);
+                FileStream fs = new FileStream(to + "/" + Path.GetFileName(filename), FileMode.Create);
                 fs.Write(sig, 0, sig.Length);
                 fs.Write(filecontent, 0, filecontent.Length);
                 fs.Close();
@@ -29,7 +29,7 @@ namespace XLua
             foreach(var dir in Directory.GetDirectories(from))
             {
 
-                doSignature(dir, to + "\\" + new DirectoryInfo(dir).Name, sha, rsa);
+                doSignature(dir, to + "/" + new DirectoryInfo(dir).Name, sha, rsa);
             }
         }
 
