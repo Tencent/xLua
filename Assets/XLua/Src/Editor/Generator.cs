@@ -226,7 +226,7 @@ namespace CSObjectWrapEditor
             if (!type.IsAbstract)
             {
                 foreach (var con in type.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.IgnoreCase).Cast<MethodBase>()
-                    .Where(constructor => !isObsolete(constructor)))
+                    .Where(constructor => !isMethodInBlackList(constructor) && !isObsolete(constructor)))
                 {
                     int def_count = 0;
                     constructors.Add(con);
