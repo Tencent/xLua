@@ -79,7 +79,7 @@ namespace XLua
 
         public override bool Equals(object o)
         {
-            if (this.GetType() == o.GetType())
+            if (o != null && this.GetType() == o.GetType())
             {
 #if THREAD_SAFT || HOTFIX_ENABLE
                 lock (luaEnv.luaEnvLock)
