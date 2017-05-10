@@ -117,14 +117,19 @@ namespace XLua.CSObjectWrap
 					end
 					local def_count = constructor_def_vals[ci]
 					local param_count = parameters.Length
+					local in_num = CalcCsList(parameters, function(p) return p.IsIn or not p.IsOut end)
                     local out_num = CalcCsList(parameters, function(p) return p.IsOut or p.ParameterType.IsByRef end)
 					local real_param_count = param_count - def_count
                     local has_v_params = param_count > 0 and IsParams(parameters[param_count - 1])
-				%>if(LuaAPI.lua_gettop(L) <%=has_v_params and ">=" or "=="%> <%=parameters.Length + 1 - def_count - (has_v_params and 1 or 0)%><%ForEachCsList(parameters, function(parameter, pi) 
+					local in_pos = 0
+				%>if(LuaAPI.lua_gettop(L) <%=has_v_params and ">=" or "=="%> <%=in_num + 1 - def_count - (has_v_params and 1 or 0)%><%ForEachCsList(parameters, function(parameter, pi) 
                 if pi >= real_param_count then return end 
                 local parameterType = parameter.ParameterType
                 if has_v_params and pi == param_count - 1 then  parameterType = parameterType:GetElementType() end
-                %> && <%=GetCheckStatement(parameterType, pi+2, has_v_params and pi == param_count - 1)%><% end)%>)
+				if parameter.IsIn or not parameter.IsOut then in_pos = in_pos + 1
+                %> && <%=GetCheckStatement(parameterType, in_pos+1, has_v_params and pi == param_count - 1)%><% 
+				end
+				end)%>)
 				{
 					<%ForEachCsList(parameters, function(parameter, pi) 
                     if pi >= real_param_count then return end 
