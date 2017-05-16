@@ -204,11 +204,11 @@ namespace XLua
             }
 #endif
             assemblies = new List<Assembly>();
-            assemblies.Add(Assembly.GetExecutingAssembly());
 
 #if UNITY_WSA && !UNITY_EDITOR
             var assemblies_usorted = Utils.GetAssemblies();
 #else
+            assemblies.Add(Assembly.GetExecutingAssembly());
             var assemblies_usorted = AppDomain.CurrentDomain.GetAssemblies();
 #endif
             addAssemblieByName(assemblies_usorted, "mscorlib,");
