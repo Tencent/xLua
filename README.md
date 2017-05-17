@@ -1,7 +1,7 @@
 ![](Assets/XLua/Doc/xLua.png)
 
-[![license](http://img.shields.io/badge/license-MIT-blue.png)](https://github.com/Tencent/xLua/blob/master/LICENSE.TXT)
-[![release](https://img.shields.io/badge/release-v2.1.6-blue.png)](https://github.com/Tencent/xLua/releases)
+[![license](http://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/Tencent/xLua/blob/master/LICENSE.TXT)
+[![release](https://img.shields.io/badge/release-v2.1.7-blue.svg)](https://github.com/Tencent/xLua/releases)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-blue.svg)](https://github.com/Tencent/xLua/pulls)
 
 ## C#下Lua编程支持
