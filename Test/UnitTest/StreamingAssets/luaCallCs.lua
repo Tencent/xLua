@@ -2293,3 +2293,28 @@ function CMyTestCaseLuaCallCS.CaseFirstPushEnum(self)
 	local ret = CS.LuaTestObj.FirstPushEnumFunc(2)
 	ASSERT_EQ(ret, "4")
 end
+
+function CMyTestCaseLuaCallCS.CaseReferTestClass(self)
+	self.count = 1 + self.count
+	local int_x = 10
+	local int_y = 12
+	local str_z = "abc"
+	local class1, ret_y, ret_z = CS.ReferTestClass(int_x, int_y)
+	local ret = class1:Get_X_Y_ADD()
+	ASSERT_EQ(ret, 22)
+	ASSERT_EQ(ret_y, 11)
+	ASSERT_EQ(ret_z, "test1")
+
+	local class3, ret_z = CS.ReferTestClass(int_x)
+	local ret = class3:Get_X_Y_ADD()
+	ASSERT_EQ(ret, 20)
+	ASSERT_EQ(ret_z, "test3")
+end
+
+function CMyTestCaseLuaCallCS.CaseVariableParamFuncNoParam(self)
+    self.count = 1 + self.count
+	local ret = CS.LuaTestObj.VariableParamFunc2()
+	ASSERT_EQ(ret, 0)
+	local ret = CS.LuaTestObj.VariableParamFunc2("abc", "haha")
+	ASSERT_EQ(ret, 2)
+end
