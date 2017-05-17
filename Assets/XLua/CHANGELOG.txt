@@ -1,4 +1,4 @@
-﻿[v2.1.7 待发布]
+﻿v2.1.7 2017年5月17日
 新增特性
 1、支持发布UWP（含HoloLens，Xbox one，Win10 Mobile、Win10 PC）应用；
 2、支持对lua源代码ras+sha1签名；
