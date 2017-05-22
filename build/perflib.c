@@ -181,7 +181,7 @@ static void mark_function(lua_State *L, lua_State *dL) {
 			if (*name != '\0' && LUA_TTABLE == lua_type(L, -1)) {
 				make_root(dL, p, name, RT_UPVALUE, used_in, 1);
 				lua_insert(dL, MARKED_TABLE);
-				mark_object(L, dL, p);
+				mark_object(L, dL);
 				lua_remove(dL, MARKED_TABLE);
 			} else if (LUA_TFUNCTION == lua_type(L, -1)) {
 				mark_function(L, dL);
