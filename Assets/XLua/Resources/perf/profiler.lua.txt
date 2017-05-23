@@ -80,7 +80,7 @@ end
 local sort_funcs = {
     TOTAL = function(a, b) return a.total_time > b.total_time end,
     AVERAGE = function(a, b) return a.average > b.average end,
-    CALLED = function(a, b) return a.called > b.called end
+    CALLED = function(a, b) return a.count > b.count end
 }
 
 local function report(sort_by)
