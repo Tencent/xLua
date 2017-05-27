@@ -75,6 +75,17 @@ public static class HotfixCfg
 }
 ~~~
 
+## Hotfix Flag
+
+Hotfix标签可以设置一些标志位对生成代码及插桩定制化
+
+* Stateless       ：Stateless和Stateful的区别请看下下节
+* Stateful        ：同上
+* ValueTypeBoxing ：值类型的适配delegate会收敛到object，好处是代码量更少，不好的是值类型会产生boxing及gc，适用于对安装包敏感的业务
+* IgnoreProperty  ：不对属性注入及生成适配代码
+* IgnoreNotPublic ：不对非public的方法注入及生成适配代码
+* Inline          ：不生成适配delegate，直接在函数体注入处理代码
+
 ## 使用建议
 
 * 对所有较大可能变动的类型加上Hotfix标识；

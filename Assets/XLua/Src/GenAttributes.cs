@@ -63,10 +63,15 @@ namespace XLua
 
     }
 
+    [Flags]
     public enum HotfixFlag
     {
         Stateless = 0,
         Stateful = 1,
+        ValueTypeBoxing = 2,
+        IgnoreProperty = 4,
+        IgnoreNotPublic = 8,
+        Inline = 16
     }
 
     public class HotfixAttribute : Attribute

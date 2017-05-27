@@ -633,13 +633,18 @@ namespace CSObjectWrapEditor
 
         static MethodInfoSimulation makeHotfixMethodInfoSimulation(MethodBase hotfixMethod, HotfixFlag hotfixType)
         {
-            Type retTypeExpect = (hotfixType == HotfixFlag.Stateful && hotfixMethod.IsConstructor && !hotfixMethod.IsStatic)
+            bool isStateful = hotfixType.HasFlag(HotfixFlag.Stateful);
+            bool ignoreValueType = hotfixType.HasFlag(HotfixFlag.ValueTypeBoxing);
+            //isStateful = false;
+            //ignoreValueType = true;
+
+            Type retTypeExpect = (isStateful && hotfixMethod.IsConstructor && !hotfixMethod.IsStatic)
                     ? typeof(LuaTable) : (hotfixMethod.IsConstructor ? typeof(void) : (hotfixMethod as MethodInfo).ReturnType);
             int hashCode = retTypeExpect.GetHashCode();
             List<ParameterInfoSimulation> paramsExpect = new List<ParameterInfoSimulation>();
             if (!hotfixMethod.IsStatic) // add self
             {
-                if (hotfixType == HotfixFlag.Stateful && !hotfixMethod.IsConstructor)
+                if (isStateful && !hotfixMethod.IsConstructor)
                 {
                     paramsExpect.Add(new ParameterInfoSimulation()
                     {
@@ -658,7 +663,7 @@ namespace CSObjectWrapEditor
                         Name = "self",
                         IsOut = false,
                         IsIn = true,
-                        ParameterType = hotfixMethod.DeclaringType.IsValueType ? hotfixMethod.DeclaringType : typeof(object),
+                        ParameterType = (hotfixMethod.DeclaringType.IsValueType && !ignoreValueType) ? hotfixMethod.DeclaringType : typeof(object),
                         IsParamArray = false
                     });
                 }
@@ -672,7 +677,7 @@ namespace CSObjectWrapEditor
                     Name = param.Name,
                     IsOut = param.IsOut,
                     IsIn = param.IsIn,
-                    ParameterType = (param.ParameterType.IsByRef || param.ParameterType.IsValueType
+                    ParameterType = (param.ParameterType.IsByRef || (param.ParameterType.IsValueType && !ignoreValueType)
                       || param.IsDefined(typeof(System.ParamArrayAttribute), false)) ? param.ParameterType : typeof(object),
                     IsParamArray = param.IsDefined(typeof(System.ParamArrayAttribute), false)
                 };
@@ -730,19 +735,29 @@ namespace CSObjectWrapEditor
 
         static bool injectByGeneric(MethodBase method, HotfixFlag hotfixType)
         {
+            bool isStateful = hotfixType.HasFlag(HotfixFlag.Stateful);
+            bool ignoreValueType = hotfixType.HasFlag(HotfixFlag.ValueTypeBoxing);
+            //isStateful = false;
+            //ignoreValueType = true;
+
             if (!method.IsConstructor && (isNotPublic((method as MethodInfo).ReturnType) || hasGenericParameter((method as MethodInfo).ReturnType))) return true;
 
-            if (!method.IsStatic &&  (hotfixType == HotfixFlag.Stateless || method.IsConstructor)
-                &&((method.DeclaringType.IsValueType && isNotPublic(method.DeclaringType)) || hasGenericParameter(method.DeclaringType)))
+            if (!method.IsStatic &&  (!isStateful || method.IsConstructor)
+                &&(((method.DeclaringType.IsValueType && !ignoreValueType) && isNotPublic(method.DeclaringType)) || hasGenericParameter(method.DeclaringType)))
             {
                 return true;
             }
 
             foreach (var param in method.GetParameters())
             {
-                if (((param.ParameterType.IsValueType || param.ParameterType.IsByRef) && isNotPublic(param.ParameterType)) || hasGenericParameter(param.ParameterType)) return true;
+                if ((((param.ParameterType.IsValueType && !ignoreValueType) || param.ParameterType.IsByRef) && isNotPublic(param.ParameterType)) || hasGenericParameter(param.ParameterType)) return true;
             }
             return false;
+        }
+
+        static bool HasFlag(this HotfixFlag toCheck, HotfixFlag flag)
+        {
+            return (toCheck != HotfixFlag.Stateless) && ((toCheck & flag) == flag);
         }
         
         static void GenDelegateBridge(IEnumerable<Type> types, string save_path, IEnumerable<Type> hotfix_check_types)
@@ -752,7 +767,7 @@ namespace CSObjectWrapEditor
             types = types.Where(type => !type.GetMethod("Invoke").GetParameters().Any(paramInfo => paramInfo.ParameterType.IsGenericParameter));
             var hotfxDelegates = new List<MethodInfoSimulation>();
             var comparer = new MethodInfoSimulationComparer();
-#if !NO_HOTFIX_GEN
+
             var bindingAttrOfMethod = BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly | BindingFlags.NonPublic;
             var bindingAttrOfConstructor = BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly | BindingFlags.NonPublic;
             foreach (var type in (from type in hotfix_check_types where type.IsDefined(typeof(HotfixAttribute), false) select type))
@@ -762,8 +777,17 @@ namespace CSObjectWrapEditor
                     continue;
                 }
                 var hotfixType = ((type.GetCustomAttributes(typeof(HotfixAttribute), false)[0]) as HotfixAttribute).Flag;
+                if (hotfixType.HasFlag(HotfixFlag.Inline))
+                {
+                    continue;
+                }
+                bool ignoreProperty = hotfixType.HasFlag(HotfixFlag.IgnoreProperty);
+                bool ignoreNotPublic = hotfixType.HasFlag(HotfixFlag.IgnoreNotPublic);
+                //ignoreProperty = true;
                 hotfxDelegates.AddRange(type.GetMethods(bindingAttrOfMethod)
                     .Where(method => !method.Name.Contains("<"))
+                    .Where(method => !ignoreNotPublic || method.IsPublic)
+                    .Where(method => !ignoreProperty || !method.IsSpecialName || (!method.Name.StartsWith("get_") && !method.Name.StartsWith("set_")))
                     .Cast<MethodBase>()
                     .Concat(type.GetConstructors(bindingAttrOfConstructor).Cast<MethodBase>())
                     .Where(method => !injectByGeneric(method, hotfixType))
@@ -771,12 +795,17 @@ namespace CSObjectWrapEditor
             }
             foreach (var kv in HotfixCfg)
             {
-                if (kv.Key.Name.Contains("<"))
+                if (kv.Key.Name.Contains("<") || kv.Value.HasFlag(HotfixFlag.Inline))
                 {
                     continue;
                 }
+                bool ignoreProperty = kv.Value.HasFlag(HotfixFlag.IgnoreProperty);
+                bool ignoreNotPublic = kv.Value.HasFlag(HotfixFlag.IgnoreNotPublic);
+                //ignoreProperty = true;
                 hotfxDelegates.AddRange(kv.Key.GetMethods(bindingAttrOfMethod)
                     .Where(method => !method.Name.Contains("<"))
+                    .Where(method => !ignoreNotPublic || method.IsPublic)
+                    .Where(method => !ignoreProperty || !method.IsSpecialName || (!method.Name.StartsWith("get_") && !method.Name.StartsWith("set_")))
                     .Cast<MethodBase>()
                     .Concat(kv.Key.GetConstructors(bindingAttrOfConstructor).Cast<MethodBase>())
                     .Where(method => !injectByGeneric(method, kv.Value))
@@ -787,7 +816,7 @@ namespace CSObjectWrapEditor
             {
                 hotfxDelegates[i].DeclaringTypeName = "__Gen_Hotfix_Delegate" + i;
             }
-#endif
+
             var delegates_groups = types.Select(delegate_type => makeMethodInfoSimulation(delegate_type.GetMethod("Invoke")))
                 .Concat(hotfxDelegates)
                 .GroupBy(d => d, comparer).Select((group) => new { Key = group.Key, Value = group.ToList()});
