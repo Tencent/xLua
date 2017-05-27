@@ -23,7 +23,7 @@ using System.Collections;
 
 namespace XLua
 {
-    public class LuaTable : LuaBase
+    public partial class LuaTable : LuaBase
     {
         public LuaTable(int reference, LuaEnv luaenv) : base(reference, luaenv)
         {
@@ -68,6 +68,37 @@ namespace XLua
                 {
                     LuaAPI.lua_settop(L, oldTop);
                 }
+#if THREAD_SAFT || HOTFIX_ENABLE
+            }
+#endif
+        }
+
+        // no boxing version get
+        public bool ContainsKey<TKey>(TKey key)
+        {
+#if THREAD_SAFT || HOTFIX_ENABLE
+            lock (luaEnv.luaEnvLock)
+            {
+#endif
+                var L = luaEnv.L;
+                var translator = luaEnv.translator;
+                int oldTop = LuaAPI.lua_gettop(L);
+                LuaAPI.lua_getref(L, luaReference);
+                translator.PushByType(L, key);
+
+                if (0 != LuaAPI.xlua_pgettable(L, -2))
+                {
+                    string err = LuaAPI.lua_tostring(L, -1);
+                    LuaAPI.lua_settop(L, oldTop);
+                    throw new Exception("get field [" + key + "] error:" + err);
+                }
+
+                bool ret =  LuaAPI.lua_type(L, -1) != LuaTypes.LUA_TNIL;
+
+                LuaAPI.lua_settop(L, oldTop);
+
+                return ret;
+
 #if THREAD_SAFT || HOTFIX_ENABLE
             }
 #endif
