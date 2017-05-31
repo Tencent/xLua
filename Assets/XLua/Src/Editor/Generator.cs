@@ -785,6 +785,7 @@ namespace CSObjectWrapEditor
                 bool ignoreNotPublic = hotfixType.HasFlag(HotfixFlag.IgnoreNotPublic);
                 //ignoreProperty = true;
                 hotfxDelegates.AddRange(type.GetMethods(bindingAttrOfMethod)
+                    .Where(method => method.GetMethodBody() != null)
                     .Where(method => !method.Name.Contains("<"))
                     .Where(method => !ignoreNotPublic || method.IsPublic)
                     .Where(method => !ignoreProperty || !method.IsSpecialName || (!method.Name.StartsWith("get_") && !method.Name.StartsWith("set_")))
@@ -803,6 +804,7 @@ namespace CSObjectWrapEditor
                 bool ignoreNotPublic = kv.Value.HasFlag(HotfixFlag.IgnoreNotPublic);
                 //ignoreProperty = true;
                 hotfxDelegates.AddRange(kv.Key.GetMethods(bindingAttrOfMethod)
+                    .Where(method => method.GetMethodBody() != null)
                     .Where(method => !method.Name.Contains("<"))
                     .Where(method => !ignoreNotPublic || method.IsPublic)
                     .Where(method => !ignoreProperty || !method.IsSpecialName || (!method.Name.StartsWith("get_") && !method.Name.StartsWith("set_")))
