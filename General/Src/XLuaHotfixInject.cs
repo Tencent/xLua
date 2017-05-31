@@ -40,7 +40,7 @@ namespace XLua
                 });
                 var assembly = Assembly.Load(File.ReadAllBytes(assmbly_path));
                 Hotfix.Config(assembly.GetTypes());
-                Hotfix.HotfixInject(assmbly_path, args.Skip(2));
+                Hotfix.HotfixInject(assmbly_path, args.Skip(1));
             }
             catch(Exception e)
             {
