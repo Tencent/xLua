@@ -619,9 +619,22 @@ namespace XLua
                     else if (i == 0 && !method.IsStatic && type.IsValueType)
                     {
                         processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldobj, type));
-                        if (ignoreValueType)
+                        
+                    }
+                    if (ignoreValueType)
+                    {
+                        TypeReference paramType;
+                        if (method.IsStatic)
                         {
-                            processor.InsertBefore(insertPoint, processor.Create(OpCodes.Box, type));
+                            paramType = method.Parameters[i].ParameterType;
+                        }
+                        else
+                        {
+                            paramType = (i == 0) ? type : method.Parameters[i - 1].ParameterType;
+                        }
+                        if (paramType.IsValueType)
+                        {
+                            processor.InsertBefore(insertPoint, processor.Create(OpCodes.Box, paramType));
                         }
                     }
                 }
