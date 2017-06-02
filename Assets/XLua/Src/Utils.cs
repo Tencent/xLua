@@ -98,7 +98,7 @@ namespace XLua
         {
             return from assembly in AppDomain.CurrentDomain.GetAssemblies()
 #if UNITY_EDITOR || XLUA_GENERAL
-                                          where !(assembly.ManifestModule is System.Reflection.Emit.ModuleBuilder)
+                                          where !(assembly.ManifestModule is System.Reflection.Emit.ModuleBuilder) && assembly.GetName().Name != "UnityEditor.WebGL.Extensions"
 #endif
                                           from type in assembly.GetTypes()
                                           where exclude_generic_definition ? !type.IsGenericTypeDefinition() : true
