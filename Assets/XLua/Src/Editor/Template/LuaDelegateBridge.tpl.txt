@@ -90,13 +90,15 @@ namespace XLua
 		<%
 		ForEachCsList(delegates_groups, function(delegates_group, group_idx)
 		    ForEachCsList(delegates_group.Value, function(delegate)
-			local delegate_type_name = delegate.DeclaringTypeName or CsFullTypeName(delegate.DeclaringType)
+            if delegate.DeclaringType then
+			local delegate_type_name = CsFullTypeName(delegate.DeclaringType)
 		%>
 		    if (type == typeof(<%=delegate_type_name%>))
 			{
 			    return new <%=delegate_type_name%>(__Gen_Delegate_Imp<%=group_idx%>);
 			}
 		<%
+            end
 		    end)
 		end)
 		%>
@@ -104,11 +106,4 @@ namespace XLua
 		}
 	}
     
-    <%ForEachCsList(hotfx_delegates, function(hotfx_delegate, idx)
-    local parameters = hotfx_delegate:GetParameters()
-    %>
-    [HotfixDelegate]
-    public delegate <%=CsFullTypeName(hotfx_delegate.ReturnType)%> <%=hotfx_delegate.DeclaringTypeName%>(<%ForEachCsList(parameters, function(parameter, pi)
-        %><%if pi ~= 0 then%>, <%end%><%=(parameter.IsOut and "out " or (parameter.ParameterType.IsByRef and "ref " or ""))%><%=CsFullTypeName(parameter.ParameterType)%> p<%=pi%><%end)%>);
-    <%end)%>
 }

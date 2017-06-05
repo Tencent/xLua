@@ -332,7 +332,7 @@ namespace XLua
 #endif
         
         Dictionary<int, WeakReference> delegate_bridges = new Dictionary<int, WeakReference>();
-        public Delegate CreateDelegateBridge(RealStatePtr L, Type delegateType, int idx)
+        public object CreateDelegateBridge(RealStatePtr L, Type delegateType, int idx)
         {
             LuaAPI.lua_pushvalue(L, idx);
             LuaAPI.lua_rawget(L, LuaIndexes.LUA_REGISTRYINDEX);
@@ -343,6 +343,10 @@ namespace XLua
 
                 if (delegate_bridges[referenced].IsAlive)
                 {
+                    if (delegateType == null)
+                    {
+                        return delegate_bridges[referenced].Target;
+                    }
                     DelegateBridgeBase exist_bridge = delegate_bridges[referenced].Target as DelegateBridgeBase;
                     Delegate exist_delegate;
                     if (exist_bridge.TryGetDelegate(delegateType, out exist_delegate))
@@ -389,6 +393,11 @@ namespace XLua
                 LuaAPI.lua_pushnil(L);
                 LuaAPI.xlua_rawseti(L, LuaIndexes.LUA_REGISTRYINDEX, reference);
                 throw e;
+            }
+            if (delegateType == null)
+            {
+                delegate_bridges[reference] = new WeakReference(bridge);
+                return bridge;
             }
             try {
                 var ret = bridge.GetDelegateByType(delegateType);

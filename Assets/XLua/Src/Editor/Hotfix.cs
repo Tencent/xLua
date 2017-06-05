@@ -26,6 +26,7 @@ namespace XLua
     {
         static TypeReference objType = null;
         static TypeReference luaTableType = null;
+        static TypeDefinition delegateBridgeType = null;
 
         static TypeDefinition luaFunctionType = null;
         static MethodDefinition invokeSessionStart = null;
@@ -47,6 +48,7 @@ namespace XLua
 #endif
 
             luaTableType = assembly.MainModule.Types.Single(t => t.FullName == "XLua.LuaTable");
+            delegateBridgeType = assembly.MainModule.Types.Single(t => t.FullName == "XLua.DelegateBridge");
 
             luaFunctionType = assembly.MainModule.Types.Single(t => t.FullName == "XLua.LuaFunction");
             invokeSessionStart = luaFunctionType.Methods.Single(m => m.Name == "InvokeSessionStart");
@@ -81,7 +83,7 @@ namespace XLua
             }
         }
 
-        static List<TypeDefinition> hotfix_delegates = null;
+        static List<MethodDefinition> hotfix_bridges = null;
 
         static bool isSameType(TypeReference left, TypeReference right)
         {
@@ -106,18 +108,18 @@ namespace XLua
             return (toCheck != HotfixFlagInTool.Stateless) && ((toCheck & flag) == flag);
         }
 
-        static bool findHotfixDelegate(AssemblyDefinition assembly, MethodDefinition method, out TypeReference delegateType, out MethodReference invoke, HotfixFlagInTool hotfixType)
+        static bool findHotfixDelegate(AssemblyDefinition assembly, MethodDefinition method, out MethodReference invoke, HotfixFlagInTool hotfixType)
         {
             bool isStateful = hotfixType.HasFlag(HotfixFlagInTool.Stateful);
             bool ignoreValueType = hotfixType.HasFlag(HotfixFlagInTool.ValueTypeBoxing);
 
-            for (int i = 0; i < hotfix_delegates.Count; i++)
+            for (int i = 0; i < hotfix_bridges.Count; i++)
             {
-                MethodDefinition delegate_invoke = hotfix_delegates[i].Methods.Single(m => m.Name == "Invoke");
+                MethodDefinition hotfix_bridge = hotfix_bridges[i];
                 var returnType = (isStateful && method.IsConstructor && !method.IsStatic) ? luaTableType : method.ReturnType;
-                if (isSameType(returnType, delegate_invoke.ReturnType))
+                if (isSameType(returnType, hotfix_bridge.ReturnType))
                 {
-                    var parametersOfDelegate = delegate_invoke.Parameters;
+                    var parametersOfDelegate = hotfix_bridge.Parameters;
                     int compareOffset = 0;
                     if (!method.IsStatic)
                     {
@@ -162,12 +164,10 @@ namespace XLua
                     {
                         continue;
                     }
-                    delegateType = hotfix_delegates[i];
-                    invoke = delegate_invoke;
+                    invoke = hotfix_bridge;
                     return true;
                 }
             }
-            delegateType = null;
             invoke = null;
             return false;
         }
@@ -439,11 +439,10 @@ namespace XLua
 
                 Config(cfg_check_types);
 
-                var hotfixDelegateAttributeType = assembly.MainModule.Types.Single(t => t.FullName == "XLua.HotfixDelegateAttribute");
-                hotfix_delegates = (from module in assembly.Modules
-                                    from type in module.Types
-                                    where type.CustomAttributes.Any(ca => ca.AttributeType == hotfixDelegateAttributeType)
-                                    select type).ToList();
+                //var hotfixDelegateAttributeType = assembly.MainModule.Types.Single(t => t.FullName == "XLua.HotfixDelegateAttribute");
+                hotfix_bridges = (from method in delegateBridgeType.Methods
+                                    where method.Name.StartsWith("__Gen_Delegate_Imp")
+                                    select method).ToList();
 
                 var hotfixAttributeType = assembly.MainModule.Types.Single(t => t.FullName == "XLua.HotfixAttribute");
                 foreach (var type in (from module in assembly.Modules from type in module.Types select type))
@@ -556,23 +555,22 @@ namespace XLua
 
             bool isFinalize = (method.Name == "Finalize" && method.IsSpecialName);
 
-            TypeReference delegateType = null;
             MethodReference invoke = null;
 
             int param_count = method.Parameters.Count + (method.IsStatic ? 0 : 1);
 
-            if (!findHotfixDelegate(assembly, method, out delegateType, out invoke, hotfixType))
+            if (!findHotfixDelegate(assembly, method, out invoke, hotfixType))
             {
                 Error("can not find delegate for " + method.DeclaringType + "." + method.Name + "! try re-genertate code.");
                 return false;
             }
 
-            if (delegateType == null || invoke == null)
+            if (invoke == null)
             {
                 throw new Exception("unknow exception!");
             }
             FieldDefinition fieldDefinition = new FieldDefinition(luaDelegateName, Mono.Cecil.FieldAttributes.Static | Mono.Cecil.FieldAttributes.Private,
-                delegateType);
+                delegateBridgeType);
             type.Fields.Add(fieldDefinition);
             FieldReference fieldReference = fieldDefinition.GetGeneric();
 

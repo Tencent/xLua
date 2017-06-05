@@ -825,7 +825,6 @@ namespace CSObjectWrapEditor
             GenOne(typeof(DelegateBridge), (type, type_info) =>
             {
                 type_info.Set("delegates_groups", delegates_groups.ToList());
-                type_info.Set("hotfx_delegates", hotfxDelegates);
             }, templateRef.LuaDelegateBridge, textWriter);
             textWriter.Close();
         }

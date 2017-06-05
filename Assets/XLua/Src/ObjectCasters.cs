@@ -433,6 +433,21 @@ namespace XLua
                     return translator.CreateDelegateBridge(L, type, idx);
                 };
             }
+            else if (typeof(DelegateBridgeBase).IsAssignableFrom(type))
+            {
+                return (RealStatePtr L, int idx, object target) =>
+                {
+                    object obj = fixTypeGetter(L, idx, target);
+                    if (obj != null) return obj;
+
+                    if (!LuaAPI.lua_isfunction(L, idx))
+                    {
+                        return null;
+                    }
+
+                    return translator.CreateDelegateBridge(L, null, idx);
+                };
+            }
             else if (type.IsInterface())
             {
                 return (RealStatePtr L, int idx, object target) =>
