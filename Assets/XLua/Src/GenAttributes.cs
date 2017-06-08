@@ -71,7 +71,8 @@ namespace XLua
         ValueTypeBoxing = 2,
         IgnoreProperty = 4,
         IgnoreNotPublic = 8,
-        Inline = 16
+        Inline = 16,
+        IntKey = 32
     }
 
     public class HotfixAttribute : Attribute

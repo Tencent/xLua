@@ -527,10 +527,10 @@ namespace XLua
                         k = 'ctor'
                     end
                     local f = type(v) == 'function' and v or nil
-                    xlua.access(cs, cflag .. '__Hitfix0_'..k, f) -- at least one
+                    xlua.access(cs, cflag .. '__Hotfix0_'..k, f) -- at least one
                     pcall(function()
                         for i = 1, 99 do
-                            xlua.access(cs, cflag .. '__Hitfix'..i..'_'..k, f)
+                            xlua.access(cs, cflag .. '__Hotfix'..i..'_'..k, f)
                         end
                     end)
                 end

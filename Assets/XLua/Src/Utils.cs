@@ -500,7 +500,7 @@ namespace XLua
                 if (private_access)
                 {
                     // skip hotfix inject field
-                    if (field.IsStatic && (field.Name.StartsWith("__Hitfix") || field.Name.StartsWith("_c__Hitfix")) && typeof(Delegate).IsAssignableFrom(field.FieldType))
+                    if (field.IsStatic && (field.Name.StartsWith("__Hotfix") || field.Name.StartsWith("_c__Hotfix")) && typeof(Delegate).IsAssignableFrom(field.FieldType))
                     {
                         continue;
                     }
