@@ -53,7 +53,8 @@ namespace XLua
 
             luaTableType = assembly.MainModule.Types.Single(t => t.FullName == "XLua.LuaTable");
             delegateBridgeType = assembly.MainModule.Types.Single(t => t.FullName == "XLua.DelegateBridge");
-            delegateBridgeGetter = delegateBridgeType.Methods.Single(m => m.Name == "Get");
+            delegateBridgeGetter = assembly.MainModule.Types.Single(t => t.FullName == "XLua.HotfixDelegateBridge")
+                .Methods.Single(m => m.Name == "Get");
 
             //luaFunctionType = assembly.MainModule.Types.Single(t => t.FullName == "XLua.LuaFunction");
             invokeSessionStart = delegateBridgeType.Methods.Single(m => m.Name == "InvokeSessionStart");
@@ -324,35 +325,7 @@ namespace XLua
             {
                 throw new InvalidOperationException(type.FullName + " is generic definition, can not be mark as IntKey!");
             }
-
-            bool hasStaticConstructor = type.Methods.Any(m => m.IsConstructor && m.IsStatic);
-
-            MethodDefinition staticBridgeGetter = null;
-            MethodDefinition instanceBridgeGetter = null;
-
-            if (isIntKey)
-            {
-                if (!hasStaticConstructor)
-                {
-                    staticBridgeGetter = new MethodDefinition("__Hotfix_xluaGetDelegateBridge_Static", Mono.Cecil.MethodAttributes.Private | Mono.Cecil.MethodAttributes.Static, delegateBridgeType);
-                    staticBridgeGetter.Parameters.Add(new ParameterDefinition(assembly.MainModule.TypeSystem.Int32));
-                    ILProcessor processor = staticBridgeGetter.Body.GetILProcessor();
-                    var instructions = staticBridgeGetter.Body.Instructions;
-                    instructions.Add(processor.Create(OpCodes.Ldarg_0));
-                    instructions.Add(processor.Create(OpCodes.Call, delegateBridgeGetter));
-                    instructions.Add(processor.Create(OpCodes.Ret));
-                }
-                else if(type.Methods.Count(m => !m.IsStatic) > 0)
-                {
-                    instanceBridgeGetter = new MethodDefinition("__Hotfix_xluaGetDelegateBridge_Instance", Mono.Cecil.MethodAttributes.Private, delegateBridgeType);
-                    instanceBridgeGetter.Parameters.Add(new ParameterDefinition(assembly.MainModule.TypeSystem.Int32));
-                    ILProcessor processor = instanceBridgeGetter.Body.GetILProcessor();
-                    var instructions = instanceBridgeGetter.Body.Instructions;
-                    instructions.Add(processor.Create(OpCodes.Ldarg_1));
-                    instructions.Add(processor.Create(OpCodes.Call, delegateBridgeGetter));
-                    instructions.Add(processor.Create(OpCodes.Ret));
-                }
-            }
+            //isIntKey = !type.HasGenericParameters;
 
             FieldReference stateTable = null;
             if (isStateful)
@@ -379,26 +352,15 @@ namespace XLua
                 if (method.Name != ".cctor" && !method.IsAbstract && !method.IsPInvokeImpl && method.Body != null && !method.Name.Contains("<"))
                 {
                     //Debug.Log(method);
-                    var ins_getter = hasStaticConstructor ? instanceBridgeGetter : staticBridgeGetter;
-                    var static_getter = hasStaticConstructor ? delegateBridgeGetter : staticBridgeGetter;
                     if ((isInline || method.HasGenericParameters || genericInOut(assembly, method, hotfixType)) 
-                        ? !injectGenericMethod(assembly, method, hotfixType, stateTable, ins_getter, static_getter) :
-                        !injectMethod(assembly, method, hotfixType, stateTable, ins_getter, static_getter, hasStaticConstructor))
+                        ? !injectGenericMethod(assembly, method, hotfixType, stateTable) :
+                        !injectMethod(assembly, method, hotfixType, stateTable))
                     {
                         return false;
                     }
                 }
             }
 
-            if (staticBridgeGetter != null)
-            {
-                type.Methods.Add(staticBridgeGetter);
-            }
-
-            if (instanceBridgeGetter != null)
-            {
-                type.Methods.Add(instanceBridgeGetter);
-            }
             return true;
         }
 
@@ -600,7 +562,7 @@ namespace XLua
             return null;
         }
 
-        static bool injectMethod(AssemblyDefinition assembly, MethodDefinition method, HotfixFlagInTool hotfixType, FieldReference stateTable, MethodDefinition bridgeGetter, MethodDefinition staticBridgeGetter, bool needStore)
+        static bool injectMethod(AssemblyDefinition assembly, MethodDefinition method, HotfixFlagInTool hotfixType, FieldReference stateTable)
         {
             var type = method.DeclaringType;
             
@@ -622,9 +584,11 @@ namespace XLua
             }
 
             FieldReference fieldReference = null;
-            VariableDefinition injection = null;
+            VariableDefinition injection = new VariableDefinition(delegateBridgeType);
+            method.Body.Variables.Add(injection);
 
             bool isIntKey = hotfixType.HasFlag(HotfixFlagInTool.IntKey) && !type.HasGenericParameters;
+            //isIntKey = !type.HasGenericParameters;
 
             if (!isIntKey)
             {
@@ -639,11 +603,6 @@ namespace XLua
                     delegateBridgeType);
                 type.Fields.Add(fieldDefinition);
                 fieldReference = fieldDefinition.GetGeneric();
-            }
-            else if (needStore)
-            {
-                injection = new VariableDefinition(delegateBridgeType);
-                method.Body.Variables.Add(injection);
             }
 
             bool isStateful = hotfixType.HasFlag(HotfixFlagInTool.Stateful);
@@ -662,69 +621,24 @@ namespace XLua
             {
                 if (isIntKey)
                 {
-                    if (method.IsStatic)
-                    {
-                        if (needStore)
-                        {
-                            processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldc_I4, bridgeIndex));
-                            processor.InsertBefore(insertPoint, processor.Create(OpCodes.Call, staticBridgeGetter));
-                            processor.InsertBefore(insertPoint, processor.Create(OpCodes.Stloc, injection));
-                            processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldloc, injection));
-                        }
-                        else
-                        {
-                            processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldc_I4, bridgeIndex));
-                            processor.InsertBefore(insertPoint, processor.Create(OpCodes.Call, staticBridgeGetter));
-                        }
-                    }
-                    else
-                    {
-                        if (!bridgeGetter.IsStatic)
-                        {
-                            processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldarg_0));
-                        }
-                        processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldc_I4, bridgeIndex));
-                        processor.InsertBefore(insertPoint, processor.Create(OpCodes.Call, bridgeGetter));
-                    }
+                    processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldc_I4, bridgeIndex));
+                    processor.InsertBefore(insertPoint, processor.Create(OpCodes.Call, delegateBridgeGetter));
                 }
                 else
                 {
                     processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldsfld, fieldReference));
                 }
+                processor.InsertBefore(insertPoint, processor.Create(OpCodes.Stloc, injection));
+                processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldloc, injection));
                 processor.InsertBefore(insertPoint, processor.Create(OpCodes.Brfalse, insertPoint));
 
                 if (statefulConstructor)
                 {
                     processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldarg_0));
                 }
-                if (isIntKey)
-                {
-                    if (method.IsStatic)
-                    {
-                        if (needStore)
-                        {
-                            processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldloc, injection));
-                        }
-                        else
-                        {
-                            processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldc_I4, bridgeIndex));
-                            processor.InsertBefore(insertPoint, processor.Create(OpCodes.Call, staticBridgeGetter));
-                        }
-                    }
-                    else
-                    {
-                        if (!bridgeGetter.IsStatic)
-                        {
-                            processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldarg_0));
-                        }
-                        processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldc_I4, bridgeIndex));
-                        processor.InsertBefore(insertPoint, processor.Create(OpCodes.Call, bridgeGetter));
-                    }
-                }
-                else
-                {
-                    processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldsfld, fieldReference));
-                }
+
+                processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldloc, injection));
+
                 for (int i = 0; i < param_count; i++)
                 {
                     if (i < ldargs.Length)
@@ -846,12 +760,13 @@ namespace XLua
             return definition;
         }
 
-        static bool injectGenericMethod(AssemblyDefinition assembly, MethodDefinition method, HotfixFlagInTool hotfixType, FieldReference stateTable, MethodDefinition bridgeGetter, MethodDefinition staticBridgeGetter)
+        static bool injectGenericMethod(AssemblyDefinition assembly, MethodDefinition method, HotfixFlagInTool hotfixType, FieldReference stateTable)
         {
             var type = method.DeclaringType;
             
             bool isFinalize = (method.Name == "Finalize" && method.IsSpecialName);
             bool isIntKey = hotfixType.HasFlag(HotfixFlagInTool.IntKey) && !type.HasGenericParameters;
+            //isIntKey = !type.HasGenericParameters;
 
             FieldReference fieldReference = null;
             VariableDefinition injection = null;
@@ -892,20 +807,8 @@ namespace XLua
             {
                 if (isIntKey)
                 {
-                    if (method.IsStatic)
-                    {
-                        processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldc_I4, bridgeIndex));
-                        processor.InsertBefore(insertPoint, processor.Create(OpCodes.Call, staticBridgeGetter));
-                    }
-                    else
-                    {
-                        if (!bridgeGetter.IsStatic)
-                        {
-                            processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldarg_0));
-                        }
-                        processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldc_I4, bridgeIndex));
-                        processor.InsertBefore(insertPoint, processor.Create(OpCodes.Call, bridgeGetter));
-                    }
+                    processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldc_I4, bridgeIndex));
+                    processor.InsertBefore(insertPoint, processor.Create(OpCodes.Call, delegateBridgeGetter));
                     processor.InsertBefore(insertPoint, processor.Create(OpCodes.Stloc, injection));
                 }
 

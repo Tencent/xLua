@@ -83,15 +83,13 @@ namespace XLua
         }
     }
 
-    public partial class DelegateBridge : DelegateBridgeBase
+    public static class HotfixDelegateBridge
     {
-        public static DelegateBridge[] DelegateBridgeList = new DelegateBridge[0];
-
         public static DelegateBridge Get(int idx)
         {
-            if (idx < DelegateBridgeList.Length) // 内部使用，不验证小于0的情况
+            if (idx < DelegateBridge.DelegateBridgeList.Length) // 内部使用，不验证小于0的情况
             {
-                return DelegateBridgeList[idx];
+                return DelegateBridge.DelegateBridgeList[idx];
             }
             else
             {
@@ -101,17 +99,22 @@ namespace XLua
 
         public static void Set(int idx, DelegateBridge val)
         {
-            if (idx >= DelegateBridgeList.Length)
+            if (idx >= DelegateBridge.DelegateBridgeList.Length)
             {
                 DelegateBridge[] newList = new DelegateBridge[idx + 1];
-                for(int i = 0; i < DelegateBridgeList.Length; i++)
+                for (int i = 0; i < DelegateBridge.DelegateBridgeList.Length; i++)
                 {
-                    newList[i] = DelegateBridgeList[i];
+                    newList[i] = DelegateBridge.DelegateBridgeList[i];
                 }
-                DelegateBridgeList = newList;
+                DelegateBridge.DelegateBridgeList = newList;
             }
-            DelegateBridgeList[idx] = val;
+            DelegateBridge.DelegateBridgeList[idx] = val;
         }
+    }
+
+    public partial class DelegateBridge : DelegateBridgeBase
+    {
+        internal static DelegateBridge[] DelegateBridgeList = new DelegateBridge[0];
 
         internal static bool Gen_Flag = false;
 
