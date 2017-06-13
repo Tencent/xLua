@@ -171,7 +171,7 @@ namespace XLua
 	
 	public partial class StaticLuaCallbacks
     {
-	    static bool __tryArrayGet(Type type, RealStatePtr L, ObjectTranslator translator, object obj, int index)
+	    internal static bool __tryArrayGet(Type type, RealStatePtr L, ObjectTranslator translator, object obj, int index)
 		{
 		<%ForEachCsList(purevaluetypes, function(type_info, idx)
 		if not type_info.Type.IsValueType then return end
@@ -187,7 +187,7 @@ namespace XLua
             return false;
 		}
 		
-		static bool __tryArraySet(Type type, RealStatePtr L, ObjectTranslator translator, object obj, int array_idx, int obj_idx)
+		internal static bool __tryArraySet(Type type, RealStatePtr L, ObjectTranslator translator, object obj, int array_idx, int obj_idx)
 		{
 		<%
 		local is_first = true
@@ -204,11 +204,5 @@ namespace XLua
 		end)%>
             return false;
 		}
-		
-		static StaticLuaCallbacks()
-        {
-            genTryArrayGetPtr = __tryArrayGet;
-            GenTryArraySetPtr = __tryArraySet;
-        }
 	}
 }

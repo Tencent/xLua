@@ -21,7 +21,6 @@ namespace XLua.LuaDLL
 	
 	public partial class Lua
 	{
-        public static int LUA_MULTRET = -1;
 #if UNITY_IPHONE && !UNITY_EDITOR
         const string LUADLL = "__Internal";
 #else
@@ -279,15 +278,15 @@ namespace XLua.LuaDLL
             }
             else
             {
-                if (Encoding.UTF8.GetByteCount(str) > str_buff.Length)
+                if (Encoding.UTF8.GetByteCount(str) > InternalGlobals.strBuff.Length)
                 {
                     byte[] bytes = Encoding.UTF8.GetBytes(str);
                     xlua_pushlstring(L, bytes, bytes.Length);
                 }
                 else
                 {
-                    int bytes_len = Encoding.UTF8.GetBytes(str, 0, str.Length, str_buff, 0);
-                    xlua_pushlstring(L, str_buff, bytes_len);
+                    int bytes_len = Encoding.UTF8.GetBytes(str, 0, str.Length, InternalGlobals.strBuff, 0);
+                    xlua_pushlstring(L, InternalGlobals.strBuff, bytes_len);
                 }
             }
         }
@@ -295,8 +294,6 @@ namespace XLua.LuaDLL
         [DllImport(LUADLL, CallingConvention = CallingConvention.Cdecl)]
         public static extern void xlua_pushlstring(IntPtr L, byte[] str, int size);
 
-        
-        static byte[] str_buff = new byte[256];
         public static void xlua_pushasciistring(IntPtr L, string str) // for inner use only
         {
             if (str == null)
@@ -306,13 +303,13 @@ namespace XLua.LuaDLL
             else
             {
                 int str_len = str.Length;
-                if (str_buff.Length < str_len)
+                if (InternalGlobals.strBuff.Length < str_len)
                 {
-                    str_buff = new byte[str_len];
+                    InternalGlobals.strBuff = new byte[str_len];
                 }
 
-                int bytes_len = Encoding.UTF8.GetBytes(str, 0, str_len, str_buff, 0);
-                xlua_pushlstring(L, str_buff, bytes_len);
+                int bytes_len = Encoding.UTF8.GetBytes(str, 0, str_len, InternalGlobals.strBuff, 0);
+                xlua_pushlstring(L, InternalGlobals.strBuff, bytes_len);
             }
         }
 

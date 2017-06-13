@@ -85,7 +85,17 @@ namespace XLua
 
     sealed class LuaIndexes
     {
-        public static int LUA_REGISTRYINDEX = -10000;
+        public static int LUA_REGISTRYINDEX
+        {
+            get
+            {
+                return InternalGlobals.LUA_REGISTRYINDEX;
+            }
+            set
+            {
+                InternalGlobals.LUA_REGISTRYINDEX = value;
+            }
+        }
     }
 
     public partial class ObjectTranslator
@@ -95,13 +105,6 @@ namespace XLua
         internal ObjectCasters objectCasters;
 
         internal readonly ObjectPool objects = new ObjectPool();
-        //public readonly Dictionary<int, object> objects = new Dictionary<int, object>();
-        // object to object #
-        //Fix bug by john, struct equals is by value, blow will print
-        //local v1=Vector3(1,1,1) 
-        //local v2=Vector3(1,1,1) 
-        //v1.x = 100 
-        //print(v1.x, v2.x) 
         internal readonly Dictionary<object, int> reverseMap = new Dictionary<object, int>(new ReferenceEqualsComparer());
 		internal LuaEnv luaEnv;
 		internal StaticLuaCallbacks metaFunctions;

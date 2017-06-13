@@ -43,7 +43,7 @@ namespace XLua
 		static XLua.CSObjectWrap.XLua_Gen_Initer_Register__ gen_reg_dumb_obj {get{return s_gen_reg_dumb_obj;}}
 	}
 	
-	public static partial class Utils
+	internal partial class InternalGlobals
     {
 	    <%
 		local type_to_methods = {}
@@ -61,9 +61,9 @@ namespace XLua
 		%><%if pi ~= 0 then%>, <%end%><%if parameter.IsOut then %>out <% elseif parameter.ParameterType.IsByRef then %>ref <% end %> <%=CsFullTypeName(parameter.ParameterType)%> <%=parameter.Name%><%
 		end)%>);
 		<%end)%>
-	    static Utils()
+	    static InternalGlobals()
 		{
-		    extension_method_map = new Dictionary<Type, IEnumerable<MethodInfo>>()
+		    extensionMethodMap = new Dictionary<Type, IEnumerable<MethodInfo>>()
 			{
 			    <%for _, methods_info in ipairs(seq_tbl) do%>
 				{typeof(<%=CsFullTypeName(methods_info.type)%>), new List<MethodInfo>(){
@@ -78,6 +78,9 @@ namespace XLua
 				}},
 				<%end%>
 			};
+			
+			genTryArrayGetPtr = StaticLuaCallbacks.__tryArrayGet;
+            genTryArraySetPtr = StaticLuaCallbacks.__tryArraySet;
 		}
 	}
 }

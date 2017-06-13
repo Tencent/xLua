@@ -269,19 +269,6 @@ namespace XLua
             }
         }
 
-        static Dictionary<string, string> support_op = new Dictionary<string, string>()
-        {
-            { "op_Addition", "__add" },
-            { "op_Subtraction", "__sub" },
-            { "op_Multiply", "__mul" },
-            { "op_Division", "__div" },
-            { "op_Equality", "__eq" },
-            { "op_UnaryNegation", "__unm" },
-            { "op_LessThan", "__lt" },
-            { "op_LessThanOrEqual", "__le" },
-            { "op_Modulus", "__mod" }
-        };
-
         static LuaCSFunction genItemGetter(Type type, PropertyInfo[] props)
         {
             props = props.Where(prop => !prop.GetIndexParameters()[0].ParameterType.IsAssignableFrom(typeof(string))).ToArray();
@@ -394,10 +381,9 @@ namespace XLua
             };
         }
 
-        static Dictionary<Type, IEnumerable<MethodInfo>> extension_method_map = null;
         static IEnumerable<MethodInfo> GetExtensionMethodsOf(Type type_to_be_extend)
         {
-            if (extension_method_map == null)
+            if (InternalGlobals.extensionMethodMap == null)
             {
                 List<Type> type_def_extention_method = new List<Type>();
 
@@ -469,13 +455,13 @@ namespace XLua
                 }
                 enumerator.Dispose();
 
-                extension_method_map = (from type in type_def_extention_method
+                InternalGlobals.extensionMethodMap = (from type in type_def_extention_method
                                         from method in type.GetMethods(BindingFlags.Static | BindingFlags.Public)
                                         where IsSupportedExtensionMethod(method)
                                         group method by getExtendedType(method)).ToDictionary(g => g.Key, g => g as IEnumerable<MethodInfo>);
             }
             IEnumerable<MethodInfo> ret = null;
-            extension_method_map.TryGetValue(type_to_be_extend, out ret);
+            InternalGlobals.extensionMethodMap.TryGetValue(type_to_be_extend, out ret);
             return ret;
         }
 
@@ -580,7 +566,7 @@ namespace XLua
 
                 if (method_name.StartsWith("op_")) // 操作符
                 {
-                    if (support_op.ContainsKey(method_name))
+                    if (InternalGlobals.supportOp.ContainsKey(method_name))
                     {
                         if (overloads == null)
                         {
@@ -643,7 +629,7 @@ namespace XLua
             {
                 if (kv.Key.Name.StartsWith("op_")) // 操作符
                 {
-                    LuaAPI.xlua_pushasciistring(L, support_op[kv.Key.Name]);
+                    LuaAPI.xlua_pushasciistring(L, InternalGlobals.supportOp[kv.Key.Name]);
                     translator.PushFixCSFunction(L,
                         new LuaCSFunction(translator.methodWrapsCache._GenMethodWrap(type, kv.Key.Name, kv.Value.ToArray()).Call));
                     LuaAPI.lua_rawset(L, obj_meta);
@@ -938,10 +924,10 @@ namespace XLua
             return idx > 0 ? idx : top + idx + 1;
         }
 
-        public static readonly int OBJ_META_IDX = -4;
-        public static readonly int METHOD_IDX = -3;
-        public static readonly int GETTER_IDX = -2;
-        public static readonly int SETTER_IDX = -1;
+        public const int OBJ_META_IDX = -4;
+        public const int METHOD_IDX = -3;
+        public const int GETTER_IDX = -2;
+        public const int SETTER_IDX = -1;
 
         public static void EndObjectRegister(Type type, RealStatePtr L, ObjectTranslator translator, LuaCSFunction csIndexer,
             LuaCSFunction csNewIndexer, Type base_type, LuaCSFunction arrayIndexer, LuaCSFunction arrayNewIndexer)
@@ -1093,10 +1079,10 @@ namespace XLua
             LuaAPI.lua_setmetatable(L, cls_table);
         }
 
-        public static readonly int CLS_IDX = -4;
-        public static readonly int CLS_META_IDX = -3;
-        public static readonly int CLS_GETTER_IDX = -2;
-        public static readonly int CLS_SETTER_IDX = -1;
+        public const int CLS_IDX = -4;
+        public const int CLS_META_IDX = -3;
+        public const int CLS_GETTER_IDX = -2;
+        public const int CLS_SETTER_IDX = -1;
 
         public static void EndClassRegister(Type type, RealStatePtr L, ObjectTranslator translator)
         {
@@ -1238,13 +1224,13 @@ namespace XLua
             LuaAPI.lua_pop(L, 1);
         }
 
-        public static string LuaIndexsFieldName = "LuaIndexs";
+        public const string LuaIndexsFieldName = "LuaIndexs";
 
-        public static string LuaNewIndexsFieldName = "LuaNewIndexs";
+        public const string LuaNewIndexsFieldName = "LuaNewIndexs";
 
-        public static string LuaClassIndexsFieldName = "LuaClassIndexs";
+        public const string LuaClassIndexsFieldName = "LuaClassIndexs";
 
-        public static string LuaClassNewIndexsFieldName = "LuaClassNewIndexs";
+        public const string LuaClassNewIndexsFieldName = "LuaClassNewIndexs";
 
         public static bool IsParamsMatch(MethodInfo delegateMethod, MethodInfo bridgeMethod)
         {

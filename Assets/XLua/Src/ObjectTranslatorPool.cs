@@ -23,14 +23,13 @@ namespace XLua
 {
 	internal class ObjectTranslatorPool
 	{
-		private static volatile ObjectTranslatorPool instance = new ObjectTranslatorPool ();		
 		private Dictionary<RealStatePtr, WeakReference> translators = new Dictionary<RealStatePtr, WeakReference>();
 		
 		public static ObjectTranslatorPool Instance
 		{
 			get
 			{
-				return instance;
+				return InternalGlobals.objectTranslatorPool;
 			}
 		}
 		

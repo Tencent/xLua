@@ -516,8 +516,8 @@ namespace XLua
                         }
                         else
                         {
-                            if (StaticLuaCallbacks.GenTryArraySetPtr == null
-                                || !StaticLuaCallbacks.GenTryArraySetPtr(type, L, translator, ary, i, n + 1))
+                            if (InternalGlobals.genTryArraySetPtr == null
+                                || !InternalGlobals.genTryArraySetPtr(type, L, translator, ary, i, n + 1))
                             {
                                 ary.SetValue(elementCaster(L, n + 1, null), i);
                             }

@@ -168,12 +168,6 @@ namespace XLua
             }
         }
 
-        delegate bool TryArrayGet(Type type, RealStatePtr L, ObjectTranslator translator, object obj, int index);
-        public delegate bool TryArraySet(Type type, RealStatePtr L, ObjectTranslator translator, object obj, int array_idx, int obj_idx);
-
-        static TryArrayGet genTryArrayGetPtr = null;
-        internal static TryArraySet GenTryArraySetPtr = null;
-
         static bool tryPrimitiveArrayGet(Type type, RealStatePtr L, object obj, int index)
         {
             bool ok = true;
@@ -282,11 +276,11 @@ namespace XLua
                     return 1;
                 }
 
-                if (genTryArrayGetPtr != null)
+                if (InternalGlobals.genTryArrayGetPtr != null)
                 {
                     try
                     {
-                        if (genTryArrayGetPtr(type, L, translator, array, i))
+                        if (InternalGlobals.genTryArrayGetPtr(type, L, translator, array, i))
                         {
                             return 1;
                         }
@@ -438,11 +432,11 @@ namespace XLua
                     return 0;
                 }
 
-                if (GenTryArraySetPtr != null)
+                if (InternalGlobals.genTryArraySetPtr != null)
                 {
                     try
                     {
-                        if (GenTryArraySetPtr(type, L, translator, array, i, 3))
+                        if (InternalGlobals.genTryArraySetPtr(type, L, translator, array, i, 3))
                         {
                             return 0;
                         }
