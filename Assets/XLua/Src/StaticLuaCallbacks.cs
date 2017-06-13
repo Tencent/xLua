@@ -171,7 +171,7 @@ namespace XLua
         static bool tryPrimitiveArrayGet(Type type, RealStatePtr L, object obj, int index)
         {
             bool ok = true;
-            
+
             if (type == typeof(int[]))
             {
                 int[] array = obj as int[];
@@ -800,26 +800,34 @@ namespace XLua
             }
         }
 
+        static Type getType(RealStatePtr L, ObjectTranslator translator, int idx)
+        {
+            if (LuaAPI.lua_type(L, idx) == LuaTypes.LUA_TTABLE)
+            {
+                LuaTable tbl;
+                translator.Get(L, idx, out tbl);
+                return tbl.Get<Type>("UnderlyingSystemType");
+            }
+            else if (LuaAPI.lua_type(L, idx) == LuaTypes.LUA_TSTRING)
+            {
+                string className = LuaAPI.lua_tostring(L, idx);
+                return translator.FindType(className);
+            }
+            else
+            {
+                return null;
+            }
+        }
+
         [MonoPInvokeCallback(typeof(LuaCSFunction))]
         public static int XLuaAccess(RealStatePtr L)
         {
             try
             {
                 ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
-                Type type = null;
+                Type type = getType(L, translator, 1);
                 object obj = null;
-                if (LuaAPI.lua_type(L, 1) == LuaTypes.LUA_TTABLE)
-                {
-                    LuaTable tbl;
-                    translator.Get(L, 1, out tbl);
-                    type = tbl.Get<Type>("UnderlyingSystemType");
-                }
-                else if (LuaAPI.lua_type(L, 1) == LuaTypes.LUA_TSTRING)
-                {
-                    string className = LuaAPI.lua_tostring(L, 1);
-                    type = translator.FindType(className);
-                }
-                else if (LuaAPI.lua_type(L, 1) == LuaTypes.LUA_TUSERDATA)
+                if (type == null && LuaAPI.lua_type(L, 1) == LuaTypes.LUA_TUSERDATA)
                 {
                     obj = translator.SafeGetCSObj(L, 1);
                     if (obj == null)
@@ -870,7 +878,7 @@ namespace XLua
                 }
                 return LuaAPI.luaL_error(L, "xlua.access, no field " + fieldName);
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 return LuaAPI.luaL_error(L, "c# exception in xlua.access: " + e);
             }
@@ -882,23 +890,7 @@ namespace XLua
             try
             {
                 ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
-                Type type = null;
-                if (LuaAPI.lua_type(L, 1) == LuaTypes.LUA_TTABLE)
-                {
-                    LuaTable tbl;
-                    translator.Get(L, 1, out tbl);
-                    type = tbl.Get<Type>("UnderlyingSystemType");
-                }
-                else if (LuaAPI.lua_type(L, 1) == LuaTypes.LUA_TSTRING)
-                {
-                    string className = LuaAPI.lua_tostring(L, 1);
-                    type = translator.FindType(className);
-                }
-                else
-                {
-                    return LuaAPI.luaL_error(L, "xlua.private_accessible, #1 parameter must a type/string");
-                }
-
+                Type type = getType(L, translator, 1); ;
                 if (type == null)
                 {
                     return LuaAPI.luaL_error(L, "xlua.private_accessible, can not find c# type");
@@ -910,6 +902,48 @@ namespace XLua
             catch (Exception e)
             {
                 return LuaAPI.luaL_error(L, "c# exception in xlua.private_accessible: " + e);
+            }
+        }
+
+        [MonoPInvokeCallback(typeof(LuaCSFunction))]
+        public static int XLuaMetatableOperation(RealStatePtr L)
+        {
+            try
+            {
+                ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
+                Type type = getType(L, translator, 1);
+                if (type == null)
+                {
+                    return LuaAPI.luaL_error(L, "xlua.metatable_operation, can not find c# type");
+                }
+
+                bool is_first = false;
+                int type_id = translator.getTypeId(L, type, out is_first);
+
+                var param_num = LuaAPI.lua_gettop(L);
+
+                if (param_num == 1) //get
+                {
+                    LuaAPI.xlua_rawgeti(L, LuaIndexes.LUA_REGISTRYINDEX, type_id);
+                    return 1;
+                }
+                else if (param_num == 2) //set
+                {
+                    if (LuaAPI.lua_type(L, 2) != LuaTypes.LUA_TTABLE)
+                    {
+                        return LuaAPI.luaL_error(L, "argument #2 must be a table");
+                    }
+                    LuaAPI.xlua_rawseti(L, LuaIndexes.LUA_REGISTRYINDEX, type_id);
+                    return 0;
+                }
+                else
+                {
+                    return LuaAPI.luaL_error(L, "invalid argument num for xlua.metatable_operation: " + param_num);
+                }
+            }
+            catch (Exception e)
+            {
+                return LuaAPI.luaL_error(L, "c# exception in xlua.metatable_operation: " + e);
             }
         }
     }

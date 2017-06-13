@@ -246,7 +246,7 @@ namespace XLua
             initCSharpCallLua();
         }
 
-        enum LOGLEVEL{
+        internal enum LOGLEVEL{
             NO,
             INFO,
             WARN,
@@ -524,6 +524,9 @@ namespace XLua
             LuaAPI.xlua_pushasciistring(L, "private_accessible");
             LuaAPI.lua_pushstdcallcfunction(L, StaticLuaCallbacks.XLuaPrivateAccessible);
             LuaAPI.lua_rawset(L, -3);
+            LuaAPI.xlua_pushasciistring(L, "metatable_operation");
+            LuaAPI.lua_pushstdcallcfunction(L, StaticLuaCallbacks.XLuaMetatableOperation);
+            LuaAPI.lua_rawset(L, -3);
             LuaAPI.lua_pop(L, 1);
 
             LuaAPI.lua_createtable(L, 1, 4); // 4 for __gc, __tostring, __index, __newindex
@@ -795,7 +798,7 @@ namespace XLua
         //only store the type id to type map for struct
         Dictionary<int, Type> typeMap = new Dictionary<int, Type>();
 
-        int getTypeId(RealStatePtr L, Type type, out bool is_first, LOGLEVEL log_level = LOGLEVEL.WARN)
+        internal int getTypeId(RealStatePtr L, Type type, out bool is_first, LOGLEVEL log_level = LOGLEVEL.WARN)
         {
             int type_id;
             is_first = false;

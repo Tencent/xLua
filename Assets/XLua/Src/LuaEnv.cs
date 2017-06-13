@@ -535,6 +535,12 @@ namespace XLua
                     end)
                 end
             end
+            xlua.getmetatable = function(cs)
+                return xlua.metatable_operation(cs)
+            end
+            xlua.setmetatable = function(cs, mt)
+                return xlua.metatable_operation(cs, mt)
+            end
             ";
 
         public delegate byte[] CustomLoader(ref string filepath);
