@@ -898,10 +898,13 @@ namespace CSObjectWrapEditor
 #if !XLUA_GENERAL
         static void clear(string path)
         {
-            System.IO.Directory.Delete(path, true);
-            AssetDatabase.DeleteAsset(path.Substring(path.IndexOf("Assets") + "Assets".Length));
+            if (Directory.Exists(path))
+            {
+                Directory.Delete(path, true);
+                AssetDatabase.DeleteAsset(path.Substring(path.IndexOf("Assets") + "Assets".Length));
 
-            AssetDatabase.Refresh();
+                AssetDatabase.Refresh();
+            }
         }
 #endif
 
