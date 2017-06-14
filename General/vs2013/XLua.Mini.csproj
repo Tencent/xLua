@@ -58,6 +58,9 @@
     <Compile Include="..\..\Assets\XLua\Src\GenConfig.cs">
       <Link>Assets\XLua\Src\GenConfig.cs</Link>
     </Compile>
+    <Compile Include="..\..\Assets\XLua\Src\InternalGlobals.cs">
+      <Link>Assets\XLua\Src\InternalGlobals.cs</Link>
+    </Compile>
     <Compile Include="..\..\Assets\XLua\Src\LuaBase.cs">
       <Link>Assets\XLua\Src\LuaBase.cs</Link>
     </Compile>
