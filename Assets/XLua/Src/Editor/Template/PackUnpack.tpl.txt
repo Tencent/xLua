@@ -31,10 +31,10 @@ namespace XLua
 			if (Utils.LoadField(L, idx, "<%=fieldInfo.Name%>"))
             {
 			    <%if fieldInfo.IsField then%>
-                translator.Get(L, top + 1, out val.<%=fieldInfo.Name%>);
+				<%=GetCasterStatement(fieldInfo.Type, "top + 1", "val."..fieldInfo.Name)%>;
 				<%else%>
 				var <%=fieldInfo.Name%> = val.<%=fieldInfo.Name%>;
-				translator.Get(L, top + 1, out <%=fieldInfo.Name%>);
+				<%=GetCasterStatement(fieldInfo.Type, "top + 1", fieldInfo.Name)%>;
 				val.<%=fieldInfo.Name%> = <%=fieldInfo.Name%>;
 				<%end%>
             }
