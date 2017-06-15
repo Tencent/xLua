@@ -252,11 +252,6 @@ function IsStruct(t)
     return t.IsValueType and not t.IsPrimitive
 end
 
-function IsGetByOut(t)
-    if t.IsByRef then t = t:GetElementType() end
-    return genPushAndUpdateTypes[t] or (t == typeof(CS.System.Decimal))
-end
-
 function NeedUpdate(t)
     if t.IsByRef then t = t:GetElementType() end
     return t.IsValueType and not t.IsPrimitive and not IsEnum and t ~= typeof(CS.System.Decimal)
@@ -265,16 +260,16 @@ end
 function GetCasterStatement(t, idx, var_name, need_declare, is_v_params)
     local testname = getSafeFullName(t)
 	local statement = ""
-    local is_get_by_out = IsGetByOut(t)
+    local is_struct = IsStruct(t)
 	
     if need_declare then
         statement = CsFullTypeName(t) .. " " .. var_name
-        if is_get_by_out then
+        if is_struct and not typedCaster[testname] and not fixCaster[testname] then
             statement = statement .. ";"
         else
             statement = statement .. " = "
         end
-    elseif not is_get_by_out then
+    elseif not is_struct then
 	    statement = var_name .. " = "
     end
 	
@@ -288,7 +283,7 @@ function GetCasterStatement(t, idx, var_name, need_declare, is_v_params)
         return statement .. fixCaster[testname] .. "(L, ".. idx ..")" 
     elseif testname == "System.Object" then
         return statement .. "translator.GetObject(L, ".. idx ..", typeof(" .. CsFullTypeName(t) .."))"
-    elseif is_get_by_out then
+    elseif is_struct then
         return statement .. "translator.Get(L, ".. idx ..", out " .. var_name .. ")"
     else
         return statement .. "("..CsFullTypeName(t)..")translator.GetObject(L, ".. idx ..", typeof(" .. CsFullTypeName(t) .."))" 
@@ -308,7 +303,8 @@ end
 local objectType = typeof(CS.System.Object)
 function GetSelfStatement(t)
     local fulltypename = CsFullTypeName(t)
-    if IsGetByOut(t) then
+    local is_struct = IsStruct(t)
+    if is_struct then
 	    return fulltypename .. " __cl_gen_to_be_invoked;translator.Get(L, 1, out __cl_gen_to_be_invoked)"
 	else
 	    if t == objectType then
