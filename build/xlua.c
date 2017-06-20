@@ -14,6 +14,7 @@
 
 #include <string.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include "i64lib.h"
 
 /*
@@ -34,7 +35,7 @@ LUA_API int xlua_get_registry_index() {
 }
 
 LUA_API int xlua_get_lib_version() {
-	return 101;
+	return 102;
 }
 
 LUA_API int xlua_tocsobj_safe(lua_State *L,int index) {
@@ -1187,6 +1188,32 @@ LUA_API int css_clone(lua_State *L) {
     lua_getmetatable(L, 1);
 	lua_setmetatable(L, -2);
 	return 1;
+}
+
+static int* xlua_hotfix_flags = NULL;
+static int xlua_hotfix_flags_len = 0;
+
+LUA_API int xlua_get_hotfix_flag(int idx) {
+	if (idx >= xlua_hotfix_flags_len) {
+		return 0;
+	} else {
+		return xlua_hotfix_flags[idx];
+	}
+}
+
+LUA_API void xlua_set_hotfix_flag(int idx, int flag) {
+	int i;
+	if (idx >= xlua_hotfix_flags_len) {
+		if (xlua_hotfix_flags == NULL) {
+			xlua_hotfix_flags = (int*)malloc((idx + 1) * sizeof(int));
+		} else {
+			xlua_hotfix_flags = (int*)realloc(xlua_hotfix_flags, (idx + 1) * sizeof(int));
+		}
+		for(i = xlua_hotfix_flags_len; i < (idx + 1); i++) {
+			xlua_hotfix_flags[i] = 0;
+		}
+	} 
+	xlua_hotfix_flags[idx] = flag;
 }
 
 static const luaL_Reg xlualib[] = {

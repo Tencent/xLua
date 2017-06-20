@@ -30,8 +30,8 @@ namespace XLua
 
         static TypeDefinition delegateBridgeType = null;
         static MethodDefinition delegateBridgeGetter = null;
+        static MethodReference hotfixFlagGetter = null;
 
-        //static TypeDefinition luaFunctionType = null;
         static MethodDefinition invokeSessionStart = null;
         static MethodDefinition functionInvoke = null;
         static MethodDefinition invokeSessionEnd = null;
@@ -56,6 +56,8 @@ namespace XLua
             delegateBridgeType = assembly.MainModule.Types.Single(t => t.FullName == "XLua.DelegateBridge");
             delegateBridgeGetter = assembly.MainModule.Types.Single(t => t.FullName == "XLua.HotfixDelegateBridge")
                 .Methods.Single(m => m.Name == "Get");
+            hotfixFlagGetter = assembly.MainModule.Types.Single(t => t.FullName == "XLua.HotfixDelegateBridge")
+                .Methods.Single(m => m.Name == "xlua_get_hotfix_flag");
 
             //luaFunctionType = assembly.MainModule.Types.Single(t => t.FullName == "XLua.LuaFunction");
             invokeSessionStart = delegateBridgeType.Methods.Single(m => m.Name == "InvokeSessionStart");
@@ -587,14 +589,15 @@ namespace XLua
             }
 
             FieldReference fieldReference = null;
-            VariableDefinition injection = new VariableDefinition(delegateBridgeType);
-            method.Body.Variables.Add(injection);
-
+            VariableDefinition injection = null;
             bool isIntKey = hotfixType.HasFlag(HotfixFlagInTool.IntKey) && !type.HasGenericParameters;
             //isIntKey = !type.HasGenericParameters;
 
             if (!isIntKey)
             {
+                injection = new VariableDefinition(delegateBridgeType);
+                method.Body.Variables.Add(injection);
+
                 var luaDelegateName = getDelegateName(method);
                 if (luaDelegateName == null)
                 {
@@ -625,22 +628,29 @@ namespace XLua
                 if (isIntKey)
                 {
                     processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldc_I4, bridgeIndexByKey.Count));
-                    processor.InsertBefore(insertPoint, processor.Create(OpCodes.Call, delegateBridgeGetter));
+                    processor.InsertBefore(insertPoint, processor.Create(OpCodes.Call, hotfixFlagGetter));
                 }
                 else
                 {
                     processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldsfld, fieldReference));
+                    processor.InsertBefore(insertPoint, processor.Create(OpCodes.Stloc, injection));
+                    processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldloc, injection));
                 }
-                processor.InsertBefore(insertPoint, processor.Create(OpCodes.Stloc, injection));
-                processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldloc, injection));
                 processor.InsertBefore(insertPoint, processor.Create(OpCodes.Brfalse, insertPoint));
 
                 if (statefulConstructor)
                 {
                     processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldarg_0));
                 }
-
-                processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldloc, injection));
+                if (isIntKey)
+                {
+                    processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldc_I4, bridgeIndexByKey.Count));
+                    processor.InsertBefore(insertPoint, processor.Create(OpCodes.Call, delegateBridgeGetter));
+                }
+                else
+                {
+                    processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldloc, injection));
+                }
 
                 for (int i = 0; i < param_count; i++)
                 {
@@ -788,11 +798,9 @@ namespace XLua
 
                 fieldReference = fieldDefinition.GetGeneric();
             }
-            else
-            {
-                injection = new VariableDefinition(delegateBridgeType);
-                method.Body.Variables.Add(injection);
-            }
+
+            injection = new VariableDefinition(delegateBridgeType);
+            method.Body.Variables.Add(injection);
 
             int param_start = method.IsStatic ? 0 : 1;
             int param_count = method.Parameters.Count + param_start;
@@ -811,28 +819,22 @@ namespace XLua
                 if (isIntKey)
                 {
                     processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldc_I4, bridgeIndexByKey.Count));
+                    processor.InsertBefore(insertPoint, processor.Create(OpCodes.Call, hotfixFlagGetter));
+                    processor.InsertBefore(insertPoint, processor.Create(OpCodes.Brfalse, insertPoint));
+                    processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldc_I4, bridgeIndexByKey.Count));
                     processor.InsertBefore(insertPoint, processor.Create(OpCodes.Call, delegateBridgeGetter));
                     processor.InsertBefore(insertPoint, processor.Create(OpCodes.Stloc, injection));
                 }
-
-                if (isIntKey)
-                {
-                    processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldloc, injection));
-                }
                 else
                 {
                     processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldsfld, fieldReference));
-                }
-                processor.InsertBefore(insertPoint, processor.Create(OpCodes.Brfalse, insertPoint));
-
-                if (isIntKey)
-                {
+                    processor.InsertBefore(insertPoint, processor.Create(OpCodes.Stloc, injection));
                     processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldloc, injection));
+                    processor.InsertBefore(insertPoint, processor.Create(OpCodes.Brfalse, insertPoint));
                 }
-                else
-                {
-                    processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldsfld, fieldReference));
-                }
+
+                processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldloc, injection));
+
                 processor.InsertBefore(insertPoint, processor.Create(OpCodes.Callvirt, invokeSessionStart));
 
                 bool statefulConstructor = isStateful && method.IsConstructor && !method.IsStatic;
@@ -847,14 +849,7 @@ namespace XLua
                 {
                     if (i == 0 && !method.IsStatic)
                     {
-                        if (isIntKey)
-                        {
-                            processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldloc, injection));
-                        }
-                        else
-                        {
-                            processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldsfld, fieldReference));
-                        }
+                        processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldloc, injection));
                         processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldarg_0));
                         if (isStateful && !method.IsConstructor)
                         {
@@ -879,14 +874,7 @@ namespace XLua
                         }
                         if (!param.IsOut)
                         {
-                            if (isIntKey)
-                            {
-                                processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldloc, injection));
-                            }
-                            else
-                            {
-                                processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldsfld, fieldReference));
-                            }
+                            processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldloc, injection));
 
                             if (i < ldargs.Length)
                             {
@@ -929,14 +917,7 @@ namespace XLua
 
                 int outStart = (isVoid ? 0 : 1);
 
-                if (isIntKey)
-                {
-                    processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldloc, injection));
-                }
-                else
-                {
-                    processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldsfld, fieldReference));
-                }
+                processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldloc, injection));
                 processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldc_I4, outCout + outStart));
                 processor.InsertBefore(insertPoint, processor.Create(OpCodes.Callvirt, functionInvoke));
 
@@ -945,14 +926,7 @@ namespace XLua
                 {
                     if (method.Parameters[i].ParameterType.IsByReference)
                     {
-                        if (isIntKey)
-                        {
-                            processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldloc, injection));
-                        }
-                        else
-                        {
-                            processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldsfld, fieldReference));
-                        }
+                        processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldloc, injection));
                         processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldc_I4, outPos));
                         int arg_pos = param_start + i;
                         if (arg_pos < ldargs.Length)
@@ -976,14 +950,7 @@ namespace XLua
                 {
                     processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldarg_0));
                 }
-                if (isIntKey)
-                {
-                    processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldloc, injection));
-                }
-                else
-                {
-                    processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldsfld, fieldReference));
-                }
+                processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldloc, injection));
                 if (isVoid)
                 {
                     processor.InsertBefore(insertPoint, processor.Create(OpCodes.Callvirt, invokeSessionEnd));

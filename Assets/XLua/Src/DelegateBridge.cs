@@ -18,6 +18,7 @@ using LuaCSFunction = XLua.LuaDLL.lua_CSFunction;
 
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 
 namespace XLua
 {
@@ -85,16 +86,23 @@ namespace XLua
 
     public static class HotfixDelegateBridge
     {
+#if (UNITY_IPHONE || ENABLE_IL2CPP) && !UNITY_EDITOR
+        [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
+        public static extern bool xlua_get_hotfix_flag(int idx);
+
+        
+        [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void xlua_set_hotfix_flag(int idx, bool flag);
+#else
+        public static bool xlua_get_hotfix_flag(int idx)
+        {
+            return (idx < DelegateBridge.DelegateBridgeList.Length) && (DelegateBridge.DelegateBridgeList[idx] != null);
+        }
+#endif
+
         public static DelegateBridge Get(int idx)
         {
-            if (idx < DelegateBridge.DelegateBridgeList.Length) // 内部使用，不验证小于0的情况
-            {
-                return DelegateBridge.DelegateBridgeList[idx];
-            }
-            else
-            {
-                return null;
-            }
+            return DelegateBridge.DelegateBridgeList[idx];
         }
 
         public static void Set(int idx, DelegateBridge val)
@@ -109,6 +117,9 @@ namespace XLua
                 DelegateBridge.DelegateBridgeList = newList;
             }
             DelegateBridge.DelegateBridgeList[idx] = val;
+#if (UNITY_IPHONE || ENABLE_IL2CPP) && !UNITY_EDITOR
+            xlua_set_hotfix_flag(idx, val != null);
+#endif
         }
     }
 
