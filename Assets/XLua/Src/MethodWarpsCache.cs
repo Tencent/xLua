@@ -457,6 +457,11 @@ namespace XLua
                     MethodInfo add = eventInfo.GetAddMethod();
                     MethodInfo remove = eventInfo.GetRemoveMethod();
 
+                    if (add == null && remove == null)
+                    {
+                        throw new Exception(type.Name + "'s " + eventName + " has either add nor remove");
+                    }
+
                     bool is_static = add != null ? add.IsStatic : remove.IsStatic;
                     if (!is_static) start_idx = 1;
 

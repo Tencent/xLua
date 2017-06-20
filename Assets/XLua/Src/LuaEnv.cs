@@ -390,10 +390,7 @@ namespace XLua
                 LuaAPI.lua_close(L);
 
                 ObjectTranslatorPool.Instance.Remove(L);
-                if (translator != null)
-                {
-                    translator = null;
-                }
+                translator = null;
 
                 rawL = IntPtr.Zero;
 
