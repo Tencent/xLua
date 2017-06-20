@@ -19,6 +19,7 @@ using System.Reflection;
 using System.Linq;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
+using System.IO;
 
 namespace XLua
 {
@@ -41,7 +42,7 @@ namespace XLua
 
         static Dictionary<string, int> hotfixCfg;
 
-        static int bridgeIndex = 0;
+        static List<MethodDefinition> bridgeIndexByKey;
 
         static void init(AssemblyDefinition assembly, IEnumerable<string> search_directorys)
         {
@@ -65,7 +66,7 @@ namespace XLua
             inParams = delegateBridgeType.Methods.Single(m => m.Name == "InParams");
             outParam = delegateBridgeType.Methods.Single(m => m.Name == "OutParam");
 
-            bridgeIndex = 0;
+            bridgeIndexByKey = new List<MethodDefinition>();
 
             var resolver = assembly.MainModule.AssemblyResolver as BaseAssemblyResolver;
             foreach (var path in
@@ -373,7 +374,7 @@ namespace XLua
             {
                 return;
             }
-            HotfixInject("./Library/ScriptAssemblies/Assembly-CSharp.dll", null, Utils.GetAllTypes());
+            HotfixInject("./Library/ScriptAssemblies/Assembly-CSharp.dll", null, CSObjectWrapEditor.GeneratorConfig.common_path + "Resources/hotfix_id_map.lua.txt", Utils.GetAllTypes());
         }
 #endif
 
@@ -434,7 +435,7 @@ namespace XLua
             }
         }
 
-        public static void HotfixInject(string inject_assembly_path, IEnumerable<string> search_directorys, IEnumerable<Type> cfg_check_types = null)
+        public static void HotfixInject(string inject_assembly_path, IEnumerable<string> search_directorys, string id_map_file_path, IEnumerable<Type> cfg_check_types = null)
         {
             AssemblyDefinition assembly = null;
             try
@@ -477,6 +478,8 @@ namespace XLua
 #else
                 var writerParameters = new WriterParameters { WriteSymbols = true };
                 assembly.Write(inject_assembly_path, writerParameters);
+                Directory.CreateDirectory(Path.GetDirectoryName(id_map_file_path));
+                OutputIntKeyMapper(new FileStream(id_map_file_path, FileMode.Create, FileAccess.Write));
                 Info("hotfix inject finish!");
 #endif
             }
@@ -621,7 +624,7 @@ namespace XLua
             {
                 if (isIntKey)
                 {
-                    processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldc_I4, bridgeIndex));
+                    processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldc_I4, bridgeIndexByKey.Count));
                     processor.InsertBefore(insertPoint, processor.Create(OpCodes.Call, delegateBridgeGetter));
                 }
                 else
@@ -713,7 +716,7 @@ namespace XLua
             }
             if (isIntKey)
             {
-                bridgeIndex++;
+                bridgeIndexByKey.Add(method);
             }
             return true;
         }
@@ -807,7 +810,7 @@ namespace XLua
             {
                 if (isIntKey)
                 {
-                    processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldc_I4, bridgeIndex));
+                    processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldc_I4, bridgeIndexByKey.Count));
                     processor.InsertBefore(insertPoint, processor.Create(OpCodes.Call, delegateBridgeGetter));
                     processor.InsertBefore(insertPoint, processor.Create(OpCodes.Stloc, injection));
                 }
@@ -1018,6 +1021,33 @@ namespace XLua
 
             return true;
         }
+
+        public static void OutputIntKeyMapper(Stream output)
+        {
+            using (StreamWriter writer = new StreamWriter(output))
+            {
+                writer.WriteLine("return {");
+                var data = bridgeIndexByKey
+                    .Select((md, idx) => new { Method = md, Index = idx})
+                    .GroupBy(info => info.Method.DeclaringType)
+                    .ToDictionary(group => group.Key, group =>
+                    {
+                        return group.GroupBy(info => info.Method.Name).ToDictionary(group_by_name => group_by_name.Key, group_by_name => group_by_name.Select(info => info.Index.ToString()).ToArray());
+                    });
+                foreach(var kv in data)
+                {
+                    writer.WriteLine("    [\"" + kv.Key.FullName.Replace('/', '+') + "\"] = {");
+                    foreach(var kv2 in kv.Value)
+                    {
+                        writer.WriteLine("        [\"" + kv2.Key + "\"] = {");
+                        writer.WriteLine("            " + string.Join(",", kv2.Value));
+                        writer.WriteLine("        },");
+                    }
+                    writer.WriteLine("    },");
+                }
+                writer.WriteLine("}");
+            }
+        }
     }
 }
 #else
@@ -1059,8 +1089,9 @@ namespace XLua
             }
 
             var assembly_csharp_path = "./Library/ScriptAssemblies/Assembly-CSharp.dll";
+            var id_map_file_path = CSObjectWrapEditor.GeneratorConfig.common_path + "Resources/hotfix_id_map.lua.txt";
 
-            List<string> args = new List<string>() { inject_tool_path, assembly_csharp_path};
+            List<string> args = new List<string>() { inject_tool_path, assembly_csharp_path, id_map_file_path};
 
             foreach (var path in
                 (from asm in AppDomain.CurrentDomain.GetAssemblies() select asm.ManifestModule.FullyQualifiedName)

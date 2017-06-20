@@ -10,12 +10,12 @@ namespace XLua
     {
         public static void Useage()
         {
-            Console.WriteLine("XLuaHotfixInject assmbly_path [search_path1, search_path2 ...]");
+            Console.WriteLine("XLuaHotfixInject assmbly_path id_map_file_path [search_path1, search_path2 ...]");
         }
 
         public static void Main(string[] args)
         {
-            if (args.Length == 0)
+            if (args.Length < 2)
             {
                 Useage();
                 return;
@@ -25,7 +25,7 @@ namespace XLua
             {
                 var assmbly_path = Path.GetFullPath(args[0]);
                 AppDomain currentDomain = AppDomain.CurrentDomain;
-                List<string> search_paths = args.Skip(1).ToList();
+                List<string> search_paths = args.Skip(2).ToList();
                 currentDomain.AssemblyResolve += new ResolveEventHandler((object sender, ResolveEventArgs rea) =>
                 {
                     foreach (var search_path in search_paths)
@@ -40,7 +40,7 @@ namespace XLua
                 });
                 var assembly = Assembly.Load(File.ReadAllBytes(assmbly_path));
                 Hotfix.Config(assembly.GetTypes());
-                Hotfix.HotfixInject(assmbly_path, args.Skip(1));
+                Hotfix.HotfixInject(assmbly_path, args.Skip(2), args[1]);
             }
             catch(Exception e)
             {

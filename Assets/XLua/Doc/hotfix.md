@@ -79,12 +79,86 @@ public static class HotfixCfg
 
 Hotfix标签可以设置一些标志位对生成代码及插桩定制化
 
-* Stateless       ：Stateless和Stateful的区别请看下下节
-* Stateful        ：同上
-* ValueTypeBoxing ：值类型的适配delegate会收敛到object，好处是代码量更少，不好的是值类型会产生boxing及gc，适用于对安装包敏感的业务
-* IgnoreProperty  ：不对属性注入及生成适配代码
-* IgnoreNotPublic ：不对非public的方法注入及生成适配代码
-* Inline          ：不生成适配delegate，直接在函数体注入处理代码
+* Stateless
+
+Stateless和Stateful的区别请看下下节。
+
+* Stateful
+
+同上。
+
+* ValueTypeBoxing
+
+值类型的适配delegate会收敛到object，好处是代码量更少，不好的是值类型会产生boxing及gc，适用于对text段敏感的业务。
+
+* IgnoreProperty
+
+不对属性注入及生成适配代码。
+
+* IgnoreNotPublic
+
+不对非public的方法注入及生成适配代码。
+
+* Inline
+
+不生成适配delegate，直接在函数体注入处理代码。
+
+* IntKey
+
+不生成静态字段，而是把所有注入点放到一个数组集中管理。
+
+好处：对text段影响小。
+
+坏处：使用不太方便，不想原来的使用那么方便，需要通过id来指明hotfix哪个函数，而这个id是代码注入工具时分配的，函数到id的映射会保存在Gen/Resources/hotfix_id_map.lua.txt，发布手机版本后请妥善保存该文件。
+
+该文件的格式大概如下：
+
+~~~lua
+return {
+    ["HotfixTest"] = {
+        [".ctor"] = {
+            5
+        },
+        ["Start"] = {
+            6
+        },
+        ["Update"] = {
+            7
+        },
+        ["FixedUpdate"] = {
+            8
+        },
+        ["Add"] = {
+            9,10
+        },
+        ["OnGUI"] = {
+            11
+        },
+    },
+}
+~~~
+
+想要替换HotfixTest的Update函数，你得
+
+~~~lua
+CS.XLua.HotfixDelegateBridge.Set(7, func)
+~~~
+
+能不能自动化一些呢？可以，xlua.util提供了auto_id_map函数，执行一次后你就可以像以前那样直接用类，方法名去指明修补的函数。
+
+~~~lua
+(require 'xlua.util').auto_id_map()
+xlua.hotfix(CS.HotfixTest, 'Update', function(self)
+		self.tick = self.tick + 1
+		if (self.tick % 50) == 0 then
+			print('<<<<<<<<Update in lua, tick = ' .. self.tick)
+		end
+	end)
+~~~
+
+前提是hotfix_id_map.lua.txt放到可以通过require 'hotfix_id_map'引用到的地方。
+
+ps：虽然xlua执行代码注入时会把hotfix_id_map.lua.txt放到Resources下，但那时似乎Unity已经不再处理新增的文件。貌似可以通过提前执行“Hotfix inject in Editor”来提前生成，但目前不确认两次生成的id是否必定一致。
 
 ## 使用建议
 
