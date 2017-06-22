@@ -1058,11 +1058,8 @@ namespace XLua
 
             var assembly_csharp_path = "./Library/ScriptAssemblies/Assembly-CSharp.dll";
             var id_map_file_path = CSObjectWrapEditor.GeneratorConfig.common_path + "Resources/hotfix_id_map.lua.txt";
-            string codeBaseOfThis = typeof(Hotfix).Assembly.CodeBase;
-            UriBuilder uri = new UriBuilder(codeBaseOfThis);
-            string assemblyPathOfThis = Uri.UnescapeDataString(uri.Path);
 
-            List<string> args = new List<string>() { inject_tool_path, assembly_csharp_path, id_map_file_path, assemblyPathOfThis};
+            List<string> args = new List<string>() { inject_tool_path, assembly_csharp_path, id_map_file_path};
 
             foreach (var path in
                 (from asm in AppDomain.CurrentDomain.GetAssemblies() select asm.ManifestModule.FullyQualifiedName)
