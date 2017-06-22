@@ -49,7 +49,7 @@ namespace XLua
         internal object luaEnvLock = new object();
 #endif
 
-        const int LIB_VERSION_EXPECT = 102;
+        const int LIB_VERSION_EXPECT = 101;
 
         public LuaEnv()
         {

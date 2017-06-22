@@ -86,7 +86,7 @@ namespace XLua
 
     public static class HotfixDelegateBridge
     {
-#if (UNITY_IPHONE || ENABLE_IL2CPP) && !UNITY_EDITOR
+#if UNITY_IPHONE && !UNITY_EDITOR
         [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
         public static extern bool xlua_get_hotfix_flag(int idx);
 
