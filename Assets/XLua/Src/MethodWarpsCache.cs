@@ -57,6 +57,13 @@ namespace XLua
             this.translator = translator;
             this.targetType = targetType;
             this.method = method;
+#if UNITY_EDITOR
+            if (method.IsDefined(typeof(ObsoleteAttribute), true))
+            {
+                ObsoleteAttribute info = Attribute.GetCustomAttribute(method, typeof(ObsoleteAttribute)) as ObsoleteAttribute;
+                UnityEngine.Debug.LogWarning("Obsolete Method [" + method + "]: " + info.Message);
+            }
+#endif
             HasDefalutValue = false;
         }
 
