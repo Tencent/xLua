@@ -94,6 +94,9 @@
     <Compile Include="..\..\Assets\XLua\Src\ObjectTranslatorPool.cs">
       <Link>Assets\XLua\Src\ObjectTranslatorPool.cs</Link>
     </Compile>
+    <Compile Include="..\..\Assets\XLua\Src\RawObject.cs">
+      <Link>Assets\XLua\Src\RawObject.cs</Link>
+    </Compile>
     <Compile Include="..\..\Assets\XLua\Src\SignatureLoader.cs">
       <Link>Assets\XLua\Src\SignatureLoader.cs</Link>
     </Compile>

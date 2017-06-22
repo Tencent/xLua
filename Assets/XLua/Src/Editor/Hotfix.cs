@@ -482,6 +482,7 @@ namespace XLua
                 assembly.Write(inject_assembly_path, writerParameters);
                 Directory.CreateDirectory(Path.GetDirectoryName(id_map_file_path));
                 OutputIntKeyMapper(new FileStream(id_map_file_path, FileMode.Create, FileAccess.Write));
+                File.Copy(id_map_file_path, id_map_file_path + "." + DateTime.Now.ToString("yyyyMMddHHmmssfff"));
                 Info("hotfix inject finish!");
 #endif
             }
@@ -1057,8 +1058,11 @@ namespace XLua
 
             var assembly_csharp_path = "./Library/ScriptAssemblies/Assembly-CSharp.dll";
             var id_map_file_path = CSObjectWrapEditor.GeneratorConfig.common_path + "Resources/hotfix_id_map.lua.txt";
+            string codeBaseOfThis = typeof(Hotfix).Assembly.CodeBase;
+            UriBuilder uri = new UriBuilder(codeBaseOfThis);
+            string assemblyPathOfThis = Uri.UnescapeDataString(uri.Path);
 
-            List<string> args = new List<string>() { inject_tool_path, assembly_csharp_path, id_map_file_path};
+            List<string> args = new List<string>() { inject_tool_path, assembly_csharp_path, id_map_file_path, assemblyPathOfThis};
 
             foreach (var path in
                 (from asm in AppDomain.CurrentDomain.GetAssemblies() select asm.ManifestModule.FullyQualifiedName)

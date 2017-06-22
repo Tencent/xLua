@@ -10,7 +10,7 @@ namespace XLua
     {
         public static void Useage()
         {
-            Console.WriteLine("XLuaHotfixInject assmbly_path id_map_file_path [search_path1, search_path2 ...]");
+            Console.WriteLine("XLuaHotfixInject assmbly_path id_map_file_path [cfg_assmbly2_path] [search_path1, search_path2 ...]");
         }
 
         public static void Main(string[] args)
@@ -24,8 +24,17 @@ namespace XLua
             try
             {
                 var assmbly_path = Path.GetFullPath(args[0]);
+                string cfg_assmbly2 = null;
+                if (args.Length > 2)
+                {
+                    cfg_assmbly2 = Path.GetFullPath(args[2]);
+                    if (!cfg_assmbly2.EndsWith(".dll"))
+                    {
+                        cfg_assmbly2 = null;
+                    }
+                }
                 AppDomain currentDomain = AppDomain.CurrentDomain;
-                List<string> search_paths = args.Skip(2).ToList();
+                List<string> search_paths = args.Skip(cfg_assmbly2 == null ? 2 : 3).ToList();
                 currentDomain.AssemblyResolve += new ResolveEventHandler((object sender, ResolveEventArgs rea) =>
                 {
                     foreach (var search_path in search_paths)
@@ -40,7 +49,12 @@ namespace XLua
                 });
                 var assembly = Assembly.Load(File.ReadAllBytes(assmbly_path));
                 Hotfix.Config(assembly.GetTypes());
-                Hotfix.HotfixInject(assmbly_path, args.Skip(2), args[1]);
+                if (cfg_assmbly2 != null)
+                {
+                    assembly = Assembly.Load(File.ReadAllBytes(cfg_assmbly2));
+                    Hotfix.Config(assembly.GetTypes());
+                }
+                Hotfix.HotfixInject(assmbly_path, args.Skip(cfg_assmbly2 == null ? 2 : 3), args[1]);
             }
             catch(Exception e)
             {
