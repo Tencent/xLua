@@ -363,7 +363,8 @@ namespace XLua
                         }
                         else
                         {
-                            return translator.SafeGetCSObj(L, idx);
+                            object obj = translator.SafeGetCSObj(L, idx);
+                            return (obj is RawObject) ? (obj as RawObject).Target : obj;
                         }
                     }
                 default:
