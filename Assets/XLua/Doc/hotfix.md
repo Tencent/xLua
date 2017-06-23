@@ -93,11 +93,11 @@ Stateless和Stateful的区别请看下下节。
 
 * IgnoreProperty
 
-不对属性注入及生成适配代码。
+不对属性注入及生成适配代码，一般而言，大多数属性的实现都很简单，出错几率比较小，建议不注入。
 
 * IgnoreNotPublic
 
-不对非public的方法注入及生成适配代码。
+不对非public的方法注入及生成适配代码。除了像MonoBehaviour那种会被反射调用的私有方法必须得注入，其它仅被本类调用的非public方法可以不注入，只不过修复时会工作量稍大，所有引用到这个函数的public方法都要重写。
 
 * Inline
 
@@ -109,7 +109,7 @@ Stateless和Stateful的区别请看下下节。
 
 好处：对text段影响小。
 
-坏处：使用不太方便，不想原来的使用那么方便，需要通过id来指明hotfix哪个函数，而这个id是代码注入工具时分配的，函数到id的映射会保存在Gen/Resources/hotfix_id_map.lua.txt，发布手机版本后请妥善保存该文件。
+坏处：使用不像默认方式那么方便，需要通过id来指明hotfix哪个函数，而这个id是代码注入工具时分配的，函数到id的映射会保存在Gen/Resources/hotfix_id_map.lua.txt，并且自动加时间戳备份到hotfix_id_map.lua.txt同级目录，发布手机版本后请妥善保存该文件。
 
 该文件的格式大概如下：
 
@@ -144,6 +144,8 @@ return {
 CS.XLua.HotfixDelegateBridge.Set(7, func)
 ~~~
 
+如果是重载函数，将会一个函数名对应多个id，比如上面的Add函数。
+
 能不能自动化一些呢？可以，xlua.util提供了auto_id_map函数，执行一次后你就可以像以前那样直接用类，方法名去指明修补的函数。
 
 ~~~lua
@@ -158,7 +160,7 @@ xlua.hotfix(CS.HotfixTest, 'Update', function(self)
 
 前提是hotfix_id_map.lua.txt放到可以通过require 'hotfix_id_map'引用到的地方。
 
-ps：虽然xlua执行代码注入时会把hotfix_id_map.lua.txt放到Resources下，但那时似乎Unity已经不再处理新增的文件。貌似可以通过提前执行“Hotfix inject in Editor”来提前生成，但目前不确认两次生成的id是否必定一致。
+ps：虽然xlua执行代码注入时会把hotfix_id_map.lua.txt放到Resources下，但那时似乎Unity已经不再处理新增的文件。貌似可以通过提前执行“Hotfix inject in Editor”来提前生成，但id不一定一样，比如有的类型里头有平台/编辑器专用的api，编辑器下和真机下的id将不一样。
 
 ## 使用建议
 
