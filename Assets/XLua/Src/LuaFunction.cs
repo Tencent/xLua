@@ -210,6 +210,10 @@ namespace XLua
             lock (luaEnv.luaEnvLock)
             {
 #endif
+                if (LuaIndexes.LUA_REGISTRYINDEX != -10000)
+                {
+                    throw new InvalidOperationException("SetEnv not support in lua53");
+                }
                 var L = luaEnv.L;
                 int oldTop = LuaAPI.lua_gettop(L);
                 push(L);
