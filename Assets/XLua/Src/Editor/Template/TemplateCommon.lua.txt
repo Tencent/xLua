@@ -171,13 +171,21 @@ function SetGenPushAndUpdateTypes(list)
     end)
 end
 
-function CsFullTypeName(t)
+local xLuaClasses
+function SetXLuaClasses(list)
+    xLuaClasses = {}
+	ForEachCsList(list, function(t)
+        xLuaClasses[t.Name] = true
+    end)
+end
+
+local function _CsFullTypeName(t)
     if t.IsArray then
-        return CsFullTypeName(t:GetElementType()) .. '[' .. string.rep(',', t:GetArrayRank() - 1) .. ']'
+        return _CsFullTypeName(t:GetElementType()) .. '[' .. string.rep(',', t:GetArrayRank() - 1) .. ']'
     elseif t.IsByRef then
-        return CsFullTypeName(t:GetElementType())
+        return _CsFullTypeName(t:GetElementType())
     elseif t.IsGenericParameter then
-        return CsFullTypeName(t.BaseType)
+        return _CsFullTypeName(t.BaseType)
     end
 
     local name = t.FullName:gsub("&", ""):gsub("%+", ".") 
@@ -187,9 +195,14 @@ function CsFullTypeName(t)
 	local genericParameter = ""
     ForEachCsList(t:GetGenericArguments(), function(at, ati)
         if ati ~= 0 then  genericParameter = genericParameter .. ', ' end
-        genericParameter = genericParameter .. CsFullTypeName(at)
+        genericParameter = genericParameter .. _CsFullTypeName(at)
     end)
     return name:gsub("`%d+", '<' .. genericParameter .. '>'):gsub("%[%[.*", "")
+end
+
+function CsFullTypeName(t)
+    local name = _CsFullTypeName(t)
+	return xLuaClasses[name] and ("global::" .. name) or name
 end
 
 function CSVariableName(t)
