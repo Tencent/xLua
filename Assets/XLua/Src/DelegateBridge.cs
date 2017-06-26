@@ -117,7 +117,7 @@ namespace XLua
                 DelegateBridge.DelegateBridgeList = newList;
             }
             DelegateBridge.DelegateBridgeList[idx] = val;
-#if (UNITY_IPHONE || ENABLE_IL2CPP) && !UNITY_EDITOR
+#if UNITY_IPHONE && !UNITY_EDITOR
             xlua_set_hotfix_flag(idx, val != null);
 #endif
         }
