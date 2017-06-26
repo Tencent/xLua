@@ -674,6 +674,11 @@ namespace XLua
                 object obj;
                 if (udata != -1 && objects.TryGetValue(udata, out obj))
                 {
+                    RawObject rawObject = obj as RawObject;
+                    if (rawObject != null)
+                    {
+                        obj = rawObject.Target;
+                    }
                     return type.IsAssignableFrom(obj.GetType());
                 }
 
@@ -694,7 +699,9 @@ namespace XLua
 
             if (udata != -1)
             {
-                return objects.Get(udata);
+                object obj = objects.Get(udata);
+                RawObject rawObject = obj as RawObject;
+                return rawObject == null ? obj : rawObject.Target;
             }
             else
             {
