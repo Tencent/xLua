@@ -1,4 +1,18 @@
-﻿v2.1.7 2017年5月17日
+﻿v2.1.8 待发布
+新增特性
+1、Hotfix标签添加几个订制参数：ValueTypeBoxing、IgnoreProperty、IgnoreNotPublic、Inline、IntKey
+2、Hotfix代码注入优化，减少text段占用；
+3、Hotfix配置支持放Editor目录，可以减少text段占用；
+4、支持以指定类型传递object参数；
+5、反射调用Obsolete方法在Editor下打印warning；
+
+变更
+
+bug修复
+1、pinvoke独立设置的In，Out属性可能导致生成代码失败；
+2、如果业务在全局名字空间有和xLua名字空间的同名类，生成代码编译失败；
+
+v2.1.7 2017年5月17日
 新增特性
 1、支持发布UWP（含HoloLens，Xbox one，Win10 Mobile、Win10 PC）应用；
 2、支持对lua源代码ras+sha1签名；
