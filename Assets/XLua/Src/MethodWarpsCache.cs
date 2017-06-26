@@ -61,7 +61,7 @@ namespace XLua
             if (method.IsDefined(typeof(ObsoleteAttribute), true))
             {
                 ObsoleteAttribute info = Attribute.GetCustomAttribute(method, typeof(ObsoleteAttribute)) as ObsoleteAttribute;
-                UnityEngine.Debug.LogWarning("Obsolete Method [" + method + "]: " + info.Message);
+                UnityEngine.Debug.LogWarning("Obsolete Method [" + method.DeclaringType.ToString() + method.Name + "]: " + info.Message);
             }
 #endif
             HasDefalutValue = false;
