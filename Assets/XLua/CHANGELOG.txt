@@ -1,4 +1,4 @@
-﻿v2.1.8 待发布
+﻿v2.1.8 2017年6月27日
 新增特性
 1、Hotfix标签添加几个订制参数：ValueTypeBoxing、IgnoreProperty、IgnoreNotPublic、Inline、IntKey
 2、Hotfix代码注入优化，减少text段占用；
