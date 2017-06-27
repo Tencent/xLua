@@ -42,14 +42,14 @@ public static List<Type> mymodule_lua_call_cs_list = new List<Type>()
 ~~~csharp
 
 [Hotfix]
-publicstaticList&lt;Type&gt; by\_property
-{
-    get
+    public static List<Type> by_property
     {
-        return (from type inAssembly.GetExecutingAssembly().GetTypes()
-                where type.Namespace == &quot;XXXX&quot;
-                select type).ToList();
-    }
+        get
+        {
+            return (from type in Assembly.GetExecutingAssembly().GetTypes()
+                    where type.Namespace == "XXXX"
+                    select type).ToList();
+        }
 }
 
 ~~~
