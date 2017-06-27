@@ -57,13 +57,6 @@ namespace XLua
             this.translator = translator;
             this.targetType = targetType;
             this.method = method;
-#if UNITY_EDITOR
-            if (method.IsDefined(typeof(ObsoleteAttribute), true))
-            {
-                ObsoleteAttribute info = Attribute.GetCustomAttribute(method, typeof(ObsoleteAttribute)) as ObsoleteAttribute;
-                UnityEngine.Debug.LogWarning("Obsolete Method [" + method.DeclaringType.ToString() + method.Name + "]: " + info.Message);
-            }
-#endif
             HasDefalutValue = false;
         }
 
@@ -185,6 +178,13 @@ namespace XLua
         {
             try
             {
+#if UNITY_EDITOR && !DISABLE_OBSOLETE_WARNING
+                if (method.IsDefined(typeof(ObsoleteAttribute), true))
+                {
+                    ObsoleteAttribute info = Attribute.GetCustomAttribute(method, typeof(ObsoleteAttribute)) as ObsoleteAttribute;
+                    UnityEngine.Debug.LogWarning("Obsolete Method [" + method.DeclaringType.ToString() + "." + method.Name + "]: " + info.Message);
+                } 
+#endif
                 object target = null;
                 MethodBase toInvoke = method;
 
