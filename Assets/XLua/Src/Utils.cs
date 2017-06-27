@@ -376,8 +376,15 @@ namespace XLua
         {
             return (RealStatePtr L) =>
             {
-                ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
-                return translator.TranslateToEnumToTop(L, type, 1);
+                try
+                {
+                    ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
+                    return translator.TranslateToEnumToTop(L, type, 1);
+                }
+                catch(Exception e)
+                {
+                    return LuaAPI.luaL_error(L, "cast to " + type + " exception:" + e);
+                }
             };
         }
 
