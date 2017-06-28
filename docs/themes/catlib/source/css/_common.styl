@@ -1,0 +1,63 @@
+@import "_settings"
+
+body,footer,header, h1, h2, h3, h4, h5, h6, hr, p, blockquote, dl, dt, dd, ul, ol, li, form, fieldset, legend, button, input, textarea, th, td
+    margin 0
+    padding 0
+	text-align center
+	-webkit-text-size-adjust none
+	color: $main-color
+
+body,button, input, select, textarea, ol,p, blockquote, dl, dt, dd, ul, ol, li, form, fieldset, legend, button, input, textarea, th, td
+    outline none 
+    font 1em "Helvetica Neue","Helvetica","Lucida Grande","Arial","Hiragino Sans GB","Microsoft Yahei","WenQuanYi Micro Hei","sans-serif",arial,sans-serif; 
+    text-align left
+    color: $main-color
+
+body
+    background-color white 
+    background-attachment fixed
+
+ul, ol 
+    list-style none
+
+a
+	text-decoration none
+    transition all 0.5s
+    -moz-transition all 0.5s
+    -webkit-transition all 0.5s
+    -o-transition all 0.5s
+    cursor pointer
+	color: $main-color
+	text-decoration none
+
+a:hover
+    text-decoration underline 
+    outline 0 
+    color: $main-color
+
+.abs 
+    position absolute
+
+.clear:after
+    content "."  
+    display block  
+    height 0 
+    clear both 
+    visibility hidden
+
+.clear
+     zoom 1
+
+button
+    border none
+
+html
+    overflow-x hidden
+    
+body 
+    min-width 20rem  
+    overflow-x hidden
+
+.border
+    padding-left 1rem 
+    padding-right 1rem
