@@ -1,10 +1,10 @@
 ---
-title: 介绍
+title: 热标识
 type: guide
 order: 1000
 ---
 
-## 使用方式
+### 使用方式
 
 1、添加HOTFIX_ENABLE宏打开该特性（在Unity3D的File->Build Setting->Scripting Define Symbols下添加）。编辑器、各手机平台这个宏要分别设置！如果是自动化打包，要注意在代码里头用API设置的宏是不生效的，需要在编辑器设置。
 
@@ -14,7 +14,7 @@ order: 1000
 
 3、注入，构建手机包这个步骤会在构建时自动进行，编辑器下开发补丁需要手动执行"XLua/Hotfix Inject In Editor"菜单。注入成功会打印“hotfix inject finish!”或者“had injected!”。
 
-## 内嵌模式
+### 内嵌模式
 
 默认通过小工具执行代码注入，也可以采用内嵌到编辑器的方式，定义INJECT_WITHOUT_TOOL宏即可。
 
@@ -29,7 +29,7 @@ OSX命令行 cp /Applications/Unity/Unity.app/Contents/Managed/Mono.Cecil.* Proj
 Win命令行 copy UnityPath\Editor\Data\Managed\Mono.Cecil.* Project\Assets\XLua\Src\Editor\
 ```
 
-## 约束
+### 约束
 
 不支持静态构造函数。
 
@@ -37,7 +37,7 @@ Win命令行 copy UnityPath\Editor\Data\Managed\Mono.Cecil.* Project\Assets\XLua
 
 目前只支持Assets下代码的热补丁，不支持引擎，c#系统库的热补丁。
 
-## API
+### API
 xlua.hotfix(class, [method_name], fix)
 
 * 描述         ： 注入lua补丁
@@ -50,7 +50,7 @@ xlua.private_accessible(class)
 * 描述          ： 让一个类的私有字段，属性，方法等可用
 * class         ： 同xlua.hotfix的class参数
 
-## 标识要热更新的类型
+### 标识要热更新的类型
 
 和其它配置一样，有两种方式
 
@@ -58,7 +58,7 @@ xlua.private_accessible(class)
 
 方式二：在一个static类的static字段或者属性里头配置一个列表。属性可以用于实现的比较复杂的配置，比如根据Namespace做白名单。
 
-~~~csharp
+```csharp
 public static class HotfixCfg
 {
     [Hotfix]
@@ -79,9 +79,9 @@ public static class HotfixCfg
         }
     }
 }
-~~~
+```
 
-## Hotfix Flag
+### Hotfix Flag
 
 Hotfix标签可以设置一些标志位对生成代码及插桩定制化
 
@@ -119,7 +119,7 @@ Stateless和Stateful的区别请看下下节。
 
 该文件的格式大概如下：
 
-~~~lua
+```lua
 return {
     ["HotfixTest"] = {
         [".ctor"] = {
@@ -142,19 +142,19 @@ return {
         },
     },
 }
-~~~
+```
 
 想要替换HotfixTest的Update函数，你得
 
-~~~lua
+```lua
 CS.XLua.HotfixDelegateBridge.Set(7, func)
-~~~
+```
 
 如果是重载函数，将会一个函数名对应多个id，比如上面的Add函数。
 
 能不能自动化一些呢？可以，xlua.util提供了auto_id_map函数，执行一次后你就可以像以前那样直接用类，方法名去指明修补的函数。
 
-~~~lua
+```lua
 (require 'xlua.util').auto_id_map()
 xlua.hotfix(CS.HotfixTest, 'Update', function(self)
 		self.tick = self.tick + 1
@@ -162,20 +162,20 @@ xlua.hotfix(CS.HotfixTest, 'Update', function(self)
 			print('<<<<<<<<Update in lua, tick = ' .. self.tick)
 		end
 	end)
-~~~
+```
 
 前提是hotfix_id_map.lua.txt放到可以通过require 'hotfix_id_map'引用到的地方。
 
 ps：虽然xlua执行代码注入时会把hotfix_id_map.lua.txt放到Resources下，但那时似乎Unity已经不再处理新增的文件。貌似可以通过提前执行“Hotfix inject in Editor”来提前生成，但id不一定一样，比如有的类型里头有平台/编辑器专用的api，编辑器下和真机下的id将不一样。
 
-## 使用建议
+### 使用建议
 
 * 对所有较大可能变动的类型加上Hotfix标识；
 * 建议用反射找出所有函数参数、字段、属性、事件涉及的delegate类型，标注CSharpCallLua；
 * 业务代码、引擎API、系统API，需要在Lua补丁里头高性能访问的类型，加上LuaCallCSharp；
 * 引擎API、系统API可能被代码剪裁调（C#无引用的地方都会被剪裁），如果觉得可能会新增C#代码之外的API调用，这些API所在的类型要么加LuaCallCSharp，要么加ReflectionUse；
 
-## Stateless和Stateful
+### Stateless和Stateful
 
 打Hotfix标签时，默认是Stateless方式，你也可以选Stateful方式，我们先说区别，再说使用场景。
 
@@ -187,7 +187,7 @@ Stateless比较适合无状态的类，有状态的话，你得通过反射去�
 
 Stateful的代价是会在类增加一个LuaTable类型的字段（中间层面增加，不会改源代码）。但这种方式是适用性更广，比如你不想要lua状态，可以在构造函数拦截那返回空。而且操作状态性能比反射操作C#私有变量要好，也可以随意新增任意的状态信息。缺点是，执行成员函数之前就new好的对象，接收到的状态会是空，所以需要重启，在一开始就执行替换。
 
-## 打补丁
+### 打补丁
 
 xlua可以用lua函数替换C#的构造函数，函数，属性，事件的替换。lua实现都是函数，比如属性对于一个getter函数和一个setter函数，事件对应一个add函数和一个remove函数。
 
@@ -232,7 +232,7 @@ end)
 
 * 构造函数
 
-构造函数对应的method_name是".ctor"。
+构造函数对应的method_name是`.ctor`。
 
 如果是Stateful方式，你可以返回一个table作为这个对象的状态。
 
@@ -272,11 +272,11 @@ public class GenericClass<T>
 ｝
 ```
 
-你只能对GenericClass\<double\>，GenericClass\<int\>这些类，而不是对GenericClass打补丁。
+你只能对GenericClass`<double>`，GenericClass`<int>`这些类，而不是对GenericClass打补丁。
 
-另外值得一提的是，要注意泛化类型的命名方式，比如GenericClass\<double\>的命名是GenericClass`1[System.Double]，具体可以看[MSDN](https://msdn.microsoft.com/en-us/library/w3f99sx1.aspx)。
+另外值得一提的是，要注意泛化类型的命名方式，比如GenericClass`<double>`的命名是GenericClass`1[System.Double]，具体可以看[MSDN](https://msdn.microsoft.com/en-us/library/w3f99sx1.aspx)。
 
-对GenericClass<double>打补丁的实例如下：
+对GenericClass`<double>`打补丁的实例如下：
 
 ```csharp
 luaenv.DoString(@"
@@ -299,7 +299,7 @@ luaenv.DoString(@"
 
 通过util.cs_generator可以用一个function模拟一个IEnumerator，在里头用coroutine.yield，就类似C#里头的yield return。比如下面的C#代码和对应的hotfix代码是等同效果的
 
-~~~csharp
+```csharp
 [XLua.Hotfix]
 public class HotFixSubClass : MonoBehaviour {
     IEnumerator Start()
@@ -311,9 +311,9 @@ public class HotFixSubClass : MonoBehaviour {
         }
     }
 }
-~~~
+```
 
-~~~csharp
+```csharp
 luaenv.DoString(@"
     local util = require 'xlua.util'
 	xlua.hotfix(CS.HotFixSubClass,{
@@ -327,7 +327,7 @@ luaenv.DoString(@"
 		end;
 	})
 ");
-~~~
+```
 
 * 整个类
 
