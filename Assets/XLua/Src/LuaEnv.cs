@@ -382,12 +382,12 @@ namespace XLua
                 if (disposed) return;
                 Tick();
 
+                LuaAPI.lua_close(L);
+
                 if (!translator.AllDelegateBridgeReleased())
                 {
                     throw new InvalidOperationException("try to dispose a LuaEnv with C# callback!");
                 }
-
-                LuaAPI.lua_close(L);
 
                 ObjectTranslatorPool.Instance.Remove(L);
                 translator = null;
