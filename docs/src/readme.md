@@ -12,11 +12,11 @@ order 为左侧导航排序，但是注意，假设0开始是基础的区域，1
 
 > 这是小提示框用法
 
-![图片用法](https://camo.githubusercontent.com/f3ee503ea31e85234c7be36b33688afeb540b63a/687474703a2f2f6361746c69622e696f2f7374796c652f6c6f676f2e706e67)
+![图片用法](https://github.com/Tencent/xLua/blob/master/Assets/XLua/Doc/xLua.png)
 
 ps：markdown的图片不会调整大小所以如果要使用调整大小的图片应该用：
 
-<img width="173" height="57" src="https://camo.githubusercontent.com/f3ee503ea31e85234c7be36b33688afeb540b63a/687474703a2f2f6361746c69622e696f2f7374796c652f6c6f676f2e706e67">
+<img width="173" height="57" src="https://github.com/Tencent/xLua/blob/master/Assets/XLua/Doc/xLua.png">
 
 
 ### 子标题会被索引
@@ -26,7 +26,7 @@ ps：markdown的图片不会调整大小所以如果要使用调整大小的图�
 
 ### 子标题2
 
-[超链接用法](https://github.com/catlib/catlib)
+[超链接用法](https://github.com/tencent/xlua)
 
 - 列表用法
 - 列表用法

@@ -12,13 +12,13 @@ xLua目前以zip包形式发布，在工程目录下解压即可。
 
 ### xLua可以放别的目录吗？
 
-可以，但生成代码目录需要配置一下（默认放Assets\XLua\Gen目录），具体可以看《XLua的配置.doc》的GenPath配置介绍。
+可以，但生成代码目录需要配置一下（默认放`Assets\XLua\Gen`目录），具体可以看《XLua的配置.doc》的GenPath配置介绍。
 
 ### lua源码只能以txt后缀？
 
 什么后缀都可以。
 
-如果你想以TextAsset打包到安装包（比如放到Resources目录），Unity不认lua后缀，这是Unity的规则。
+如果你想以`TextAsset`打包到安装包（比如放到`Resources`目录），Unity不认`lua`后缀，这是Unity的规则。
 
 如果你不打包到安装包，就没有后缀的限制：比如自行下载到某个目录（这也是热更的正确姿势），然后通过CustomLoader或者设置package.path去读这个目录。
 
@@ -26,7 +26,7 @@ xLua目前以zip包形式发布，在工程目录下解压即可。
 
 ### Plugins源码在哪里可以找到，怎么使用？
 
-Plugins源码位于xLua_Project_Root/build下。
+Plugins源码位于`xLua_Project_Root/build`下。
 
 源码编译依赖cmake，安装cmake后执行make_xxxx_yyyy.zz即可，xxxx代表平台，比如ios，android等，yyyy是要集成的虚拟机，有lua53和luajit两者，zz是后缀，windows下是bat，其它平台是sh。
 

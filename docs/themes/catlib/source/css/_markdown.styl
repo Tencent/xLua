@@ -17,7 +17,7 @@ article
         color $main-color 
         opacity 0.3
     h4
-        font-size 1.125rem  
+        font-size 1rem  
         margin-top 2.125rem
         margin-bottom 1.25rem
     h5
@@ -36,7 +36,30 @@ article
         list-style disc
         font-size 0.9rem
         li
+            padding-top 0.25rem
             color rgb(82,82,82);
+    table
+        width 100%
+        border-collapse collapse 
+        border 0
+        border-spacing 0  
+        margin-bottom 1rem
+        margin-top 1rem;
+        tr:nth-child(even) 
+            td
+                background-color rgb(247,247,247)
+        .title-row 
+            background-color #ededed
+        tr 
+            th, td
+                padding 0.5rem 1rem 0.5rem 1rem
+                color rgb(82,82,82)
+            th
+                background-color #e8e8e8
+                font-weight bold
+                font-size 0.85rem
+            td
+                font-size 0.75rem
     blockquote
         padding 12px 24px 12px 30px
         margin 2em 0
@@ -92,10 +115,6 @@ article
             color #FFF
         p a:hover
             color:rgb(252,216,214);
-    hr
-        height:1px;
-        border:none;
-        border-top:1px dashed rgb(220,220,220);
     ol
         list-style-type:none;
         counter-reset:sectioncounter;
@@ -104,9 +123,14 @@ article
         font-size 0.9rem
         li
             color rgb(82,82,82);
+            padding-top 0.25rem
         li:before
             content:counter(sectioncounter) ". "
             counter-increment:sectioncounter 
+    hr
+        height:1px;
+        border:none;
+        border-top:1px dashed rgb(220,220,220);
     figure
         margin 1.2rem 0
     .highlight

@@ -26,7 +26,7 @@ xLua在功能、性能、易用性都有不少突破，这几方面分别最具�
 
 打开zip包，你会看到一个Assets目录，这目录就对应Unity工程的Assets目录，保持这目录结构放到你的Unity工程。
 
-如果希望安装到其它目录，请看[FAQ](Assets/XLua/Doc/faq.md)相关介绍。
+如果希望安装到其它目录，请看[FAQ](faq.html)相关介绍。
 
 ### lua5.3 vs luajit
 
@@ -83,30 +83,30 @@ Debug.Log("max:" + max(32, 12));
 * 运行时影响小，不打补丁基本和原有程序一样。
 * 出问题了可以用Lua来打补丁，这时才会走到lua代码逻辑；
 
-> [这里](Assets/XLua/Doc/hotfix.md)是使用指南。
+> [这里](hotfix.html)是使用指南。
 
 ### 更多示例
 
-* [01_Helloworld](Assets/XLua/Examples/01_Helloworld/): 快速入门的例子。
-* [02_U3DScripting](Assets/XLua/Examples/02_U3DScripting/): 展示怎么用lua来写MonoBehaviour。
-* [03_UIEvent](Assets/XLua/Examples/03_UIEvent/): 展示怎么用lua来写UI逻辑。
-* [04_LuaObjectOrented](Assets/XLua/Examples/04_LuaObjectOrented/): 展示lua面向对象和C#的配合。
-* [05_NoGc](Assets/XLua/Examples/05_NoGc/): 展示怎么去避免值类型的GC。
-* [06_Coroutine](Assets/XLua/Examples/06_Coroutine/): 展示lua协程怎么和Unity协程相配合。
-* [07_AsyncTest](Assets/XLua/Examples/07_AsyncTest/): 展示怎么用lua协程来把异步逻辑同步化。
-* [08_Hotfix](Assets/XLua/Examples/08_Hotfix/): 热补丁的示例（需要开启热补丁特性，如何开启请看[指南](Assets/XLua/Doc/hotfix.md)）。
-* [09_GenericMethod](Assets/XLua/Examples/09_GenericMethod/): 泛化函数支持的演示。
-* [10_SignatureLoader](Assets/XLua/Examples/10_SignatureLoader/): 展示如何读取经数字签名的lua脚本，参见[数字签名](Assets/XLua/Doc/signature.md)的文档介绍。
-* [11_RawObject](Assets/XLua/Examples/11_RawObject/): 当C#参数是object时，如何把一个lua number指定以boxing后的int传递过去。
+* [01_Helloworld](https://github.com/Tencent/xLua/tree/master/Assets/XLua/Examples/01_Helloworld/): 快速入门的例子。
+* [02_U3DScripting](https://github.com/Tencent/xLua/tree/master/Assets/XLua/Examples/02_U3DScripting/): 展示怎么用lua来写MonoBehaviour。
+* [03_UIEvent](https://github.com/Tencent/xLua/tree/master/Assets/XLua/Examples/03_UIEvent/): 展示怎么用lua来写UI逻辑。
+* [04_LuaObjectOrented](https://github.com/Tencent/xLua/tree/master/Assets/XLua/Examples/04_LuaObjectOrented/): 展示lua面向对象和C#的配合。
+* [05_NoGc](https://github.com/Tencent/xLua/tree/master/Assets/XLua/Examples/05_NoGc/): 展示怎么去避免值类型的GC。
+* [06_Coroutine](https://github.com/Tencent/xLua/tree/master/Assets/XLua/Examples/06_Coroutine/): 展示lua协程怎么和Unity协程相配合。
+* [07_AsyncTest](https://github.com/Tencent/xLua/tree/master/Assets/XLua/Examples/07_AsyncTest/): 展示怎么用lua协程来把异步逻辑同步化。
+* [08_Hotfix](https://github.com/Tencent/xLua/tree/master/Assets/XLua/Examples/08_Hotfix/): 热补丁的示例（需要开启热补丁特性，如何开启请看[指南](Assets/XLua/Doc/hotfix.md)）。
+* [09_GenericMethod](https://github.com/Tencent/xLua/tree/master/Assets/XLua/Examples/09_GenericMethod/): 泛化函数支持的演示。
+* [10_SignatureLoader](https://github.com/Tencent/xLua/tree/master/Assets/XLua/Examples/10_SignatureLoader/): 展示如何读取经数字签名的lua脚本，参见[数字签名](https://github.com/Tencent/xLua/tree/master/Assets/XLua/Doc/signature.md)的文档介绍。
+* [11_RawObject](https://github.com/Tencent/xLua/tree/master/Assets/XLua/Examples/11_RawObject/): 当C#参数是object时，如何把一个lua number指定以boxing后的int传递过去。
 
 ### 文档
 
-* [XLua教程.doc](Assets/XLua/Doc/XLua教程.doc)：教程，其配套代码[这里](Assets/XLua/Tutorial/)。
-* [XLua的配置](Assets/XLua/Doc/configure.md)：介绍如何配置xLua。
-* [XLua增加删除第三方lua库.doc](Assets/XLua/Doc/XLua增加删除第三方lua库.doc)：如何增删第三方lua扩展库。
-* [XLua API.doc](Assets/XLua/Doc/XLua_API.doc)：API文档。
-* [生成引擎二次开发指南](Assets/XLua/Doc/custom_generate.md)：介绍如何做生成引擎的二次开发。
-* [热补丁操作指南](Assets/XLua/Doc/hotfix.md)：介绍如何使用热补丁特性。
+* [XLua教程.doc](https://github.com/Tencent/xLua/tree/master/Assets/XLua/Doc/XLua教程.doc)：教程，其配套代码[这里](https://github.com/Tencent/xLua/tree/master/Assets/XLua/Tutorial/)。
+* [XLua的配置](https://github.com/Tencent/xLua/tree/master/Assets/XLua/Doc/configure.md)：介绍如何配置xLua。
+* [XLua增加删除第三方lua库.doc](https://github.com/Tencent/xLua/tree/master/Assets/XLua/Doc/XLua增加删除第三方lua库.doc)：如何增删第三方lua扩展库。
+* [XLua API.doc](https://github.com/Tencent/xLua/tree/master/Assets/XLua/Doc/XLua_API.doc)：API文档。
+* [生成引擎二次开发指南](https://github.com/Tencent/xLua/tree/master/Assets/XLua/Doc/custom_generate.md)：介绍如何做生成引擎的二次开发。
+* [热补丁操作指南](https://github.com/Tencent/xLua/tree/master/Assets/XLua/Doc/hotfix.md)：介绍如何使用热补丁特性。
 
 ### 技术支持
 

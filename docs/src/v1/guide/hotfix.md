@@ -4,6 +4,8 @@ type: guide
 order: 1000
 ---
 
+## 热标识
+
 ### 使用方式
 
 1、添加HOTFIX_ENABLE宏打开该特性（在Unity3D的File->Build Setting->Scripting Define Symbols下添加）。编辑器、各手机平台这个宏要分别设置！如果是自动化打包，要注意在代码里头用API设置的宏是不生效的，需要在编辑器设置。
