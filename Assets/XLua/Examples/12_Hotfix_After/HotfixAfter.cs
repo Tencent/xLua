@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using XLua;
+using System.Collections.Generic;
 
 [Hotfix]
 public class HotfixAfter : MonoBehaviour {

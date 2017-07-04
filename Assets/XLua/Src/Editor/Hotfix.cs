@@ -430,6 +430,30 @@ namespace XLua
                 }
             }
 
+#if HOTFIX_AFTER_ENABLE
+			//开启AfterFix会在函数结束前注入delelate,这个注入会自动忽略掉属性
+			foreach (var method in type.Methods)
+			{
+				if (ignoreNotPublic && !method.IsPublic)
+				{
+					continue;
+				}
+				if (method.IsSpecialName && (method.Name.StartsWith("get_") || method.Name.StartsWith("set_")))
+				{
+					continue;
+				}
+				if (method.Name != ".cctor" && !method.IsAbstract && !method.IsPInvokeImpl && method.Body != null && !method.Name.Contains("<"))
+				{
+					//Debug.Log(method);
+					if ((isInline || method.HasGenericParameters || genericInOut(assembly, method, hotfixType)) 
+					    ? !injectGenericMethod(assembly, method, hotfixType, stateTable, true) : !injectMethod(assembly, method, hotfixType, stateTable, true))
+					{
+						return false;
+					}
+				}
+			}
+#endif
+
             return true;
         }
 
@@ -591,11 +615,6 @@ namespace XLua
 
 		static bool injectMethod(AssemblyDefinition assembly, MethodDefinition method, HotfixFlagInTool hotfixType, FieldReference stateTable, bool isAfter = false)
 		{
-#if HOTFIX_AFTER_ENABLE
-			if (!isAfter) {
-				injectMethod(assembly, method, hotfixType, stateTable, true);
-			}
-#endif
 			var type = method.DeclaringType;
 			
 			bool isFinalize = (method.Name == "Finalize" && method.IsSpecialName);
@@ -645,10 +664,14 @@ namespace XLua
             var insertPoint = method.Body.Instructions[0];
             var processor = method.Body.GetILProcessor();
 
-			if (method.IsConstructor || (isAfter && !isFinalize))
+			if (method.IsConstructor)
 			{
 				insertPoint = findNextRet(method.Body.Instructions, insertPoint);
             }
+
+			if (isAfter && !isFinalize) {
+				insertPoint = method.Body.Instructions[method.Body.Instructions.Count - 1];
+			}
 
             while (insertPoint != null)
             {
@@ -802,12 +825,6 @@ namespace XLua
 
         static bool injectGenericMethod(AssemblyDefinition assembly, MethodDefinition method, HotfixFlagInTool hotfixType, FieldReference stateTable, bool isAfter = false)
         {
-#if HOTFIX_AFTER_ENABLE
-			if (!isAfter) {
-				injectGenericMethod(assembly, method, hotfixType, stateTable, true);
-			}
-#endif
-
             var type = method.DeclaringType;
             
             bool isFinalize = (method.Name == "Finalize" && method.IsSpecialName);
@@ -840,10 +857,14 @@ namespace XLua
             var insertPoint = method.Body.Instructions[0];
             var processor = method.Body.GetILProcessor();
 
-			if (method.IsConstructor || (isAfter && !isFinalize))
+			if (method.IsConstructor)
 			{
 				insertPoint = findNextRet(method.Body.Instructions, insertPoint);
             }
+
+			if (isAfter && !isFinalize) {
+				insertPoint = method.Body.Instructions[method.Body.Instructions.Count - 1];
+			}
 
             bool isStateful = hotfixType.HasFlag(HotfixFlagInTool.Stateful);
 
