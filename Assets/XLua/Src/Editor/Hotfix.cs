@@ -422,16 +422,29 @@ namespace XLua
                 if (method.Name != ".cctor" && !method.IsAbstract && !method.IsPInvokeImpl && method.Body != null && !method.Name.Contains("<"))
                 {
                     //Debug.Log(method);
-                    if ((isInline || method.HasGenericParameters || genericInOut(assembly, method, hotfixType)) 
-                        ? !injectGenericMethod(assembly, method, hotfixType, stateTable) :
-                        !injectMethod(assembly, method, hotfixType, stateTable))
-                    {
-                        return false;
-                    }
-                }
-            }
-
-            return true;
+#if HOTFIX_AFTER_ENABLE
+//					if ((isInline || method.HasGenericParameters || genericInOut(assembly, method, hotfixType)) 
+//					    ? !(injectGenericMethod(assembly, method, hotfixType, stateTable) && injectGenericMethod(assembly, method, hotfixType, stateTable, true))
+//					    : !(injectMethod(assembly, method, hotfixType, stateTable) && injectMethod(assembly, method, hotfixType, stateTable, true)))
+//					{
+//						return false;
+//					}
+					if ((isInline || method.HasGenericParameters || genericInOut(assembly, method, hotfixType)) 
+					    ? !injectGenericMethod(assembly, method, hotfixType, stateTable) : !injectMethod(assembly, method, hotfixType, stateTable))
+					{
+						return false;
+					}
+#else
+					if ((isInline || method.HasGenericParameters || genericInOut(assembly, method, hotfixType)) 
+					    ? !injectGenericMethod(assembly, method, hotfixType, stateTable) : !injectMethod(assembly, method, hotfixType, stateTable))
+					{
+						return false;
+					}
+					#endif
+				}
+			}
+			
+			return true;
         }
 
 #if !XLUA_GENERAL
@@ -551,7 +564,7 @@ namespace XLua
 
         static readonly int MAX_OVERLOAD = 100;
 
-        static string getDelegateName(MethodDefinition method)
+        static string getDelegateName(MethodDefinition method, bool isAfter = false)
         {
             string fieldName = method.Name;
             if (fieldName.StartsWith("."))
@@ -563,7 +576,8 @@ namespace XLua
             var type = method.DeclaringType;
             for (int i = 0; i < MAX_OVERLOAD; i++)
             {
-                string tmp = ccFlag + "__Hotfix" + i + "_" + fieldName;
+				//after注入对应了hotfixDelegate的100-199
+				string tmp = isAfter ? ccFlag + "__Hotfix" + (i + MAX_OVERLOAD) + "_" + fieldName : ccFlag + "__Hotfix" + i + "_" + fieldName;
                 if (!type.Fields.Any(f => f.Name == tmp)) // injected
                 {
                     luaDelegateName = tmp;
@@ -590,8 +604,13 @@ namespace XLua
             return null;
         }
 
-        static bool injectMethod(AssemblyDefinition assembly, MethodDefinition method, HotfixFlagInTool hotfixType, FieldReference stateTable)
+        static bool injectMethod(AssemblyDefinition assembly, MethodDefinition method, HotfixFlagInTool hotfixType, FieldReference stateTable, bool isAfter = true)
         {
+			if(isAfter)
+			{
+				injectMethod(assembly, method, hotfixType, stateTable, false);
+			}
+
             var type = method.DeclaringType;
             
             bool isFinalize = (method.Name == "Finalize" && method.IsSpecialName);
@@ -621,7 +640,7 @@ namespace XLua
                 injection = new VariableDefinition(delegateBridgeType);
                 method.Body.Variables.Add(injection);
 
-                var luaDelegateName = getDelegateName(method);
+                var luaDelegateName = getDelegateName(method, isAfter);
                 if (luaDelegateName == null)
                 {
                     Error("too many overload!");
@@ -641,9 +660,9 @@ namespace XLua
             var insertPoint = method.Body.Instructions[0];
             var processor = method.Body.GetILProcessor();
 
-            if (method.IsConstructor)
-            {
-                insertPoint = findNextRet(method.Body.Instructions, insertPoint);
+			if (method.IsConstructor || (isAfter && !isFinalize))
+			{
+				insertPoint = findNextRet(method.Body.Instructions, insertPoint);
             }
 
             while (insertPoint != null)
@@ -796,8 +815,12 @@ namespace XLua
             return definition;
         }
 
-        static bool injectGenericMethod(AssemblyDefinition assembly, MethodDefinition method, HotfixFlagInTool hotfixType, FieldReference stateTable)
+		static bool injectGenericMethod(AssemblyDefinition assembly, MethodDefinition method, HotfixFlagInTool hotfixType, FieldReference stateTable, bool isAfter = true)
         {
+			if (isAfter) {
+				injectGenericMethod(assembly, method, hotfixType, stateTable, false);
+			}
+
             var type = method.DeclaringType;
             
             bool isFinalize = (method.Name == "Finalize" && method.IsSpecialName);
@@ -808,7 +831,7 @@ namespace XLua
             VariableDefinition injection = null;
             if (!isIntKey)
             {
-                var luaDelegateName = getDelegateName(method);
+                var luaDelegateName = getDelegateName(method, isAfter);
                 if (luaDelegateName == null)
                 {
                     Error("too many overload!");
@@ -830,9 +853,9 @@ namespace XLua
             var insertPoint = method.Body.Instructions[0];
             var processor = method.Body.GetILProcessor();
 
-            if (method.IsConstructor)
-            {
-                insertPoint = findNextRet(method.Body.Instructions, insertPoint);
+			if (method.IsConstructor || (isAfter && !isFinalize))
+			{
+				insertPoint = findNextRet(method.Body.Instructions, insertPoint);
             }
 
             bool isStateful = hotfixType.HasFlag(HotfixFlagInTool.Stateful);
