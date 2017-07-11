@@ -1,0 +1,19 @@
+<section class="sidebar clearfix">
+    <ul>
+        <% site.pages.find({type: 'guide' , lang: page.lang}).sort('order').each(function (p) { %>
+            <% var fileName = p.path.replace(/^.+?\/([\w-]+)\.html/, '$1') %>
+            <% if(fileName == 'index'){%>
+                <li><h3>基础</h3></li>
+            <%}%>
+            <% if(fileName == 'tutorial'){%>
+                <li><h3>教程</h3></li>
+            <%}%>
+            <% if(fileName == 'hotfix'){%>
+                <li><h3>其他</h3></li>
+            <%}%>
+            <li>
+                <p><a href="<%- url_for(p.path) %>" class="sidebar-link<%- page.title === p.title ? ' current' : '' %><%- p.is_new ? ' new' : '' %>"><%- p.title %></a></p>
+            </li>
+        <% }) %>
+    </ul>
+</section>
