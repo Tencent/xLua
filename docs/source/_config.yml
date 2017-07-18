@@ -4,9 +4,9 @@
 
 # Site
 title: XLua
-subtitle: Pure C# Intepreter
-description: Pure C# Intepreter
-author: Ourpalm
+subtitle: Tencent XLua
+description: Tencent XLua
+author: Tencent
 language: zh-CN
 timezone: Asia/Shanghai
 
@@ -19,7 +19,7 @@ permalink_defaults:
 
 # Directory
 source_dir: src
-public_dir: public
+public_dir: ../public
 tag_dir: tags
 archive_dir: archives
 category_dir: categories
