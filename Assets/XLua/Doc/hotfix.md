@@ -44,6 +44,12 @@ xlua.private_accessible(class)
 * 描述          ： 让一个类的私有字段，属性，方法等可用
 * class         ： 同xlua.hotfix的class参数
 
+util.hotfix_ex(class, method_name, fix)
+
+* 描述         ： xlua.hotfix的增强版本，可以在fix函数里头执行原来的函数，缺点是fix的执行会略慢。
+* method_name  ： 方法名；
+* fix          ： 用来替换C#方法的lua function。
+
 ## 标识要热更新的类型
 
 和其它配置一样，有两种方式
