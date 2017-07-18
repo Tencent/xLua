@@ -98,10 +98,30 @@ local function auto_id_map()
     end
 end
 
+--和xlua.hotfix的区别是：这个可以调用原来的函数
+local function hotfix_ex(cs, field, func)
+    assert(type(field) == 'string' and type(func) == 'function', 'invalid argument: #2 string needed, #3 function needed!')
+    local function func_after(...)
+        xlua.hotfix(cs, field, nil)
+        local ret = {func(...)}
+        xlua.hotfix(cs, field, func_after)
+        return unpack(ret)
+    end
+    xlua.hotfix(cs, field, func_after)
+end
+
+local function bind(func, obj)
+    return function(...)
+        return func(obj, ...)
+    end
+end
+
 return {
     async_to_sync = async_to_sync,
     coroutine_call = coroutine_call,
     cs_generator = cs_generator,
     loadpackage = loadpackage,
     auto_id_map = auto_id_map,
+    hotfix_ex = hotfix_ex,
+    bind = bind,
 }

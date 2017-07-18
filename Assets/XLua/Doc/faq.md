@@ -211,3 +211,17 @@ print(dic:TryGetValue('a'))
 看[例子11](../Examples/11_RawObject/RawObjectTest.cs)
 
 
+## 如何做到先执行原来的C#逻辑，然后再执行补丁
+
+用util.hotfix_ex，可以调用原先的C#逻辑
+
+~~~lua
+local util = require 'xlua.util'
+util.hotfix_ex(CS.HotfixTest, 'Add', function(self, a, b)
+   local org_sum = self:Add(a, b)
+   print('org_sum', org_sum)
+   return a + b
+end)
+~~~
+
+
