@@ -1,6 +1,12 @@
 language: csharp
 script:
-  - xbuild /p:Configuration=Release General/vs2013/XLua.sln
-  - cp Assets/Plugins/x86_64/libxlua.so General/Bin/
   - cd General
+  - xbuild /p:Configuration=Release vs2013/XLua.sln
+  - cp ../Assets/Plugins/x86_64/libxlua.so Bin/
   - mono Bin/XLuaUnitTest.exe
+  - mono Tools/XLuaGenerate.exe Bin/XLuaTest.exe
+  - mv Gen Gen1
+  - mono Tools/XLuaGenerate.exe Bin/XLuaUnitTest.exe
+  - mv Gen Gen2
+  - xbuild /p:Configuration=Release vs2013/XLuaGenTest.sln
+  - mono Bin/XLuaUnitTestGenCode.exe

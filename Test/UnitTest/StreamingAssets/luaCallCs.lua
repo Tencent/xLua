@@ -65,7 +65,7 @@ end
 function CMyTestCaseLuaCallCS.CaseDefaultParamFunc5(self)
     self.count = 1 + self.count
 	local ret = CS.LuaTestObj.DefaultParaFuncMulti(100, "efg", 1, 98)
-	ASSERT_EQ(ret, 100)
+	ASSERT_EQ(ret, 101)
 end
 
 function CMyTestCaseLuaCallCS.CaseDefaultParamFunc6(self)
