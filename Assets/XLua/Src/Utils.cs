@@ -408,26 +408,7 @@ namespace XLua
                     {
                         type_def_extention_method.Add(type);
                     }
-                    else if(!type.IsInterface() && typeof(ReflectionConfig).IsAssignableFrom(type))
-                    {
-                        var tmp = (Activator.CreateInstance(type) as ReflectionConfig).ReflectionUse;
-                        if (tmp != null)
-                        {
-                            type_def_extention_method.AddRange(tmp
-                                .Where(t => t.IsDefined(typeof(ExtensionAttribute), false)));
-                        }
-                    }
-#if UNITY_EDITOR || XLUA_GENERAL
-                    else if (!type.IsInterface && typeof(GenConfig).IsAssignableFrom(type))
-                    {
-                        var tmp = (Activator.CreateInstance(type) as GenConfig).CSharpCallLua;
-                        if (tmp != null)
-                        {
-                            type_def_extention_method.AddRange(tmp
-                            .Where(t => t.IsDefined(typeof(ExtensionAttribute), false)));
-                        }
-                    }
-#endif
+
                     if (!type.IsAbstract() || !type.IsSealed()) continue;
 
                     var fields = type.GetFields(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);

@@ -284,15 +284,7 @@ namespace XLua
                 List<Type> cs_call_lua = new List<Type>();
                 foreach (var type in Utils.GetAllTypes())
                 {
-                    if (!type.IsInterface() && typeof(GenConfig).IsAssignableFrom(type))
-                    {
-                        var cfg = Activator.CreateInstance(type) as GenConfig;
-                        if (cfg.CSharpCallLua != null)
-                        {
-                            cs_call_lua.AddRange(cfg.CSharpCallLua);
-                        }
-                    }
-                    else if(type.IsDefined(typeof(CSharpCallLuaAttribute), false))
+                    if(type.IsDefined(typeof(CSharpCallLuaAttribute), false))
                     {
                         cs_call_lua.Add(type);
                     }
