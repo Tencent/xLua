@@ -1,5 +1,5 @@
 language: csharp
 script:
   - xbuild /p:Configuration=Release General/vs2013/XLua.sln
-  - cp Assets/Plugins/x86_64/libxlua.so .
+  - cp Assets/Plugins/x86_64/libxlua.so General/Bin/
   - mono General/Bin/XLuaUnitTest.exe
