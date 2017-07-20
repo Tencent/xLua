@@ -3,6 +3,7 @@ script:
   - cd General
   - xbuild /p:Configuration=Release vs2013/XLua.sln
   - cp ../Assets/Plugins/x86_64/libxlua.so Bin/
+  - cp ../Assets/Plugins/x86_64/libxlua.so Tools/
   - mono Bin/XLuaUnitTest.exe
   - mono Tools/XLuaGenerate.exe Bin/XLuaTest.exe
   - mv Gen Gen1
