@@ -162,6 +162,49 @@ links
     "XLua.Mini",
 }
 
+project "XLuaUnitTest"
+language "C#"
+kind "ConsoleApp"
+framework "4.0"
+targetdir "./Bin"
+
+files
+{
+    "./Src/XLuaUnitTest.cs",
+    "../Test/UnitTest/xLuaTest/**.cs",
+}
+
+defines
+{
+    "XLUA_GENERAL",
+}
+
+links
+{
+    "System",
+    "System.Core",
+    "XLua.Mini",
+}
+
+solution "XLuaGenTest"
+    configurations {
+        "Debug", "Release"
+    }
+
+    location ("./" .. (_ACTION or ""))
+    debugdir (".")
+    debugargs {  }
+
+    platforms { "Any CPU" }
+
+configuration "Debug"
+    symbols "On"
+    defines { "_DEBUG", "DEBUG", "TRACE" }
+configuration "Release"
+    flags { "Optimize" }
+configuration "vs*"
+    defines { "" }
+
 project "XLuaTestGenCode"
 language "C#"
 kind "ConsoleApp"
@@ -188,30 +231,6 @@ links
     "System.Core",
 }
 
-
-project "XLuaUnitTest"
-language "C#"
-kind "ConsoleApp"
-framework "4.0"
-targetdir "./Bin"
-
-files
-{
-    "./Src/XLuaUnitTest.cs",
-    "../Test/UnitTest/xLuaTest/**.cs",
-}
-
-defines
-{
-    "XLUA_GENERAL",
-}
-
-links
-{
-    "System",
-    "System.Core",
-    "XLua.Mini",
-}
 
 project "XLuaUnitTestGenCode"
 language "C#"

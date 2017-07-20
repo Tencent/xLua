@@ -1,0 +1,4 @@
+language: csharp
+script:
+  - xbuild /p:Configuration=Release General/vs2013/XLua.sln
+  - mono General/Bin/XLuaUnitTest.exe
