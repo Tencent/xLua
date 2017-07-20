@@ -119,30 +119,30 @@
   </resheader>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
   <data name="LuaClassWrap_tpl" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\..\assets\xlua\src\editor\template\luaclasswrap.tpl.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;gb2312</value>
+    <value>..\..\Assets\XLua\Src\Editor\Template\LuaClassWrap.tpl.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;gb2312</value>
   </data>
   <data name="LuaDelegateBridge_tpl" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\..\assets\xlua\src\editor\template\luadelegatebridge.tpl.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;gb2312</value>
+    <value>..\..\Assets\XLua\Src\Editor\Template\LuaDelegateBridge.tpl.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;gb2312</value>
   </data>
   <data name="LuaDelegateWrap_tpl" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\..\assets\xlua\src\editor\template\luadelegatewrap.tpl.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;gb2312</value>
+    <value>..\..\Assets\XLua\Src\Editor\Template\LuaDelegateWrap.tpl.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;gb2312</value>
   </data>
   <data name="LuaEnumWrap_tpl" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\..\assets\xlua\src\editor\template\luaenumwrap.tpl.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;gb2312</value>
+    <value>..\..\Assets\XLua\Src\Editor\Template\LuaEnumWrap.tpl.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;gb2312</value>
   </data>
   <data name="LuaInterfaceBridge_tpl" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\..\assets\xlua\src\editor\template\luainterfacebridge.tpl.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;gb2312</value>
+    <value>..\..\Assets\XLua\Src\Editor\Template\LuaInterfaceBridge.tpl.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;gb2312</value>
   </data>
   <data name="LuaRegister_tpl" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\..\assets\xlua\src\editor\template\luaregister.tpl.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;gb2312</value>
+    <value>..\..\Assets\XLua\Src\Editor\Template\LuaRegister.tpl.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;gb2312</value>
   </data>
   <data name="LuaWrapPusher_tpl" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\..\assets\xlua\src\editor\template\luawrappusher.tpl.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;gb2312</value>
+    <value>..\..\Assets\XLua\Src\Editor\Template\LuaWrapPusher.tpl.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;gb2312</value>
   </data>
   <data name="PackUnpack_tpl" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\..\assets\xlua\src\editor\template\packunpack.tpl.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;gb2312</value>
+    <value>..\..\Assets\XLua\Src\Editor\Template\PackUnpack.tpl.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;gb2312</value>
   </data>
   <data name="TemplateCommon_lua" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\..\assets\xlua\src\editor\template\templatecommon.lua.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;gb2312</value>
+    <value>..\..\Assets\XLua\Src\Editor\Template\TemplateCommon.lua.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;gb2312</value>
   </data>
 </root>
