@@ -584,14 +584,24 @@ namespace XLua
                     }
                     continue;
                 }
-                else if (method_name.StartsWith("get_") && prop_map.TryGetValue(method.Name.Substring(4), out prop)) // getter of property
+                else if (method_name.StartsWith("get_") && method.IsSpecialName) // getter of property
                 {
+                    string prop_name = method.Name.Substring(4);
+                    if (!prop_map.TryGetValue(prop_name, out prop))
+                    {
+                        prop = type.GetProperty(prop_name);
+                    }
                     LuaAPI.xlua_pushasciistring(L, prop.Name);
                     translator.PushFixCSFunction(L, genPropGetter(type, prop, method.IsStatic));
                     LuaAPI.lua_rawset(L, method.IsStatic ? cls_getter : obj_getter);
                 }
-                else if (method_name.StartsWith("set_") && prop_map.TryGetValue(method.Name.Substring(4), out prop)) // setter of property
+                else if (method_name.StartsWith("set_") && method.IsSpecialName) // setter of property
                 {
+                    string prop_name = method.Name.Substring(4);
+                    if (!prop_map.TryGetValue(prop_name, out prop))
+                    {
+                        prop = type.GetProperty(prop_name);
+                    }
                     LuaAPI.xlua_pushasciistring(L, prop.Name);
                     translator.PushFixCSFunction(L, genPropSetter(type, prop, method.IsStatic));
                     LuaAPI.lua_rawset(L, method.IsStatic ? cls_setter : obj_setter);
