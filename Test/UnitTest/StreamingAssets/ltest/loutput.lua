@@ -181,9 +181,9 @@ function CmdTestOutPut.StaticInfo(self)
 		self:Message("%s %s", self:getFMTStr("failed"), v)
 	end
 	
-	self:Message("\n %d SUITES, %d TESTS, %d FAILED", self.stat.iTotalSuite, self.stat.iTotalCase, iFailedNum)
-
-	self:outerList("StaticInfo")		
+	self:outerList("StaticInfo")	
+    
+    error(string.format("%d SUITES, %d TESTS, %d FAILED", self.stat.iTotalSuite, self.stat.iTotalCase, iFailedNum))
 end
 
 
