@@ -222,6 +222,8 @@ local function getSafeFullName(t)
     if t.IsGenericParameter then
         return t.BaseType == objType and t.Name or getSafeFullName(t.BaseType)
     end
+	
+	if not t.FullName then return "" end
 
     return t.FullName:gsub("&", "")
 end
