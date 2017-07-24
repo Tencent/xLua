@@ -743,6 +743,21 @@ namespace XLua
             }
         }
 
+#if GENERIC_SHARING
+        public T GetByType<T>(RealStatePtr L, int index)
+        {
+            Func<RealStatePtr, int, T> get_func;
+            if (tryGetGetFuncByType(typeof(T), out get_func))
+            {
+                return get_func(L, index);
+            }
+            else
+            {
+                return (T)GetObject(L, index, typeof(T));
+            }
+        }
+#endif
+
         public T[] GetParams<T>(RealStatePtr L, int index)
         {
             T[] ret = new T[Math.Max(LuaAPI.lua_gettop(L) - index + 1, 0)];

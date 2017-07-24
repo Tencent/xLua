@@ -849,6 +849,10 @@ namespace CSObjectWrapEditor
         {
             types = types.Where(type=>!type.IsEnum);
 
+#if GENERIC_SHARING
+            types = types.GroupBy(t => t.IsGenericType ? t.GetGenericTypeDefinition() : t).Select(g => g.Key);
+#endif
+
             var typeMap = types.ToDictionary(type => {
                 //Debug.Log("type:" + type);
                 return type.ToString();
@@ -963,7 +967,29 @@ namespace CSObjectWrapEditor
                                     select method;
             GenOne(typeof(DelegateBridgeBase), (type, type_info) =>
             {
+#if GENERIC_SHARING
+                type_info.Set("wraps", wraps.Where(t=>!t.IsGenericType).ToList());
+                var genericTypeGroups = wraps.Where(t => t.IsGenericType).GroupBy(t => t.GetGenericTypeDefinition());
+
+                var typeToArgsList = luaenv.NewTable();
+                foreach (var genericTypeGroup in genericTypeGroups)
+                {
+                    var argsList = luaenv.NewTable();
+                    int i = 1;
+                    foreach(var genericType in genericTypeGroup)
+                    {
+                        argsList.Set(i++, genericType.GetGenericArguments());
+                    }
+                    typeToArgsList.Set(genericTypeGroup.Key, argsList);
+                    argsList.Dispose();
+                }
+
+                type_info.Set("generic_wraps", typeToArgsList);
+                typeToArgsList.Dispose();
+#else
                 type_info.Set("wraps", wraps.ToList());
+#endif
+
                 type_info.Set("itf_bridges", itf_bridges.ToList());
                 type_info.Set("extension_methods", extension_methods.ToList());
             }, templateRef.LuaRegister, textWriter);

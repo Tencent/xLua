@@ -302,6 +302,8 @@ function GetCasterStatement(t, idx, var_name, need_declare, is_v_params)
         return statement .. "translator.GetObject(L, ".. idx ..", typeof(" .. CsFullTypeName(t) .."))"
     elseif is_struct then
         return statement .. "translator.Get(L, ".. idx ..", out " .. var_name .. ")"
+	elseif t.IsGenericParameter and not t.DeclaringMethod then
+	    return statement .. "translator.GetByType<"..t.Name..">(L, ".. idx ..")" 
     else
         return statement .. "("..CsFullTypeName(t)..")translator.GetObject(L, ".. idx ..", typeof(" .. CsFullTypeName(t) .."))" 
     end
@@ -344,6 +346,8 @@ function GetPushStatement(t, variable, is_v_params)
         return fixPush[testname] .. "(L, ".. variable ..")" 
     elseif genPushAndUpdateTypes[t] then
         return "translator.Push".. CSVariableName(t) .."(L, "..variable..")"
+    elseif t.IsGenericParameter and not t.DeclaringMethod then
+	    return "translator.PushByType(L, "..variable..")"
     else
         return "translator.Push(L, "..variable..")"
     end
