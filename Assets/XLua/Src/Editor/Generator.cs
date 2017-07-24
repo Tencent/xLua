@@ -1394,7 +1394,7 @@ namespace CSObjectWrapEditor
                 if (parameterType.IsGenericParameter)
                 {
                     var parameterConstraints = parameterType.GetGenericParameterConstraints();
-                    if (parameterConstraints.Length == 0 || !parameterConstraints[0].IsClass || hasGenericParameter(parameterConstraints[0]))
+                    if (parameterConstraints.Length == 0 || !parameterConstraints[0].IsClass || (parameterConstraints[0] == typeof(ValueType)) || hasGenericParameter(parameterConstraints[0]))
                         return false;
                     hasValidGenericParameter = true;
                 }
