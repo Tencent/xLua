@@ -179,13 +179,15 @@ function SetXLuaClasses(list)
     end)
 end
 
+local objType = typeof(CS.System.Object)
+
 local function _CsFullTypeName(t)
     if t.IsArray then
         return _CsFullTypeName(t:GetElementType()) .. '[' .. string.rep(',', t:GetArrayRank() - 1) .. ']'
     elseif t.IsByRef then
         return _CsFullTypeName(t:GetElementType())
     elseif t.IsGenericParameter then
-        return _CsFullTypeName(t.BaseType)
+        return t.BaseType == objType and t.Name or _CsFullTypeName(t.BaseType) --TODO:应该判断是否类型约束
     end
 
     local name = t.FullName:gsub("&", ""):gsub("%+", ".") 
@@ -197,7 +199,7 @@ local function _CsFullTypeName(t)
         if ati ~= 0 then  genericParameter = genericParameter .. ', ' end
         genericParameter = genericParameter .. _CsFullTypeName(at)
     end)
-    return name:gsub("`%d+", '<' .. genericParameter .. '>'):gsub("%[%[.*", "")
+    return name:gsub("`%d+", '<' .. genericParameter .. '>'):gsub("%[[^,%]].*", "")
 end
 
 function CsFullTypeName(t)
@@ -218,7 +220,7 @@ local function getSafeFullName(t)
     end
 
     if t.IsGenericParameter then
-        return getSafeFullName(t.BaseType)
+        return t.BaseType == objType and t.Name or getSafeFullName(t.BaseType)
     end
 
     return t.FullName:gsub("&", "")
