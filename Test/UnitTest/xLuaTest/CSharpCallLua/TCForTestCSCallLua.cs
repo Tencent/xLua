@@ -43,7 +43,8 @@ public struct Pedding
     public byte c;
 }
 
-[LuaCallCSharp(GenFlag.GCOptimize)]
+[GCOptimize]
+[LuaCallCSharp]
 public struct TestStruct
 {
     public TestStruct(int p1, int p2)

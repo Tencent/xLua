@@ -386,7 +386,8 @@ public delegate void NullEventHandler();
 public class ParaClass
 {}
 
-[LuaCallCSharp(GenFlag.GCOptimize)]
+[GCOptimize]
+[LuaCallCSharp]
 public struct ParaStruct
 {}
 

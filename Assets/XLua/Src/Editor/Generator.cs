@@ -1175,34 +1175,6 @@ namespace CSObjectWrapEditor
 
             foreach (var t in check_types)
             {
-                if(!t.IsInterface && typeof(GenConfig).IsAssignableFrom(t))
-                {
-                    var cfg = Activator.CreateInstance(t) as GenConfig;
-                    if (cfg.LuaCallCSharp != null) LuaCallCSharp.AddRange(cfg.LuaCallCSharp);
-                    if (cfg.CSharpCallLua != null) CSharpCallLua.AddRange(cfg.CSharpCallLua);
-                    if (cfg.BlackList != null) BlackList.AddRange(cfg.BlackList);
-                }
-                else if (!t.IsInterface && typeof(GCOptimizeConfig).IsAssignableFrom(t))
-                {
-                    var cfg = Activator.CreateInstance(t) as GCOptimizeConfig;
-                    if (cfg.TypeList != null) GCOptimizeList.AddRange(cfg.TypeList);
-                    if (cfg.AdditionalProperties != null)
-                    {
-                        foreach(var kv in cfg.AdditionalProperties)
-                        {
-                            if(!AdditionalProperties.ContainsKey(kv.Key))
-                            {
-                                AdditionalProperties.Add(kv.Key, kv.Value);
-                            }
-                        }
-                    }
-                }
-                else if (!t.IsInterface && typeof(ReflectionConfig).IsAssignableFrom(t))
-                {
-                    var cfg = Activator.CreateInstance(t) as ReflectionConfig;
-                    ReflectionUse.AddRange(cfg.ReflectionUse);
-                }
-
                 MergeCfg(t, null, () => t);
 
                 if (!t.IsAbstract || !t.IsSealed) continue;
@@ -1422,7 +1394,7 @@ namespace CSObjectWrapEditor
                 if (parameterType.IsGenericParameter)
                 {
                     var parameterConstraints = parameterType.GetGenericParameterConstraints();
-                    if (parameterConstraints.Length == 0 || !parameterConstraints[0].IsClass || hasGenericParameter(parameterConstraints[0]))
+                    if (parameterConstraints.Length == 0 || !parameterConstraints[0].IsClass || (parameterConstraints[0] == typeof(ValueType)) || hasGenericParameter(parameterConstraints[0]))
                         return false;
                     hasValidGenericParameter = true;
                 }

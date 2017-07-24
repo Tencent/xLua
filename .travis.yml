@@ -1,0 +1,17 @@
+language: csharp
+script:
+  - mkdir -p build_linux64 && cd build_linux64
+  - cmake ../build
+  - cd ..
+  - cmake --build build_linux64 --config Release
+  - cd General
+  - xbuild /p:Configuration=Release vs2013/XLua.sln
+  - cp ../build_linux64/libxlua.so Bin/
+  - cp ../build_linux64/libxlua.so Tools/
+  - mono Bin/XLuaUnitTest.exe
+  - mono Tools/XLuaGenerate.exe Bin/XLuaTest.exe
+  - mv Gen Gen1
+  - mono Tools/XLuaGenerate.exe Bin/XLuaUnitTest.exe
+  - mv Gen Gen2
+  - xbuild /p:Configuration=Release vs2013/XLuaGenTest.sln
+  - mono Bin/XLuaUnitTestGenCode.exe

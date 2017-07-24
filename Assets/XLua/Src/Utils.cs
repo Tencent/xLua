@@ -408,26 +408,7 @@ namespace XLua
                     {
                         type_def_extention_method.Add(type);
                     }
-                    else if(!type.IsInterface() && typeof(ReflectionConfig).IsAssignableFrom(type))
-                    {
-                        var tmp = (Activator.CreateInstance(type) as ReflectionConfig).ReflectionUse;
-                        if (tmp != null)
-                        {
-                            type_def_extention_method.AddRange(tmp
-                                .Where(t => t.IsDefined(typeof(ExtensionAttribute), false)));
-                        }
-                    }
-#if UNITY_EDITOR || XLUA_GENERAL
-                    else if (!type.IsInterface && typeof(GenConfig).IsAssignableFrom(type))
-                    {
-                        var tmp = (Activator.CreateInstance(type) as GenConfig).CSharpCallLua;
-                        if (tmp != null)
-                        {
-                            type_def_extention_method.AddRange(tmp
-                            .Where(t => t.IsDefined(typeof(ExtensionAttribute), false)));
-                        }
-                    }
-#endif
+
                     if (!type.IsAbstract() || !type.IsSealed()) continue;
 
                     var fields = type.GetFields(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
@@ -584,14 +565,24 @@ namespace XLua
                     }
                     continue;
                 }
-                else if (method_name.StartsWith("get_") && prop_map.TryGetValue(method.Name.Substring(4), out prop)) // getter of property
+                else if (method_name.StartsWith("get_") && method.IsSpecialName) // getter of property
                 {
+                    string prop_name = method.Name.Substring(4);
+                    if (!prop_map.TryGetValue(prop_name, out prop))
+                    {
+                        prop = type.GetProperty(prop_name);
+                    }
                     LuaAPI.xlua_pushasciistring(L, prop.Name);
                     translator.PushFixCSFunction(L, genPropGetter(type, prop, method.IsStatic));
                     LuaAPI.lua_rawset(L, method.IsStatic ? cls_getter : obj_getter);
                 }
-                else if (method_name.StartsWith("set_") && prop_map.TryGetValue(method.Name.Substring(4), out prop)) // setter of property
+                else if (method_name.StartsWith("set_") && method.IsSpecialName) // setter of property
                 {
+                    string prop_name = method.Name.Substring(4);
+                    if (!prop_map.TryGetValue(prop_name, out prop))
+                    {
+                        prop = type.GetProperty(prop_name);
+                    }
                     LuaAPI.xlua_pushasciistring(L, prop.Name);
                     translator.PushFixCSFunction(L, genPropSetter(type, prop, method.IsStatic));
                     LuaAPI.lua_rawset(L, method.IsStatic ? cls_setter : obj_setter);
