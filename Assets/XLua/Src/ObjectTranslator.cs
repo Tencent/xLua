@@ -468,7 +468,7 @@ namespace XLua
                 };
                 interfaceBridgeCreators.Add(interfaceType, creator);
 #else
-                throw new InvalidCastException("This interface must add to CSharpCallLua: " + interfaceType);
+                throw new InvalidCastException("This type must add to CSharpCallLua: " + interfaceType);
 #endif
             }
             LuaAPI.lua_pushvalue(L, idx);

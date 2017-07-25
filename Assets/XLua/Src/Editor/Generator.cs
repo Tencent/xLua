@@ -1106,7 +1106,7 @@ namespace CSObjectWrapEditor
 
         public static Dictionary<Type, HotfixFlag> HotfixCfg = null;
 
-        static void AddToList(List<Type> list, Func<object> get)
+        static void AddToList(List<Type> list, Func<object> get, Type attr)
         {
             object obj = get();
             if (obj is Type)
@@ -1117,30 +1117,34 @@ namespace CSObjectWrapEditor
             {
                 list.AddRange(obj as IEnumerable<Type>);
             }
+            else
+            {
+                throw new InvalidOperationException("Only field/property with the type IEnumerable<Type> can be marked " + attr.Name);
+            }
         }
 
         static void MergeCfg(MemberInfo test, Type cfg_type, Func<object> get_cfg)
         {
             if (test.IsDefined(typeof(LuaCallCSharpAttribute), false))
             {
-                AddToList(LuaCallCSharp, get_cfg);
+                AddToList(LuaCallCSharp, get_cfg, typeof(LuaCallCSharpAttribute));
                 object[] ccla = test.GetCustomAttributes(typeof(LuaCallCSharpAttribute), false);
                 if (ccla.Length == 1 && (((ccla[0] as LuaCallCSharpAttribute).Flag & GenFlag.GCOptimize) != 0))
                 {
-                    AddToList(GCOptimizeList, get_cfg);
+                    AddToList(GCOptimizeList, get_cfg, typeof(LuaCallCSharpAttribute));
                 }
             }
             if (test.IsDefined(typeof(CSharpCallLuaAttribute), false))
             {
-                AddToList(CSharpCallLua, get_cfg);
+                AddToList(CSharpCallLua, get_cfg, typeof(CSharpCallLuaAttribute));
             }
             if (test.IsDefined(typeof(GCOptimizeAttribute), false))
             {
-                AddToList(GCOptimizeList, get_cfg);
+                AddToList(GCOptimizeList, get_cfg, typeof(GCOptimizeAttribute));
             }
             if (test.IsDefined(typeof(ReflectionUseAttribute), false))
             {
-                AddToList(ReflectionUse, get_cfg);
+                AddToList(ReflectionUse, get_cfg, typeof(ReflectionUseAttribute));
             }
             if (test.IsDefined(typeof(HotfixAttribute), false))
             {

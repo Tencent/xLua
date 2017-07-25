@@ -283,7 +283,7 @@ namespace XLua
             cg.Emit(OpCodes.Ret);
 
             // end of GetDelegateByType
-            get_deleate_by_type_il.Emit(OpCodes.Ldstr, "This delegate must add to CSharpCallLua:");
+            get_deleate_by_type_il.Emit(OpCodes.Ldstr, "This type must add to CSharpCallLua:");
             get_deleate_by_type_il.Emit(OpCodes.Ldarg_1);
             get_deleate_by_type_il.Emit(OpCodes.Call, typeof(string).GetMethod("Concat", new Type[] { typeof(object), typeof(object) }));
             get_deleate_by_type_il.Emit(OpCodes.Newobj, typeof(System.InvalidCastException).GetConstructor(new Type[] { typeof(string) }));
@@ -352,7 +352,7 @@ namespace XLua
 
             if (!gen_interfaces.Contains(to_be_impl))
             {
-                throw new InvalidCastException("This interface must add to CSharpCallLua: " + to_be_impl);
+                throw new InvalidCastException("This type must add to CSharpCallLua: " + to_be_impl);
             }
 
             TypeBuilder impl_type_builder = CodeEmitModule.DefineType("XLuaGenInterfaceImpl" + (genID++), TypeAttributes.Public | TypeAttributes.Class, typeof(LuaBase), new Type[] { to_be_impl});
