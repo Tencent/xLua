@@ -16,10 +16,22 @@ namespace XLua.LuaDLL
 
 #if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN || XLUA_GENERAL || (UNITY_WSA && !UNITY_EDITOR)
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-#endif
     public delegate int lua_CSFunction(IntPtr L);
-	
-	public partial class Lua
+
+#if GEN_CODE_MINIMIZE
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate int CSharpWrapperCaller(IntPtr L, int funcidx, int top);
+#endif
+#else
+    public delegate int lua_CSFunction(IntPtr L);
+
+#if GEN_CODE_MINIMIZE
+    public delegate int CSharpWrapperCaller(IntPtr L, int funcidx, int top);
+#endif
+#endif
+
+
+    public partial class Lua
 	{
 #if UNITY_IPHONE && !UNITY_EDITOR
         const string LUADLL = "__Internal";
@@ -538,5 +550,20 @@ namespace XLua.LuaDLL
         [DllImport(LUADLL, CallingConvention = CallingConvention.Cdecl)]
         public static extern bool xlua_is_eq_str(IntPtr L, int index, string str, int str_len);
 
+#if GEN_CODE_MINIMIZE
+        [DllImport(LUADLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern void xlua_set_csharp_wrapper_caller(IntPtr wrapper);
+
+        [DllImport(LUADLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern void xlua_push_csharp_wrapper(IntPtr L, int wrapperID);
+
+        public static void xlua_set_csharp_wrapper_caller(CSharpWrapperCaller wrapper_caller)
+        {
+#if XLUA_GENERAL || (UNITY_WSA && !UNITY_EDITOR)
+            GCHandle.Alloc(wrapper);
+#endif
+            xlua_set_csharp_wrapper_caller(Marshal.GetFunctionPointerForDelegate(wrapper_caller));
+        }
+#endif
     }
 }

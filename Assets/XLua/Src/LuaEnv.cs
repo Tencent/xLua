@@ -49,7 +49,7 @@ namespace XLua
         internal object luaEnvLock = new object();
 #endif
 
-        const int LIB_VERSION_EXPECT = 101;
+        const int LIB_VERSION_EXPECT = 102;
 
         public LuaEnv()
         {
@@ -63,7 +63,10 @@ namespace XLua
             lock(luaEnvLock)
             {
 #endif
-                LuaIndexes.LUA_REGISTRYINDEX = LuaAPI.xlua_get_registry_index(); ;
+                LuaIndexes.LUA_REGISTRYINDEX = LuaAPI.xlua_get_registry_index();
+#if GEN_CODE_MINIMIZE
+                LuaAPI.xlua_set_csharp_wrapper_caller(InternalGlobals.CSharpWrapperCallerPtr);
+#endif
                 // Create State
                 rawL = LuaAPI.luaL_newstate();
 

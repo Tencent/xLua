@@ -34,7 +34,7 @@ LUA_API int xlua_get_registry_index() {
 }
 
 LUA_API int xlua_get_lib_version() {
-	return 101;
+	return 102;
 }
 
 LUA_API int xlua_tocsobj_safe(lua_State *L,int index) {
@@ -751,6 +751,45 @@ LUA_API void xlua_push_csharp_function(lua_State* L, lua_CFunction fn, int n)
     lua_pushcclosure(L, csharp_function_wrap, 2 + (n > 0 ? n : 0));
 }
 
+typedef int (*lua_CSWrapperCaller) (lua_State *L, int wrapperid, int top);
+
+static lua_CSWrapperCaller g_csharp_wrapper_caller = NULL;
+
+LUA_API void xlua_set_csharp_wrapper_caller(lua_CSWrapperCaller wrapper_caller)
+{
+	g_csharp_wrapper_caller = wrapper_caller;
+}
+
+static int csharp_function_wrapper_wrapper(lua_State *L) {
+    int ret = 0;
+	
+	if (g_csharp_wrapper_caller == NULL) {
+		return luaL_error(L, "g_csharp_wrapper_caller not set");
+	}
+	
+	ret = g_csharp_wrapper_caller(L, xlua_tointeger(L, lua_upvalueindex(1)), lua_gettop(L));    
+    
+    if (lua_toboolean(L, lua_upvalueindex(2)))
+    {
+        lua_pushboolean(L, 0);
+        lua_replace(L, lua_upvalueindex(2));
+        return lua_error(L);
+    }
+    
+	if (lua_gethook(L)) {
+		call_ret_hook(L);
+	}
+	
+    return ret;
+}
+
+LUA_API void xlua_push_csharp_wrapper(lua_State* L, int wrapperid)
+{ 
+	lua_pushinteger(L, wrapperid);
+	lua_pushboolean(L, 0);
+    lua_pushcclosure(L, csharp_function_wrapper_wrapper, 2);
+}
+
 LUALIB_API int xlua_upvalueindex(int n) {
 	return lua_upvalueindex(2 + n);
 }
@@ -1025,18 +1064,90 @@ LUA_API int xlua_is_eq_str(lua_State *L, int idx, const char* str, int str_len) 
 #define T_FLOAT  8
 #define T_DOUBLE 9
 
-static const uint8_t size_of[10] = {
-	sizeof(int8_t),
-	sizeof(uint8_t),
-	sizeof(int16_t),
-	sizeof(uint16_t),
-	sizeof(int32_t),
-	sizeof(uint32_t),
-	sizeof(int64_t),
-	sizeof(uint64_t),
-	sizeof(float),
-	sizeof(double),
+#define DIRECT_ACCESS(type, push_func, to_func) \
+int xlua_struct_get_##type(lua_State *L) {\
+	CSharpStruct *css = (CSharpStruct *)lua_touserdata(L, 1);\
+	int offset = xlua_tointeger(L, lua_upvalueindex(1));\
+	type val;\
+	if (css == NULL || css->fake_id != -1 || css->len < offset + sizeof(type)) {\
+		return luaL_error(L, "invalid c# struct!");\
+	} else {\
+		memcpy(&val, (&(css->data[0]) + offset), sizeof(type));\
+		push_func(L, val);\
+		return 1;\
+	}\
+}\
+\
+int xlua_struct_set_##type(lua_State *L) { \
+	CSharpStruct *css = (CSharpStruct *)lua_touserdata(L, 1);\
+	int offset = xlua_tointeger(L, lua_upvalueindex(1));\
+	type val;\
+	if (css == NULL || css->fake_id != -1 || css->len < offset + sizeof(type)) {\
+		return luaL_error(L, "invalid c# struct!");\
+	} else {\
+	    val = (type)to_func(L, 2);\
+		memcpy((&(css->data[0]) + offset), &val, sizeof(type));\
+		return 0;\
+	}\
+}\
+
+DIRECT_ACCESS(int8_t, xlua_pushinteger, xlua_tointeger);
+DIRECT_ACCESS(uint8_t, xlua_pushinteger, xlua_tointeger);
+DIRECT_ACCESS(int16_t, xlua_pushinteger, xlua_tointeger);
+DIRECT_ACCESS(uint16_t, xlua_pushinteger, xlua_tointeger);
+DIRECT_ACCESS(int32_t, xlua_pushinteger, xlua_tointeger);
+DIRECT_ACCESS(uint32_t, xlua_pushuint, xlua_touint);
+DIRECT_ACCESS(int64_t, lua_pushint64, lua_toint64);
+DIRECT_ACCESS(uint64_t, lua_pushuint64, lua_touint64);
+DIRECT_ACCESS(float, lua_pushnumber, lua_tonumber);
+DIRECT_ACCESS(double, lua_pushnumber, lua_tonumber);
+
+static const lua_CFunction direct_getters[10] = {
+	xlua_struct_get_int8_t,
+	xlua_struct_get_uint8_t,
+	xlua_struct_get_int16_t,
+	xlua_struct_get_uint16_t,
+	xlua_struct_get_int32_t,
+	xlua_struct_get_uint32_t,
+	xlua_struct_get_int64_t,
+	xlua_struct_get_uint64_t,
+	xlua_struct_get_float,
+	xlua_struct_get_double
 };
+
+static const lua_CFunction direct_setters[10] = {
+	xlua_struct_set_int8_t,
+	xlua_struct_set_uint8_t,
+	xlua_struct_set_int16_t,
+	xlua_struct_set_uint16_t,
+	xlua_struct_set_int32_t,
+	xlua_struct_set_uint32_t,
+	xlua_struct_set_int64_t,
+	xlua_struct_set_uint64_t,
+	xlua_struct_set_float,
+	xlua_struct_set_double
+};
+
+int nop(lua_State *L) {
+	return 0;
+}
+
+LUA_API int gen_css_access(lua_State *L) {
+	int offset = xlua_tointeger(L, 1);
+	int type = xlua_tointeger(L, 2);
+	if (offset < 0) {
+		return luaL_error(L, "offset must larger than 0");
+	}
+	if (type < T_INT8 || type > T_DOUBLE) {
+		return luaL_error(L, "unknow tag[%d]", type);
+	}
+	lua_pushvalue(L, 1);
+	lua_pushcclosure(L, direct_getters[type], 1);
+	lua_pushvalue(L, 1);
+	lua_pushcclosure(L, direct_setters[type], 1);
+	lua_pushcclosure(L, nop, 0);
+	return 3;
+}
 
 static int is_cs_data(lua_State *L, int idx) {
 	if (LUA_TUSERDATA == lua_type(L, idx) && lua_getmetatable(L, idx)) {
@@ -1049,128 +1160,6 @@ static int is_cs_data(lua_State *L, int idx) {
 		lua_pop (L, 2);
 	}
 	return 0;
-}
-
-static int css_access(lua_State *L) {
-	int offset = lua_tointeger(L, lua_upvalueindex(1));
-	int type = lua_tointeger(L, lua_upvalueindex(2));
-	int top = lua_gettop(L);
-	int16_t i16 = 0;
-	uint16_t u16 = 0;
-	int32_t i32 = 0;
-	uint32_t u32 = 0;
-	int64_t i64 = 0;
-	uint64_t u64 = 0;
-	float f = 0;
-	double d = 0;
-	CSharpStruct *css = (CSharpStruct *)lua_touserdata(L, 1);
-	if (!is_cs_data(L, 1) || css->fake_id != -1 || css->len < offset + size_of[type]) {
-		luaL_error(L, "invalid c# struct!"); 
-	}
-	
-	if (top >= 2) { // set
-		switch(type) {
-		case T_INT8:
-		    *((int8_t *)(&(css->data[0]) + offset)) = (int8_t)lua_tointeger(L, 2);
-			break;
-		case T_UINT8:
-		    *((uint8_t *)(&(css->data[0]) + offset)) = (uint8_t)lua_tointeger(L, 2);
-			break;
-		case T_INT16:
-		    i16 = (int16_t)lua_tointeger(L, 2);
-			memcpy((&(css->data[0]) + offset), &i16, sizeof(i16));
-			break;
-		case T_UINT16:
-		    u16 = (uint16_t)lua_tointeger(L, 2);
-			memcpy((&(css->data[0]) + offset), &u16, sizeof(u16));
-			break;
-		case T_INT32:
-		    i32 = (int32_t)lua_tointeger(L, 2);
-			memcpy((&(css->data[0]) + offset), &i32, sizeof(i32));
-			break;
-		case T_UINT32:
-		    u32 = xlua_touint(L, 2);
-			memcpy((&(css->data[0]) + offset), &u32, sizeof(u32));
-			break;
-		case T_INT64:
-		    i64 = lua_toint64(L, 2);
-			memcpy((&(css->data[0]) + offset), &i64, sizeof(i64));
-			break;
-		case T_UINT64:
-		    u64 = lua_touint64(L, 2);
-			memcpy((&(css->data[0]) + offset), &u64, sizeof(u64));
-			break;
-		case T_FLOAT:
-		    f = lua_tonumber(L, 2);
-			memcpy((&(css->data[0]) + offset), &f, sizeof(f));
-			break;
-		case T_DOUBLE:
-		    d = lua_tonumber(L, 2);
-			memcpy((&(css->data[0]) + offset), &d, sizeof(d));
-			break;
-		default:
-		    return luaL_error(L, "unknow tag[%d]", type);
-		}
-		return 0;
-	} else {
-		switch(type) {
-		case T_INT8:
-		    lua_pushinteger(L, *((int8_t *)(&(css->data[0]) + offset)));
-			break;
-		case T_UINT8:
-		    lua_pushinteger(L, *((uint8_t *)(&(css->data[0]) + offset)));
-			break;
-		case T_INT16:
-			memcpy(&i16, (&(css->data[0]) + offset), sizeof(i16));
-		    lua_pushinteger(L, i16);
-			break;
-		case T_UINT16:
-			memcpy(&u16, (&(css->data[0]) + offset), sizeof(u16));
-		    lua_pushinteger(L, u16);
-			break;
-		case T_INT32:
-			memcpy(&i32, (&(css->data[0]) + offset), sizeof(i32));
-		    lua_pushinteger(L, i32);
-			break;
-		case T_UINT32:
-			memcpy(&u32, (&(css->data[0]) + offset), sizeof(u32));
-		    xlua_pushuint(L, u32);
-			break;
-		case T_INT64:
-			memcpy(&i64, (&(css->data[0]) + offset), sizeof(i64));
-		    lua_pushint64(L, i64);
-			break;
-		case T_UINT64:
-			memcpy(&u64, (&(css->data[0]) + offset), sizeof(u64));
-		    lua_pushint64(L, u64);
-			break;
-		case T_FLOAT:
-			memcpy(&f, (&(css->data[0]) + offset), sizeof(f));
-		    lua_pushnumber(L, f);
-			break;
-		case T_DOUBLE:
-			memcpy(&d, (&(css->data[0]) + offset), sizeof(d));
-		    lua_pushnumber(L, d);
-			break;
-		default:
-		    return luaL_error(L, "unknow tag[%d]", type);
-		}
-		
-		return 1;
-	}
-}
-
-LUA_API int gen_css_access(lua_State *L) {
-	int offset = lua_tointeger(L, 1);
-	int type = lua_tointeger(L, 2);
-	if (offset < 0) {
-		return luaL_error(L, "offset must larger than 0");
-	}
-	if (type < T_INT8 || type > T_DOUBLE) {
-		return luaL_error(L, "unknow tag[%d]", type);
-	}
-	lua_pushcclosure(L, css_access, 2);
-	return 1;
 }
 
 LUA_API int css_clone(lua_State *L) {

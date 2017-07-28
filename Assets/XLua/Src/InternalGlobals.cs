@@ -49,6 +49,10 @@ namespace XLua
         };
 
         internal static Dictionary<Type, IEnumerable<MethodInfo>> extensionMethodMap = null;
+
+#if GEN_CODE_MINIMIZE
+        internal static LuaDLL.CSharpWrapperCaller CSharpWrapperCallerPtr = new LuaDLL.CSharpWrapperCaller(StaticLuaCallbacks.CSharpWrapperCallerImpl);
+#endif
     }
 
 }
