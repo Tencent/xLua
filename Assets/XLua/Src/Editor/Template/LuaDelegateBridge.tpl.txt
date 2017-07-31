@@ -41,7 +41,7 @@ namespace XLua
 			%><%=CsFullTypeName(parameter.ParameterType)%> p<%=pi%><% 
 		end) %>)
 		{
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
             lock (luaEnv.luaEnvLock)
             {
 #endif
@@ -74,7 +74,7 @@ namespace XLua
                 <%if has_return then %><%=GetCasterStatement(delegate.ReturnType, "err_func + 1", "__gen_ret", true)%>;<% end%>
                 LuaAPI.lua_settop(L, err_func - 1);
                 <%if has_return then %>return  __gen_ret;<% end%>
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
             }
 #endif
 		}

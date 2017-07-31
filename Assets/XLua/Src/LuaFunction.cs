@@ -31,7 +31,7 @@ namespace XLua
         //如果需要其它个数的Action和Func， 这个类声明为partial，可以自己加
         public void Action<T>(T a)
         {
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
             lock (luaEnv.luaEnvLock)
             {
 #endif
@@ -45,14 +45,14 @@ namespace XLua
                 if (error != 0)
                     luaEnv.ThrowExceptionFromError(oldTop);
                 LuaAPI.lua_settop(L, oldTop);
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
             }
 #endif
         }
 
         public TResult Func<T, TResult>(T a)
         {
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
             lock (luaEnv.luaEnvLock)
             {
 #endif
@@ -79,14 +79,14 @@ namespace XLua
                     LuaAPI.lua_settop(L, oldTop);
                 }
                 return ret;
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
             }
 #endif
         }
 
         public void Action<T1, T2>(T1 a1, T2 a2)
         {
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
             lock (luaEnv.luaEnvLock)
             {
 #endif
@@ -101,14 +101,14 @@ namespace XLua
                 if (error != 0)
                     luaEnv.ThrowExceptionFromError(oldTop);
                 LuaAPI.lua_settop(L, oldTop);
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
             }
 #endif
         }
 
         public TResult Func<T1, T2, TResult>(T1 a1, T2 a2)
         {
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
             lock (luaEnv.luaEnvLock)
             {
 #endif
@@ -136,7 +136,7 @@ namespace XLua
                     LuaAPI.lua_settop(L, oldTop);
                 }
                 return ret;
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
             }
 #endif
         }
@@ -144,7 +144,7 @@ namespace XLua
         //deprecated
         public object[] Call(object[] args, Type[] returnTypes)
         {
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
             lock (luaEnv.luaEnvLock)
             {
 #endif
@@ -172,7 +172,7 @@ namespace XLua
                     return translator.popValues(L, oldTop, returnTypes);
                 else
                     return translator.popValues(L, oldTop);
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
             }
 #endif
         }
@@ -189,7 +189,7 @@ namespace XLua
             {
                 throw new InvalidOperationException(typeof(T).Name + " is not a delegate type");
             }
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
             lock (luaEnv.luaEnvLock)
             {
 #endif
@@ -199,14 +199,14 @@ namespace XLua
                 T ret = (T)translator.GetObject(L, -1, typeof(T));
                 LuaAPI.lua_pop(luaEnv.L, 1);
                 return ret;
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
             }
 #endif
         }
 
         public void SetEnv(LuaTable env)
         {
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
             lock (luaEnv.luaEnvLock)
             {
 #endif
@@ -216,7 +216,7 @@ namespace XLua
                 env.push(L);
                 LuaAPI.lua_setfenv(L, -2);
                 LuaAPI.lua_settop(L, oldTop);
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
             }
 #endif
         }

@@ -32,7 +32,7 @@ namespace XLua
         // no boxing version get
         public void Get<TKey, TValue>(TKey key, out TValue value)
         {
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
             lock (luaEnv.luaEnvLock)
             {
 #endif
@@ -68,7 +68,7 @@ namespace XLua
                 {
                     LuaAPI.lua_settop(L, oldTop);
                 }
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
             }
 #endif
         }
@@ -76,7 +76,7 @@ namespace XLua
         // no boxing version get
         public bool ContainsKey<TKey>(TKey key)
         {
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
             lock (luaEnv.luaEnvLock)
             {
 #endif
@@ -99,7 +99,7 @@ namespace XLua
 
                 return ret;
 
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
             }
 #endif
         }
@@ -107,7 +107,7 @@ namespace XLua
         //no boxing version set
         public void Set<TKey, TValue>(TKey key, TValue value)
         {
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
             lock (luaEnv.luaEnvLock)
             {
 #endif
@@ -124,7 +124,7 @@ namespace XLua
                     luaEnv.ThrowExceptionFromError(oldTop);
                 }
                 LuaAPI.lua_settop(L, oldTop);
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
             }
 #endif
         }
@@ -132,7 +132,7 @@ namespace XLua
 
         public T GetInPath<T>(string path)
         {
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
             lock (luaEnv.luaEnvLock)
             {
 #endif
@@ -164,14 +164,14 @@ namespace XLua
                     LuaAPI.lua_settop(L, oldTop);
                 }
                 return value;
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
             }
 #endif
         }
 
         public void SetInPath<T>(string path, T val)
         {
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
             lock (luaEnv.luaEnvLock)
             {
 #endif
@@ -185,7 +185,7 @@ namespace XLua
                 }
 
                 LuaAPI.lua_settop(L, oldTop);
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
             }
 #endif
         }
@@ -218,7 +218,7 @@ namespace XLua
 
         public void ForEach<TKey, TValue>(Action<TKey, TValue> action)
         {
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
             lock (luaEnv.luaEnvLock)
             {
 #endif
@@ -246,7 +246,7 @@ namespace XLua
                 {
                     LuaAPI.lua_settop(L, oldTop);
                 }
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
             }
 #endif
         }
@@ -255,7 +255,7 @@ namespace XLua
         {
             get
             {
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
                 lock (luaEnv.luaEnvLock)
                 {
 #endif
@@ -265,13 +265,13 @@ namespace XLua
                     var len = (int)LuaAPI.xlua_objlen(L, -1);
                     LuaAPI.lua_settop(L, oldTop);
                     return len;
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
                 }
 #endif
             }
         }
 
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
         [Obsolete("not thread saft!", true)]
 #endif
         public IEnumerable GetKeys()
@@ -289,7 +289,7 @@ namespace XLua
             LuaAPI.lua_settop(L, oldTop);
         }
 
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
         [Obsolete("not thread saft!", true)]
 #endif
         public IEnumerable<T> GetKeys<T>()
@@ -336,7 +336,7 @@ namespace XLua
 
         public void SetMetaTable(LuaTable metaTable)
         {
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
             lock (luaEnv.luaEnvLock)
             {
 #endif
@@ -344,7 +344,7 @@ namespace XLua
                 metaTable.push(luaEnv.L);
                 LuaAPI.lua_setmetatable(luaEnv.L, -2);
                 LuaAPI.lua_pop(luaEnv.L, 1);
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
             }
 #endif
         }
@@ -353,7 +353,7 @@ namespace XLua
         {
             var L = luaEnv.L;
             var translator = luaEnv.translator;
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
             lock (luaEnv.luaEnvLock)
             {
 #endif
@@ -361,7 +361,7 @@ namespace XLua
                 T ret = (T)translator.GetObject(L, -1, typeof(T));
                 LuaAPI.lua_pop(luaEnv.L, 1);
                 return ret;
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
             }
 #endif
         }

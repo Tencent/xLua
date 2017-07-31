@@ -55,7 +55,7 @@ namespace XLua
             {
                 if (luaReference != 0)
                 {
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
                     lock (luaEnv.luaEnvLock)
                     {
 #endif
@@ -68,7 +68,7 @@ namespace XLua
                         {
                             luaEnv.equeueGCAction(new LuaEnv.GCAction { Reference = luaReference, IsDelegate = is_delegate });
                         }
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
                     }
 #endif
                 }
@@ -81,7 +81,7 @@ namespace XLua
         {
             if (o != null && this.GetType() == o.GetType())
             {
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
                 lock (luaEnv.luaEnvLock)
                 {
 #endif
@@ -95,7 +95,7 @@ namespace XLua
                     int equal = LuaAPI.lua_rawequal(L, -1, -2);
                     LuaAPI.lua_settop(L, top);
                     return (equal != 0);
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
                 }
 #endif
             }
