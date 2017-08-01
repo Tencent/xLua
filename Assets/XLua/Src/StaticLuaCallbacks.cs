@@ -973,6 +973,8 @@ namespace XLua
                     {
                         return LuaAPI.luaL_error(L, "argument #2 must be a table");
                     }
+                    LuaAPI.lua_pushnumber(L, type_id);
+                    LuaAPI.xlua_rawseti(L, 2, 1);
                     LuaAPI.xlua_rawseti(L, LuaIndexes.LUA_REGISTRYINDEX, type_id);
                     return 0;
                 }
