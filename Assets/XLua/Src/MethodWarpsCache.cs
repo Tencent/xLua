@@ -275,18 +275,20 @@ namespace XLua
     {
         private string methodName;
         private List<OverloadMethodWrap> overloads = new List<OverloadMethodWrap>();
+        private bool forceCheck;
 
-        public MethodWrap(string methodName, List<OverloadMethodWrap> overloads)
+        public MethodWrap(string methodName, List<OverloadMethodWrap> overloads, bool forceCheck)
         {
             this.methodName = methodName;
             this.overloads = overloads;
+            this.forceCheck = forceCheck;
         }
 
         public int Call(RealStatePtr L)
         {
             try
             {
-                if (overloads.Count == 1 && !overloads[0].HasDefalutValue) return overloads[0].Call(L);
+                if (overloads.Count == 1 && !overloads[0].HasDefalutValue && !forceCheck) return overloads[0].Call(L);
 
                 for (int i = 0; i < overloads.Count; ++i)
                 {
@@ -349,7 +351,7 @@ namespace XLua
                 }
                 else
                 {
-                    LuaCSFunction ctor = _GenMethodWrap(type, ".ctor", constructors).Call;
+                    LuaCSFunction ctor = _GenMethodWrap(type, ".ctor", constructors, true).Call;
                     
                     if (type.IsValueType())
                     {
@@ -524,7 +526,7 @@ namespace XLua
             return methodsOfType[eventName];
         }
 
-        public MethodWrap _GenMethodWrap(Type type, string methodName, IEnumerable<MemberInfo> methodBases)
+        public MethodWrap _GenMethodWrap(Type type, string methodName, IEnumerable<MemberInfo> methodBases, bool forceCheck = false)
         { 
             List<OverloadMethodWrap> overloads = new List<OverloadMethodWrap>();
             foreach(var methodBase in methodBases)
@@ -540,7 +542,7 @@ namespace XLua
                 overload.Init(objCheckers, objCasters);
                 overloads.Add(overload);
             }
-            return new MethodWrap(methodName, overloads);
+            return new MethodWrap(methodName, overloads, forceCheck);
         }
 
         private static bool tryMakeGenericMethod(ref MethodBase method)
