@@ -684,9 +684,14 @@ static int noenv (lua_State *L) {
 
 static void setpath (lua_State *L, const char *fieldname, const char *envname1,
                                    const char *envname2, const char *def) {
+#if defined(WINAPI_FAMILY_PARTITION)
+  const char *path = NULL;
+#else
   const char *path = getenv(envname1);
   if (path == NULL)  /* no environment variable? */
     path = getenv(envname2);  /* try alternative name */
+#endif
+
   if (path == NULL || noenv(L))  /* no environment variable? */
     lua_pushstring(L, def);  /* use default */
   else {
