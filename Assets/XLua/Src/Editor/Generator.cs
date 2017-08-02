@@ -211,8 +211,17 @@ namespace CSObjectWrapEditor
                     if (parameterType.IsGenericParameter)
                     {
                         var parameterConstraints = parameterType.GetGenericParameterConstraints();
-                        if (parameterConstraints.Length == 0 || !parameterConstraints[0].IsAssignableFrom(extendedType))
-                            return false;
+                        if (parameterConstraints.Length == 0) return false;
+                        bool firstParamMatch = false;
+                        foreach (var parameterConstraint in parameterConstraints)
+                        {
+                            if (parameterConstraint != typeof(ValueType) && parameterConstraint.IsAssignableFrom(extendedType))
+                            {
+                                firstParamMatch = true;
+                            }
+                        }
+                        if (!firstParamMatch) return false;
+
                         hasValidGenericParameter = true;
                     }
                     else if (parameterType != extendedType)
