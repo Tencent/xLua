@@ -498,6 +498,9 @@ namespace XLua.LuaDLL
         public static extern IntPtr xlua_pushstruct(IntPtr L, uint size, int meta_ref);
 
         [DllImport(LUADLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern void xlua_pushcstable(IntPtr L, uint field_count, int meta_ref);
+
+        [DllImport(LUADLL, CallingConvention = CallingConvention.Cdecl)]
         public static extern IntPtr lua_touserdata(IntPtr L, int idx);
 
         [DllImport(LUADLL, CallingConvention = CallingConvention.Cdecl)]

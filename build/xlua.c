@@ -824,6 +824,12 @@ LUA_API void *xlua_pushstruct(lua_State *L, unsigned int size, int meta_ref) {
 	return css;
 }
 
+LUA_API void xlua_pushcstable(lua_State *L, unsigned int size, int meta_ref) {
+	lua_createtable(L, 0, size);
+    lua_rawgeti(L, LUA_REGISTRYINDEX, meta_ref);
+	lua_setmetatable(L, -2);
+}
+
 LUA_API int xlua_gettypeid(lua_State *L, int idx) {
 	int type_id = -1;
 	if (lua_type(L, idx) == LUA_TUSERDATA) {

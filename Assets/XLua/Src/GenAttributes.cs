@@ -47,10 +47,29 @@ namespace XLua
 
     }
 
+    [Flags]
+    public enum OptimizeFlag
+    {
+        Default = 0,
+        PackAsTable = 1
+    }
+
     //如果想对struct生成免GC代码，加这个标签
     public class GCOptimizeAttribute : Attribute
     {
+        OptimizeFlag flag;
+        public OptimizeFlag Flag
+        {
+            get
+            {
+                return flag;
+            }
+        }
 
+        public GCOptimizeAttribute(OptimizeFlag flag = OptimizeFlag.Default)
+        {
+            this.flag = flag;
+        }
     }
 
     //如果想在反射下使用，加这个标签

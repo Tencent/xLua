@@ -95,6 +95,7 @@ Debug.Log("max:" + max(32, 12));
 * [09_GenericMethod](Assets/XLua/Examples/09_GenericMethod/): 泛化函数支持的演示。
 * [10_SignatureLoader](Assets/XLua/Examples/10_SignatureLoader/): 展示如何读取经数字签名的lua脚本，参见[数字签名](Assets/XLua/Doc/signature.md)的文档介绍。
 * [11_RawObject](Assets/XLua/Examples/11_RawObject/): 当C#参数是object时，如何把一个lua number指定以boxing后的int传递过去。
+* [12_ReImplementInLua](Assets/XLua/Examples/12_ReImplementInLua/): 展示如何将复杂值类型改为lua实现。
  
 ## 文档
 

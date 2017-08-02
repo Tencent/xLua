@@ -845,11 +845,17 @@ namespace CSObjectWrapEditor
         {
             string filePath = save_path + "WrapPusher.cs";
             StreamWriter textWriter = new StreamWriter(filePath, false, Encoding.UTF8);
+            var emptyMap = new Dictionary<Type, Type>();
             GenOne(typeof(ObjectTranslator), (type, type_info) =>
             {
                 type_info.Set("purevaluetypes", types
                      .Where(t => t.IsEnum || (!t.IsPrimitive && SizeOf(t) != -1))
-                     .Select(t => new { Type = t, Size = SizeOf(t) }).ToList());
+                     .Select(t => new {
+                         Type = t,
+                         Size = SizeOf(t),
+                         Flag = t.IsEnum ? OptimizeFlag.Default : OptimizeCfg[t],
+                         FieldInfos = (t.IsEnum || OptimizeCfg[t] == OptimizeFlag.Default) ? null : getXluaTypeInfo(t, emptyMap).FieldInfos
+                     }).ToList());
                 type_info.Set("tableoptimzetypes", types.Where(t => !t.IsEnum && SizeOf(t) == -1)
                      .Select(t => new { Type = t, Fields = t.GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly) })
                      .ToList());
@@ -1037,6 +1043,58 @@ namespace CSObjectWrapEditor
             public int Size;
         }
 
+        class XluaTypeInfo
+        {
+            public Type Type;
+            public List<XluaFieldInfo> FieldInfos;
+            public List<List<XluaFieldInfo>> FieldGroup;
+            public bool IsRoot;
+        }
+
+        static XluaTypeInfo getXluaTypeInfo(Type t, Dictionary<Type, Type> set)
+        {
+            var fs = t.GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
+                        .Select(fi => new XluaFieldInfo { Name = fi.Name, Type = fi.FieldType, IsField = true, Size = SizeOf(fi.FieldType) })
+                        .Concat(t.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
+                        .Where(prop => {
+                            return (AdditionalProperties.ContainsKey(t) && AdditionalProperties[t].Contains(prop.Name))
+                                || prop.IsDefined(typeof(AdditionalPropertiesAttribute), false);
+                        })
+                        .Select(prop => new XluaFieldInfo { Name = prop.Name, Type = prop.PropertyType, IsField = false, Size = SizeOf(prop.PropertyType) }));
+            int float_field_count = 0;
+            bool only_float = true;
+            foreach (var f in fs)
+            {
+                if (f.Type == typeof(float))
+                {
+                    float_field_count++;
+                }
+                else
+                {
+                    only_float = false;
+                    break;
+                }
+            }
+            List<List<XluaFieldInfo>> grouped_field = null;
+            if (only_float && float_field_count > 1)
+            {
+                grouped_field = new List<List<XluaFieldInfo>>();
+                List<XluaFieldInfo> group = null;
+                foreach (var f in fs)
+                {
+                    if (group == null) group = new List<XluaFieldInfo>();
+                    group.Add(f);
+                    if (group.Count >= 6)
+                    {
+                        grouped_field.Add(group);
+                        group = null;
+                    }
+                }
+                if (group != null) grouped_field.Add(group);
+            }
+            return new XluaTypeInfo { Type = t, FieldInfos = fs.ToList(), FieldGroup = grouped_field, IsRoot = set.ContainsKey(t) };
+        }
+
         public static void GenPackUnpack(IEnumerable<Type> types, string save_path)
         {
             var set = types.ToDictionary(type => type);
@@ -1054,49 +1112,7 @@ namespace CSObjectWrapEditor
             StreamWriter textWriter = new StreamWriter(filePath, false, Encoding.UTF8);
             GenOne(typeof(CopyByValue), (type, type_info) =>
             {
-                type_info.Set("type_infos", all_types.Distinct().Select(t =>
-                {
-                    var fs = t.GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
-                        .Select(fi => new XluaFieldInfo { Name = fi.Name, Type = fi.FieldType, IsField = true, Size = SizeOf(fi.FieldType) })
-                        .Concat(t.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
-                        .Where(prop => {
-                            return (AdditionalProperties.ContainsKey(t) && AdditionalProperties[t].Contains(prop.Name))
-                                || prop.IsDefined(typeof(AdditionalPropertiesAttribute), false);
-                        })
-                        .Select(prop=> new XluaFieldInfo { Name = prop.Name, Type = prop.PropertyType, IsField = false, Size = SizeOf(prop.PropertyType) }));
-                    int float_field_count = 0;
-                    bool only_float = true;
-                    foreach (var f in fs)
-                    {
-                        if (f.Type == typeof(float))
-                        {
-                            float_field_count++;
-                        }
-                        else
-                        {
-                            only_float = false;
-                            break;
-                        }
-                    }
-                    List<List<XluaFieldInfo>> grouped_field = null;
-                    if (only_float && float_field_count > 1)
-                    {
-                        grouped_field = new List<List<XluaFieldInfo>>();
-                        List<XluaFieldInfo> group = null;
-                        foreach (var f in fs)
-                        {
-                            if (group == null) group = new List<XluaFieldInfo>();
-                            group.Add(f);
-                            if (group.Count >= 6)
-                            {
-                                grouped_field.Add(group);
-                                group = null;
-                            }
-                        }
-                        if (group != null) grouped_field.Add(group);
-                    }
-                    return new { Type = t, FieldInfos = fs.ToList(), FieldGroup = grouped_field, IsRoot = set.ContainsKey(t) };
-                }).ToList());
+                type_info.Set("type_infos", all_types.Distinct().Select(t => getXluaTypeInfo(t, set)).ToList());
             }, templateRef.PackUnpack, textWriter);
             textWriter.Close();
         }
@@ -1118,7 +1134,9 @@ namespace CSObjectWrapEditor
 
         public static Dictionary<Type, HotfixFlag> HotfixCfg = null;
 
-        static void AddToList(List<Type> list, Func<object> get, Type attr)
+        public static Dictionary<Type, OptimizeFlag> OptimizeCfg = null;
+
+        static void AddToList(List<Type> list, Func<object> get, object attr)
         {
             object obj = get();
             if (obj is Type)
@@ -1131,7 +1149,22 @@ namespace CSObjectWrapEditor
             }
             else
             {
-                throw new InvalidOperationException("Only field/property with the type IEnumerable<Type> can be marked " + attr.Name);
+                throw new InvalidOperationException("Only field/property with the type IEnumerable<Type> can be marked " + attr.GetType().Name);
+            }
+            if (attr is GCOptimizeAttribute)
+            {
+                var flag = (attr as GCOptimizeAttribute).Flag;
+                if (obj is Type)
+                {
+                    OptimizeCfg.Add(obj as Type, flag);
+                }
+                else if (obj is IEnumerable<Type>)
+                {
+                    foreach(var type in (obj as IEnumerable<Type>))
+                    {
+                        OptimizeCfg.Add(type, flag);
+                    }
+                }
             }
         }
 
@@ -1139,24 +1172,24 @@ namespace CSObjectWrapEditor
         {
             if (test.IsDefined(typeof(LuaCallCSharpAttribute), false))
             {
-                AddToList(LuaCallCSharp, get_cfg, typeof(LuaCallCSharpAttribute));
                 object[] ccla = test.GetCustomAttributes(typeof(LuaCallCSharpAttribute), false);
+                AddToList(LuaCallCSharp, get_cfg, ccla[0]);
                 if (ccla.Length == 1 && (((ccla[0] as LuaCallCSharpAttribute).Flag & GenFlag.GCOptimize) != 0))
                 {
-                    AddToList(GCOptimizeList, get_cfg, typeof(LuaCallCSharpAttribute));
+                    AddToList(GCOptimizeList, get_cfg, ccla[0]);
                 }
             }
             if (test.IsDefined(typeof(CSharpCallLuaAttribute), false))
             {
-                AddToList(CSharpCallLua, get_cfg, typeof(CSharpCallLuaAttribute));
+                AddToList(CSharpCallLua, get_cfg, test.GetCustomAttributes(typeof(CSharpCallLuaAttribute), false)[0]);
             }
             if (test.IsDefined(typeof(GCOptimizeAttribute), false))
             {
-                AddToList(GCOptimizeList, get_cfg, typeof(GCOptimizeAttribute));
+                AddToList(GCOptimizeList, get_cfg, test.GetCustomAttributes(typeof(GCOptimizeAttribute), false)[0]);
             }
             if (test.IsDefined(typeof(ReflectionUseAttribute), false))
             {
-                AddToList(ReflectionUse, get_cfg, typeof(ReflectionUseAttribute));
+                AddToList(ReflectionUse, get_cfg, test.GetCustomAttributes(typeof(ReflectionUseAttribute), false)[0]);
             }
             if (test.IsDefined(typeof(HotfixAttribute), false))
             {
@@ -1214,6 +1247,8 @@ namespace CSObjectWrapEditor
             };
 
             HotfixCfg = new Dictionary<Type, HotfixFlag>();
+
+            OptimizeCfg = new Dictionary<Type, OptimizeFlag>();
 
             foreach (var t in check_types)
             {

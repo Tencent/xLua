@@ -541,6 +541,10 @@ namespace XLua
             xlua.setmetatable = function(cs, mt)
                 return xlua.metatable_operation(cs, mt)
             end
+            xlua.setclass = function(parent, name, impl)
+                impl.UnderlyingSystemType = parent[name].UnderlyingSystemType
+                rawset(parent, name, impl)
+            end
             ";
 
         public delegate byte[] CustomLoader(ref string filepath);
