@@ -1317,8 +1317,12 @@ namespace XLua
                 if (parameterType.IsGenericParameter)
                 {
                     var parameterConstraints = parameterType.GetGenericParameterConstraints();
-                    if (parameterConstraints.Length == 0 || !parameterConstraints[0].IsClass())
-                        return false;
+                    if (parameterConstraints.Length == 0) return false;
+                    foreach (var parameterConstraint in parameterConstraints)
+                    {
+                        if (!parameterConstraint.IsClass || (parameterConstraint == typeof(ValueType)))
+                            return false;
+                    }
                     hasValidGenericParameter = true;
                 }
             }

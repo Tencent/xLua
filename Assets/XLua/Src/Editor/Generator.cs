@@ -184,17 +184,17 @@ namespace CSObjectWrapEditor
 
                 type_has_extension_methods = from type in gen_types
                                              where type.GetMethods(BindingFlags.Static | BindingFlags.Public)
-                                                    .Any(method => Utils.IsSupportedExtensionMethod(method))
+                                                    .Any(method => method.IsDefined(typeof(ExtensionAttribute), false))
                                              select type;
             }
             return from type in type_has_extension_methods
                    where type.IsSealed && !type.IsGenericType && !type.IsNested
                         from method in type.GetMethods(BindingFlags.Static | BindingFlags.Public)
-                        where IsSupportedExtensionMethod(method, extendedType)
+                        where isSupportedExtensionMethod(method, extendedType)
                         select method;
         }
 
-        public static bool IsSupportedExtensionMethod(MethodBase method, Type extendedType)
+        static bool isSupportedExtensionMethod(MethodBase method, Type extendedType)
         {
             if (!method.IsDefined(typeof(ExtensionAttribute), false))
                 return false;
@@ -221,8 +221,12 @@ namespace CSObjectWrapEditor
                 else if (parameterType.IsGenericParameter)
                 {
                     var parameterConstraints = parameterType.GetGenericParameterConstraints();
-                    if (parameterConstraints.Length == 0 || !parameterConstraints[0].IsClass())
-                        return false;
+                    if (parameterConstraints.Length == 0) return false;
+                    foreach (var parameterConstraint in parameterConstraints)
+                    {
+                        if (!parameterConstraint.IsClass || (parameterConstraint == typeof(ValueType)) || Generator.hasGenericParameter(parameterConstraint))
+                            return false;
+                    }
                     hasValidGenericParameter = true;
                 }
             }
@@ -1465,19 +1469,23 @@ namespace CSObjectWrapEditor
             if (!method.ContainsGenericParameters)
                 return true;
             var methodParameters = method.GetParameters();
-            var hasValidGenericParameter = false;
+            var hasGenericParameter = false;
             for (var i = 0; i < methodParameters.Length; i++)
             {
                 var parameterType = methodParameters[i].ParameterType;
                 if (parameterType.IsGenericParameter)
                 {
                     var parameterConstraints = parameterType.GetGenericParameterConstraints();
-                    if (parameterConstraints.Length == 0 || !parameterConstraints[0].IsClass || (parameterConstraints[0] == typeof(ValueType)) || hasGenericParameter(parameterConstraints[0]))
-                        return false;
-                    hasValidGenericParameter = true;
+                    if (parameterConstraints.Length == 0) return false;
+                    foreach (var parameterConstraint in parameterConstraints)
+                    {
+                        if (!parameterConstraint.IsClass || (parameterConstraint == typeof(ValueType)) || Generator.hasGenericParameter(parameterConstraint))
+                            return false;
+                    }
+                    hasGenericParameter = true;
                 }
             }
-            return hasValidGenericParameter;
+            return hasGenericParameter;
         }
 
 #if !XLUA_GENERAL
