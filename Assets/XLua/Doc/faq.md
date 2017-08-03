@@ -239,7 +239,7 @@ public class TestClass
     { 
     }
 	
-	public static void SFoo(int a)
+    public static void SFoo(int a)
     {
     }
 ｝
@@ -248,6 +248,8 @@ public delegate void TestDelegate(int a);
 
 你可以指明用Foo函数创建一个TestDelegate实例
 ~~~lua
+local util = require 'xlua.util'
+
 local d1 = util.createdelegate(CS.TestDelegate, obj, CS.TestClass, 'Foo', {typeof(CS.System.Int32)}) --由于Foo是实例方法，所以参数2需要传TestClass实例
 local d2 = util.createdelegate(CS.TestDelegate, nil, CS.TestClass, 'SFoo', {typeof(CS.System.Int32)})
 
