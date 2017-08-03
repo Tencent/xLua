@@ -62,7 +62,8 @@ namespace XLua
 
         public void Init(ObjectCheckers objCheckers, ObjectCasters objCasters)
         {
-            if (typeof(Delegate).IsAssignableFrom(targetType) || !method.IsStatic || method.IsConstructor)
+            if ((typeof(Delegate) != targetType && typeof(Delegate).IsAssignableFrom(targetType)) ||
+                !method.IsStatic || method.IsConstructor)
             {
                 luaStackPosStart = 2;
                 if (!method.IsConstructor)

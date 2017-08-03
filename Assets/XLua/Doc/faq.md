@@ -224,4 +224,34 @@ util.hotfix_ex(CS.HotfixTest, 'Add', function(self, a, b)
 end)
 ~~~
 
+## 怎么把C#的函数赋值给一个委托字段
+
+2.1.8及之前版本，你把C#函数当成一个lua函数即可，性能会略低，因为委托调用时先通过Birdage适配代码调用lua，然后lua再调用回C#。
+
+2.1.9 xlua.util新增createdelegate函数
+
+比如如下C#代码
+
+~~~csharp
+public class TestClass
+{
+    public void Foo(int a)
+    { 
+    }
+	
+	public static void SFoo(int a)
+    {
+    }
+｝
+public delegate void TestDelegate(int a);
+~~~
+
+你可以指明用Foo函数创建一个TestDelegate实例
+~~~lua
+local d1 = util.createdelegate(CS.TestDelegate, obj, CS.TestClass, 'Foo', {typeof(CS.System.Int32)}) --由于Foo是实例方法，所以参数2需要传TestClass实例
+local d2 = util.createdelegate(CS.TestDelegate, nil, CS.TestClass, 'SFoo', {typeof(CS.System.Int32)})
+
+obj_has_TestDelegate.field = d1 + d2 --到时调用field的时候将会触发Foo和SFoo，这不会经过Lua适配
+
+~~~
 

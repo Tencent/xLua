@@ -116,6 +116,15 @@ local function bind(func, obj)
     end
 end
 
+-- description: 直接用C#函数创建delegate
+local function createdelegate(delegate_cls, obj, impl_cls, method_name, parameter_type_list)
+    local m = parameter_type_list and typeof(impl_cls):GetMethod(method_name, CS.System.Reflection.BindingFlags.Public | CS.System.Reflection.BindingFlags.NonPublic
+             | CS.System.Reflection.BindingFlags.Instance | CS.System.Reflection.BindingFlags.Static, nil, parameter_type_list, nil)
+             or typeof(impl_cls):GetMethod(method_name, CS.System.Reflection.BindingFlags.Public | CS.System.Reflection.BindingFlags.NonPublic
+             | CS.System.Reflection.BindingFlags.Instance | CS.System.Reflection.BindingFlags.Static)
+    return CS.System.Delegate.CreateDelegate(typeof(delegate_cls), obj, m)
+end
+
 return {
     async_to_sync = async_to_sync,
     coroutine_call = coroutine_call,
@@ -124,4 +133,5 @@ return {
     auto_id_map = auto_id_map,
     hotfix_ex = hotfix_ex,
     bind = bind,
+    createdelegate = createdelegate,
 }
