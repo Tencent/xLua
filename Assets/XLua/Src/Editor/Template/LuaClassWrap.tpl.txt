@@ -14,8 +14,41 @@ using System.Collections.Generic;
 <%
 require "TemplateCommon"
 
-local OpNameMap = {op_Addition = "__AddMeta", op_Subtraction = "__SubMeta", op_Multiply = "__MulMeta", op_Division = "__DivMeta", op_Equality = "__EqMeta", op_UnaryNegation = "__UnmMeta", op_LessThan="__LTMeta", op_LessThanOrEqual="__LEMeta", op_Modulus="__ModMeta"}
-local OpCallNameMap = {op_Addition = "+", op_Subtraction = "-", op_Multiply = "*", op_Division = "/", op_Equality = "==", op_UnaryNegation = "-", op_LessThan="<", op_LessThanOrEqual="<=", op_Modulus="%"}
+local OpNameMap = {
+    op_Addition = "__AddMeta",
+	op_Subtraction = "__SubMeta",
+	op_Multiply = "__MulMeta",
+	op_Division = "__DivMeta",
+	op_Equality = "__EqMeta",
+	op_UnaryNegation = "__UnmMeta",
+	op_LessThan = "__LTMeta",
+	op_LessThanOrEqual = "__LEMeta",
+	op_Modulus = "__ModMeta",
+    op_BitwiseAnd = "__BandMeta",
+    op_BitwiseOr = "__BorMeta",
+    op_ExclusiveOr = "__BxorMeta",
+    op_OnesComplement = "__BnotMeta",
+    op_LeftShift = "__ShlMeta",
+    op_RightShift = "__ShrMeta",
+}
+
+local OpCallNameMap = {
+    op_Addition = "+",
+	op_Subtraction = "-",
+	op_Multiply = "*",
+	op_Division = "/",
+	op_Equality = "==",
+	op_UnaryNegation = "-",
+	op_LessThan = "<",
+	op_LessThanOrEqual = "<=",
+	op_Modulus = "%",
+	op_BitwiseAnd = "&",
+    op_BitwiseOr = "|",
+    op_ExclusiveOr = "^",
+    op_OnesComplement = "~",
+    op_LeftShift = "<<",
+    op_RightShift = ">>",
+}
 
 local obj_method_count = 0
 local obj_getter_count = 0
@@ -281,7 +314,7 @@ namespace XLua.CSObjectWrap
         static int <%=OpNameMap[operator.Name]%>(RealStatePtr L)
         {
             ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
-            <% if operator.Name ~= "op_UnaryNegation" then 
+            <% if operator.Name ~= "op_UnaryNegation" and operator.Name ~= "op_OnesComplement"  then 
                 ForEachCsList(operator.Overloads, function(overload)
                 local left_param = overload:GetParameters()[0]
                 local right_param = overload:GetParameters()[1]
