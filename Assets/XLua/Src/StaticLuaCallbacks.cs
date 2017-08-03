@@ -24,7 +24,7 @@ namespace XLua
 
     public partial class StaticLuaCallbacks
     {
-        internal LuaCSFunction GcMeta, ToStringMeta;
+        internal LuaCSFunction GcMeta, ToStringMeta, EnumAndMeta, EnumOrMeta;
 
         internal LuaCSFunction StaticCSFunctionWraper, FixCSFunctionWraper;
         
@@ -32,8 +32,54 @@ namespace XLua
         {
             GcMeta = new LuaCSFunction(StaticLuaCallbacks.LuaGC);
             ToStringMeta = new LuaCSFunction(StaticLuaCallbacks.ToString);
+            EnumAndMeta = new LuaCSFunction(EnumAnd);
+            EnumOrMeta = new LuaCSFunction(EnumOr);
             StaticCSFunctionWraper = new LuaCSFunction(StaticLuaCallbacks.StaticCSFunction);
             FixCSFunctionWraper = new LuaCSFunction(StaticLuaCallbacks.FixCSFunction);
+        }
+
+        [MonoPInvokeCallback(typeof(LuaCSFunction))]
+        public static int EnumAnd(RealStatePtr L)
+        {
+            try
+            {
+                ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
+                object left = translator.FastGetCSObj(L, 1);
+                object right = translator.FastGetCSObj(L, 2);
+                Type typeOfLeft = left.GetType();
+                if (!typeOfLeft.IsEnum || typeOfLeft != right.GetType())
+                {
+                    return LuaAPI.luaL_error(L, "invalid argument for Enum BitwiseAnd");
+                }
+                translator.PushAny(L, Enum.ToObject(typeOfLeft, Convert.ToInt64(left) & Convert.ToInt64(right)));
+                return 1;
+            }
+            catch (Exception e)
+            {
+                return LuaAPI.luaL_error(L, "c# exception in Enum BitwiseAnd:" + e);
+            }
+        }
+
+        [MonoPInvokeCallback(typeof(LuaCSFunction))]
+        public static int EnumOr(RealStatePtr L)
+        {
+            try
+            {
+                ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
+                object left = translator.FastGetCSObj(L, 1);
+                object right = translator.FastGetCSObj(L, 2);
+                Type typeOfLeft = left.GetType();
+                if (!typeOfLeft.IsEnum || typeOfLeft != right.GetType())
+                {
+                    return LuaAPI.luaL_error(L, "invalid argument for Enum BitwiseOr");
+                }
+                translator.PushAny(L, Enum.ToObject(typeOfLeft, Convert.ToInt64(left) | Convert.ToInt64(right)));
+                return 1;
+            }
+            catch (Exception e)
+            {
+                return LuaAPI.luaL_error(L, "c# exception in Enum BitwiseOr:" + e);
+            }
         }
 
         [MonoPInvokeCallback(typeof(LuaCSFunction))]

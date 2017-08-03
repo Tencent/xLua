@@ -859,6 +859,15 @@ namespace XLua
                 }
                 else
                 {
+                    if (type.IsEnum)
+                    {
+                        LuaAPI.xlua_pushasciistring(L, "__band");
+                        LuaAPI.lua_pushstdcallcfunction(L, metaFunctions.EnumAndMeta);
+                        LuaAPI.lua_rawset(L, -3);
+                        LuaAPI.xlua_pushasciistring(L, "__bor");
+                        LuaAPI.lua_pushstdcallcfunction(L, metaFunctions.EnumOrMeta);
+                        LuaAPI.lua_rawset(L, -3);
+                    }
                     LuaAPI.lua_pushvalue(L, -1);
                     type_id = LuaAPI.luaL_ref(L, LuaIndexes.LUA_REGISTRYINDEX);
                     LuaAPI.lua_pushnumber(L, type_id);
