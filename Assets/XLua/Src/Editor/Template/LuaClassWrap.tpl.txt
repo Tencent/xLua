@@ -94,14 +94,50 @@ ForEachCsList(setters, function(setter)
     end 
 end)
 
+local enum_and_op = debug.getmetatable(CS.System.Reflection.BindingFlags.Public).__band
+local has_generic_flag = function(f1, f2)
+    return (f1 ~= CS.System.Reflection.GenericParameterAttributes.None) and (enum_and_op(f1, f2) == f2)
+end
+
 local generic_arg_list = ""
 if type.IsGenericTypeDefinition then
     generic_arg_list = "<"
+    
+    local constraints = {}
+    
 	ForEachCsList(type:GetGenericArguments(), function(generic_arg, gai)
+        local constraint = {}
 	    if gai ~= 0 then generic_arg_list = generic_arg_list .. ", " end
+        if has_generic_flag(generic_arg.GenericParameterAttributes, CS.System.Reflection.GenericParameterAttributes.Covariant) then
+            generic_arg_list = generic_arg_list .. 'in '
+        end
+        if has_generic_flag(generic_arg.GenericParameterAttributes, CS.System.Reflection.GenericParameterAttributes.Contravariant) then
+            generic_arg_list = generic_arg_list .. 'out '
+        end
 		generic_arg_list = generic_arg_list .. generic_arg.Name
+        
+        if has_generic_flag(generic_arg.GenericParameterAttributes, CS.System.Reflection.GenericParameterAttributes.ReferenceTypeConstraint) then
+            table.insert(constraint, 'class')
+        end
+        if has_generic_flag(generic_arg.GenericParameterAttributes, CS.System.Reflection.GenericParameterAttributes.NotNullableValueTypeConstraint) then
+            table.insert(constraint, 'struct')
+        end
+        ForEachCsList(generic_arg:GetGenericParameterConstraints(), function(gpc)
+            if gpc ~= typeof(CS.System.ValueType) or not has_generic_flag(generic_arg.GenericParameterAttributes, CS.System.Reflection.GenericParameterAttributes.NotNullableValueTypeConstraint) then
+                table.insert(constraint, CsFullTypeName(gpc))
+            end
+        end)
+        if has_generic_flag(generic_arg.GenericParameterAttributes, CS.System.Reflection.GenericParameterAttributes.DefaultConstructorConstraint) then
+            table.insert(constraint, 'new()')
+        end
+        if #constraint > 0 then
+            table.insert(constraints, 'where ' .. generic_arg.Name .. ' : ' .. table.concat(constraint, ','))
+        end
 	end)
 	generic_arg_list = generic_arg_list .. ">"
+    if #constraints > 0 then
+        generic_arg_list = generic_arg_list .. table.concat(constraints, ',')
+    end
 end
 
 %>
