@@ -12,13 +12,14 @@ using XLua;
 using System.Collections.Generic;
 <%
 require "TemplateCommon"
+local enum_or_op = debug.getmetatable(CS.System.Reflection.BindingFlags.Public).__bor
 %>
 
 namespace XLua.CSObjectWrap
 {
     using Utils = XLua.Utils;
     <%ForEachCsList(types, function(type)
-	local fields = g_enum_get_fields_flag and type:GetFields(g_enum_get_fields_flag) or type:GetFields()
+	local fields = type:GetFields(enum_or_op(CS.System.Reflection.BindingFlags.Public, CS.System.Reflection.BindingFlags.Static))
 	%>
     public class <%=CSVariableName(type)%>Wrap
     {
