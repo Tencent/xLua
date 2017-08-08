@@ -180,6 +180,7 @@ function SetXLuaClasses(list)
 end
 
 local objType = typeof(CS.System.Object)
+local valueType = typeof(CS.System.ValueType)
 
 local function _CsFullTypeName(t)
     if t.IsArray then
@@ -187,7 +188,7 @@ local function _CsFullTypeName(t)
     elseif t.IsByRef then
         return _CsFullTypeName(t:GetElementType())
     elseif t.IsGenericParameter then
-        return t.BaseType == objType and t.Name or _CsFullTypeName(t.BaseType) --TODO:应该判断是否类型约束
+        return (t.BaseType == objType or t.BaseType == valueType) and t.Name or _CsFullTypeName(t.BaseType) --TODO:应该判断是否类型约束
     end
 
     local name = t.FullName:gsub("&", ""):gsub("%+", ".") 
@@ -380,4 +381,50 @@ end
 
 function AccessorNeedTranslator(accessor)
     return not accessor.IsStatic or not JustLuaType(accessor.Type)
+end
+
+local GenericParameterAttributes = CS.System.Reflection.GenericParameterAttributes
+local enum_and_op = debug.getmetatable(CS.System.Reflection.BindingFlags.Public).__band
+local has_generic_flag = function(f1, f2)
+    return (f1 ~= GenericParameterAttributes.None) and (enum_and_op(f1, f2) == f2)
+end
+
+function GenericArgumentList(type)
+    local generic_arg_list = ""
+    local type_constraints = ""
+    if type.IsGenericTypeDefinition then
+        generic_arg_list = "<"
+        
+        local constraints = {}
+        
+        ForEachCsList(type:GetGenericArguments(), function(generic_arg, gai)
+            local constraint = {}
+            if gai ~= 0 then generic_arg_list = generic_arg_list .. ", " end
+            
+            generic_arg_list = generic_arg_list .. generic_arg.Name
+            
+            if has_generic_flag(generic_arg.GenericParameterAttributes, GenericParameterAttributes.ReferenceTypeConstraint) then
+                table.insert(constraint, 'class')
+            end
+            if has_generic_flag(generic_arg.GenericParameterAttributes, GenericParameterAttributes.NotNullableValueTypeConstraint) then
+                table.insert(constraint, 'struct')
+            end
+            ForEachCsList(generic_arg:GetGenericParameterConstraints(), function(gpc)
+                if gpc ~= typeof(CS.System.ValueType) or not has_generic_flag(generic_arg.GenericParameterAttributes, GenericParameterAttributes.NotNullableValueTypeConstraint) then
+                    table.insert(constraint, CsFullTypeName(gpc))
+                end
+            end)
+            if not has_generic_flag(generic_arg.GenericParameterAttributes, GenericParameterAttributes.NotNullableValueTypeConstraint) and has_generic_flag(generic_arg.GenericParameterAttributes, GenericParameterAttributes.DefaultConstructorConstraint) then
+                table.insert(constraint, 'new()')
+            end
+            if #constraint > 0 then
+                table.insert(constraints, 'where ' .. generic_arg.Name .. ' : ' .. table.concat(constraint, ','))
+            end
+        end)
+        generic_arg_list = generic_arg_list .. ">"
+        if #constraints > 0 then
+            type_constraints = table.concat(constraints, ',')
+        end
+    end
+    return generic_arg_list, type_constraints
 end
