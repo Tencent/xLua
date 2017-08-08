@@ -31,7 +31,7 @@ namespace XLua.CSObjectWrap
 				local generic_arg_list = "<"
 				ForEachCsList(args, function(generic_arg, gai)
 					if gai ~= 0 then generic_arg_list = generic_arg_list .. ", " end
-					generic_arg_list = generic_arg_list .. generic_arg.Name
+					generic_arg_list = generic_arg_list .. CsFullTypeName(generic_arg)
 				end)
 				generic_arg_list = generic_arg_list .. ">"
 				
