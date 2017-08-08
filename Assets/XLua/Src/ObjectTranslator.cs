@@ -1143,7 +1143,7 @@ namespace XLua
             }
             else if (objects.TryGetValue(udata, out obj))
             {
-#if !UNITY_5 && !XLUA_GENERAL
+#if !UNITY_5 && !XLUA_GENERAL && !UNITY_2017
                 if (obj != null && obj is UnityEngine.Object && ((obj as UnityEngine.Object) == null))
                 {
                     //throw new UnityEngine.MissingReferenceException("The object of type '"+ obj.GetType().Name +"' has been destroyed but you are still trying to access it.");
