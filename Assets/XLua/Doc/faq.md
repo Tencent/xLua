@@ -44,6 +44,8 @@ ios和osx需要在mac下编译。
 
 解决办法，确认XXX（类型名）加上CSharpCallLua后，清除代码后运行。
 
+如果编辑器下没问题，发布到手机报这错，表示你发布前没生成代码（执行“XLua/Generate Code”）。
+
 ## hotfix下怎么触发一个event
 
 首先通过xlua.private_accessible开启私有成员访问。
