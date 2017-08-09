@@ -1,4 +1,26 @@
-﻿v2.1.8 2017年6月27日
+﻿v2.1.9 [待发布]
+新增特性
+1、新增最小生成模式，可以节省50%的text段空间；
+2、新增xlua.util.createdelegate，支持在lua直接用C#函数创建delegate而不需要通过lua适配；
+3、xlua.private_accessible支持public int Prop { get; private set; }
+4、新增	xlua.getmetatable、	xlua.setmetatable、xlua.setclass、xlua.genaccessor，用以支持lua使用C#类型直接在lua侧完成；
+5、反射下扩展方法的支持；
+
+优化
+1、加入travis持续集成；
+
+变更
+1、LuaCallCSharp自动去除匿名类型；
+2、THREAD_SAFT改为THREAD_SAFE；
+3、GenFlag.GCOptimize标记为过时；
+4、删除过时的GenConfig配置方式；
+
+bug修复
+1、window phone下一些系统api是禁用的，源码中去掉；
+2、泛型约束是struct的时候，生成代码失败；
+3、unity2017 .net 4.6，枚举生成代码报错；
+
+v2.1.8 2017年6月27日
 新增特性
 1、Hotfix标签添加几个订制参数：ValueTypeBoxing、IgnoreProperty、IgnoreNotPublic、Inline、IntKey
 2、Hotfix代码注入优化，减少text段占用；
