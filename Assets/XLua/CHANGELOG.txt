@@ -1,12 +1,12 @@
-﻿v2.1.9 [待发布]
+﻿v2.1.9 2017年8月10日
 新增特性
-1、新增最小生成模式，可以节省50%的text段空间；
+1、新增最小生成模式（通过GEN_CODE_MINIMIZE切换），可以节省50%的text段空间；
 2、新增xlua.util.createdelegate，支持在lua直接用C#函数创建delegate而不需要通过lua适配；
 3、xlua.private_accessible支持public int Prop { get; private set; }
-4、新增	xlua.getmetatable、	xlua.setmetatable、xlua.setclass、xlua.genaccessor，用以支持lua使用C#类型直接在lua侧完成；
+4、新增	xlua.getmetatable、xlua.setmetatable、xlua.setclass、xlua.genaccessor，用以支持lua使用C#类型直接在lua侧完成；
 5、反射下扩展方法的支持；
 
-优化
+工程优化
 1、加入travis持续集成；
 
 变更
