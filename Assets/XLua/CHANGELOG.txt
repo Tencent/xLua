@@ -5,6 +5,7 @@
 3、xlua.private_accessible支持public int Prop { get; private set; }
 4、新增	xlua.getmetatable、xlua.setmetatable、xlua.setclass、xlua.genaccessor，用以支持lua使用C#类型直接在lua侧完成；
 5、反射下扩展方法的支持；
+6、lua53版本支持位操作符重载：C#侧的位操作符重载对应到lua的位操作符重载；enum全部加上&和|位操作符；
 
 工程优化
 1、加入travis持续集成；
