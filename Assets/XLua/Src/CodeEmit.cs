@@ -89,19 +89,8 @@ namespace XLua
             foreach (var group in groups)
             {
                 var to_be_impl = group.Key;
-                var parameters = to_be_impl.GetParameters();
 
-                Type[] param_types = new Type[parameters.Length];
-                for (int i = 0; i < parameters.Length; ++i)
-                {
-                    param_types[i] = parameters[i].ParameterType;
-                }
-
-                var method_builder = impl_type_builder.DefineMethod("Invoke" + (genID++), to_be_impl.Attributes, to_be_impl.ReturnType, param_types);
-                for (int i = 0; i < parameters.Length; ++i)
-                {
-                    method_builder.DefineParameter(i + 1, parameters[i].Attributes, parameters[i].Name);
-                }
+                var method_builder = defineImplementMethod(impl_type_builder, to_be_impl, to_be_impl.Attributes, "Invoke" + (genID++));
 
                 genImpl(to_be_impl, method_builder.GetILGenerator(), false);
 
@@ -214,20 +203,9 @@ namespace XLua
                     {
                         continue;
                     }
-                    var parameters = method.GetParameters();
 
-                    Type[] param_types = new Type[parameters.Length];
-                    for (int i = 0; i < parameters.Length; ++i)
-                    {
-                        param_types[i] = parameters[i].ParameterType;
-                    }
-
-                    var method_builder = impl_type_builder.DefineMethod(method.Name,
-                        MethodAttributes.Public | MethodAttributes.Final | MethodAttributes.Virtual, method.ReturnType, param_types);
-                    for (int i = 0; i < parameters.Length; ++i)
-                    {
-                        method_builder.DefineParameter(i + 1, parameters[i].Attributes, parameters[i].Name);
-                    }
+                    var method_builder = defineImplementMethod(impl_type_builder, method,
+                        MethodAttributes.Public | MethodAttributes.Final | MethodAttributes.Virtual);
 
                     genImpl(method, method_builder.GetILGenerator(), true);
                 }
@@ -475,7 +453,7 @@ namespace XLua
             il.Emit(OpCodes.Ret);
         }
 
-        private MethodBuilder defineImplementMethod(TypeBuilder type_builder, MethodInfo to_be_impl, MethodAttributes attributes)
+        private MethodBuilder defineImplementMethod(TypeBuilder type_builder, MethodInfo to_be_impl, MethodAttributes attributes, string methodName = null)
         {
             var parameters = to_be_impl.GetParameters();
 
@@ -485,7 +463,7 @@ namespace XLua
                 param_types[i] = parameters[i].ParameterType;
             }
 
-            var method_builder = type_builder.DefineMethod(to_be_impl.Name, attributes, to_be_impl.ReturnType, param_types);
+            var method_builder = type_builder.DefineMethod(methodName == null ? to_be_impl.Name : methodName, attributes, to_be_impl.ReturnType, param_types);
             for (int i = 0; i < parameters.Length; ++i)
             {
                 method_builder.DefineParameter(i + 1, parameters[i].Attributes, parameters[i].Name);
