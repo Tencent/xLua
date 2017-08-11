@@ -103,157 +103,7 @@ namespace XLua
                     method_builder.DefineParameter(i + 1, parameters[i].Attributes, parameters[i].Name);
                 }
 
-                ILGenerator g = method_builder.GetILGenerator();
-                g.DeclareLocal(typeof(RealStatePtr));//RealStatePtr L;  0
-                g.DeclareLocal(typeof(int));//int err_func; 1
-                g.DeclareLocal(typeof(ObjectTranslator));//ObjectTranslator translator; 2
-                bool has_return = to_be_impl.ReturnType != typeof(void);
-                if (has_return)
-                {
-                    g.DeclareLocal(to_be_impl.ReturnType); //ReturnType ret; 3
-                }
-
-                // L = LuaBase.L;
-                g.Emit(OpCodes.Ldarg_0);
-                g.Emit(OpCodes.Callvirt, LuaBase_L_getter);
-                g.Emit(OpCodes.Stloc_0);
-
-                //err_func =LuaAPI.load_error_func(L, errorFuncRef);
-                g.Emit(OpCodes.Ldloc_0);
-                g.Emit(OpCodes.Ldarg_0);
-                g.Emit(OpCodes.Callvirt, DelegateBridgeBase_errorFuncRef_getter);
-                g.Emit(OpCodes.Call, LuaAPI_load_error_func);
-                g.Emit(OpCodes.Stloc_1);
-
-                //translator = LuaBase.translator;
-                g.Emit(OpCodes.Ldarg_0);
-                g.Emit(OpCodes.Callvirt, LuaBase_translator_getter);
-                g.Emit(OpCodes.Stloc_2);
-
-                //LuaAPI.lua_getref(L, luaReference);
-                g.Emit(OpCodes.Ldloc_0);
-                g.Emit(OpCodes.Ldarg_0);
-                g.Emit(OpCodes.Ldfld, LuaBase_luaReference);
-                g.Emit(OpCodes.Call, LuaAPI_lua_getref);
-
-                int in_param_count = 0;
-                int out_param_count = 0;
-                //translator.PushAny(L, param_in)
-                bool has_params = false;
-                for (int i = 0; i < parameters.Length; ++i)
-                {
-                    var pinfo = parameters[i];
-                    if (!pinfo.IsOut)
-                    {
-                        var ptype = pinfo.ParameterType;
-                        var pelemtype = ptype.IsByRef ? ptype.GetElementType() : ptype;
-
-                        g.Emit(OpCodes.Ldloc_2);
-                        g.Emit(OpCodes.Ldloc_0);
-                        g.Emit(OpCodes.Ldarg, (short)(i + 1));
-                        if (ptype.IsByRef)
-                        {
-                            if (pelemtype.IsValueType)
-                            {
-                                g.Emit(OpCodes.Ldobj, pelemtype);
-                                g.Emit(OpCodes.Box, pelemtype);
-                            }
-                            else
-                            {
-                                g.Emit(OpCodes.Ldind_Ref);
-                            }
-                        }
-                        else if (ptype.IsValueType)
-                        {
-                            g.Emit(OpCodes.Box, ptype);
-                        }
-                        if (pinfo.IsDefined(typeof(System.ParamArrayAttribute), false))
-                        {
-                            g.Emit(OpCodes.Callvirt, ObjectTranslator_PushParams);
-                            has_params = true;
-                        }
-                        else
-                        {
-                            g.Emit(OpCodes.Callvirt, ObjectTranslator_PushAny);
-                            ++in_param_count;
-                        }
-                    }
-
-                    if (pinfo.ParameterType.IsByRef)
-                    {
-                        ++out_param_count;
-                    }
-                }
-
-                g.Emit(OpCodes.Ldloc_0);
-                g.Emit(OpCodes.Ldc_I4, in_param_count);
-                if (has_params)
-                {
-                    Label l1 = g.DefineLabel();
-
-                    g.Emit(OpCodes.Ldarg, (short)parameters.Length);
-                    g.Emit(OpCodes.Brfalse, l1);
-
-                    g.Emit(OpCodes.Ldarg, (short)parameters.Length);
-                    g.Emit(OpCodes.Ldlen);
-                    g.Emit(OpCodes.Add);
-                    g.MarkLabel(l1);
-                }
-                g.Emit(OpCodes.Ldc_I4, out_param_count + (has_return ? 1 : 0));
-                g.Emit(OpCodes.Ldloc_1);
-                g.Emit(OpCodes.Call, LuaAPI_lua_pcall);
-                Label no_exception = g.DefineLabel();
-                g.Emit(OpCodes.Brfalse, no_exception);
-
-                g.Emit(OpCodes.Ldarg_0);
-                g.Emit(OpCodes.Ldfld, LuaBase_luaEnv);
-                g.Emit(OpCodes.Ldloc_1);
-                g.Emit(OpCodes.Ldc_I4_1);
-                g.Emit(OpCodes.Sub);
-                g.Emit(OpCodes.Callvirt, LuaEnv_ThrowExceptionFromError);
-                g.MarkLabel(no_exception);
-
-                int offset = 1;
-                if (has_return)
-                {
-                    genGetObjectCall(g, offset++, to_be_impl.ReturnType);
-                    g.Emit(OpCodes.Stloc_3);
-                }
-
-                for (int i = 0; i < parameters.Length; ++i)
-                {
-                    var pinfo = parameters[i];
-                    var ptype = pinfo.ParameterType;
-                    if (ptype.IsByRef)
-                    {
-                        g.Emit(OpCodes.Ldarg, (short)(i + 1));
-                        var pelemtype = ptype.GetElementType();
-                        genGetObjectCall(g, offset++, pelemtype);
-                        if (pelemtype.IsValueType)
-                        {
-                            g.Emit(OpCodes.Stobj, pelemtype);
-                        }
-                        else
-                        {
-                            g.Emit(OpCodes.Stind_Ref);
-                        }
-
-                    }
-                }
-
-                if (has_return)
-                {
-                    g.Emit(OpCodes.Ldloc_3);
-                }
-
-                //LuaAPI.lua_settop(L, err_func - 1);
-                g.Emit(OpCodes.Ldloc_0);
-                g.Emit(OpCodes.Ldloc_1);
-                g.Emit(OpCodes.Ldc_I4_1);
-                g.Emit(OpCodes.Sub);
-                g.Emit(OpCodes.Call, LuaAPI_lua_settop);
-
-                g.Emit(OpCodes.Ret);
+                genImpl(to_be_impl, method_builder.GetILGenerator(), false);
 
                 foreach(var dt in group)
                 {
@@ -379,187 +229,7 @@ namespace XLua
                         method_builder.DefineParameter(i + 1, parameters[i].Attributes, parameters[i].Name);
                     }
 
-                    ILGenerator g = method_builder.GetILGenerator();
-                    g.DeclareLocal(typeof(RealStatePtr));//RealStatePtr L;  0
-                    g.DeclareLocal(typeof(int));//int err_func; 1
-                    g.DeclareLocal(typeof(ObjectTranslator));//ObjectTranslator translator; 2
-                    bool has_return = method.ReturnType != typeof(void);
-                    if (has_return)
-                    {
-                        g.DeclareLocal(method.ReturnType); //ReturnType ret; 3
-                    }
-
-                    // L = LuaBase.L;
-                    g.Emit(OpCodes.Ldarg_0);
-                    g.Emit(OpCodes.Callvirt, LuaBase_L_getter);
-                    g.Emit(OpCodes.Stloc_0);
-
-                    //err_func =LuaAPI.load_error_func(L, errorFuncRef);
-                    g.Emit(OpCodes.Ldloc_0);
-                    g.Emit(OpCodes.Ldarg_0);
-                    g.Emit(OpCodes.Callvirt, DelegateBridgeBase_errorFuncRef_getter);
-                    g.Emit(OpCodes.Call, LuaAPI_load_error_func);
-                    g.Emit(OpCodes.Stloc_1);
-
-                    //translator = LuaBase.translator;
-                    g.Emit(OpCodes.Ldarg_0);
-                    g.Emit(OpCodes.Callvirt, LuaBase_translator_getter);
-                    g.Emit(OpCodes.Stloc_2);
-
-                    //LuaAPI.lua_getref(L, luaReference);
-                    g.Emit(OpCodes.Ldloc_0);
-                    g.Emit(OpCodes.Ldarg_0);
-                    g.Emit(OpCodes.Ldfld, LuaBase_luaReference);
-                    g.Emit(OpCodes.Call, LuaAPI_lua_getref);
-
-                    //LuaAPI.lua_pushstring(L, "xxx");
-                    g.Emit(OpCodes.Ldloc_0);
-                    g.Emit(OpCodes.Ldstr, method.Name);
-                    g.Emit(OpCodes.Call, LuaAPI_lua_pushstring);
-
-                    //LuaAPI.xlua_pgettable(L, -2)
-                    g.Emit(OpCodes.Ldloc_0);
-                    g.Emit(OpCodes.Ldc_I4_S, (sbyte)-2);
-                    g.Emit(OpCodes.Call, LuaAPI_xlua_pgettable);
-                    Label gettable_no_exception = g.DefineLabel();
-                    g.Emit(OpCodes.Brfalse, gettable_no_exception);
-
-                    g.Emit(OpCodes.Ldarg_0);
-                    g.Emit(OpCodes.Ldfld, LuaBase_luaEnv);
-                    g.Emit(OpCodes.Ldloc_1);
-                    g.Emit(OpCodes.Ldc_I4_1);
-                    g.Emit(OpCodes.Sub);
-                    g.Emit(OpCodes.Callvirt, LuaEnv_ThrowExceptionFromError);
-                    g.MarkLabel(gettable_no_exception);
-
-                    //LuaAPI.lua_pushvalue(L, -2);
-                    g.Emit(OpCodes.Ldloc_0);
-                    g.Emit(OpCodes.Ldc_I4_S, (sbyte)-2);
-                    g.Emit(OpCodes.Call, LuaAPI_lua_pushvalue);
-
-                    //LuaAPI.lua_remove(L, -3);
-                    g.Emit(OpCodes.Ldloc_0);
-                    g.Emit(OpCodes.Ldc_I4_S, (sbyte)-3);
-                    g.Emit(OpCodes.Call, LuaAPI_lua_remove);
-
-                    int in_param_count = 0;
-                    int out_param_count = 0;
-                    bool has_params = false;
-                    //translator.PushAny(L, param_in)
-                    for (int i = 0; i < parameters.Length; ++i)
-                    {
-                        var pinfo = parameters[i];
-                        if (!pinfo.IsOut)
-                        {
-                            var ptype = pinfo.ParameterType;
-                            var pelemtype = ptype.IsByRef ? ptype.GetElementType() : ptype;
-
-                            g.Emit(OpCodes.Ldloc_2);
-                            g.Emit(OpCodes.Ldloc_0);
-                            g.Emit(OpCodes.Ldarg, (short)(i + 1));
-                            if (ptype.IsByRef)
-                            {
-                                if (pelemtype.IsValueType)
-                                {
-                                    g.Emit(OpCodes.Ldobj, pelemtype);
-                                    g.Emit(OpCodes.Box, pelemtype);
-                                }
-                                else
-                                {
-                                    g.Emit(OpCodes.Ldind_Ref);
-                                }
-                            }
-                            else if (ptype.IsValueType)
-                            {
-                                g.Emit(OpCodes.Box, ptype);
-                            }
-                            if (pinfo.IsDefined(typeof(System.ParamArrayAttribute), false))
-                            {
-                                g.Emit(OpCodes.Callvirt, ObjectTranslator_PushParams);
-                                has_params = true;
-                            }
-                            else
-                            {
-                                g.Emit(OpCodes.Callvirt, ObjectTranslator_PushAny);
-                                ++in_param_count;
-                            }
-                        }
-
-                        if (pinfo.ParameterType.IsByRef)
-                        {
-                            ++out_param_count;
-                        }
-                    }
-
-                    g.Emit(OpCodes.Ldloc_0);
-                    g.Emit(OpCodes.Ldc_I4, in_param_count + 1);
-                    if (has_params)
-                    {
-                        Label l1 = g.DefineLabel();
-
-                        g.Emit(OpCodes.Ldarg, (short)parameters.Length);
-                        g.Emit(OpCodes.Brfalse, l1);
-
-                        g.Emit(OpCodes.Ldarg, (short)parameters.Length);
-                        g.Emit(OpCodes.Ldlen);
-                        g.Emit(OpCodes.Add);
-                        g.MarkLabel(l1);
-                    }
-                    g.Emit(OpCodes.Ldc_I4, out_param_count + (has_return ? 1 : 0));
-                    g.Emit(OpCodes.Ldloc_1);
-                    g.Emit(OpCodes.Call, LuaAPI_lua_pcall);
-                    Label no_exception = g.DefineLabel();
-                    g.Emit(OpCodes.Brfalse, no_exception);
-
-                    g.Emit(OpCodes.Ldarg_0);
-                    g.Emit(OpCodes.Ldfld, LuaBase_luaEnv);
-                    g.Emit(OpCodes.Ldloc_1);
-                    g.Emit(OpCodes.Ldc_I4_1);
-                    g.Emit(OpCodes.Sub);
-                    g.Emit(OpCodes.Callvirt, LuaEnv_ThrowExceptionFromError);
-                    g.MarkLabel(no_exception);
-
-                    int offset = 1;
-                    if (has_return)
-                    {
-                        genGetObjectCall(g, offset++, method.ReturnType);
-                        g.Emit(OpCodes.Stloc_3);
-                    }
-
-                    for (int i = 0; i < parameters.Length; ++i)
-                    {
-                        var pinfo = parameters[i];
-                        var ptype = pinfo.ParameterType;
-                        if (ptype.IsByRef)
-                        {
-                            g.Emit(OpCodes.Ldarg, (short)(i + 1));
-                            var pelemtype = ptype.GetElementType();
-                            genGetObjectCall(g, offset++, pelemtype);
-                            if (pelemtype.IsValueType)
-                            {
-                                g.Emit(OpCodes.Stobj, pelemtype);
-                            }
-                            else
-                            {
-                                g.Emit(OpCodes.Stind_Ref);
-                            }
-
-                        }
-                    }
-
-                    if (has_return)
-                    {
-                        g.Emit(OpCodes.Ldloc_3);
-                    }
-
-                    //LuaAPI.lua_settop(L, err_func - 1);
-                    g.Emit(OpCodes.Ldloc_0);
-                    g.Emit(OpCodes.Ldloc_1);
-                    g.Emit(OpCodes.Ldc_I4_1);
-                    g.Emit(OpCodes.Sub);
-                    g.Emit(OpCodes.Call, LuaAPI_lua_settop);
-
-                    g.Emit(OpCodes.Ret);
+                    genImpl(method, method_builder.GetILGenerator(), true);
                 }
                 else if (member.MemberType == MemberTypes.Property)
                 {
@@ -821,6 +491,195 @@ namespace XLua
                 method_builder.DefineParameter(i + 1, parameters[i].Attributes, parameters[i].Name);
             }
             return method_builder;
+        }
+
+        private void genImpl(MethodInfo to_be_impl, ILGenerator il, bool isObj)
+        {
+            var parameters = to_be_impl.GetParameters();
+
+            il.DeclareLocal(typeof(RealStatePtr));//RealStatePtr L;  0
+            il.DeclareLocal(typeof(int));//int err_func; 1
+            il.DeclareLocal(typeof(ObjectTranslator));//ObjectTranslator translator; 2
+            bool has_return = to_be_impl.ReturnType != typeof(void);
+            if (has_return)
+            {
+                il.DeclareLocal(to_be_impl.ReturnType); //ReturnType ret; 3
+            }
+
+            // L = LuaBase.L;
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Callvirt, LuaBase_L_getter);
+            il.Emit(OpCodes.Stloc_0);
+
+            //err_func =LuaAPI.load_error_func(L, errorFuncRef);
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Callvirt, DelegateBridgeBase_errorFuncRef_getter);
+            il.Emit(OpCodes.Call, LuaAPI_load_error_func);
+            il.Emit(OpCodes.Stloc_1);
+
+            //translator = LuaBase.translator;
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Callvirt, LuaBase_translator_getter);
+            il.Emit(OpCodes.Stloc_2);
+
+            //LuaAPI.lua_getref(L, luaReference);
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldfld, LuaBase_luaReference);
+            il.Emit(OpCodes.Call, LuaAPI_lua_getref);
+
+            if (isObj)
+            {
+                //LuaAPI.lua_pushstring(L, "xxx");
+                il.Emit(OpCodes.Ldloc_0);
+                il.Emit(OpCodes.Ldstr, to_be_impl.Name);
+                il.Emit(OpCodes.Call, LuaAPI_lua_pushstring);
+
+                //LuaAPI.xlua_pgettable(L, -2)
+                il.Emit(OpCodes.Ldloc_0);
+                il.Emit(OpCodes.Ldc_I4_S, (sbyte)-2);
+                il.Emit(OpCodes.Call, LuaAPI_xlua_pgettable);
+                Label gettable_no_exception = il.DefineLabel();
+                il.Emit(OpCodes.Brfalse, gettable_no_exception);
+
+                il.Emit(OpCodes.Ldarg_0);
+                il.Emit(OpCodes.Ldfld, LuaBase_luaEnv);
+                il.Emit(OpCodes.Ldloc_1);
+                il.Emit(OpCodes.Ldc_I4_1);
+                il.Emit(OpCodes.Sub);
+                il.Emit(OpCodes.Callvirt, LuaEnv_ThrowExceptionFromError);
+                il.MarkLabel(gettable_no_exception);
+
+                //LuaAPI.lua_pushvalue(L, -2);
+                il.Emit(OpCodes.Ldloc_0);
+                il.Emit(OpCodes.Ldc_I4_S, (sbyte)-2);
+                il.Emit(OpCodes.Call, LuaAPI_lua_pushvalue);
+
+                //LuaAPI.lua_remove(L, -3);
+                il.Emit(OpCodes.Ldloc_0);
+                il.Emit(OpCodes.Ldc_I4_S, (sbyte)-3);
+                il.Emit(OpCodes.Call, LuaAPI_lua_remove);
+            }
+
+            int in_param_count = 0;
+            int out_param_count = 0;
+            bool has_params = false;
+            //translator.PushAny(L, param_in)
+            for (int i = 0; i < parameters.Length; ++i)
+            {
+                var pinfo = parameters[i];
+                if (!pinfo.IsOut)
+                {
+                    var ptype = pinfo.ParameterType;
+                    var pelemtype = ptype.IsByRef ? ptype.GetElementType() : ptype;
+
+                    il.Emit(OpCodes.Ldloc_2);
+                    il.Emit(OpCodes.Ldloc_0);
+                    il.Emit(OpCodes.Ldarg, (short)(i + 1));
+                    if (ptype.IsByRef)
+                    {
+                        if (pelemtype.IsValueType)
+                        {
+                            il.Emit(OpCodes.Ldobj, pelemtype);
+                            il.Emit(OpCodes.Box, pelemtype);
+                        }
+                        else
+                        {
+                            il.Emit(OpCodes.Ldind_Ref);
+                        }
+                    }
+                    else if (ptype.IsValueType)
+                    {
+                        il.Emit(OpCodes.Box, ptype);
+                    }
+                    if (pinfo.IsDefined(typeof(System.ParamArrayAttribute), false))
+                    {
+                        il.Emit(OpCodes.Callvirt, ObjectTranslator_PushParams);
+                        has_params = true;
+                    }
+                    else
+                    {
+                        il.Emit(OpCodes.Callvirt, ObjectTranslator_PushAny);
+                        ++in_param_count;
+                    }
+                }
+
+                if (pinfo.ParameterType.IsByRef)
+                {
+                    ++out_param_count;
+                }
+            }
+
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Ldc_I4, in_param_count + (isObj ? 1 : 0));
+            if (has_params)
+            {
+                Label l1 = il.DefineLabel();
+
+                il.Emit(OpCodes.Ldarg, (short)parameters.Length);
+                il.Emit(OpCodes.Brfalse, l1);
+
+                il.Emit(OpCodes.Ldarg, (short)parameters.Length);
+                il.Emit(OpCodes.Ldlen);
+                il.Emit(OpCodes.Add);
+                il.MarkLabel(l1);
+            }
+            il.Emit(OpCodes.Ldc_I4, out_param_count + (has_return ? 1 : 0));
+            il.Emit(OpCodes.Ldloc_1);
+            il.Emit(OpCodes.Call, LuaAPI_lua_pcall);
+            Label no_exception = il.DefineLabel();
+            il.Emit(OpCodes.Brfalse, no_exception);
+
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldfld, LuaBase_luaEnv);
+            il.Emit(OpCodes.Ldloc_1);
+            il.Emit(OpCodes.Ldc_I4_1);
+            il.Emit(OpCodes.Sub);
+            il.Emit(OpCodes.Callvirt, LuaEnv_ThrowExceptionFromError);
+            il.MarkLabel(no_exception);
+
+            int offset = 1;
+            if (has_return)
+            {
+                genGetObjectCall(il, offset++, to_be_impl.ReturnType);
+                il.Emit(OpCodes.Stloc_3);
+            }
+
+            for (int i = 0; i < parameters.Length; ++i)
+            {
+                var pinfo = parameters[i];
+                var ptype = pinfo.ParameterType;
+                if (ptype.IsByRef)
+                {
+                    il.Emit(OpCodes.Ldarg, (short)(i + 1));
+                    var pelemtype = ptype.GetElementType();
+                    genGetObjectCall(il, offset++, pelemtype);
+                    if (pelemtype.IsValueType)
+                    {
+                        il.Emit(OpCodes.Stobj, pelemtype);
+                    }
+                    else
+                    {
+                        il.Emit(OpCodes.Stind_Ref);
+                    }
+
+                }
+            }
+
+            if (has_return)
+            {
+                il.Emit(OpCodes.Ldloc_3);
+            }
+
+            //LuaAPI.lua_settop(L, err_func - 1);
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Ldloc_1);
+            il.Emit(OpCodes.Ldc_I4_1);
+            il.Emit(OpCodes.Sub);
+            il.Emit(OpCodes.Call, LuaAPI_lua_settop);
+
+            il.Emit(OpCodes.Ret);
         }
     }
 }
