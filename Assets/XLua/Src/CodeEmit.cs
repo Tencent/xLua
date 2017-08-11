@@ -283,11 +283,8 @@ namespace XLua
             cg.Emit(OpCodes.Ret);
 
             // end of GetDelegateByType
-            get_deleate_by_type_il.Emit(OpCodes.Ldstr, "This type must add to CSharpCallLua:");
-            get_deleate_by_type_il.Emit(OpCodes.Ldarg_1);
-            get_deleate_by_type_il.Emit(OpCodes.Call, typeof(string).GetMethod("Concat", new Type[] { typeof(object), typeof(object) }));
-            get_deleate_by_type_il.Emit(OpCodes.Newobj, typeof(System.InvalidCastException).GetConstructor(new Type[] { typeof(string) }));
-            get_deleate_by_type_il.Emit(OpCodes.Throw);
+            get_deleate_by_type_il.Emit(OpCodes.Ldnull);
+            get_deleate_by_type_il.Emit(OpCodes.Ret);
 
             impl_type_builder.DefineMethodOverride(get_deleate_by_type, typeof(DelegateBridgeBase).GetMethod("GetDelegateByType"));
 

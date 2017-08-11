@@ -329,7 +329,28 @@ namespace XLua
 #if UNITY_EDITOR || XLUA_GENERAL
         CodeEmit ce = new CodeEmit();
 #endif
-        
+        Delegate getDelegate(DelegateBridgeBase bridge, Type delegateType)
+        {
+            Delegate ret = bridge.GetDelegateByType(delegateType);
+
+            if (ret != null)
+            {
+                return ret;
+            }
+            
+            // get by parameters
+            MethodInfo delegateMethod = delegateType.GetMethod("Invoke");
+            var methods = bridge.GetType().GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+            for(int i = 0; i < methods.Length; i++)
+            {
+                if (!methods[i].IsConstructor && Utils.IsParamsMatch(delegateMethod, methods[i]))
+                {
+                    return Delegate.CreateDelegate(delegateType, bridge, methods[i]);
+                }
+            }
+
+            throw new InvalidCastException("This type must add to CSharpCallLua: " + delegateType);
+        }
         Dictionary<int, WeakReference> delegate_bridges = new Dictionary<int, WeakReference>();
         public object CreateDelegateBridge(RealStatePtr L, Type delegateType, int idx)
         {
@@ -354,7 +375,7 @@ namespace XLua
                     }
                     else
                     {
-                        exist_delegate = exist_bridge.GetDelegateByType(delegateType);
+                        exist_delegate = getDelegate(exist_bridge, delegateType);
                         exist_bridge.AddDelegate(delegateType, exist_delegate);
                         return exist_delegate;
                     }
@@ -399,7 +420,7 @@ namespace XLua
                 return bridge;
             }
             try {
-                var ret = bridge.GetDelegateByType(delegateType);
+                var ret = getDelegate(bridge, delegateType);
                 bridge.AddDelegate(delegateType, ret);
                 delegate_bridges[reference] = new WeakReference(bridge);
                 return ret;

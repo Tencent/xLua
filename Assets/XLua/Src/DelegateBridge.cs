@@ -80,7 +80,7 @@ namespace XLua
 
         public virtual Delegate GetDelegateByType(Type type)
         {
-            throw new InvalidCastException("This type must add to CSharpCallLua: " + type);
+            return null;
         }
     }
 
