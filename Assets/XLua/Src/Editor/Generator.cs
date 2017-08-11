@@ -1520,6 +1520,10 @@ namespace CSObjectWrapEditor
         [UnityEditor.Callbacks.PostProcessScene]
         public static void CheckGenrate()
         {
+            if (EditorApplication.isCompiling || Application.isPlaying)
+            {
+                return;
+            }
             if (!DelegateBridge.Gen_Flag)
             {
                 throw new InvalidOperationException("Code has not been genrated, may be not work in phone!");
