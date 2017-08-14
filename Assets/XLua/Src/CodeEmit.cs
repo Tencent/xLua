@@ -210,12 +210,12 @@ namespace XLua
             var ctor_param_types = new Type[] { typeof(int), typeof(LuaEnv) };
             ConstructorInfo parent_ctor = typeof(DelegateBridgeBase).GetConstructor(ctor_param_types);
             var ctor_builder = impl_type_builder.DefineConstructor(MethodAttributes.Public, CallingConventions.Standard, ctor_param_types);
-            var cg = ctor_builder.GetILGenerator();
-            cg.Emit(OpCodes.Ldarg_0);
-            cg.Emit(OpCodes.Ldarg_1);
-            cg.Emit(OpCodes.Ldarg_2);
-            cg.Emit(OpCodes.Call, parent_ctor);
-            cg.Emit(OpCodes.Ret);
+            var ctor_il = ctor_builder.GetILGenerator();
+            ctor_il.Emit(OpCodes.Ldarg_0);
+            ctor_il.Emit(OpCodes.Ldarg_1);
+            ctor_il.Emit(OpCodes.Ldarg_2);
+            ctor_il.Emit(OpCodes.Call, parent_ctor);
+            ctor_il.Emit(OpCodes.Ret);
 
             // end of GetDelegateByType
             get_deleate_by_type_il.Emit(OpCodes.Ldnull);
@@ -227,45 +227,45 @@ namespace XLua
             return impl_type_builder.CreateType();
         }
 
-        private void genGetObjectCall(ILGenerator g, int offset, Type type, LocalBuilder L, LocalBuilder translator, LocalBuilder offsetBase)
+        private void genGetObjectCall(ILGenerator il, int offset, Type type, LocalBuilder L, LocalBuilder translator, LocalBuilder offsetBase)
         {
-            g.Emit(OpCodes.Ldloc, translator); // translator
-            g.Emit(OpCodes.Ldloc, L); // L
+            il.Emit(OpCodes.Ldloc, translator); // translator
+            il.Emit(OpCodes.Ldloc, L); // L
             if (offsetBase != null)
             {
-                g.Emit(OpCodes.Ldloc, offsetBase); // err_func
-                g.Emit(OpCodes.Ldc_I4, offset);
-                g.Emit(OpCodes.Add);
+                il.Emit(OpCodes.Ldloc, offsetBase); // err_func
+                il.Emit(OpCodes.Ldc_I4, offset);
+                il.Emit(OpCodes.Add);
             }
             else
             {
-                g.Emit(OpCodes.Ldc_I4, offset);
+                il.Emit(OpCodes.Ldc_I4, offset);
             }
-            g.Emit(OpCodes.Ldtoken, type);
-            g.Emit(OpCodes.Call, Type_GetTypeFromHandle); // typeof(type)
-            g.Emit(OpCodes.Callvirt, ObjectTranslator_GetObject);
+            il.Emit(OpCodes.Ldtoken, type);
+            il.Emit(OpCodes.Call, Type_GetTypeFromHandle); // typeof(type)
+            il.Emit(OpCodes.Callvirt, ObjectTranslator_GetObject);
             if (type.IsValueType)
             {
-                Label not_null = g.DefineLabel();
-                Label null_done = g.DefineLabel();
-                LocalBuilder local_new = g.DeclareLocal(type);
+                Label not_null = il.DefineLabel();
+                Label null_done = il.DefineLabel();
+                LocalBuilder local_new = il.DeclareLocal(type);
 
-                g.Emit(OpCodes.Dup);
-                g.Emit(OpCodes.Brtrue_S, not_null);
+                il.Emit(OpCodes.Dup);
+                il.Emit(OpCodes.Brtrue_S, not_null);
 
-                g.Emit(OpCodes.Pop);
-                g.Emit(OpCodes.Ldloca, local_new);
-                g.Emit(OpCodes.Initobj, type);
-                g.Emit(OpCodes.Ldloc, local_new);
-                g.Emit(OpCodes.Br_S, null_done);
+                il.Emit(OpCodes.Pop);
+                il.Emit(OpCodes.Ldloca, local_new);
+                il.Emit(OpCodes.Initobj, type);
+                il.Emit(OpCodes.Ldloc, local_new);
+                il.Emit(OpCodes.Br_S, null_done);
 
-                g.MarkLabel(not_null);
-                g.Emit(OpCodes.Unbox_Any, type);
-                g.MarkLabel(null_done);
+                il.MarkLabel(not_null);
+                il.Emit(OpCodes.Unbox_Any, type);
+                il.MarkLabel(null_done);
             }
             else if (type != typeof(object))
             {
-                g.Emit(OpCodes.Castclass, type);
+                il.Emit(OpCodes.Castclass, type);
             }
         }
 
@@ -386,36 +386,7 @@ namespace XLua
                         il.Emit(OpCodes.Callvirt, LuaEnv_ThrowExceptionFromError);
                         il.MarkLabel(gettable_no_exception);
 
-                        il.Emit(OpCodes.Ldloc, translator);
-                        il.Emit(OpCodes.Ldloc, L);
-                        il.Emit(OpCodes.Ldc_I4_S, (sbyte)-1);
-                        il.Emit(OpCodes.Ldtoken, property.PropertyType);
-                        il.Emit(OpCodes.Call, Type_GetTypeFromHandle); // typeof(type)
-                        il.Emit(OpCodes.Callvirt, ObjectTranslator_GetObject);
-
-                        if (property.PropertyType.IsValueType)
-                        {
-                            Label not_null = il.DefineLabel();
-                            Label null_done = il.DefineLabel();
-                            LocalBuilder local_new = il.DeclareLocal(property.PropertyType);
-
-                            il.Emit(OpCodes.Dup);
-                            il.Emit(OpCodes.Brtrue_S, not_null);
-
-                            il.Emit(OpCodes.Pop);
-                            il.Emit(OpCodes.Ldloca, local_new);
-                            il.Emit(OpCodes.Initobj, property.PropertyType);
-                            il.Emit(OpCodes.Ldloc, local_new);
-                            il.Emit(OpCodes.Br_S, null_done);
-
-                            il.MarkLabel(not_null);
-                            il.Emit(OpCodes.Unbox_Any, property.PropertyType);
-                            il.MarkLabel(null_done);
-                        }
-                        else if (property.PropertyType != typeof(object))
-                        {
-                            il.Emit(OpCodes.Castclass, property.PropertyType);
-                        }
+                        genGetObjectCall(il, -1, property.PropertyType, L, translator, null);
                         il.Emit(OpCodes.Stloc, ret);
 
                         //LuaAPI.lua_pop(L, 2);
@@ -520,12 +491,12 @@ namespace XLua
             var ctor_param_types = new Type[] { typeof(int), typeof(LuaEnv) };
             ConstructorInfo parent_ctor = typeof(LuaBase).GetConstructor(ctor_param_types);
             var ctor_builder = impl_type_builder.DefineConstructor(MethodAttributes.Public, CallingConventions.Standard, ctor_param_types);
-            var cg = ctor_builder.GetILGenerator();
-            cg.Emit(OpCodes.Ldarg_0);
-            cg.Emit(OpCodes.Ldarg_1);
-            cg.Emit(OpCodes.Ldarg_2);
-            cg.Emit(OpCodes.Call, parent_ctor);
-            cg.Emit(OpCodes.Ret);
+            var ctor_il = ctor_builder.GetILGenerator();
+            ctor_il.Emit(OpCodes.Ldarg_0);
+            ctor_il.Emit(OpCodes.Ldarg_1);
+            ctor_il.Emit(OpCodes.Ldarg_2);
+            ctor_il.Emit(OpCodes.Call, parent_ctor);
+            ctor_il.Emit(OpCodes.Ret);
 
             return impl_type_builder.CreateType();
         }
