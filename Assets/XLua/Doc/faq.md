@@ -259,3 +259,24 @@ obj_has_TestDelegate.field = d1 + d2 --到时调用field的时候将会触发Foo
 
 ~~~
 
+## 为什么有时Lua错误直接中断了而没错误信息？
+
+一般两种情况：
+
+1、你的错误代码用协程跑，而标准的lua，协程出错是通过resume返回值来表示，可以查阅相关的lua官方文档。如果你希望协程出错直接抛异常，可以在你的resume调用那加个assert。
+
+把类似下面的代码：
+
+~~~lua
+coroutine.resume(co, ...)
+~~~
+
+改为：
+
+~~~lua
+assert(coroutine.resume(co, ...))
+~~~
+
+2、上层catch后，不打印
+
+比如某些sdk，在回调业务时，try-catch后把异常吃了。
