@@ -65,6 +65,18 @@ namespace XLua
 
         private Dictionary<Type, MethodInfo> fixPush;
 
+        private MethodInfo LuaAPI_xlua_tointeger = typeof(LuaAPI).GetMethod("xlua_tointeger");
+        private MethodInfo LuaAPI_lua_tonumber = typeof(LuaAPI).GetMethod("lua_tonumber");
+        private MethodInfo LuaAPI_lua_tostring = typeof(LuaAPI).GetMethod("lua_tostring");
+        private MethodInfo LuaAPI_lua_toboolean = typeof(LuaAPI).GetMethod("lua_toboolean");
+        private MethodInfo LuaAPI_lua_tobytes = typeof(LuaAPI).GetMethod("lua_tobytes");
+        private MethodInfo LuaAPI_lua_touserdata = typeof(LuaAPI).GetMethod("lua_touserdata");
+        private MethodInfo LuaAPI_xlua_touint = typeof(LuaAPI).GetMethod("xlua_touint");
+        private MethodInfo LuaAPI_lua_touint64 = typeof(LuaAPI).GetMethod("lua_touint64");
+        private MethodInfo LuaAPI_lua_toint64 = typeof(LuaAPI).GetMethod("lua_toint64");
+
+        private Dictionary<Type, MethodInfo> typedCaster;
+        private Dictionary<Type, MethodInfo> fixCaster;
 
         public CodeEmit()
         {
@@ -85,6 +97,29 @@ namespace XLua
                 {typeof(byte[]), LuaAPI_lua_pushbytes},
                 {typeof(bool), LuaAPI_lua_pushboolean},
                 {typeof(IntPtr), LuaAPI_lua_pushlightuserdata},
+            };
+
+            fixCaster = new Dictionary<Type, MethodInfo>()
+            {
+                {typeof(double), LuaAPI_lua_tonumber},
+                {typeof(string), LuaAPI_lua_tostring},
+                {typeof(bool), LuaAPI_lua_toboolean},
+                {typeof(byte[]), LuaAPI_lua_tobytes},
+                {typeof(IntPtr), LuaAPI_lua_touserdata},
+                {typeof(uint), LuaAPI_xlua_touint},
+                {typeof(ulong), LuaAPI_lua_touint64},
+                {typeof(int), LuaAPI_xlua_tointeger},
+                {typeof(long), LuaAPI_lua_toint64},
+            };
+
+            typedCaster = new Dictionary<Type, MethodInfo>()
+            {
+                {typeof(byte), LuaAPI_xlua_tointeger},
+                {typeof(char), LuaAPI_xlua_tointeger},
+                {typeof(short), LuaAPI_xlua_tointeger},
+                {typeof(sbyte), LuaAPI_xlua_tointeger},
+                {typeof(float), LuaAPI_lua_tonumber},
+                {typeof(ushort), LuaAPI_xlua_tointeger},
             };
         }
 
@@ -229,7 +264,10 @@ namespace XLua
 
         private void genGetObjectCall(ILGenerator il, int offset, Type type, LocalBuilder L, LocalBuilder translator, LocalBuilder offsetBase)
         {
-            il.Emit(OpCodes.Ldloc, translator); // translator
+            if (!fixCaster.ContainsKey(type) && !typedCaster.ContainsKey(type))
+            {
+                il.Emit(OpCodes.Ldloc, translator); // translator
+            }
             il.Emit(OpCodes.Ldloc, L); // L
             if (offsetBase != null)
             {
@@ -241,31 +279,73 @@ namespace XLua
             {
                 il.Emit(OpCodes.Ldc_I4, offset);
             }
-            il.Emit(OpCodes.Ldtoken, type);
-            il.Emit(OpCodes.Call, Type_GetTypeFromHandle); // typeof(type)
-            il.Emit(OpCodes.Callvirt, ObjectTranslator_GetObject);
-            if (type.IsValueType)
+
+            MethodInfo caster;
+            
+            if (fixCaster.TryGetValue(type, out caster))
             {
-                Label not_null = il.DefineLabel();
-                Label null_done = il.DefineLabel();
-                LocalBuilder local_new = il.DeclareLocal(type);
-
-                il.Emit(OpCodes.Dup);
-                il.Emit(OpCodes.Brtrue_S, not_null);
-
-                il.Emit(OpCodes.Pop);
-                il.Emit(OpCodes.Ldloca, local_new);
-                il.Emit(OpCodes.Initobj, type);
-                il.Emit(OpCodes.Ldloc, local_new);
-                il.Emit(OpCodes.Br_S, null_done);
-
-                il.MarkLabel(not_null);
-                il.Emit(OpCodes.Unbox_Any, type);
-                il.MarkLabel(null_done);
+                il.Emit(OpCodes.Call, caster);
             }
-            else if (type != typeof(object))
+            else if (typedCaster.TryGetValue(type, out caster))
             {
-                il.Emit(OpCodes.Castclass, type);
+                il.Emit(OpCodes.Call, caster);
+                if (type == typeof(byte))
+                {
+                    il.Emit(OpCodes.Conv_U1);
+                }
+                else if(type == typeof(char))
+                {
+                    il.Emit(OpCodes.Conv_U2);
+                }
+                else if (type == typeof(short))
+                {
+                    il.Emit(OpCodes.Conv_I2);
+                }
+                else if (type == typeof(sbyte))
+                {
+                    il.Emit(OpCodes.Conv_I1);
+                }
+                else if (type == typeof(ushort))
+                {
+                    il.Emit(OpCodes.Conv_U2);
+                }
+                else if (type == typeof(float))
+                {
+                    il.Emit(OpCodes.Conv_R4);
+                }
+                else
+                {
+                    throw new InvalidProgramException(type + " is not a type need cast");
+                }
+            }
+            else
+            {
+                il.Emit(OpCodes.Ldtoken, type);
+                il.Emit(OpCodes.Call, Type_GetTypeFromHandle); // typeof(type)
+                il.Emit(OpCodes.Callvirt, ObjectTranslator_GetObject);
+                if (type.IsValueType)
+                {
+                    Label not_null = il.DefineLabel();
+                    Label null_done = il.DefineLabel();
+                    LocalBuilder local_new = il.DeclareLocal(type);
+
+                    il.Emit(OpCodes.Dup);
+                    il.Emit(OpCodes.Brtrue_S, not_null);
+
+                    il.Emit(OpCodes.Pop);
+                    il.Emit(OpCodes.Ldloca, local_new);
+                    il.Emit(OpCodes.Initobj, type);
+                    il.Emit(OpCodes.Ldloc, local_new);
+                    il.Emit(OpCodes.Br_S, null_done);
+
+                    il.MarkLabel(not_null);
+                    il.Emit(OpCodes.Unbox_Any, type);
+                    il.MarkLabel(null_done);
+                }
+                else if (type != typeof(object))
+                {
+                    il.Emit(OpCodes.Castclass, type);
+                }
             }
         }
 

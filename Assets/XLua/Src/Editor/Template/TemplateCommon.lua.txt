@@ -76,7 +76,7 @@ local fixChecker = {
 }
 
 local typedCaster = {
-	["System.Byte"] = "LuaAPI.lua_tonumber",
+	["System.Byte"] = "LuaAPI.xlua_tointeger",
 	["System.Char"] = "LuaAPI.xlua_tointeger",
 	["System.Int16"] = "LuaAPI.xlua_tointeger",
 	["System.SByte"] = "LuaAPI.xlua_tointeger",
