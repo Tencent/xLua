@@ -13,7 +13,7 @@ local function async_to_sync(async_func, callback_pos)
         local waiting = false
         local function cb_func(...)
             if waiting then
-                coroutine.resume(_co, ...)
+                assert(coroutine.resume(_co, ...))
             else
                 rets = {...}
             end
