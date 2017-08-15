@@ -836,7 +836,7 @@ namespace XLua
             LuaAPI.lua_pop(L, 1);
             LuaAPI.lua_rawset(L, cls_meta); // set __newindex
 
-            LuaCSFunction constructor = translator.methodWrapsCache.GetConstructorWrap(type);
+            LuaCSFunction constructor = typeof(Delegate).IsAssignableFrom(type)? translator.metaFunctions.DelegateCtor : translator.methodWrapsCache.GetConstructorWrap(type);
             if (constructor == null)
             {
                 constructor = (RealStatePtr LL) =>

@@ -27,6 +27,8 @@ namespace XLua
         internal LuaCSFunction GcMeta, ToStringMeta, EnumAndMeta, EnumOrMeta;
 
         internal LuaCSFunction StaticCSFunctionWraper, FixCSFunctionWraper;
+
+        internal LuaCSFunction DelegateCtor;
         
         public StaticLuaCallbacks()
         {
@@ -36,6 +38,7 @@ namespace XLua
             EnumOrMeta = new LuaCSFunction(EnumOr);
             StaticCSFunctionWraper = new LuaCSFunction(StaticLuaCallbacks.StaticCSFunction);
             FixCSFunctionWraper = new LuaCSFunction(StaticLuaCallbacks.FixCSFunction);
+            DelegateCtor = new LuaCSFunction(DelegateConstructor);
         }
 
         [MonoPInvokeCallback(typeof(LuaCSFunction))]
@@ -1032,6 +1035,26 @@ namespace XLua
             catch (Exception e)
             {
                 return LuaAPI.luaL_error(L, "c# exception in xlua.metatable_operation: " + e);
+            }
+        }
+
+        [MonoPInvokeCallback(typeof(LuaCSFunction))]
+        public static int DelegateConstructor(RealStatePtr L)
+        {
+            try
+            {
+                ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
+                Type type = getType(L, translator, 1);
+                if (type == null || !typeof(Delegate).IsAssignableFrom(type))
+                {
+                    return LuaAPI.luaL_error(L, "delegate constructor: #1 argument must be a Delegate's type");
+                }
+                translator.PushAny(L, translator.GetObject(L, 2, type));
+                return 1;
+            }
+            catch (Exception e)
+            {
+                return LuaAPI.luaL_error(L, "c# exception in delegate constructor: " + e);
             }
         }
     }
