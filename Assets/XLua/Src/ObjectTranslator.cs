@@ -337,6 +337,11 @@ namespace XLua
             {
                 return ret;
             }
+
+            if (delegateType == typeof(Delegate) || delegateType == typeof(MulticastDelegate))
+            {
+                return null;
+            }
             
             // get by parameters
             MethodInfo delegateMethod = delegateType.GetMethod("Invoke");
