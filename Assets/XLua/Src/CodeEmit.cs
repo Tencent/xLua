@@ -914,7 +914,6 @@ namespace XLua
             LocalBuilder translator = il.DeclareLocal(typeof(ObjectTranslator));
             LocalBuilder top = il.DeclareLocal(typeof(int));
 
-            // TODO: try-catch
             il.Emit(OpCodes.Ldarg_0);
             il.Emit(OpCodes.Stloc, L);
 
@@ -931,6 +930,8 @@ namespace XLua
                 il.Emit(OpCodes.Stloc, top);
             }
 
+            int argLocalStart = 5;
+
             for (int i = 0; i < methodsToCall.Count; i++)
             {
                 var method = methodsToCall[i];
@@ -940,7 +941,7 @@ namespace XLua
 
                 for (int j = 0; j < paramInfos.Length; j++)
                 {
-                    if (paramInfos[j].IsOut)
+                    if (!paramInfos[j].IsOut)
                     {
                         inParamCount++;
                     }
@@ -950,11 +951,10 @@ namespace XLua
                     }
                 }
 
-                Label endOfBlock = default(Label);
+                Label endOfBlock = endOfBlock = il.DefineLabel();
 
                 if (needCheckParameterType)
                 {
-                    endOfBlock = il.DefineLabel();
                     il.Emit(OpCodes.Ldloc, top);
                     il.Emit(OpCodes.Ldc_I4, inParamCount + (isStatic ? 0 : 1));
                     il.Emit(OpCodes.Bne_Un, endOfBlock);
@@ -975,8 +975,6 @@ namespace XLua
                     }
                 }
 
-                const int ARG_LOCAL_START = 5;
-
                 int luaPos = isStatic ? 1 : 2;
 
                 for (int j = 0; j < paramInfos.Length; j++)
@@ -988,7 +986,7 @@ namespace XLua
                     if (!paramInfo.IsOut)
                     {
                         genGetObjectCall(il, luaPos++, paramRawType, L, translator, null);
-                        il.Emit(OpCodes.Stloc, ARG_LOCAL_START + j);
+                        il.Emit(OpCodes.Stloc, argLocalStart + j);
                     }
                 }
 
@@ -999,7 +997,7 @@ namespace XLua
 
                 for (int j = 0; j < paramInfos.Length; j++)
                 {
-                    il.Emit(paramInfos[j].ParameterType.IsByRef ? OpCodes.Ldloca : OpCodes.Ldloc, ARG_LOCAL_START + j);
+                    il.Emit(paramInfos[j].ParameterType.IsByRef ? OpCodes.Ldloca : OpCodes.Ldloc, argLocalStart + j);
                 }
 
                 il.Emit(isStatic ? OpCodes.Call : OpCodes.Callvirt, method);
@@ -1011,7 +1009,7 @@ namespace XLua
                     hasReturn = true;
                     var methodReturn = il.DeclareLocal(method.ReturnType);
                     il.Emit(OpCodes.Stloc, methodReturn);
-                    genPush(il, method.ReturnType, (short)(ARG_LOCAL_START + paramInfos.Length), false, L, translator, false);
+                    genPush(il, method.ReturnType, (short)(argLocalStart + paramInfos.Length), false, L, translator, false);
                 }
 
                 for (int j = 0; j < paramInfos.Length; j++)
@@ -1019,7 +1017,7 @@ namespace XLua
                     if (paramInfos[i].ParameterType.IsByRef)
                     {
                         genPush(il, paramInfos[i].ParameterType.GetElementType(),
-                            (short)(ARG_LOCAL_START + j), false, L, translator, false);
+                            (short)(argLocalStart + j), false, L, translator, false);
                     }
                 }
 
@@ -1032,6 +1030,12 @@ namespace XLua
                 if (needCheckParameterType)
                 {
                     il.MarkLabel(endOfBlock);
+                }
+
+                argLocalStart += paramInfos.Length;
+                if (method.ReturnType != typeof(void))
+                {
+                    argLocalStart++;
                 }
             }
 
