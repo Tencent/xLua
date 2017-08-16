@@ -32,8 +32,15 @@ namespace XLua
 				return InternalGlobals.objectTranslatorPool;
 			}
 		}
-		
-		public ObjectTranslatorPool ()
+
+#if UNITY_EDITOR || XLUA_GENERAL
+        public static ObjectTranslator FindTranslator(RealStatePtr L)
+        {
+            return InternalGlobals.objectTranslatorPool.Find(L);
+        }
+#endif
+
+        public ObjectTranslatorPool ()
 		{
 		}
 		
