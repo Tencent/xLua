@@ -821,8 +821,6 @@ namespace XLua
             il.Emit(OpCodes.Callvirt, ObjectTranslator_Assignable);
         }
 
-        private MethodInfo UnityEngine_Debug_Log = typeof(UnityEngine.Debug).GetMethod("Log", new Type[] { typeof(object) });
-
         public Type EmitWrap(Type toBeWrap)
         {
             TypeBuilder wrapTypeBuilder = CodeEmitModule.DefineType("XLuaGenWrap" + (genID++), TypeAttributes.Public | TypeAttributes.Class | TypeAttributes.Abstract | TypeAttributes.Sealed);
