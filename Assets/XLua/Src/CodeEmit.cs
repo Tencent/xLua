@@ -821,6 +821,17 @@ namespace XLua
             il.Emit(OpCodes.Callvirt, ObjectTranslator_Assignable);
         }
 
+        void callRegisterFunc(ILGenerator il, MethodBuilder method, int index, string name)
+        {
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldc_I4, index);
+            il.Emit(OpCodes.Ldstr, name);
+            il.Emit(OpCodes.Ldnull);
+            il.Emit(OpCodes.Ldftn, method);
+            il.Emit(OpCodes.Newobj, LuaCSFunction_Constructor);
+            il.Emit(OpCodes.Call, Utils_RegisterFunc);
+        }
+
         public Type EmitWrap(Type toBeWrap)
         {
             TypeBuilder wrapTypeBuilder = CodeEmitModule.DefineType("XLuaGenWrap" + (genID++), TypeAttributes.Public | TypeAttributes.Class | TypeAttributes.Abstract | TypeAttributes.Sealed);
@@ -836,17 +847,25 @@ namespace XLua
             il.Emit(OpCodes.Call, ObjectTranslatorPool_FindTranslator);
             il.Emit(OpCodes.Stloc, translator);
 
+            var instanceMethods = toBeWrap.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
+                .Where(m => !m.IsSpecialName).GroupBy(m => m.Name).ToList();
+
             //begin obj
             il.Emit(OpCodes.Ldtoken, toBeWrap);
             il.Emit(OpCodes.Call, Type_GetTypeFromHandle); // typeof(type)
             il.Emit(OpCodes.Ldarg_0);
             il.Emit(OpCodes.Ldloc, translator);
-            il.Emit(OpCodes.Ldc_I4_0);
-            il.Emit(OpCodes.Ldc_I4_0);
-            il.Emit(OpCodes.Ldc_I4_0);
-            il.Emit(OpCodes.Ldc_I4_0);
+            il.Emit(OpCodes.Ldc_I4_1);
+            il.Emit(OpCodes.Ldc_I4, instanceMethods.Count);
+            il.Emit(OpCodes.Ldc_I4_1);
+            il.Emit(OpCodes.Ldc_I4_1);
             il.Emit(OpCodes.Ldc_I4_M1);
             il.Emit(OpCodes.Call, Utils_BeginObjectRegister);
+
+            foreach (var group in instanceMethods)
+            {
+                callRegisterFunc(il, genWrap(wrapTypeBuilder, group.ToList()), Utils.METHOD_IDX, group.Key);
+            }
 
             //end obj
             il.Emit(OpCodes.Ldtoken, toBeWrap);
@@ -865,9 +884,9 @@ namespace XLua
             il.Emit(OpCodes.Call, Type_GetTypeFromHandle); // typeof(type)
             il.Emit(OpCodes.Ldarg_0);
             il.Emit(OpCodes.Ldnull);
-            il.Emit(OpCodes.Ldc_I4_0);
-            il.Emit(OpCodes.Ldc_I4_0);
-            il.Emit(OpCodes.Ldc_I4_0);
+            il.Emit(OpCodes.Ldc_I4_1);
+            il.Emit(OpCodes.Ldc_I4_1);
+            il.Emit(OpCodes.Ldc_I4_1);
             il.Emit(OpCodes.Call, Utils_BeginClassRegister);
 
             var staticMethods = toBeWrap.GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly)
@@ -875,15 +894,16 @@ namespace XLua
 
             foreach (var group in staticMethods)
             {
-                var wrapMethod = genWrap(wrapTypeBuilder, group.ToList());
-                il.Emit(OpCodes.Ldarg_0);
-                il.Emit(OpCodes.Ldc_I4, Utils.CLS_IDX);
-                il.Emit(OpCodes.Ldstr, group.Key);
-                il.Emit(OpCodes.Ldnull);
-                il.Emit(OpCodes.Ldftn, wrapMethod);
-                il.Emit(OpCodes.Newobj, LuaCSFunction_Constructor);
-                il.Emit(OpCodes.Call, Utils_RegisterFunc);
+                callRegisterFunc(il, genWrap(wrapTypeBuilder, group.ToList()), Utils.CLS_IDX, group.Key);
             }
+
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldloc, translator);
+            il.Emit(OpCodes.Ldc_I4, Utils.CLS_IDX);
+            il.Emit(OpCodes.Ldstr, "UnderlyingSystemType");
+            il.Emit(OpCodes.Ldtoken, toBeWrap);
+            il.Emit(OpCodes.Call, Type_GetTypeFromHandle);
+            il.Emit(OpCodes.Call, Utils_RegisterObject);
 
             //end class
             il.Emit(OpCodes.Ldtoken, toBeWrap);
