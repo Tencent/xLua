@@ -848,7 +848,7 @@ namespace XLua
             il.EndExceptionBlock();
         }
 
-        public MethodBuilder genFieldWrap(TypeBuilder typeBuilder, FieldInfo field, bool genGetter)
+        public MethodBuilder emitFieldWrap(TypeBuilder typeBuilder, FieldInfo field, bool genGetter)
         {
             MethodBuilder methodBuilder = typeBuilder.DefineMethod("Wrap" + (genID++), MethodAttributes.Static, typeof(int), parameterTypeOfWrap);
             methodBuilder.DefineParameter(1, ParameterAttributes.None, "L");
@@ -914,6 +914,72 @@ namespace XLua
             return methodBuilder;
         }
 
+        public MethodBuilder emitPropertyWrap(TypeBuilder typeBuilder, PropertyInfo prop, MethodInfo op, bool genGetter)
+        {
+            MethodBuilder methodBuilder = typeBuilder.DefineMethod("Wrap" + (genID++), MethodAttributes.Static, typeof(int), parameterTypeOfWrap);
+            methodBuilder.DefineParameter(1, ParameterAttributes.None, "L");
+
+            ILGenerator il = methodBuilder.GetILGenerator();
+
+            LocalBuilder L = il.DeclareLocal(typeof(RealStatePtr));
+            LocalBuilder translator = il.DeclareLocal(typeof(ObjectTranslator));
+            LocalBuilder propStore = il.DeclareLocal(prop.PropertyType);
+            LocalBuilder wrapRet = il.DeclareLocal(typeof(int));
+            LocalBuilder ex = il.DeclareLocal(typeof(Exception));
+
+            Label exceptionBlock = il.BeginExceptionBlock();
+            Label retPoint = il.DefineLabel();
+
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Stloc, L);
+
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Call, ObjectTranslatorPool_FindTranslator);
+            il.Emit(OpCodes.Stloc, translator);
+
+            if (genGetter)
+            {
+                if (!op.IsStatic)
+                {
+                    genGetObjectCall(il, 1, prop.DeclaringType, L, translator, null);
+                    il.Emit(prop.DeclaringType.IsValueType ? OpCodes.Call : OpCodes.Callvirt, op);
+                }
+                else
+                {
+                    il.Emit(OpCodes.Call, op);
+                }
+                il.Emit(OpCodes.Stloc, propStore);
+                genPush(il, prop.PropertyType, 2, false, L, translator, false);
+            }
+            else
+            {
+                if (!op.IsStatic)
+                {
+                    genGetObjectCall(il, 1, prop.DeclaringType, L, translator, null);
+                    genGetObjectCall(il, 2, prop.PropertyType, L, translator, null);
+                    il.Emit(prop.DeclaringType.IsValueType ? OpCodes.Call : OpCodes.Callvirt, op);
+                }
+                else
+                {
+                    genGetObjectCall(il, 1, prop.PropertyType, L, translator, null);
+                    il.Emit(OpCodes.Call, op);
+                }
+            }
+
+            il.Emit(OpCodes.Leave, exceptionBlock);
+
+            genCatchBlock(il, ex, wrapRet, retPoint, exceptionBlock);
+
+            il.Emit(genGetter ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
+            il.Emit(OpCodes.Ret);
+
+            il.MarkLabel(retPoint);
+            il.Emit(OpCodes.Ldloc, wrapRet);
+            il.Emit(OpCodes.Ret);
+
+            return methodBuilder;
+        }
+
         public Type EmitTypeWrap(Type toBeWrap)
         {
             TypeBuilder wrapTypeBuilder = CodeEmitModule.DefineType("XLuaGenWrap" + (genID++), TypeAttributes.Public | TypeAttributes.Class | TypeAttributes.Abstract | TypeAttributes.Sealed);
@@ -931,6 +997,7 @@ namespace XLua
 
             var instanceFlag = BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly;
             var instanceFields = toBeWrap.GetFields(instanceFlag);
+            var instanceProperties = toBeWrap.GetProperties(instanceFlag);
             var instanceMethods = toBeWrap.GetMethods(instanceFlag)
                 .Where(m => !m.IsSpecialName).GroupBy(m => m.Name).ToList();
 
@@ -948,8 +1015,23 @@ namespace XLua
 
             foreach(var field in instanceFields)
             {
-                callRegisterFunc(il, genFieldWrap(wrapTypeBuilder, field, true), Utils.GETTER_IDX, field.Name);
-                callRegisterFunc(il, genFieldWrap(wrapTypeBuilder, field, false), Utils.SETTER_IDX, field.Name);
+                callRegisterFunc(il, emitFieldWrap(wrapTypeBuilder, field, true), Utils.GETTER_IDX, field.Name);
+                callRegisterFunc(il, emitFieldWrap(wrapTypeBuilder, field, false), Utils.SETTER_IDX, field.Name);
+            }
+
+            foreach(var prop in instanceProperties)
+            {
+                var getter = prop.GetGetMethod();
+                if (getter != null && getter.IsPublic)
+                {
+                    callRegisterFunc(il, emitPropertyWrap(wrapTypeBuilder, prop, getter, true), Utils.GETTER_IDX, prop.Name);
+                }
+
+                var setter = prop.GetSetMethod();
+                if (setter != null && setter.IsPublic)
+                {
+                    callRegisterFunc(il, emitPropertyWrap(wrapTypeBuilder, prop, setter, false), Utils.SETTER_IDX, prop.Name);
+                }
             }
 
             foreach (var group in instanceMethods)
@@ -986,15 +1068,32 @@ namespace XLua
 
             var staticFields = toBeWrap.GetFields(staticFlag);
 
+            var staticProperties = toBeWrap.GetProperties(staticFlag);
+
             foreach (var group in staticMethods)
             {
                 callRegisterFunc(il, genMethodWrap(wrapTypeBuilder, group.ToList()), Utils.CLS_IDX, group.Key);
             }
 
-            foreach(var field in staticFields)
+            foreach (var prop in staticProperties)
             {
-                callRegisterFunc(il, genFieldWrap(wrapTypeBuilder, field, true), Utils.CLS_GETTER_IDX, field.Name);
-                callRegisterFunc(il, genFieldWrap(wrapTypeBuilder, field, false), Utils.CLS_SETTER_IDX, field.Name);
+                var getter = prop.GetGetMethod();
+                if (getter != null && getter.IsPublic)
+                {
+                    callRegisterFunc(il, emitPropertyWrap(wrapTypeBuilder, prop, getter, true), Utils.GETTER_IDX, prop.Name);
+                }
+
+                var setter = prop.GetSetMethod();
+                if (setter != null && setter.IsPublic)
+                {
+                    callRegisterFunc(il, emitPropertyWrap(wrapTypeBuilder, prop, setter, false), Utils.SETTER_IDX, prop.Name);
+                }
+            }
+
+            foreach (var field in staticFields)
+            {
+                callRegisterFunc(il, emitFieldWrap(wrapTypeBuilder, field, true), Utils.CLS_GETTER_IDX, field.Name);
+                callRegisterFunc(il, emitFieldWrap(wrapTypeBuilder, field, false), Utils.CLS_SETTER_IDX, field.Name);
             }
 
             //end class
