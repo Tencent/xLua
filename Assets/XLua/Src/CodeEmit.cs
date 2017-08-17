@@ -832,7 +832,71 @@ namespace XLua
             il.Emit(OpCodes.Call, Utils_RegisterFunc);
         }
 
-        public Type EmitWrap(Type toBeWrap)
+        void genCatchBlock(ILGenerator il, LocalBuilder ex, LocalBuilder wrapRet, Label retPoint, Label exceptionBlock)
+        {
+            il.BeginCatchBlock(typeof(Exception));
+            il.Emit(OpCodes.Stloc, ex);
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldstr, "c# exception:");
+            il.Emit(OpCodes.Ldloc, ex);
+            il.Emit(OpCodes.Call, String_Concat);
+            il.Emit(OpCodes.Call, LuaAPI_luaL_error);
+            il.Emit(OpCodes.Stloc, wrapRet);
+            il.Emit(OpCodes.Leave, retPoint);
+            il.Emit(OpCodes.Leave, exceptionBlock);
+
+            il.EndExceptionBlock();
+        }
+
+        public MethodBuilder genFieldGetter(TypeBuilder typeBuilder, FieldInfo field)
+        {
+            MethodBuilder methodBuilder = typeBuilder.DefineMethod("Wrap" + (genID++), MethodAttributes.Static, typeof(int), parameterTypeOfWrap);
+            methodBuilder.DefineParameter(1, ParameterAttributes.None, "L");
+
+            ILGenerator il = methodBuilder.GetILGenerator();
+
+            LocalBuilder L = il.DeclareLocal(typeof(RealStatePtr));
+            LocalBuilder translator = il.DeclareLocal(typeof(ObjectTranslator));
+            LocalBuilder ret = il.DeclareLocal(field.FieldType);
+            LocalBuilder wrapRet = il.DeclareLocal(typeof(int));
+            LocalBuilder ex = il.DeclareLocal(typeof(Exception));
+
+            Label exceptionBlock = il.BeginExceptionBlock();
+            Label retPoint = il.DefineLabel();
+
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Stloc, L);
+
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Call, ObjectTranslatorPool_FindTranslator);
+            il.Emit(OpCodes.Stloc, translator);
+
+            if (!field.IsStatic)
+            {
+                genGetObjectCall(il, 1, field.DeclaringType, L, translator, null);
+                il.Emit(OpCodes.Ldfld, field);
+            }
+            else
+            {
+                il.Emit(OpCodes.Ldsfld, field);
+            }
+            il.Emit(OpCodes.Stloc, ret);
+            genPush(il, field.FieldType, 2, false, L, translator, false);
+            il.Emit(OpCodes.Leave, exceptionBlock);
+
+            genCatchBlock(il, ex, wrapRet, retPoint, exceptionBlock);
+
+            il.Emit(OpCodes.Ldc_I4_1);
+            il.Emit(OpCodes.Ret);
+
+            il.MarkLabel(retPoint);
+            il.Emit(OpCodes.Ldloc, wrapRet);
+            il.Emit(OpCodes.Ret);
+
+            return methodBuilder;
+        }
+
+        public Type EmitTypeWrap(Type toBeWrap)
         {
             TypeBuilder wrapTypeBuilder = CodeEmitModule.DefineType("XLuaGenWrap" + (genID++), TypeAttributes.Public | TypeAttributes.Class | TypeAttributes.Abstract | TypeAttributes.Sealed);
 
@@ -847,7 +911,9 @@ namespace XLua
             il.Emit(OpCodes.Call, ObjectTranslatorPool_FindTranslator);
             il.Emit(OpCodes.Stloc, translator);
 
-            var instanceMethods = toBeWrap.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
+            var instanceFlag = BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly;
+            var instanceFields = toBeWrap.GetFields(instanceFlag);
+            var instanceMethods = toBeWrap.GetMethods(instanceFlag)
                 .Where(m => !m.IsSpecialName).GroupBy(m => m.Name).ToList();
 
             //begin obj
@@ -862,9 +928,14 @@ namespace XLua
             il.Emit(OpCodes.Ldc_I4_M1);
             il.Emit(OpCodes.Call, Utils_BeginObjectRegister);
 
+            foreach(var field in instanceFields)
+            {
+                callRegisterFunc(il, genFieldGetter(wrapTypeBuilder, field), Utils.GETTER_IDX, field.Name);
+            }
+
             foreach (var group in instanceMethods)
             {
-                callRegisterFunc(il, genWrap(wrapTypeBuilder, group.ToList()), Utils.METHOD_IDX, group.Key);
+                callRegisterFunc(il, genMethodWrap(wrapTypeBuilder, group.ToList()), Utils.METHOD_IDX, group.Key);
             }
 
             //end obj
@@ -889,12 +960,21 @@ namespace XLua
             il.Emit(OpCodes.Ldc_I4_1);
             il.Emit(OpCodes.Call, Utils_BeginClassRegister);
 
-            var staticMethods = toBeWrap.GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly)
+            var staticFlag = BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly;
+
+            var staticMethods = toBeWrap.GetMethods(staticFlag)
                 .Where(m => !m.IsSpecialName).GroupBy(m => m.Name);
+
+            var staticFields = toBeWrap.GetFields(staticFlag);
 
             foreach (var group in staticMethods)
             {
-                callRegisterFunc(il, genWrap(wrapTypeBuilder, group.ToList()), Utils.CLS_IDX, group.Key);
+                callRegisterFunc(il, genMethodWrap(wrapTypeBuilder, group.ToList()), Utils.CLS_IDX, group.Key);
+            }
+
+            foreach(var field in staticFields)
+            {
+                callRegisterFunc(il, genFieldGetter(wrapTypeBuilder, field), Utils.CLS_GETTER_IDX, field.Name);
             }
 
             //end class
@@ -909,7 +989,7 @@ namespace XLua
             return wrapTypeBuilder.CreateType();
         }
 
-        MethodBuilder genWrap(TypeBuilder typeBuilder, List<MethodInfo> methodsToCall)
+        MethodBuilder genMethodWrap(TypeBuilder typeBuilder, List<MethodInfo> methodsToCall)
         {
             var methodBuilder = typeBuilder.DefineMethod("Wrap" + (genID++), MethodAttributes.Static, typeof(int), parameterTypeOfWrap);
             methodBuilder.DefineParameter(1,  ParameterAttributes.None, "L");
@@ -929,7 +1009,7 @@ namespace XLua
             il.Emit(OpCodes.Ldarg_0);
             il.Emit(OpCodes.Stloc, L);
 
-            Label exb = il.BeginExceptionBlock();
+            Label exceptionBlock = il.BeginExceptionBlock();
             Label retPoint = il.DefineLabel();
             il.Emit(OpCodes.Ldarg_0);
             il.Emit(OpCodes.Call, ObjectTranslatorPool_FindTranslator);
@@ -1036,7 +1116,7 @@ namespace XLua
                 il.Emit(OpCodes.Ldc_I4, outParamCount + (hasReturn ? 1 : 0));
                 il.Emit(OpCodes.Stloc, wrapRet);
                 il.Emit(OpCodes.Leave, retPoint);
-                il.Emit(OpCodes.Leave, exb);
+                il.Emit(OpCodes.Leave, exceptionBlock);
                 //il.Emit(OpCodes.Ret);
 
                 if (needCheckParameterType)
@@ -1051,18 +1131,7 @@ namespace XLua
                 }
             }
 
-            il.BeginCatchBlock(typeof(Exception));
-            il.Emit(OpCodes.Stloc, ex);
-            il.Emit(OpCodes.Ldarg_0);
-            il.Emit(OpCodes.Ldstr, "c# exception:");
-            il.Emit(OpCodes.Ldloc, ex);
-            il.Emit(OpCodes.Call, String_Concat);
-            il.Emit(OpCodes.Call, LuaAPI_luaL_error);
-            il.Emit(OpCodes.Stloc, wrapRet);
-            il.Emit(OpCodes.Leave, retPoint);
-            il.Emit(OpCodes.Leave, exb);
-
-            il.EndExceptionBlock();
+            genCatchBlock(il, ex, wrapRet, retPoint, exceptionBlock);
 
             if (needCheckParameterType)
             {
