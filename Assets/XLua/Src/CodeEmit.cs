@@ -127,18 +127,12 @@ namespace XLua
         private void genPush(ILGenerator il, Type type, short dataPos, bool isParam, LocalBuilder L, LocalBuilder translator, bool isArg)
         {
             var paramElemType = type.IsByRef ? type.GetElementType() : type;
+            var ldd = isArg ? OpCodes.Ldarg : OpCodes.Ldloc;
             MethodInfo pusher;
             if (fixPush.TryGetValue(paramElemType, out pusher))
             {
                 il.Emit(OpCodes.Ldloc, L);
-                if (isArg)
-                {
-                    il.Emit(OpCodes.Ldarg, dataPos);
-                }
-                else
-                {
-                    il.Emit(OpCodes.Ldloc, dataPos);
-                }
+                il.Emit(ldd, dataPos);
 
                 if (type.IsByRef)
                 {
@@ -158,7 +152,7 @@ namespace XLua
             {
                 il.Emit(OpCodes.Ldloc, translator);
                 il.Emit(OpCodes.Ldloc, L);
-                il.Emit(OpCodes.Ldarg, dataPos);
+                il.Emit(ldd, dataPos);
                 if (type.IsByRef)
                 {
                     il.Emit(OpCodes.Ldobj, paramElemType);
@@ -169,7 +163,7 @@ namespace XLua
             {
                 il.Emit(OpCodes.Ldloc, translator);
                 il.Emit(OpCodes.Ldloc, L);
-                il.Emit(OpCodes.Ldarg, dataPos);
+                il.Emit(ldd, dataPos);
                 if (type.IsByRef)
                 {
                     if (paramElemType.IsValueType)
@@ -996,10 +990,15 @@ namespace XLua
             il.Emit(OpCodes.Stloc, translator);
 
             var instanceFlag = BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly;
+            var staticFlag = BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly;
+
             var instanceFields = toBeWrap.GetFields(instanceFlag);
             var instanceProperties = toBeWrap.GetProperties(instanceFlag);
             var instanceMethods = toBeWrap.GetMethods(instanceFlag)
                 .Where(m => !m.IsSpecialName).GroupBy(m => m.Name).ToList();
+            var supportOperators = toBeWrap.GetMethods(staticFlag)
+                .Where(m => m.IsSpecialName && InternalGlobals.supportOp.ContainsKey(m.Name))
+                .GroupBy(m => m.Name);
 
             //begin obj
             il.Emit(OpCodes.Ldtoken, toBeWrap);
@@ -1036,7 +1035,12 @@ namespace XLua
 
             foreach (var group in instanceMethods)
             {
-                callRegisterFunc(il, genMethodWrap(wrapTypeBuilder, group.ToList()), Utils.METHOD_IDX, group.Key);
+                callRegisterFunc(il, emitMethodWrap(wrapTypeBuilder, group.ToList()), Utils.METHOD_IDX, group.Key);
+            }
+
+            foreach (var group in supportOperators)
+            {
+                callRegisterFunc(il, emitMethodWrap(wrapTypeBuilder, group.ToList()), Utils.OBJ_META_IDX, InternalGlobals.supportOp[group.Key]);
             }
 
             //end obj
@@ -1061,8 +1065,6 @@ namespace XLua
             il.Emit(OpCodes.Ldc_I4_1);
             il.Emit(OpCodes.Call, Utils_BeginClassRegister);
 
-            var staticFlag = BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly;
-
             var staticMethods = toBeWrap.GetMethods(staticFlag)
                 .Where(m => !m.IsSpecialName).GroupBy(m => m.Name);
 
@@ -1072,7 +1074,7 @@ namespace XLua
 
             foreach (var group in staticMethods)
             {
-                callRegisterFunc(il, genMethodWrap(wrapTypeBuilder, group.ToList()), Utils.CLS_IDX, group.Key);
+                callRegisterFunc(il, emitMethodWrap(wrapTypeBuilder, group.ToList()), Utils.CLS_IDX, group.Key);
             }
 
             foreach (var prop in staticProperties)
@@ -1108,7 +1110,7 @@ namespace XLua
             return wrapTypeBuilder.CreateType();
         }
 
-        MethodBuilder genMethodWrap(TypeBuilder typeBuilder, List<MethodInfo> methodsToCall)
+        MethodBuilder emitMethodWrap(TypeBuilder typeBuilder, List<MethodInfo> methodsToCall)
         {
             var methodBuilder = typeBuilder.DefineMethod("Wrap" + (genID++), MethodAttributes.Static, typeof(int), parameterTypeOfWrap);
             methodBuilder.DefineParameter(1,  ParameterAttributes.None, "L");
