@@ -848,7 +848,7 @@ namespace XLua
             il.EndExceptionBlock();
         }
 
-        public MethodBuilder genFieldGetter(TypeBuilder typeBuilder, FieldInfo field)
+        public MethodBuilder genFieldWrap(TypeBuilder typeBuilder, FieldInfo field, bool genGetter)
         {
             MethodBuilder methodBuilder = typeBuilder.DefineMethod("Wrap" + (genID++), MethodAttributes.Static, typeof(int), parameterTypeOfWrap);
             methodBuilder.DefineParameter(1, ParameterAttributes.None, "L");
@@ -857,7 +857,7 @@ namespace XLua
 
             LocalBuilder L = il.DeclareLocal(typeof(RealStatePtr));
             LocalBuilder translator = il.DeclareLocal(typeof(ObjectTranslator));
-            LocalBuilder ret = il.DeclareLocal(field.FieldType);
+            LocalBuilder fieldStore = il.DeclareLocal(field.FieldType);
             LocalBuilder wrapRet = il.DeclareLocal(typeof(int));
             LocalBuilder ex = il.DeclareLocal(typeof(Exception));
 
@@ -871,22 +871,40 @@ namespace XLua
             il.Emit(OpCodes.Call, ObjectTranslatorPool_FindTranslator);
             il.Emit(OpCodes.Stloc, translator);
 
-            if (!field.IsStatic)
+            if (genGetter)
             {
-                genGetObjectCall(il, 1, field.DeclaringType, L, translator, null);
-                il.Emit(OpCodes.Ldfld, field);
+                if (!field.IsStatic)
+                {
+                    genGetObjectCall(il, 1, field.DeclaringType, L, translator, null);
+                    il.Emit(OpCodes.Ldfld, field);
+                }
+                else
+                {
+                    il.Emit(OpCodes.Ldsfld, field);
+                }
+                il.Emit(OpCodes.Stloc, fieldStore);
+                genPush(il, field.FieldType, 2, false, L, translator, false);
             }
             else
             {
-                il.Emit(OpCodes.Ldsfld, field);
+                if (!field.IsStatic)
+                {
+                    genGetObjectCall(il, 1, field.DeclaringType, L, translator, null);
+                    genGetObjectCall(il, 2, field.FieldType, L, translator, null);
+                    il.Emit(OpCodes.Stfld, field);
+                }
+                else
+                {
+                    genGetObjectCall(il, 1, field.FieldType, L, translator, null);
+                    il.Emit(OpCodes.Stsfld, field);
+                }
             }
-            il.Emit(OpCodes.Stloc, ret);
-            genPush(il, field.FieldType, 2, false, L, translator, false);
+
             il.Emit(OpCodes.Leave, exceptionBlock);
 
             genCatchBlock(il, ex, wrapRet, retPoint, exceptionBlock);
 
-            il.Emit(OpCodes.Ldc_I4_1);
+            il.Emit(genGetter ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
             il.Emit(OpCodes.Ret);
 
             il.MarkLabel(retPoint);
@@ -930,7 +948,8 @@ namespace XLua
 
             foreach(var field in instanceFields)
             {
-                callRegisterFunc(il, genFieldGetter(wrapTypeBuilder, field), Utils.GETTER_IDX, field.Name);
+                callRegisterFunc(il, genFieldWrap(wrapTypeBuilder, field, true), Utils.GETTER_IDX, field.Name);
+                callRegisterFunc(il, genFieldWrap(wrapTypeBuilder, field, false), Utils.SETTER_IDX, field.Name);
             }
 
             foreach (var group in instanceMethods)
@@ -974,7 +993,8 @@ namespace XLua
 
             foreach(var field in staticFields)
             {
-                callRegisterFunc(il, genFieldGetter(wrapTypeBuilder, field), Utils.CLS_GETTER_IDX, field.Name);
+                callRegisterFunc(il, genFieldWrap(wrapTypeBuilder, field, true), Utils.CLS_GETTER_IDX, field.Name);
+                callRegisterFunc(il, genFieldWrap(wrapTypeBuilder, field, false), Utils.CLS_SETTER_IDX, field.Name);
             }
 
             //end class
