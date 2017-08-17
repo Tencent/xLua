@@ -1079,10 +1079,12 @@ namespace XLua
             int static_getter_count, int static_setter_count)
 #endif
         {
-#if GEN_CODE_MINIMIZE
             ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
-#endif
             LuaAPI.lua_createtable(L, 0, class_field_count);
+
+            LuaAPI.xlua_pushasciistring(L, "UnderlyingSystemType");
+            translator.PushAny(L, type);
+            LuaAPI.lua_rawset(L, -3);
 
             int cls_table = LuaAPI.lua_gettop(L);
 

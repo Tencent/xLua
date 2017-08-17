@@ -897,14 +897,6 @@ namespace XLua
                 callRegisterFunc(il, genWrap(wrapTypeBuilder, group.ToList()), Utils.CLS_IDX, group.Key);
             }
 
-            il.Emit(OpCodes.Ldarg_0);
-            il.Emit(OpCodes.Ldloc, translator);
-            il.Emit(OpCodes.Ldc_I4, Utils.CLS_IDX);
-            il.Emit(OpCodes.Ldstr, "UnderlyingSystemType");
-            il.Emit(OpCodes.Ldtoken, toBeWrap);
-            il.Emit(OpCodes.Call, Type_GetTypeFromHandle);
-            il.Emit(OpCodes.Call, Utils_RegisterObject);
-
             //end class
             il.Emit(OpCodes.Ldtoken, toBeWrap);
             il.Emit(OpCodes.Call, Type_GetTypeFromHandle); // typeof(type)

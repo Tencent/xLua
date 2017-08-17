@@ -32,7 +32,6 @@ namespace XLua.CSObjectWrap
 			Utils.EndObjectRegister(typeof(<%=CsFullTypeName(type)%>), L, translator, null, null, null, null, null);
 			
 			Utils.BeginClassRegister(typeof(<%=CsFullTypeName(type)%>), L, null, 1, 0, 0);
-            Utils.RegisterObject(L, translator, Utils.CLS_IDX, "UnderlyingSystemType", typeof(<%=CsFullTypeName(type)%>));
             Utils.EndClassRegister(typeof(<%=CsFullTypeName(type)%>), L, translator);
         }
 		

@@ -35,7 +35,6 @@ namespace XLua.CSObjectWrap
 			%>
             Utils.RegisterObject(L, translator, Utils.CLS_IDX, "<%=field.Name%>", <%=CsFullTypeName(type)%>.<%=UnK(field.Name)%>);
             <%end)%>
-            Utils.RegisterObject(L, translator, Utils.CLS_IDX, "UnderlyingSystemType", typeof(<%=CsFullTypeName(type)%>));
 			Utils.RegisterFunc(L, Utils.CLS_IDX, "__CastFrom", __CastFrom);
             
             Utils.EndClassRegister(typeof(<%=CsFullTypeName(type)%>), L, translator);

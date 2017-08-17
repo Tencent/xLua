@@ -126,7 +126,6 @@ namespace XLua.CSObjectWrap
 			<% end end)%>
             <%ForEachCsList(getters, function(getter) if getter.IsStatic and getter.ReadOnly then %>Utils.RegisterObject(L, translator, Utils.CLS_IDX, "<%=getter.Name%>", <%=CsFullTypeName(type).."."..getter.Name%>);
             <%end end)%>
-            Utils.RegisterObject(L, translator, Utils.CLS_IDX, "UnderlyingSystemType", typeof(<%=CsFullTypeName(type)%>));
 			<%ForEachCsList(getters, function(getter) if getter.IsStatic and (not getter.ReadOnly) then %>Utils.RegisterFunc(L, Utils.CLS_GETTER_IDX, "<%=getter.Name%>", _g_get_<%=getter.Name%>);
             <%end end)%>
 			<%ForEachCsList(setters, function(setter) if setter.IsStatic then %>Utils.RegisterFunc(L, Utils.CLS_SETTER_IDX, "<%=setter.Name%>", _s_set_<%=setter.Name%>);

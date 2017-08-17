@@ -33,7 +33,6 @@ namespace XLua
 			%>
             Utils.RegisterObject(L, this, Utils.CLS_IDX, "<%=field.Name%>", <%=CsFullTypeName(type)%>.<%=UnK(field.Name)%>);
             <%end)%>
-            Utils.RegisterObject(L, this, Utils.CLS_IDX, "UnderlyingSystemType", typeof(<%=CsFullTypeName(type)%>));
 			Utils.RegisterFunc(L, Utils.CLS_IDX, "__CastFrom", __CastFrom<%=v_type_name%>);
             
             Utils.EndClassRegister(typeof(<%=CsFullTypeName(type)%>), L, this);
