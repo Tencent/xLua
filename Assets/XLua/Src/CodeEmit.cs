@@ -124,7 +124,7 @@ namespace XLua
             };
         }
 
-        private void genPush(ILGenerator il, Type type, short dataPos, bool isParam, LocalBuilder L, LocalBuilder translator, bool isArg)
+        private void emitPush(ILGenerator il, Type type, short dataPos, bool isParam, LocalBuilder L, LocalBuilder translator, bool isArg)
         {
             var paramElemType = type.IsByRef ? type.GetElementType() : type;
             var ldd = isArg ? OpCodes.Ldarg : OpCodes.Ldloc;
@@ -225,7 +225,7 @@ namespace XLua
 
                 var method_builder = defineImplementMethod(impl_type_builder, to_be_impl, to_be_impl.Attributes, "Invoke" + (genID++));
 
-                genImpl(to_be_impl, method_builder.GetILGenerator(), false);
+                emitMethodImpl(to_be_impl, method_builder.GetILGenerator(), false);
 
                 foreach(var dt in group)
                 {
@@ -264,7 +264,7 @@ namespace XLua
             return impl_type_builder.CreateType();
         }
 
-        private void genGetObjectCall(ILGenerator il, int offset, Type type, LocalBuilder L, LocalBuilder translator, LocalBuilder offsetBase)
+        private void EmitGetObject(ILGenerator il, int offset, Type type, LocalBuilder L, LocalBuilder translator, LocalBuilder offsetBase)
         {
             if (!fixCaster.ContainsKey(type) && !typedCaster.ContainsKey(type))
             {
@@ -392,7 +392,7 @@ namespace XLua
                     var method_builder = defineImplementMethod(impl_type_builder, method,
                         MethodAttributes.Public | MethodAttributes.Final | MethodAttributes.Virtual);
 
-                    genImpl(method, method_builder.GetILGenerator(), true);
+                    emitMethodImpl(method, method_builder.GetILGenerator(), true);
                 }
                 else if (member.MemberType == MemberTypes.Property)
                 {
@@ -404,14 +404,14 @@ namespace XLua
                         {
                             var getter_buildler = defineImplementMethod(impl_type_builder, property.GetGetMethod(), 
                                 MethodAttributes.Virtual | MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.HideBySig);
-                            genEmptyMethod(getter_buildler.GetILGenerator(), property.PropertyType);
+                            emitEmptyMethod(getter_buildler.GetILGenerator(), property.PropertyType);
                             prop_builder.SetGetMethod(getter_buildler);
                         }
                         if (property.CanWrite)
                         {
                             var setter_buildler = defineImplementMethod(impl_type_builder, property.GetSetMethod(),
                                 MethodAttributes.Virtual | MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.HideBySig);
-                            genEmptyMethod(setter_buildler.GetILGenerator(), property.PropertyType);
+                            emitEmptyMethod(setter_buildler.GetILGenerator(), property.PropertyType);
                             prop_builder.SetSetMethod(setter_buildler);
                         }
                         continue;
@@ -468,7 +468,7 @@ namespace XLua
                         il.Emit(OpCodes.Callvirt, LuaEnv_ThrowExceptionFromError);
                         il.MarkLabel(gettable_no_exception);
 
-                        genGetObjectCall(il, -1, property.PropertyType, L, translator, null);
+                        EmitGetObject(il, -1, property.PropertyType, L, translator, null);
                         il.Emit(OpCodes.Stloc, ret);
 
                         //LuaAPI.lua_pop(L, 2);
@@ -520,7 +520,7 @@ namespace XLua
                         il.Emit(OpCodes.Call, LuaAPI_lua_pushstring);
 
                         //translator.Push(L, value);
-                        genPush(il, property.PropertyType, 1, false, L, translator, true);
+                        emitPush(il, property.PropertyType, 1, false, L, translator, true);
 
                         //LuaAPI.xlua_psettable(L, -2)
                         il.Emit(OpCodes.Ldloc, L);
@@ -555,14 +555,14 @@ namespace XLua
                     {
                         var add_buildler = defineImplementMethod(impl_type_builder, event_info.GetAddMethod(),
                             MethodAttributes.Virtual | MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.HideBySig);
-                        genEmptyMethod(add_buildler.GetILGenerator(), typeof(void));
+                        emitEmptyMethod(add_buildler.GetILGenerator(), typeof(void));
                         event_builder.SetAddOnMethod(add_buildler);
                     }
                     if (event_info.GetRemoveMethod() != null)
                     {
                         var remove_buildler = defineImplementMethod(impl_type_builder, event_info.GetRemoveMethod(),
                             MethodAttributes.Virtual | MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.HideBySig);
-                        genEmptyMethod(remove_buildler.GetILGenerator(), typeof(void));
+                        emitEmptyMethod(remove_buildler.GetILGenerator(), typeof(void));
                         event_builder.SetRemoveOnMethod(remove_buildler);
                     }
                 }
@@ -583,7 +583,7 @@ namespace XLua
             return impl_type_builder.CreateType();
         }
 
-        private void genEmptyMethod(ILGenerator il, Type returnType)
+        private void emitEmptyMethod(ILGenerator il, Type returnType)
         {
             if(returnType != typeof(void))
             {
@@ -620,7 +620,7 @@ namespace XLua
             return method_builder;
         }
 
-        private void genImpl(MethodInfo to_be_impl, ILGenerator il, bool isObj)
+        private void emitMethodImpl(MethodInfo to_be_impl, ILGenerator il, bool isObj)
         {
             var parameters = to_be_impl.GetParameters();
 
@@ -701,7 +701,7 @@ namespace XLua
                 {
                     var ptype = pinfo.ParameterType;
                     bool isParam = pinfo.IsDefined(typeof(ParamArrayAttribute), false);
-                    genPush(il, ptype, (short)(i + 1), isParam, L, translator, true);
+                    emitPush(il, ptype, (short)(i + 1), isParam, L, translator, true);
                     if (isParam)
                     {
                         has_params = true;
@@ -749,7 +749,7 @@ namespace XLua
             int offset = 1;
             if (has_return)
             {
-                genGetObjectCall(il, offset++, to_be_impl.ReturnType, L, translator, err_func);
+                EmitGetObject(il, offset++, to_be_impl.ReturnType, L, translator, err_func);
                 il.Emit(OpCodes.Stloc, ret);
             }
 
@@ -761,7 +761,7 @@ namespace XLua
                 {
                     il.Emit(OpCodes.Ldarg, (short)(i + 1));
                     var pelemtype = ptype.GetElementType();
-                    genGetObjectCall(il, offset++, pelemtype, L, translator, err_func);
+                    EmitGetObject(il, offset++, pelemtype, L, translator, err_func);
                     if (pelemtype.IsValueType)
                     {
                         il.Emit(OpCodes.Stobj, pelemtype);
@@ -815,7 +815,7 @@ namespace XLua
             il.Emit(OpCodes.Callvirt, ObjectTranslator_Assignable);
         }
 
-        void callRegisterFunc(ILGenerator il, MethodBuilder method, int index, string name)
+        void emitRegisterFunc(ILGenerator il, MethodBuilder method, int index, string name)
         {
             il.Emit(OpCodes.Ldarg_0);
             il.Emit(OpCodes.Ldc_I4, index);
@@ -826,7 +826,7 @@ namespace XLua
             il.Emit(OpCodes.Call, Utils_RegisterFunc);
         }
 
-        void genCatchBlock(ILGenerator il, LocalBuilder ex, LocalBuilder wrapRet, Label retPoint, Label exceptionBlock)
+        void emitCatchBlock(ILGenerator il, LocalBuilder ex, LocalBuilder wrapRet, Label retPoint, Label exceptionBlock)
         {
             il.BeginCatchBlock(typeof(Exception));
             il.Emit(OpCodes.Stloc, ex);
@@ -869,7 +869,7 @@ namespace XLua
             {
                 if (!field.IsStatic)
                 {
-                    genGetObjectCall(il, 1, field.DeclaringType, L, translator, null);
+                    EmitGetObject(il, 1, field.DeclaringType, L, translator, null);
                     il.Emit(OpCodes.Ldfld, field);
                 }
                 else
@@ -877,26 +877,26 @@ namespace XLua
                     il.Emit(OpCodes.Ldsfld, field);
                 }
                 il.Emit(OpCodes.Stloc, fieldStore);
-                genPush(il, field.FieldType, 2, false, L, translator, false);
+                emitPush(il, field.FieldType, 2, false, L, translator, false);
             }
             else
             {
                 if (!field.IsStatic)
                 {
-                    genGetObjectCall(il, 1, field.DeclaringType, L, translator, null);
-                    genGetObjectCall(il, 2, field.FieldType, L, translator, null);
+                    EmitGetObject(il, 1, field.DeclaringType, L, translator, null);
+                    EmitGetObject(il, 2, field.FieldType, L, translator, null);
                     il.Emit(OpCodes.Stfld, field);
                 }
                 else
                 {
-                    genGetObjectCall(il, 1, field.FieldType, L, translator, null);
+                    EmitGetObject(il, 1, field.FieldType, L, translator, null);
                     il.Emit(OpCodes.Stsfld, field);
                 }
             }
 
             il.Emit(OpCodes.Leave, exceptionBlock);
 
-            genCatchBlock(il, ex, wrapRet, retPoint, exceptionBlock);
+            emitCatchBlock(il, ex, wrapRet, retPoint, exceptionBlock);
 
             il.Emit(genGetter ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
             il.Emit(OpCodes.Ret);
@@ -935,7 +935,7 @@ namespace XLua
             {
                 if (!op.IsStatic)
                 {
-                    genGetObjectCall(il, 1, prop.DeclaringType, L, translator, null);
+                    EmitGetObject(il, 1, prop.DeclaringType, L, translator, null);
                     il.Emit(prop.DeclaringType.IsValueType ? OpCodes.Call : OpCodes.Callvirt, op);
                 }
                 else
@@ -943,26 +943,26 @@ namespace XLua
                     il.Emit(OpCodes.Call, op);
                 }
                 il.Emit(OpCodes.Stloc, propStore);
-                genPush(il, prop.PropertyType, 2, false, L, translator, false);
+                emitPush(il, prop.PropertyType, 2, false, L, translator, false);
             }
             else
             {
                 if (!op.IsStatic)
                 {
-                    genGetObjectCall(il, 1, prop.DeclaringType, L, translator, null);
-                    genGetObjectCall(il, 2, prop.PropertyType, L, translator, null);
+                    EmitGetObject(il, 1, prop.DeclaringType, L, translator, null);
+                    EmitGetObject(il, 2, prop.PropertyType, L, translator, null);
                     il.Emit(prop.DeclaringType.IsValueType ? OpCodes.Call : OpCodes.Callvirt, op);
                 }
                 else
                 {
-                    genGetObjectCall(il, 1, prop.PropertyType, L, translator, null);
+                    EmitGetObject(il, 1, prop.PropertyType, L, translator, null);
                     il.Emit(OpCodes.Call, op);
                 }
             }
 
             il.Emit(OpCodes.Leave, exceptionBlock);
 
-            genCatchBlock(il, ex, wrapRet, retPoint, exceptionBlock);
+            emitCatchBlock(il, ex, wrapRet, retPoint, exceptionBlock);
 
             il.Emit(genGetter ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
             il.Emit(OpCodes.Ret);
@@ -1014,8 +1014,8 @@ namespace XLua
 
             foreach(var field in instanceFields)
             {
-                callRegisterFunc(il, emitFieldWrap(wrapTypeBuilder, field, true), Utils.GETTER_IDX, field.Name);
-                callRegisterFunc(il, emitFieldWrap(wrapTypeBuilder, field, false), Utils.SETTER_IDX, field.Name);
+                emitRegisterFunc(il, emitFieldWrap(wrapTypeBuilder, field, true), Utils.GETTER_IDX, field.Name);
+                emitRegisterFunc(il, emitFieldWrap(wrapTypeBuilder, field, false), Utils.SETTER_IDX, field.Name);
             }
 
             foreach(var prop in instanceProperties)
@@ -1023,24 +1023,24 @@ namespace XLua
                 var getter = prop.GetGetMethod();
                 if (getter != null && getter.IsPublic)
                 {
-                    callRegisterFunc(il, emitPropertyWrap(wrapTypeBuilder, prop, getter, true), Utils.GETTER_IDX, prop.Name);
+                    emitRegisterFunc(il, emitPropertyWrap(wrapTypeBuilder, prop, getter, true), Utils.GETTER_IDX, prop.Name);
                 }
 
                 var setter = prop.GetSetMethod();
                 if (setter != null && setter.IsPublic)
                 {
-                    callRegisterFunc(il, emitPropertyWrap(wrapTypeBuilder, prop, setter, false), Utils.SETTER_IDX, prop.Name);
+                    emitRegisterFunc(il, emitPropertyWrap(wrapTypeBuilder, prop, setter, false), Utils.SETTER_IDX, prop.Name);
                 }
             }
 
             foreach (var group in instanceMethods)
             {
-                callRegisterFunc(il, emitMethodWrap(wrapTypeBuilder, group.ToList()), Utils.METHOD_IDX, group.Key);
+                emitRegisterFunc(il, emitMethodWrap(wrapTypeBuilder, group.ToList()), Utils.METHOD_IDX, group.Key);
             }
 
             foreach (var group in supportOperators)
             {
-                callRegisterFunc(il, emitMethodWrap(wrapTypeBuilder, group.ToList()), Utils.OBJ_META_IDX, InternalGlobals.supportOp[group.Key]);
+                emitRegisterFunc(il, emitMethodWrap(wrapTypeBuilder, group.ToList()), Utils.OBJ_META_IDX, InternalGlobals.supportOp[group.Key]);
             }
 
             //end obj
@@ -1074,7 +1074,7 @@ namespace XLua
 
             foreach (var group in staticMethods)
             {
-                callRegisterFunc(il, emitMethodWrap(wrapTypeBuilder, group.ToList()), Utils.CLS_IDX, group.Key);
+                emitRegisterFunc(il, emitMethodWrap(wrapTypeBuilder, group.ToList()), Utils.CLS_IDX, group.Key);
             }
 
             foreach (var prop in staticProperties)
@@ -1082,20 +1082,36 @@ namespace XLua
                 var getter = prop.GetGetMethod();
                 if (getter != null && getter.IsPublic)
                 {
-                    callRegisterFunc(il, emitPropertyWrap(wrapTypeBuilder, prop, getter, true), Utils.GETTER_IDX, prop.Name);
+                    emitRegisterFunc(il, emitPropertyWrap(wrapTypeBuilder, prop, getter, true), Utils.GETTER_IDX, prop.Name);
                 }
 
                 var setter = prop.GetSetMethod();
                 if (setter != null && setter.IsPublic)
                 {
-                    callRegisterFunc(il, emitPropertyWrap(wrapTypeBuilder, prop, setter, false), Utils.SETTER_IDX, prop.Name);
+                    emitRegisterFunc(il, emitPropertyWrap(wrapTypeBuilder, prop, setter, false), Utils.SETTER_IDX, prop.Name);
                 }
             }
 
             foreach (var field in staticFields)
             {
-                callRegisterFunc(il, emitFieldWrap(wrapTypeBuilder, field, true), Utils.CLS_GETTER_IDX, field.Name);
-                callRegisterFunc(il, emitFieldWrap(wrapTypeBuilder, field, false), Utils.CLS_SETTER_IDX, field.Name);
+                if (field.IsInitOnly || field.IsLiteral)
+                {
+                    il.Emit(OpCodes.Ldarg_0);
+                    il.Emit(OpCodes.Ldloc, translator);
+                    il.Emit(OpCodes.Ldc_I4, Utils.CLS_IDX);
+                    il.Emit(OpCodes.Ldstr, field.Name);
+                    il.Emit(OpCodes.Ldsfld, field);
+                    if (field.FieldType.IsValueType)
+                    {
+                        il.Emit(OpCodes.Box, field.FieldType);
+                    }
+                    il.Emit(OpCodes.Call, Utils_RegisterObject);
+                }
+                else
+                {
+                    emitRegisterFunc(il, emitFieldWrap(wrapTypeBuilder, field, true), Utils.CLS_GETTER_IDX, field.Name);
+                    emitRegisterFunc(il, emitFieldWrap(wrapTypeBuilder, field, false), Utils.CLS_SETTER_IDX, field.Name);
+                }
             }
 
             //end class
@@ -1198,14 +1214,14 @@ namespace XLua
                     il.DeclareLocal(paramRawType);
                     if (!paramInfo.IsOut)
                     {
-                        genGetObjectCall(il, luaPos++, paramRawType, L, translator, null);
+                        EmitGetObject(il, luaPos++, paramRawType, L, translator, null);
                         il.Emit(OpCodes.Stloc, argLocalStart + j);
                     }
                 }
 
                 if (!isStatic)
                 {
-                    genGetObjectCall(il, 1, method.DeclaringType, L, translator, null);
+                    EmitGetObject(il, 1, method.DeclaringType, L, translator, null);
                 }
 
                 for (int j = 0; j < paramInfos.Length; j++)
@@ -1222,14 +1238,14 @@ namespace XLua
                     hasReturn = true;
                     var methodReturn = il.DeclareLocal(method.ReturnType);
                     il.Emit(OpCodes.Stloc, methodReturn);
-                    genPush(il, method.ReturnType, (short)(argLocalStart + paramInfos.Length), false, L, translator, false);
+                    emitPush(il, method.ReturnType, (short)(argLocalStart + paramInfos.Length), false, L, translator, false);
                 }
 
                 for (int j = 0; j < paramInfos.Length; j++)
                 {
                     if (paramInfos[i].ParameterType.IsByRef)
                     {
-                        genPush(il, paramInfos[i].ParameterType.GetElementType(),
+                        emitPush(il, paramInfos[i].ParameterType.GetElementType(),
                             (short)(argLocalStart + j), false, L, translator, false);
                     }
                 }
@@ -1252,7 +1268,7 @@ namespace XLua
                 }
             }
 
-            genCatchBlock(il, ex, wrapRet, retPoint, exceptionBlock);
+            emitCatchBlock(il, ex, wrapRet, retPoint, exceptionBlock);
 
             if (needCheckParameterType)
             {
