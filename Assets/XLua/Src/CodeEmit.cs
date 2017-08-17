@@ -995,6 +995,7 @@ namespace XLua
             var instanceFields = toBeWrap.GetFields(instanceFlag);
             var instanceProperties = toBeWrap.GetProperties(instanceFlag);
             var instanceMethods = toBeWrap.GetMethods(instanceFlag)
+                .Concat(Utils.GetExtensionMethodsOf(toBeWrap))
                 .Where(m => !m.IsSpecialName).GroupBy(m => m.Name).ToList();
             var supportOperators = toBeWrap.GetMethods(staticFlag)
                 .Where(m => m.IsSpecialName && InternalGlobals.supportOp.ContainsKey(m.Name))

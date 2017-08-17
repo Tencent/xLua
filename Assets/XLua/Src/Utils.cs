@@ -389,7 +389,7 @@ namespace XLua
             };
         }
 
-        static IEnumerable<MethodInfo> GetExtensionMethodsOf(Type type_to_be_extend)
+        internal static IEnumerable<MethodInfo> GetExtensionMethodsOf(Type type_to_be_extend)
         {
             if (InternalGlobals.extensionMethodMap == null)
             {
