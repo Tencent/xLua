@@ -436,27 +436,18 @@ namespace XLua
 			
 			if (__gen_param_count == 3)
 			{
-				System.IntPtr strlen;
-
-				System.IntPtr str = LuaAPI.lua_tolstring(L, 2, out strlen);
-
-				if (str != System.IntPtr.Zero && strlen.ToInt32() == 1)
-				{
-					byte op = System.Runtime.InteropServices.Marshal.ReadByte(str);
-				
-					<%if event.CanAdd then%>
-					if (op == (byte)'+') {
-						__cl_gen_to_be_invoked.<%=UnK(event.Name)%> += __gen_delegate;
-						return 0;
-					} 
-					<%end%>
-					<%if event.CanRemove then%>
-					if (op == (byte)'-') {
-						__cl_gen_to_be_invoked.<%=UnK(event.Name)%> -= __gen_delegate;
-						return 0;
-					} 
-					<%end%>
-				}
+				<%if event.CanAdd then%>
+				if (LuaAPI.xlua_is_eq_str(L, 2, "+")) {
+					__cl_gen_to_be_invoked.<%=UnK(event.Name)%> += __gen_delegate;
+					return 0;
+				} 
+				<%end%>
+				<%if event.CanRemove then%>
+				if (LuaAPI.xlua_is_eq_str(L, 2, "-")) {
+					__cl_gen_to_be_invoked.<%=UnK(event.Name)%> -= __gen_delegate;
+					return 0;
+				} 
+				<%end%>
 			}
 			LuaAPI.luaL_error(L, "invalid arguments to <%=CsFullTypeName(type)%>.<%=event.Name%>!");
             return 0;
@@ -473,13 +464,13 @@ namespace XLua
 			}
 			
 			<%if event.CanAdd then%>
-			if (__gen_param_count == 2 && LuaAPI.lua_tostring(L, 1) == "+") {
+			if (__gen_param_count == 2 && LuaAPI.xlua_is_eq_str(L, 1, "+")) {
 				<%=CsFullTypeName(type)%>.<%=UnK(event.Name)%> += __gen_delegate;
 				return 0;
 			} 
 			<%end%>
 			<%if event.CanRemove then%>
-			if (__gen_param_count == 2 && LuaAPI.lua_tostring(L, 1) == "-") {
+			if (__gen_param_count == 2 && LuaAPI.xlua_is_eq_str(L, 1, "-")) {
 				<%=CsFullTypeName(type)%>.<%=UnK(event.Name)%> -= __gen_delegate;
 				return 0;
 			} 
