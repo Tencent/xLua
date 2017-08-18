@@ -1019,29 +1019,49 @@ namespace XLua
                 emitRegisterFunc(il, emitFieldWrap(wrapTypeBuilder, field, false), Utils.SETTER_IDX, field.Name);
             }
 
+            List<MethodInfo> itemGetter = new List<MethodInfo>();
+            List<MethodInfo> itemSetter = new List<MethodInfo>();
+
             foreach(var prop in instanceProperties)
             {
                 var getter = prop.GetGetMethod();
                 if (getter != null && getter.IsPublic)
                 {
-                    emitRegisterFunc(il, emitPropertyWrap(wrapTypeBuilder, prop, getter, true), Utils.GETTER_IDX, prop.Name);
+                    if (prop.Name == "Item" && prop.GetIndexParameters().Length > 0)
+                    {
+                        if (!prop.GetIndexParameters()[0].ParameterType.IsAssignableFrom(typeof(string)))
+                        {
+                            itemGetter.Add(getter);
+                        }
+                    }
+                    else
+                    {
+                        emitRegisterFunc(il, emitPropertyWrap(wrapTypeBuilder, prop, getter, true), Utils.GETTER_IDX, prop.Name);
+                    }
                 }
 
                 var setter = prop.GetSetMethod();
                 if (setter != null && setter.IsPublic)
                 {
-                    emitRegisterFunc(il, emitPropertyWrap(wrapTypeBuilder, prop, setter, false), Utils.SETTER_IDX, prop.Name);
+                    if (prop.Name == "Item" && prop.GetIndexParameters().Length > 0)
+                    {
+                        itemSetter.Add(setter);
+                    }
+                    else
+                    {
+                        emitRegisterFunc(il, emitPropertyWrap(wrapTypeBuilder, prop, setter, false), Utils.SETTER_IDX, prop.Name);
+                    }
                 }
             }
 
             foreach (var group in instanceMethods)
             {
-                emitRegisterFunc(il, emitMethodWrap(wrapTypeBuilder, group.ToList()), Utils.METHOD_IDX, group.Key);
+                emitRegisterFunc(il, emitMethodWrap(wrapTypeBuilder, group.ToList(), false), Utils.METHOD_IDX, group.Key);
             }
 
             foreach (var group in supportOperators)
             {
-                emitRegisterFunc(il, emitMethodWrap(wrapTypeBuilder, group.ToList()), Utils.OBJ_META_IDX, InternalGlobals.supportOp[group.Key]);
+                emitRegisterFunc(il, emitMethodWrap(wrapTypeBuilder, group.ToList(), false), Utils.OBJ_META_IDX, InternalGlobals.supportOp[group.Key]);
             }
 
             //end obj
@@ -1050,7 +1070,19 @@ namespace XLua
             il.Emit(OpCodes.Ldarg_0);
             il.Emit(OpCodes.Ldloc, translator);
             il.Emit(OpCodes.Ldnull);
+            if (itemGetter.Count > 0)
+            {
+                UnityEngine.Debug.Log("itemGetter.Count:" + itemGetter.Count);
+                il.Emit(OpCodes.Ldftn, emitMethodWrap(wrapTypeBuilder, itemGetter, true));
+                il.Emit(OpCodes.Newobj, LuaCSFunction_Constructor);
+            }
             il.Emit(OpCodes.Ldnull);
+            if (itemSetter.Count > 0)
+            {
+                UnityEngine.Debug.Log("itemSetter.Count:" + itemSetter.Count);
+                il.Emit(OpCodes.Ldftn, emitMethodWrap(wrapTypeBuilder, itemSetter, true));
+                il.Emit(OpCodes.Newobj, LuaCSFunction_Constructor);
+            }
             il.Emit(OpCodes.Ldnull);
             il.Emit(OpCodes.Ldnull);
             il.Emit(OpCodes.Ldnull);
@@ -1075,7 +1107,7 @@ namespace XLua
 
             foreach (var group in staticMethods)
             {
-                emitRegisterFunc(il, emitMethodWrap(wrapTypeBuilder, group.ToList()), Utils.CLS_IDX, group.Key);
+                emitRegisterFunc(il, emitMethodWrap(wrapTypeBuilder, group.ToList(), false), Utils.CLS_IDX, group.Key);
             }
 
             foreach (var prop in staticProperties)
@@ -1127,14 +1159,14 @@ namespace XLua
             return wrapTypeBuilder.CreateType();
         }
 
-        MethodBuilder emitMethodWrap(TypeBuilder typeBuilder, List<MethodInfo> methodsToCall)
+        MethodBuilder emitMethodWrap(TypeBuilder typeBuilder, List<MethodInfo> methodsToCall, bool isIndexer)
         {
             var methodBuilder = typeBuilder.DefineMethod("Wrap" + (genID++), MethodAttributes.Static, typeof(int), parameterTypeOfWrap);
             methodBuilder.DefineParameter(1,  ParameterAttributes.None, "L");
 
             bool isStatic = methodsToCall[0].IsStatic;
 
-            bool needCheckParameterType = methodsToCall.Count > 1;
+            bool needCheckParameterType = (methodsToCall.Count > 1)  || isIndexer;
 
             ILGenerator il = methodBuilder.GetILGenerator();
 
@@ -1232,6 +1264,13 @@ namespace XLua
 
                 il.Emit(isStatic ? OpCodes.Call : OpCodes.Callvirt, method);
 
+                if (isIndexer)
+                {
+                    il.Emit(OpCodes.Ldarg_0);
+                    il.Emit(OpCodes.Ldc_I4_1);
+                    il.Emit(OpCodes.Call, LuaAPI_lua_pushboolean);
+                }
+
                 bool hasReturn = false;
 
                 if (method.ReturnType != typeof(void))
@@ -1251,7 +1290,7 @@ namespace XLua
                     }
                 }
 
-                il.Emit(OpCodes.Ldc_I4, outParamCount + (hasReturn ? 1 : 0));
+                il.Emit(OpCodes.Ldc_I4, outParamCount + (hasReturn ? 1 : 0) + (isIndexer ? 1 : 0));
                 il.Emit(OpCodes.Stloc, wrapRet);
                 il.Emit(OpCodes.Leave, retPoint);
                 il.Emit(OpCodes.Leave, exceptionBlock);
@@ -1273,10 +1312,21 @@ namespace XLua
 
             if (needCheckParameterType)
             {
-                il.Emit(OpCodes.Ldarg_0);
-                il.Emit(OpCodes.Ldstr, "invalid arguments to " + methodsToCall[0].DeclaringType + "." + methodsToCall[0].Name + "!");
-                il.Emit(OpCodes.Call, LuaAPI_luaL_error);
-                il.Emit(OpCodes.Ret);
+                if (isIndexer)
+                {
+                    il.Emit(OpCodes.Ldarg_0);
+                    il.Emit(OpCodes.Ldc_I4_0);
+                    il.Emit(OpCodes.Call, LuaAPI_lua_pushboolean);
+                    il.Emit(OpCodes.Ldc_I4_1);
+                    il.Emit(OpCodes.Ret);
+                }
+                else
+                {
+                    il.Emit(OpCodes.Ldarg_0);
+                    il.Emit(OpCodes.Ldstr, "invalid arguments to " + methodsToCall[0].DeclaringType + "." + methodsToCall[0].Name + "!");
+                    il.Emit(OpCodes.Call, LuaAPI_luaL_error);
+                    il.Emit(OpCodes.Ret);
+                }
             }
 
             il.MarkLabel(retPoint);
