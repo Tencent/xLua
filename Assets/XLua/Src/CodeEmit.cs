@@ -1072,14 +1072,12 @@ namespace XLua
             il.Emit(OpCodes.Ldnull);
             if (itemGetter.Count > 0)
             {
-                UnityEngine.Debug.Log("itemGetter.Count:" + itemGetter.Count);
                 il.Emit(OpCodes.Ldftn, emitMethodWrap(wrapTypeBuilder, itemGetter, true));
                 il.Emit(OpCodes.Newobj, LuaCSFunction_Constructor);
             }
             il.Emit(OpCodes.Ldnull);
             if (itemSetter.Count > 0)
             {
-                UnityEngine.Debug.Log("itemSetter.Count:" + itemSetter.Count);
                 il.Emit(OpCodes.Ldftn, emitMethodWrap(wrapTypeBuilder, itemSetter, true));
                 il.Emit(OpCodes.Newobj, LuaCSFunction_Constructor);
             }
