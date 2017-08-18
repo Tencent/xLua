@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿#if !XLUA_GENERAL
+using UnityEngine;
 using System.Collections;
 using XLua;
 
@@ -15,3 +16,4 @@ public class Main : MonoBehaviour {
 		luaenv.GC ();
 	}
 }
+#endif

@@ -1,210 +1,326 @@
-v2.1.5 2016��12��13��
-��������
-1���������������÷�ʽ������μ�XLua\Doc�¡�XLua������.doc����
-2���������ʵ��ʱ���Զ�Dispose��
-3���ڴ��Ż������������հ���delegateӳ����ڴ�ռ�ã�����LuaFunction�Լ�LuaTable�ڴ�ռ�ã�����lua tableӳ��C#interface��gc��
-4�����ɴ����ٶ��Ż���
-5��֧��ֱ����lua��clone C#�ṹ�壻
-6��LuaFunction������gc����api��
+﻿v2.1.9 2017年8月10日
+新增特性
+1、新增最小生成模式（通过GEN_CODE_MINIMIZE切换），可以节省50%的text段空间；
+2、新增xlua.util.createdelegate，支持在lua直接用C#函数创建delegate而不需要通过lua适配；
+3、xlua.private_accessible支持public int Prop { get; private set; }
+4、新增	xlua.getmetatable、xlua.setmetatable、xlua.setclass、xlua.genaccessor，用以支持lua使用C#类型直接在lua侧完成；
+5、反射下扩展方法的支持；
+6、lua53版本支持位操作符重载：C#侧的位操作符重载对应到lua的位操作符重载；enum全部加上&和|位操作符；
 
-���
-1��delegate���붼��[CSharpCallLua]��֧��C#��lua�Ļص�����ǰ�����ͷ���ֵ����ͬ��delegateֻҪ����һ�����˾Ϳ��ԣ���
+工程优化
+1、加入travis持续集成；
 
-bug�޸�
-1��ö�ٲ����ɴ���ʱ����һ��ʹ�û����������ͬ��userdata��
-2�������System.Type���໥���õ���System.Type���ɴ����޷����أ�
+变更
+1、LuaCallCSharp自动去除匿名类型；
+2、THREAD_SAFT改为THREAD_SAFE；
+3、GenFlag.GCOptimize标记为过时；
+4、删除过时的GenConfig配置方式；
+
+bug修复
+1、window phone下一些系统api是禁用的，源码中去掉；
+2、泛型约束是struct的时候，生成代码失败；
+3、unity2017 .net 4.6，枚举生成代码报错；
+
+v2.1.8 2017年6月27日
+新增特性
+1、Hotfix标签添加几个订制参数：ValueTypeBoxing、IgnoreProperty、IgnoreNotPublic、Inline、IntKey
+2、Hotfix代码注入优化，减少text段占用；
+3、Hotfix配置支持放Editor目录，可以减少text段占用；
+4、支持以指定类型传递object参数；
+5、反射调用Obsolete方法在Editor下打印warning；
+
+变更
+
+bug修复
+1、pinvoke独立设置的In，Out属性可能导致生成代码失败；
+2、如果业务在全局名字空间有和xLua名字空间的同名类，生成代码编译失败；
+
+v2.1.7 2017年5月17日
+新增特性
+1、支持发布UWP（含HoloLens，Xbox one，Win10 Mobile、Win10 PC）应用；
+2、支持对lua源代码ras+sha1签名；
+3、如果没安装Tools提示“please install the Tools”；
+4、linxu版本的支持；
+5、支持bitcode打包；
+6、对所有struct新增无参数构造函数；
+7、delegate的参数名改为p0到pn，防止hotfix时业务代码变量和生成代码冲突；
+8、支持对成员名为C#关键字的情况；
+9、新增util.loadpackage，和require类似，通过searcher加载文件，不同的是，它不执行，而且也不会cache到package.loaded；
+10、优化模版引擎大文件的生成性能；
+11、新增不需要生成代码的注入方式；
+12、支持构造函数参数带ref和out修饰符；
+13、构造函数也支持黑名单排除；
+
+变更
+1、this[object field]操作符重载；
+2、反射的数据转换规则改成和生成代码一致；
+3、忽略掉匿名类及匿名函数的注入；
+
+bug修复
+1、规避Unity的bug：List<CustomType>，CustomType是当前执行程序集的类型，这在.Net是不需要指明程序集就可以通过Type.GetType得到，但Unity下不行。
+2、解决反射下，可变参数不提供时，传null的问题；
+3、继承了另外一个程序集的类型，使用了protected类型会导致注入失败；
+4、luajit去掉dlopen和dlsym的调用；
+5、解决通用版本的生成代码工具找不到模版的问题；
+6、修复通用版本反射导入泛化类型的问题；
+7、反射调用含delegate参数的的api，会因为缓存而导致调用LuaEnv.Dispose失败；
+8、兼容老版本的C编译器，声明要放开头；
+9、生成代码对hotfix的检测算法和注入工具不一致导致的注入失败；
+10、注入的nested类型是public，但其的外层类型非public，生成代码报错；
+11、析构函数只判断名字可能出现误判；
+12、构造函数是非public的，可能会导致找不到适配delegate而注入失败；
+13、修正Extension method会在所有子类都生成代码的bug（2.1.6泛化特性引入）；
+14、构造函数重载，只有一个能hotfix成功；
+15、规避一个可能是il2cpp的bug（unity5.4）：字符串参数默认值是""，ios下在反射的default value也是Reflection.Missing；
+16、将一个table传到List<>，取了最后一个参数，而不是那个table的长度；
+17、ldarg指令在这种场景下il2cpp转换时会出现异常：1、采用模版注入；2、从4到255间有一个输出参数；改为兼容性更好的ldarg.s；
+18、解决配置了System.Delegate到CSCallLua，执行生成代码会编辑器会crash的问题；
+19、扩展函数可能和原来的函数同名，反射实现并未考虑到这种情况；
+20、通用版本的可变参数delegate调用异常；
+21、unity4规避lua53冲突的方式改为返回null更合适，异常方式会导致IsNull无法正常工作；
+22、lua_tostring解码失败改为UTF8解码；
+
+v2.1.6 2017年3月1日
+新增特性
+1、带约束的泛型支持（by forsakenyang）；
+2、非Unity的.net环境支持；
+3、代码注入支持小工具方式，该方式不用拷贝cecil库，可以解决拷错cecil库版本或者和Unity，VS插件冲突的问题；
+4、Hotfix配置支持字段和属性
+5、更方便的Unity协程hotfix
+6、在hotfix触发事件；
+7、LuaTable添加ForEach方法以及Length属性；
+8、cmake生成项目优化：保留源文件目录结构；
+9、对已经Dispose的LuaEnv的访问做保护；Dispose时检查callback是否已经都释放，没释放的话报错；
+10、支持释放Hotfix回调；
+
+变更
+1、构造函数改为执行原有逻辑后调用lua；
+2、this[string field]操作符重载会影响到继承调用，去掉该特性的支持；
+3、编辑器下的代码注入改为手动方式；
+
+bug修复
+1、防止定义了同时定义get_xx方法以及xx属性的生成代码的重名。
+2、struct注入代码无效；
+3、Utils加名字空间，防止和业务冲突；
+4、返回定长多维数组的delegate，生成代码可能会冲突；
+5、interface，以及编辑器下不生成代码情况下，对可变参数的展开；
+6、il2cpp下，如果不生成代码，会报ManifestModule不支持；
+7、规避Unity4的bug：访问一个已经被Distroy的UnityEngine.Object，编辑器下会崩溃，这个问题在Unity5，或者luajit版本都不会出现；
+8、修改上个版本引入的问题：xlua_setglobal会漏一个值在栈上，这会导致一些32位应用不稳定；
+9、当delegate参数只有ref和out的区别的话，报重载冲突；
+
+v2.1.5 2017年1月13日
+
+新增特性
+1、全平台热补丁；
+2、新增线程安全模式，可通过THREAD_SAFT宏打开；
+3、新增更简便的配置方式，具体参见XLua\Doc下《XLua的配置.doc》；
+4、多虚拟机实例时的自动Dispose；
+5、内存优化：减少匿名闭包到delegate映射的内存占用；减少LuaFunction以及LuaTable内存占用；减少lua table映射C#interface的gc；
+6、生成代码速度优化；
+7、支持直接在lua侧clone C#结构体；
+8、LuaFunction新增无gc调用api；
+
+变更
+1、delegate必须都加[CSharpCallLua]才支持C#到lua的回调（以前参数和返回值都相同的delegate只要其中一个加了就可以）；
+2、加回string/number到枚举的自动转换；
+
+bug修复
+1、枚举不生成代码时，第一次使用会产生两个不同的userdata；
+2、数组和System.Type的相互引用导致System.Type生成代码无法加载；
+3、更安全的异常处理，封装lua_setglobal,lua_getglobal的异常，C#回调保证所有C#异常都catch并转换到成lua error。
 
 
-v2.1.4 2016��11��29��
-��������
-1������ReflectionUse���Զ����ɵ�link.xml�����Է�ֹil2cpp����stripping���µķ��䲻���ã�
-2�������������棬�ɶ��ο����Լ����ɲ������������Ĵ�������ã�
-3��GetInPath��SetInPath��C# gc�Ż���
-4��һ��lua table�Զ�ת��Ϊ��GCOptimize��ǩ�ĸ��������Լ��ø������͵�һά���鲻ʹ�÷��䣬����⸴�������Ǵ�ֵ���ͣ���c# gc��
+v2.1.4 2016年11月29日
+新增特性
+1、加了ReflectionUse会自动生成到link.xml，可以防止il2cpp下因stripping导致的反射不可用；
+2、开放生成引擎，可二次开发自己生成插件，生成所需的代码或配置；
+3、GetInPath和SetInPath无C# gc优化；
+4、一个lua table自动转换为带GCOptimize标签的复杂类型以及该复杂类型的一维数组不使用反射，如果这复杂类型是纯值类型，无c# gc；
 
-���
-1������һ�����Լ����ܵĿ��ǣ���֧�����ֺ��ַ�����ö�ٵľ�Ĭת�������������������µ�__CastFrom��
-2�����ֿռ��LuaInterface��ΪXLua��
-3��LuaTable�ļ������ܵ���gc��api��עΪObsolete��
-4���ڲ�ָ���������͵�����£����һ��number������������ת����������
+变更
+1、基于一致性以及性能的考虑，不支持数字和字符串到枚举的静默转换，须主动调用起类下的__CastFrom；
+2、名字空间从LuaInterface改为XLua；
+3、LuaTable的几个可能导致gc的api标注为Obsolete；
+4、在不指明返回类型的情况下，如果一个number是整数会优先转换成整数；
 
-bug�޸�
-1��������ʽת��int��long��decimal�����ʹ���lua���decimal��
-2������������жϣ�����ɱ������λ������һ����ƥ��Ĳ�����Ҳ���ж�Ϊƥ��ɹ���
-3���ɱ����+���صĻ����ɱ䲿�ֲ����ᱨ��Ч������
-4������LuaCallCSharp��Extension method����Editor�²����ɴ��벻���ã�
+bug修复
+1、含能隐式转换int，long，decimal的类型传到lua变成decimal；
+2、反射的重载判断，如果可变参数的位置上是一个不匹配的参数，也会判断为匹配成功；
+3、可变参数+重载的话，可变部分不传会报无效参数；
+4、加了LuaCallCSharp的Extension method，在Editor下不生成代码不可用；
 
-v2.1.3 2016��11��09��
-��������
-1��LuaTable����Get<TKey, TValue>��Set<TKey, TValue>�ӿڣ�table����֧��ֵ������gc��
-2��֧��decimal������ʧ���ȶ��Ҵ��ݵ�lua��gc��
-3������LuaEnv.LoadString<T>�ӿڣ�����ָ�����ص�delegate���ͣ�
-4������ˢ�£�����Helloworld����GC���ã�Lua�������Э�����ӣ�
-5��enum�Ż������ݵ�lua��gc����int����string��ö��ת����gc��
-6��event��+/-�Ż�����������һ����������gc��
-7�����ɴ���򻯣�
+v2.1.3 2016年11月09日
+新增特性
+1、LuaTable新增Get<TKey, TValue>和Set<TKey, TValue>接口，table操作支持值类型无gc；
+2、支持decimal，不丢失精度而且传递到lua无gc；
+3、增加LuaEnv.LoadString<T>接口，用于指定返回的delegate类型；
+4、例子刷新：新增Helloworld，无GC调用，Lua面向对象，协程例子；
+5、enum优化：传递到lua无gc，从int或者string到枚举转换无gc；
+6、event的+/-优化：性能提升一倍，而且无gc；
+7、生成代码简化；
 
-���
-1��uint��lua53ӳ�䵽lua_Integer��
-2��StreamingAssets���ظ�Ϊ���ȼ���ͣ�
+变更
+1、uint在lua53映射到lua_Integer；
+2、StreamingAssets加载改为优先级最低；
 
-bug�޸�
-1�����ɴ����£����LuaTable����LuaFunction����Ϊnull�����쳣��
-2��lua5.3�£����㵽ö�ٵľ�Ĭת��ʧ�ܣ�
-3��������struct���Ͳ�����Ĭ��ֵ���쳣��
-4��lua53��Length���ظ��㣻
+bug修复
+1、生成代码下，如果LuaTable或者LuaFunction参数为null会抛异常；
+2、lua5.3下，浮点到枚举的静默转换失败；
+3、反射下struct类型参数带默认值抛异常；
+4、lua53下Length返回浮点；
 
-v2.1.2 2016��10��08��
-��������
-1��֧��lua5.3������֧��ƻ��bitcode��ԭ��64λ������λ���㣬utf8�����ԣ�
-2��CMake���룬�����������������
-3�����������Ż����������������Լ�gc
-4��C#����lua��������һ��lua gc��
-5���Ż�����ʱ�䣻
-6���������ͼ��ص�gc��
-7���Ż�ObjectPool���ڴ�ռ�ã�
-8���Ż�С�ַ�������lua��gc��
-9��LuaTable����Cast�ӿڣ�����LuaTable���������͵�ת��������interface��
-10��LuaFunction����Cast�ӿڣ�����LuaFunction��delegate��ת����
+v2.1.2 2016年10月08日
+新增特性
+1、支持lua5.3，进而支持苹果bitcode，原生64位整数，位运算，utf8等特性；
+2、CMake编译，更方便加入第三方插件
+3、数组性能优化，包括访问性能以及gc
+4、C#调用lua函数减少一次lua gc；
+5、优化启动时间；
+6、减少类型加载的gc；
+7、优化ObjectPool的内存占用；
+8、优化小字符串传入lua的gc；
+9、LuaTable添加Cast接口，用于LuaTable到其它类型的转换，比如interface；
+10、LuaFunction添加Cast接口，用于LuaFunction到delegate的转换；
 
-���
-1��lua�ڲ�ֻ�д����ŵ�64�������ͣ��������޷�������
-2����������Extension Method���ɴ��룬��ϣ���ڷ������ã���Ҫ����ReflectionUse��
+变更
+1、lua内部只有带符号的64整数类型，并增加无符号数库
+2、如果不想对Extension Method生成代码，又希望在反射下用，需要添加ReflectionUse；
 
-bug�޸�
-1����ObjectPool�Ѿ�Destroy��UnityEngine.Object�������Զ�������ܵ��ڴ�й©���⣻
-2�����ĳЩ�汾����֪��5.3.3����Unity��bug���µ��ڴ�й©���⣻
-3��LuaTable����LuaFunction������ֵ��delegate���ɴ�����ܱ�����
+bug修复
+1、对ObjectPool已经Destroy的UnityEngine.Object的引用自动解除功能的内存泄漏问题；
+2、规避某些版本（已知是5.3.3）的Unity的bug导致的内存泄漏问题；
+3、LuaTable或者LuaFunction做返回值的delegate生成代码可能报错；
 
-v2.1.1 2016��08��29��
-��������
-1��֧�ֱ༭���²������ɴ��������У�
-2������IntPtr��֧��
-3�����Ӷ�ObjectPool�Ѿ�Destroy��UnityEngine.Object�������Զ������
-4����LuaEnv���Ӷ�lua_gcһЩ��װ��
+v2.1.1 2016年08月29日
+新增特性
+1、支持编辑器下不用生成代码能运行；
+2、新增IntPtr的支持
+3、增加对ObjectPool已经Destroy的UnityEngine.Object的引用自动解除；
+4、在LuaEnv添加对lua_gc一些封装；
 
-bug�޸�
-1�����ɴ��봫��һ��LuaFunction��LuaTable��lua�ͷ���汾��һ�£����ɴ��봫�͹�ȥ��һ��C#���󣬶�������Lua������table���󣬷���Ĵ��������ʣ�
-2���޸�ͬ���ľ�̬�Լ���Ա������ͻ�����⣻
-3���޸���interface����CSharpCallLua����ʱ��interface��indexerʱ�ı�����
-4���޸�Editor�����к��newһ��xluaʵ����bug��
-5���޸�ͨ�����ɴ������ͬʱ���ɱ������Ĭ��ֵ�ĺ���������������������������bug��
-6���޸�����ʱ���Ҳ���socket���bug��
+bug修复
+1、生成代码传送一个LuaFunction、LuaTable到lua和反射版本不一致，生成代码传送过去是一个C#对象，而反射是Lua函数、table对象，反射的处理更合适；
+2、修复同名的静态以及成员方法冲突的问题；
+3、修复对interface生成CSharpCallLua代码时，interface含indexer时的报错；
+4、修复Editor在运行后会new一个xlua实例的bug；
+5、修复通过生成代码调用同时含可变参数和默认值的函数，如果不传参数，将会出错的bug；
+6、修复调试时，找不到socket库的bug；
 
 
-���
-1�����䲻�����ط���˳�������˳���Ϊ�̶������ɴ��뱣��һ�£�
-2��i64����fade_id����������ʱ����ȫ��
-3�����¼���tdr��from_file��֧�֣�
+变更
+1、反射不做重载方法顺序调整，顺序改为固定且生成代码保持一致；
+2、i64加上fade_id，参数传递时更安全；
+3、重新加入tdr的from_file的支持；
 
-v2.1.0 2016��08��08��
-��������
-1����������struct���ݵ�lua��gc��struct��Ҫ����ʲô�������ܱ��Ż��أ�
-a. struct����Ƕ������struct�������Լ���Ƕ�׵�structֻ�ܰ����⼸�ֻ������ͣ�byte��sbyte��short��ushort��int��uint��long��ulong��float��double��
-b. struct�����Լ�ʹ�õ���struct�ĵط���Ҫ��LuaCallCSharp�����Ҽ���GCOptimize���ã�
-2��ȫ��ʵ�ֵķ�����ƣ������׺����ɴ������ʹ��
-a. ֧��extension methods��Enum.__CastFrom��
-b. ios��֧�ַ���ʹ��event��
-c. ������ӳ�䡢�ɱ�������õ���Ϊ�����ɴ���һ�£�
-d. ���ܸ��ã�gc���٣�
-3�����ɴ���˵��򻯣������ӡ�Generate Minimum��ѡ�
-4��֧�����ɴ��������ļ���EditorĿ¼��
+v2.1.0 2016年08月08日
+新增特性
+1、满足条件struct传递到lua无gc，struct需要满足什么条件才能被优化呢？
+a. struct允许嵌套其它struct，但它以及它嵌套的struct只能包含这几种基本类型：byte、sbyte、short、ushort、int、uint、long、ulong、float、double；
+b. struct本身以及使用到该struct的地方需要加LuaCallCSharp，并且加了GCOptimize设置；
+2、全新实现的反射机制，更容易和生成代码配合使用
+a. 支持extension methods，Enum.__CastFrom；
+b. ios下支持反射使用event；
+c. 对类型映射、可变参数调用调整为和生成代码一致；
+d. 性能更好，gc更少；
+3、生成代码菜单简化，并增加“Generate Minimum”选项；
+4、支持生成代码配置文件放Editor目录；
 
-���
-1��luajitͳһ������2.1.0b2��
-2��luasocket���Ϊ������أ�
-3�����ص�string��byte[]�����������Ϊnil��
-4��������ʲ�����������أ�
-5��struct��ref�������޸Ļ��޸�lua��ò�����ֵ��
-6�����ɴ�����ظ�Ϊ��̬��ԭ���Ƿ��䣩��
-7���˵���Ϊ����ࣻ
-8��tdr��ΪĬ�ϲ����أ�
-9��StreamingAssets����lua��Ϊ�������ԣ�
+变更
+1、luajit统一升级成2.1.0b2；
+2、luasocket库改为按需加载；
+3、重载的string，byte[]参数检查允许为nil；
+4、子类访问不触发父类加载；
+5、struct的ref参数的修改会修改lua测该参数的值；
+6、生成代码加载改为静态（原来是反射）；
+7、菜单改为更简洁；
+8、tdr改为默认不加载；
+9、StreamingAssets加载lua改为废弃特性；
 
-bug�޸�
-1���������߷���ֵ�Ƿ���������飬�����Ƕ�ά���飬���ɴ��뱨�������
-2�����������ɴ��뱨�������
-3������Clear���ɴ����warning��
-4��profiler��i64�ⲻ֧�ֶ�ʵ����
+bug修复
+1、参数或者返回值是泛型类的数组，或者是二维数组，生成代码报编译错误；
+2、抽象类生成代码报编译错误；
+3、消除Clear生成代码的warning；
+4、profiler、i64库不支持多实例；
 
-v2.0.5 2016��05��18��
-��������
-1��util.async_to_sync�����Ը��õ�����lua��Э��ʵ��ͬ����̡��첽ִ�У������첽�ȴ�www�ȣ�
-2�����ɴ���Ĺ淶�ȵ���������һЩ���ߵĸ澯��
-bug�޸�
-1�������lua gc�Ƴ�weak table�͵���__gc��ʱ�䴰��pushͬһ���󣬻�����ָ��ͬһC#����Ĳ�ͬuserdata�����⣻
-2���ϰ汾�ĵ�lua�ڴ湤�߲�δ�����
-3������Ƕ�����Ͳ������ɴ�������⣻
+v2.0.5 2016年05月18日
+新增特性
+1、util.async_to_sync，可以更好的利用lua的协程实现同步编程、异步执行；或者异步等待www等；
+2、生成代码的规范度调整，消除一些工具的告警；
+bug修复
+1、解决在lua gc移除weak table和调用__gc的时间窗内push同一对象，会生成指向同一C#对象的不同userdata的问题；
+2、上版本的的lua内存工具并未打包；
+3、修正嵌套类型不能生成代码的问题；
 
-v2.0.4 2016��05��04��
-��������
-1��������������ʱ�����湦�ܣ�
-2������lua�ڴ�й©��λ���ߣ�
-3��lua������64λ�޷�������֧�֣�
-���
-1��֧�ֶ���delegate�󶨵�һ��clousre������֮ǰһ��clousreֻ�ܶ�Ӧһ��delegate��
-bug�޸�
-1��tdr��������Ϊ1������Ĵ��󣨱������Ӧ����{[1] = {a = 1}}�ģ�ȴ��{{a=1}}����
-2��tdr��ֵ��������int��-1����һ���ܴ��������
+v2.0.4 2016年05月04日
+新增特性
+1、新增函数调用时长报告功能；
+2、新增lua内存泄漏定位工具；
+3、lua测加入对64位无符号数的支持；
+变更
+1、支持多种delegate绑定到一个clousre。调整之前一个clousre只能对应一种delegate；
+bug修复
+1、tdr处理长度为1的数组的错误（本来解包应该是{[1] = {a = 1}}的，却是{{a=1}}）；
+2、tdr数值处理错误（int的-1会解成一个很大的正数）
 
-v2.0.3 2016��04��13��
-�¹���
-1�����ӡ�Advanced Gen�����ܣ��û������Զ������ɴ���ķ�Χ��
-2��֧�ֶԿ�����Static pusher��
-���
-1��LuaTable�Լ�InterfaceBirdage��Ϊ����metatable��
-2��Extension Methods���Զ��ӵ�����չ�࣬��Ҫ���������б���
-3���Ƴ�����ValueType�Ż���
-bug�޸�
-1��Extension MethodsΪ˽��ʱ�����ɴ����﷨����
-2�����غ�����ulongʱ�����ɴ����﷨����
-3���������ʱ��Ĭ��ֵ��������
-4��C#��lua�������ַ��ĳ��ȴ�������
+v2.0.3 2016年04月13日
+新功能
+1、添加“Advanced Gen”功能，用户可以自定义生成代码的范围；
+2、支持对库生成Static pusher；
+变更
+1、LuaTable以及InterfaceBirdage改为触发metatable；
+2、Extension Methods不自动加到被扩展类，需要加入生成列表；
+3、移除特殊ValueType优化；
+bug修复
+1、Extension Methods为私有时，生成代码语法错误；
+2、重载函数含ulong时，生成代码语法错误；
+3、反射调用时的默认值处理错误；
+4、C#向lua传中文字符的长度处理错误；
 
-v2.0.2 2016��04��06��
-���
-1��������ɴ�������֧�ֶ�ݣ�������Ŀ��ģ�黯��
-2��enum�����ɴ���ϲ���һ���ļ���ͷ��
-3���Ż��쳣������
-4���������ѿ�ͽ̡̳����ӷ��룬���ɾ���
-5��Сbug�޸ģ�
+v2.0.2 2016年04月06日
+变更
+1、库的生成代码配置支持多份，方便项目的模块化；
+2、enum的生成代码合并到一个文件里头；
+3、优化异常处理；
+4、发布包把库和教程、例子分离，更干净；
+5、小bug修改；
 
-����ָ��
-�����ļ��е�䶯��ֱ�Ӹ���ԭ��lib�ᱨ������Ҫ��
-1��ɾ��ԭ����XLuaĿ¼��
-2����ѹxlua_v2.0.2.zip��Assets�£�
-3������ִ�д������ɣ�
+升级指引
+由于文件有点变动，直接覆盖原有lib会报错，需要：
+1、删除原来的XLua目录；
+2、解压xlua_v2.0.2.zip到Assets下；
+3、重新执行代码生成；
 
-v2.0.1 2016��03��24��
-1��֧��C# ��extension methods��
-2��lua���Է����֧�֣�
-3��android��requireһ�������ڵ�lua�ļ����ܳɹ���bug��
-4��TDR 4 Lua��ĸ��£�
-5������͵ļ����Բ��ԣ�
+v2.0.1 2016年03月24日
+1、支持C# 的extension methods；
+2、lua调试方面的支持；
+3、android下require一个不存在的lua文件可能成功的bug；
+4、TDR 4 Lua库的更新；
+5、多机型的兼容性测试；
 
-v2.0.0 2016��03��08��
-1�������Ż������ܶԱȱ����뿴��ҳ��
-2������ٷ�lua�汾��tdr��
-3��֧��64λ������
-4������lua�ж�C#�쳣pcall�����Ĳ��ȶ���
-5�������Ե��Ż���
-6������һЩbug���޸ġ�
+v2.0.0 2016年03月08日
+1、性能优化，性能对比报告请看主页；
+2、加入官方lua版本的tdr；
+3、支持64位整数；
+4、修正lua中对C#异常pcall引发的不稳定；
+5、易用性的优化；
+6、其它一些bug的修改。
 
-1.0.2 2015��12��09��
-1������°汾����֪5.2�汾���£�streamAssetsPath�������ڹ��캯�����ʵ��µ�bug��
-2������windows x64�汾��֧�֣�
-3����web�汾���õ��Ĵ�������������룬���ٶ��ֻ��淢������Ӱ�죻
-4�����ɴ����ļ���ȥ����+���ţ�
-5��ɾ��4.6�����ɴ��룬�������°汾�����ù�ʱapi�Ĵ���
+1.0.2 2015年12月09日
+1、解决新版本（已知5.2版本）下，streamAssetsPath不允许在构造函数访问导致的bug；
+2、新增windows x64版本的支持；
+3、对web版本才用到的代码加入条件编译，减少对手机版发布包的影响；
+4、生成代码文件名去掉“+”号；
+5、删除4.6的生成代码，以免在新版本报引用过时api的错；
 
-v1.0.1 2015��11��30��
-1��֧��pcall��׽C#�쳣��
-2������cast������֧�����ֳ�����ʵ������internal������ֻ�ṩinterface��
-3�����interface�������event�����ɴ�����뱨����bug��
-4�����interface����Obsolete�ķ������ֶΣ����ɴ�����뱨����bug��
-5�������private��Ĭ��geter/setter���ɴ�����뱨����bug��
-6����������ȫ�ֿռ������ɴ��벻���õ�bug��
-7������bridge���뷵��ֵ��������
+v1.0.1 2015年11月30日
+1、支持pcall捕捉C#异常；
+2、新增cast方法，支持这种场景：实现类是internal声明，只提供interface；
+3、解决interface下如果有event，生成代码编译报错的bug；
+4、解决interface下有Obsolete的方法，字段，生成代码编译报错的bug；
+5、解决含private的默认geter/setter生成代码编译报错的bug；
+6、修正类在全局空间下生成代码不可用的bug；
+7、修正bridge代码返回值处理错误。
 
-v1.0.0 2015��03��30��
-��һ���汾
+v1.0.0 2015年03月30日
+第一个版本

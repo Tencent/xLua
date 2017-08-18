@@ -14,8 +14,41 @@ using System.Collections.Generic;
 <%
 require "TemplateCommon"
 
-local OpNameMap = {op_Addition = "__AddMeta", op_Subtraction = "__SubMeta", op_Multiply = "__MulMeta", op_Division = "__DivMeta", op_Equality = "__EqMeta", op_UnaryNegation = "__UnmMeta", op_LessThan="__LTMeta", op_LessThanOrEqual="__LEMeta", op_Modulus="__ModMeta"}
-local OpCallNameMap = {op_Addition = "+", op_Subtraction = "-", op_Multiply = "*", op_Division = "/", op_Equality = "==", op_UnaryNegation = "-", op_LessThan="<", op_LessThanOrEqual="<=", op_Modulus="%"}
+local OpNameMap = {
+    op_Addition = "__AddMeta",
+	op_Subtraction = "__SubMeta",
+	op_Multiply = "__MulMeta",
+	op_Division = "__DivMeta",
+	op_Equality = "__EqMeta",
+	op_UnaryNegation = "__UnmMeta",
+	op_LessThan = "__LTMeta",
+	op_LessThanOrEqual = "__LEMeta",
+	op_Modulus = "__ModMeta",
+    op_BitwiseAnd = "__BandMeta",
+    op_BitwiseOr = "__BorMeta",
+    op_ExclusiveOr = "__BxorMeta",
+    op_OnesComplement = "__BnotMeta",
+    op_LeftShift = "__ShlMeta",
+    op_RightShift = "__ShrMeta",
+}
+
+local OpCallNameMap = {
+    op_Addition = "+",
+	op_Subtraction = "-",
+	op_Multiply = "*",
+	op_Division = "/",
+	op_Equality = "==",
+	op_UnaryNegation = "-",
+	op_LessThan = "<",
+	op_LessThanOrEqual = "<=",
+	op_Modulus = "%",
+	op_BitwiseAnd = "&",
+    op_BitwiseOr = "|",
+    op_ExclusiveOr = "^",
+    op_OnesComplement = "~",
+    op_LeftShift = "<<",
+    op_RightShift = ">>",
+}
 
 local obj_method_count = 0
 local obj_getter_count = 0
@@ -61,11 +94,13 @@ ForEachCsList(setters, function(setter)
     end 
 end)
 
+local generic_arg_list, type_constraints = GenericArgumentList(type)
+
 %>
-namespace CSObjectWrap
+namespace XLua.CSObjectWrap
 {
     using Utils = XLua.Utils;
-    public class <%=CSVariableName(type)%>Wrap
+    public class <%=CSVariableName(type)%>Wrap<%=generic_arg_list%> <%=type_constraints%>
     {
         public static void __Register(RealStatePtr L)
         {
@@ -91,7 +126,6 @@ namespace CSObjectWrap
 			<% end end)%>
             <%ForEachCsList(getters, function(getter) if getter.IsStatic and getter.ReadOnly then %>Utils.RegisterObject(L, translator, Utils.CLS_IDX, "<%=getter.Name%>", <%=CsFullTypeName(type).."."..getter.Name%>);
             <%end end)%>
-            Utils.RegisterObject(L, translator, Utils.CLS_IDX, "UnderlyingSystemType", typeof(<%=CsFullTypeName(type)%>));
 			<%ForEachCsList(getters, function(getter) if getter.IsStatic and (not getter.ReadOnly) then %>Utils.RegisterFunc(L, Utils.CLS_GETTER_IDX, "<%=getter.Name%>", _g_get_<%=getter.Name%>);
             <%end end)%>
 			<%ForEachCsList(setters, function(setter) if setter.IsStatic then %>Utils.RegisterFunc(L, Utils.CLS_SETTER_IDX, "<%=setter.Name%>", _s_set_<%=setter.Name%>);
@@ -103,39 +137,66 @@ namespace CSObjectWrap
         static int __CreateInstance(RealStatePtr L)
         {
             <% 
-            if constructors.Count == 0  then 
-			   if type.IsValueType then
-			%>ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
-			<%=GetPushStatement(type, "default(" .. CsFullTypeName(type).. ")")%>;
-			return 1;
-			<%
-			   else
+            if constructors.Count == 0 and (not type.IsValueType)  then 
             %>return LuaAPI.luaL_error(L, "<%=CsFullTypeName(type)%> does not have a constructor!");<% 
-			   end
             else %>
-            ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
 			try {
-				<% ForEachCsList(constructors, function(constructor, ci)
+                ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
+				<% 
+				local hasZeroParamsCtor = false
+				ForEachCsList(constructors, function(constructor, ci)
 					local parameters = constructor:GetParameters()
+					if parameters.Length == 0 then
+					    hasZeroParamsCtor = true
+					end
 					local def_count = constructor_def_vals[ci]
 					local param_count = parameters.Length
+					local in_num = CalcCsList(parameters, function(p) return p.IsIn or not p.IsOut end)
+                    local out_num = CalcCsList(parameters, function(p) return p.IsOut or p.ParameterType.IsByRef end)
 					local real_param_count = param_count - def_count
                     local has_v_params = param_count > 0 and IsParams(parameters[param_count - 1])
-				%>if(LuaAPI.lua_gettop(L) <%=has_v_params and ">=" or "=="%> <%=parameters.Length + 1 - def_count - (has_v_params and 1 or 0)%><%ForEachCsList(parameters, function(parameter, pi) 
+					local in_pos = 0
+				%>if(LuaAPI.lua_gettop(L) <%=has_v_params and ">=" or "=="%> <%=in_num + 1 - def_count - (has_v_params and 1 or 0)%><%ForEachCsList(parameters, function(parameter, pi) 
                 if pi >= real_param_count then return end 
                 local parameterType = parameter.ParameterType
                 if has_v_params and pi == param_count - 1 then  parameterType = parameterType:GetElementType() end
-                %> && <%=GetCheckStatement(parameterType, pi+2, has_v_params and pi == param_count - 1)%><% end)%>)
+				if parameter.IsIn or not parameter.IsOut then in_pos = in_pos + 1
+                %> && <%=GetCheckStatement(parameterType, in_pos+1, has_v_params and pi == param_count - 1)%><% 
+				end
+				end)%>)
 				{
 					<%ForEachCsList(parameters, function(parameter, pi) 
                     if pi >= real_param_count then return end 
                     %><%=GetCasterStatement(parameter.ParameterType, pi+2, parameter.Name, true, has_v_params and pi == param_count - 1)%>;
 					<%end)%>
-					<%=CsFullTypeName(type)%> __cl_gen_ret = new <%=CsFullTypeName(type)%>(<%ForEachCsList(parameters, function(parameter, pi) if pi >= real_param_count then return end; if pi ~=0 then %><%=', '%><% end %><%=parameter.Name%><% end)%>);
+					<%=CsFullTypeName(type)%> __cl_gen_ret = new <%=CsFullTypeName(type)%>(<%ForEachCsList(parameters, function(parameter, pi) if pi >= real_param_count then return end; if pi ~=0 then %><%=', '%><% end ;if parameter.IsOut and parameter.ParameterType.IsByRef then %>out <% elseif parameter.ParameterType.IsByRef then %>ref <% end %><%=parameter.Name%><% end)%>);
 					<%=GetPushStatement(type, "__cl_gen_ret")%>;
-					return 1;
+                    <%local in_pos = 0
+                    ForEachCsList(parameters, function(parameter, pi)
+                        if pi >= real_param_count then return end
+                        if parameter.IsIn or not parameter.IsOut then 
+                            in_pos = in_pos + 1
+                        end
+                        if parameter.ParameterType.IsByRef then
+                        %><%=GetPushStatement(parameter.ParameterType:GetElementType(), parameter.Name)%>;
+                        <%if not parameter.IsOut and parameter.ParameterType.IsByRef and NeedUpdate(parameter.ParameterType) then 
+                  %><%=GetUpdateStatement(parameter.ParameterType:GetElementType(), in_pos+1, parameter.Name)%>;
+                        <%end%>
+                    <%
+                        end
+                    end)
+                    %>
+					return <%=out_num + 1%>;
 				}
-				<%end)%>
+				<%end)
+				if (not hasZeroParamsCtor) and type.IsValueType then
+				%>
+				if (LuaAPI.lua_gettop(L) == 1)
+				{
+				    <%=GetPushStatement(type, "default(" .. CsFullTypeName(type).. ")")%>;
+			        return 1;
+				}
+				<%end%>
 			}
 			catch(System.Exception __gen_e) {
 				return LuaAPI.luaL_error(L, "c# exception:" + __gen_e);
@@ -149,8 +210,9 @@ namespace CSObjectWrap
         public static int __CSIndexer(RealStatePtr L)
         {
 			<%if type.IsArray then %>
-			ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
 			try {
+			    ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
+			
 				if (<%=GetCheckStatement(type, 1)%> && LuaAPI.lua_isnumber(L, 2))
 				{
 					int index = (int)LuaAPI.lua_tonumber(L, 2);
@@ -164,8 +226,8 @@ namespace CSObjectWrap
 				return LuaAPI.luaL_error(L, "c# exception:" + __gen_e);
 			}
 			<%elseif indexers.Count > 0 then
-			%>ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
-			try {
+			%>try {
+			    ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
 				<%
 					ForEachCsList(indexers, function(indexer)
 						local paramter = indexer:GetParameters()[0]
@@ -243,13 +305,14 @@ namespace CSObjectWrap
         [MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
         static int <%=OpNameMap[operator.Name]%>(RealStatePtr L)
         {
-            ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
-            <% if operator.Name ~= "op_UnaryNegation" then 
-                ForEachCsList(operator.Overloads, function(overload)
+            <% if operator.Name ~= "op_UnaryNegation" and operator.Name ~= "op_OnesComplement"  then %>
+			try {
+                ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
+            <%ForEachCsList(operator.Overloads, function(overload)
                 local left_param = overload:GetParameters()[0]
                 local right_param = overload:GetParameters()[1]
             %>
-			try {
+			
 				if (<%=GetCheckStatement(left_param.ParameterType, 1)%> && <%=GetCheckStatement(right_param.ParameterType, 2)%>)
 				{
 					<%=GetCasterStatement(left_param.ParameterType, 1, "leftside", true)%>;
@@ -259,13 +322,14 @@ namespace CSObjectWrap
 					
 					return 1;
 				}
+            <%end)%>
 			}
 			catch(System.Exception __gen_e) {
 				return LuaAPI.luaL_error(L, "c# exception:" + __gen_e);
 			}
-            <%end)%>
             return LuaAPI.luaL_error(L, "invalid arguments to right hand of <%=OpCallNameMap[operator.Name]%> operator, need <%=CsFullTypeName(type)%>!");
             <%else%>
+			ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
             try {
                 <%=GetCasterStatement(type, 1, "rightside", true)%>;
                 <%=GetPushStatement(operator.Overloads[0].ReturnType, OpCallNameMap[operator.Name] .. " rightside")%>;
@@ -281,19 +345,19 @@ namespace CSObjectWrap
         [MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
         static int _m_<%=method.Name%>(RealStatePtr L)
         {
+		    try {
             <%
             local need_obj = not method.IsStatic
             if MethodCallNeedTranslator(method) then
             %>
-            ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
+                ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
             <%end%>
             <%if need_obj then%>
-            <%=GetSelfStatement(type)%>;
+                <%=GetSelfStatement(type)%>;
             <%end%>
             <%if method.Overloads.Count > 1 then%>
-			int __gen_param_count = LuaAPI.lua_gettop(L);
+			    int __gen_param_count = LuaAPI.lua_gettop(L);
             <%end%>
-            try {
                 <%ForEachCsList(method.Overloads, function(overload, oi)
                 local parameters = MethodParameters(overload)
                 local in_num = CalcCsList(parameters, function(p) return p.IsIn or not p.IsOut end)
@@ -330,9 +394,9 @@ namespace CSObjectWrap
                         %>    <%=CsFullTypeName(overload.ReturnType)%> __cl_gen_ret = <%
                     end
                     %><%if method.IsStatic then
-                    %><%=CsFullTypeName(type).."."..overload.Name%><%
+                    %><%=CsFullTypeName(type).."."..UnK(overload.Name)%><%
                     else
-                    %>__cl_gen_to_be_invoked.<%=overload.Name%><%
+                    %>__cl_gen_to_be_invoked.<%=UnK(overload.Name)%><%
                     end%>( <%ForEachCsList(parameters, function(parameter, pi) 
                         if pi >= real_param_count then return end
                         if pi ~= 0 then %>, <% end; if parameter.IsOut and parameter.ParameterType.IsByRef then %>out <% elseif parameter.ParameterType.IsByRef then %>ref <% end %><%=parameter.Name%><% end) %> );
@@ -379,11 +443,11 @@ namespace CSObjectWrap
         [MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
         static int _g_get_<%=getter.Name%>(RealStatePtr L)
         {
-            <%if AccessorNeedTranslator(getter) then %>ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);<%end%>
-            try {
+		    try {
+            <%if AccessorNeedTranslator(getter) then %>    ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);<%end%>
 			<%if not getter.IsStatic then%>
                 <%=GetSelfStatement(type)%>;
-                <%=GetPushStatement(getter.Type, "__cl_gen_to_be_invoked."..getter.Name)%>;<% else %>    <%=GetPushStatement(getter.Type, CsFullTypeName(type).."."..getter.Name)%>;<% end%>
+                <%=GetPushStatement(getter.Type, "__cl_gen_to_be_invoked."..UnK(getter.Name))%>;<% else %>    <%=GetPushStatement(getter.Type, CsFullTypeName(type).."."..UnK(getter.Name))%>;<% end%>
             } catch(System.Exception __gen_e) {
                 return LuaAPI.luaL_error(L, "c# exception:" + __gen_e);
             }
@@ -397,17 +461,17 @@ namespace CSObjectWrap
         [MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
         static int _s_set_<%=setter.Name%>(RealStatePtr L)
         {
-            <%if AccessorNeedTranslator(setter) then %>ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);<%end%>
-            try {
+		    try {
+                <%if AccessorNeedTranslator(setter) then %>ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);<%end%>
 			<%if not setter.IsStatic then %>
                 <%=GetSelfStatement(type)%>;
                 <%if is_struct then %><%=GetCasterStatement(setter.Type, 2, "__cl_gen_value", true)%>;
-				__cl_gen_to_be_invoked.<%=setter.Name%> = __cl_gen_value;<% else 
-              %><%=GetCasterStatement(setter.Type, 2, "__cl_gen_to_be_invoked." .. setter.Name)%>;<%end
+				__cl_gen_to_be_invoked.<%=UnK(setter.Name)%> = __cl_gen_value;<% else 
+              %><%=GetCasterStatement(setter.Type, 2, "__cl_gen_to_be_invoked." .. UnK(setter.Name))%>;<%end
             else 
 				if is_struct then %><%=GetCasterStatement(setter.Type, 1, "__cl_gen_value", true)%>;
-				<%=CsFullTypeName(type)%>.<%=setter.Name%> = __cl_gen_value;<%else
-          %>    <%=GetCasterStatement(setter.Type, 1, CsFullTypeName(type) .."." .. setter.Name)%>;<%end
+				<%=CsFullTypeName(type)%>.<%=UnK(setter.Name)%> = __cl_gen_value;<%else
+          %>    <%=GetCasterStatement(setter.Type, 1, CsFullTypeName(type) .."." .. UnK(setter.Name))%>;<%end
             end%>
             <%if NeedUpdate(type) and not setter.IsStatic then%>
                 <%=GetUpdateStatement(type, 1, "__cl_gen_to_be_invoked")%>;
@@ -423,10 +487,10 @@ namespace CSObjectWrap
         [MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
         static int _e_<%=event.Name%>(RealStatePtr L)
         {
-            ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
-			int __gen_param_count = LuaAPI.lua_gettop(L);
+		    try {
+                ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
+			    int __gen_param_count = LuaAPI.lua_gettop(L);
 			<%=GetSelfStatement(type)%>;
-            try {
                 <%=GetCasterStatement(event.Type, 3, "__gen_delegate", true)%>;
                 if (__gen_delegate == null) {
                     return LuaAPI.luaL_error(L, "#3 need <%=CsFullTypeName(event.Type)%>!");
@@ -444,13 +508,13 @@ namespace CSObjectWrap
 					
 						<%if event.CanAdd then%>
 						if (op == (byte)'+') {
-							__cl_gen_to_be_invoked.<%=event.Name%> += __gen_delegate;
+							__cl_gen_to_be_invoked.<%=UnK(event.Name)%> += __gen_delegate;
 							return 0;
 						} 
 						<%end%>
 						<%if event.CanRemove then%>
 						if (op == (byte)'-') {
-							__cl_gen_to_be_invoked.<%=event.Name%> -= __gen_delegate;
+							__cl_gen_to_be_invoked.<%=UnK(event.Name)%> -= __gen_delegate;
 							return 0;
 						} 
 						<%end%>
@@ -468,9 +532,9 @@ namespace CSObjectWrap
         [MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
         static int _e_<%=event.Name%>(RealStatePtr L)
         {
-            ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
-			int __gen_param_count = LuaAPI.lua_gettop(L);
-            try {
+		    try {
+                ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
+			    int __gen_param_count = LuaAPI.lua_gettop(L);
                 <%=GetCasterStatement(event.Type, 2, "__gen_delegate", true)%>;
                 if (__gen_delegate == null) {
                     return LuaAPI.luaL_error(L, "#2 need <%=CsFullTypeName(event.Type)%>!");
@@ -478,13 +542,13 @@ namespace CSObjectWrap
                 
 				<%if event.CanAdd then%>
 				if (__gen_param_count == 2 && LuaAPI.lua_tostring(L, 1) == "+") {
-					<%=CsFullTypeName(type)%>.<%=event.Name%> += __gen_delegate;
+					<%=CsFullTypeName(type)%>.<%=UnK(event.Name)%> += __gen_delegate;
 					return 0;
 				} 
 				<%end%>
 				<%if event.CanRemove then%>
 				if (__gen_param_count == 2 && LuaAPI.lua_tostring(L, 1) == "-") {
-					<%=CsFullTypeName(type)%>.<%=event.Name%> -= __gen_delegate;
+					<%=CsFullTypeName(type)%>.<%=UnK(event.Name)%> -= __gen_delegate;
 					return 0;
 				} 
 				<%end%>

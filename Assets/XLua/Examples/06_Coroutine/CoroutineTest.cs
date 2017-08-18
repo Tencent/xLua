@@ -1,10 +1,7 @@
 ﻿using UnityEngine;
 using XLua;
-using System.Collections.Generic;
-using System.Collections;
-using System;
 
-public class Coroutine : MonoBehaviour {
+public class CoroutineTest : MonoBehaviour {
     LuaEnv luaenv = null;
     // Use this for initialization
     void Start()

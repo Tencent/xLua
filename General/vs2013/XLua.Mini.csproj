@@ -1,0 +1,123 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{9A2C7D34-0697-31AB-4FD5-E250BB7E0F00}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>XLua.Mini</RootNamespace>
+    <AssemblyName>XLua.Mini</AssemblyName>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>..\Tools\</OutputPath>
+    <BaseIntermediateOutputPath>obj\Any CPU\Debug\XLua.Mini\</BaseIntermediateOutputPath>
+    <IntermediateOutputPath>$(BaseIntermediateOutputPath)</IntermediateOutputPath>
+    <DefineConstants>_DEBUG;DEBUG;TRACE;;XLUA_GENERAL</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>..\Tools\</OutputPath>
+    <BaseIntermediateOutputPath>obj\Any CPU\Release\XLua.Mini\</BaseIntermediateOutputPath>
+    <IntermediateOutputPath>$(BaseIntermediateOutputPath)</IntermediateOutputPath>
+    <DefineConstants>;XLUA_GENERAL</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="xlua">
+      <HintPath>..\..\Assets\Plugins\x86_64\xlua.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\..\Assets\XLua\Src\CodeEmit.cs">
+      <Link>Assets\XLua\Src\CodeEmit.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Assets\XLua\Src\CopyByValue.cs">
+      <Link>Assets\XLua\Src\CopyByValue.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Assets\XLua\Src\DelegateBridge.cs">
+      <Link>Assets\XLua\Src\DelegateBridge.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Assets\XLua\Src\GenAttributes.cs">
+      <Link>Assets\XLua\Src\GenAttributes.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Assets\XLua\Src\InternalGlobals.cs">
+      <Link>Assets\XLua\Src\InternalGlobals.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Assets\XLua\Src\LuaBase.cs">
+      <Link>Assets\XLua\Src\LuaBase.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Assets\XLua\Src\LuaDLL.cs">
+      <Link>Assets\XLua\Src\LuaDLL.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Assets\XLua\Src\LuaEnv.cs">
+      <Link>Assets\XLua\Src\LuaEnv.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Assets\XLua\Src\LuaException.cs">
+      <Link>Assets\XLua\Src\LuaException.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Assets\XLua\Src\LuaFunction.cs">
+      <Link>Assets\XLua\Src\LuaFunction.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Assets\XLua\Src\LuaTable.cs">
+      <Link>Assets\XLua\Src\LuaTable.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Assets\XLua\Src\MethodWarpsCache.cs">
+      <Link>Assets\XLua\Src\MethodWarpsCache.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Assets\XLua\Src\ObjectCasters.cs">
+      <Link>Assets\XLua\Src\ObjectCasters.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Assets\XLua\Src\ObjectPool.cs">
+      <Link>Assets\XLua\Src\ObjectPool.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Assets\XLua\Src\ObjectTranslator.cs">
+      <Link>Assets\XLua\Src\ObjectTranslator.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Assets\XLua\Src\ObjectTranslatorPool.cs">
+      <Link>Assets\XLua\Src\ObjectTranslatorPool.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Assets\XLua\Src\RawObject.cs">
+      <Link>Assets\XLua\Src\RawObject.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Assets\XLua\Src\SignatureLoader.cs">
+      <Link>Assets\XLua\Src\SignatureLoader.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Assets\XLua\Src\StaticLuaCallbacks.cs">
+      <Link>Assets\XLua\Src\StaticLuaCallbacks.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Assets\XLua\Src\TemplateEngine\TemplateEngine.cs">
+      <Link>Assets\XLua\Src\TemplateEngine\TemplateEngine.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Assets\XLua\Src\TypeExtensions.cs">
+      <Link>Assets\XLua\Src\TypeExtensions.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Assets\XLua\Src\Utils.cs">
+      <Link>Assets\XLua\Src\Utils.cs</Link>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

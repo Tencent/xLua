@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿#if !XLUA_GENERAL
+using UnityEngine;
+#endif
 using System.Collections;
 using System.Collections.Generic;
 using XLua;

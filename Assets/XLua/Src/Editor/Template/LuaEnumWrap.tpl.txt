@@ -12,13 +12,14 @@ using XLua;
 using System.Collections.Generic;
 <%
 require "TemplateCommon"
+local enum_or_op = debug.getmetatable(CS.System.Reflection.BindingFlags.Public).__bor
 %>
 
-namespace CSObjectWrap
+namespace XLua.CSObjectWrap
 {
     using Utils = XLua.Utils;
     <%ForEachCsList(types, function(type)
-	local fields = type:GetFields()
+	local fields = type:GetFields(enum_or_op(CS.System.Reflection.BindingFlags.Public, CS.System.Reflection.BindingFlags.Static))
 	%>
     public class <%=CSVariableName(type)%>Wrap
     {
@@ -32,9 +33,8 @@ namespace CSObjectWrap
             <% ForEachCsList(fields, function(field) 
 			if field.Name == "value__" or IsObsolute(field) then return end
 			%>
-            Utils.RegisterObject(L, translator, Utils.CLS_IDX, "<%=field.Name%>", <%=CsFullTypeName(type)%>.<%=field.Name%>);
+            Utils.RegisterObject(L, translator, Utils.CLS_IDX, "<%=field.Name%>", <%=CsFullTypeName(type)%>.<%=UnK(field.Name)%>);
             <%end)%>
-            Utils.RegisterObject(L, translator, Utils.CLS_IDX, "UnderlyingSystemType", typeof(<%=CsFullTypeName(type)%>));
 			Utils.RegisterFunc(L, Utils.CLS_IDX, "__CastFrom", __CastFrom);
             
             Utils.EndClassRegister(typeof(<%=CsFullTypeName(type)%>), L, translator);
@@ -57,7 +57,7 @@ namespace CSObjectWrap
 			        if field.Name == "value__" or IsObsolute(field) then return end
 			    %><%=(is_first and "" or "else ")%>if (LuaAPI.xlua_is_eq_str(L, 1, "<%=field.Name%>"))
                 {
-                    translator.Push<%=CSVariableName(type)%>(L, <%=CsFullTypeName(type)%>.<%=field.Name%>);
+                    translator.Push<%=CSVariableName(type)%>(L, <%=CsFullTypeName(type)%>.<%=UnK(field.Name)%>);
                 }
 				<%
 				is_first = false

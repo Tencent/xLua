@@ -12,13 +12,15 @@ using XLua;
 
 namespace XLuaTest
 {
-    [LuaCallCSharp(GenFlag.GCOptimize)]
+    [GCOptimize]
+    [LuaCallCSharp]
     public struct Pedding
     {
         public byte c;
     }
 
-    [LuaCallCSharp(GenFlag.GCOptimize)]
+    [GCOptimize]
+    [LuaCallCSharp]
     public struct MyStruct
     {
         public MyStruct(int p1, int p2)
@@ -241,6 +243,15 @@ namespace XLuaTest
 
         void OnDestroy()
         {
+            f1 =  null;
+            f2 = null;
+            f3 = null;
+            f4 = null;
+            f5 = null;
+            farr = null;
+            flua = null;
+            ie = null;
+            add = null;
             luaenv.Dispose();
         }
     }

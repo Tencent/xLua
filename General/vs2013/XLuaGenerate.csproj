@@ -1,0 +1,102 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{6A24C3AC-5687-5251-FF0C-8B07EB4E1ED4}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>XLuaGenerate</RootNamespace>
+    <AssemblyName>XLuaGenerate</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>..\Tools\</OutputPath>
+    <BaseIntermediateOutputPath>obj\Any CPU\Debug\XLuaGenerate\</BaseIntermediateOutputPath>
+    <IntermediateOutputPath>$(BaseIntermediateOutputPath)</IntermediateOutputPath>
+    <DefineConstants>_DEBUG;DEBUG;TRACE;;XLUA_GENERAL</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>..\Tools\</OutputPath>
+    <BaseIntermediateOutputPath>obj\Any CPU\Release\XLuaGenerate\</BaseIntermediateOutputPath>
+    <IntermediateOutputPath>$(BaseIntermediateOutputPath)</IntermediateOutputPath>
+    <DefineConstants>;XLUA_GENERAL</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\..\Assets\XLua\Src\Editor\Generator.cs">
+      <Link>Assets\XLua\Src\Editor\Generator.cs</Link>
+    </Compile>
+    <None Include="..\..\Assets\XLua\Src\Editor\Template\LuaClassWrap.tpl.txt">
+      <Link>Assets\XLua\Src\Editor\Template\LuaClassWrap.tpl.txt</Link>
+    </None>
+    <None Include="..\..\Assets\XLua\Src\Editor\Template\LuaDelegateBridge.tpl.txt">
+      <Link>Assets\XLua\Src\Editor\Template\LuaDelegateBridge.tpl.txt</Link>
+    </None>
+    <None Include="..\..\Assets\XLua\Src\Editor\Template\LuaDelegateWrap.tpl.txt">
+      <Link>Assets\XLua\Src\Editor\Template\LuaDelegateWrap.tpl.txt</Link>
+    </None>
+    <None Include="..\..\Assets\XLua\Src\Editor\Template\LuaEnumWrap.tpl.txt">
+      <Link>Assets\XLua\Src\Editor\Template\LuaEnumWrap.tpl.txt</Link>
+    </None>
+    <None Include="..\..\Assets\XLua\Src\Editor\Template\LuaInterfaceBridge.tpl.txt">
+      <Link>Assets\XLua\Src\Editor\Template\LuaInterfaceBridge.tpl.txt</Link>
+    </None>
+    <None Include="..\..\Assets\XLua\Src\Editor\Template\LuaRegister.tpl.txt">
+      <Link>Assets\XLua\Src\Editor\Template\LuaRegister.tpl.txt</Link>
+    </None>
+    <None Include="..\..\Assets\XLua\Src\Editor\Template\LuaWrapPusher.tpl.txt">
+      <Link>Assets\XLua\Src\Editor\Template\LuaWrapPusher.tpl.txt</Link>
+    </None>
+    <None Include="..\..\Assets\XLua\Src\Editor\Template\PackUnpack.tpl.txt">
+      <Link>Assets\XLua\Src\Editor\Template\PackUnpack.tpl.txt</Link>
+    </None>
+    <None Include="..\..\Assets\XLua\Src\Editor\Template\TemplateCommon.lua.txt">
+      <Link>Assets\XLua\Src\Editor\Template\TemplateCommon.lua.txt</Link>
+    </None>
+    <Compile Include="..\Src\XLuaGenerate.cs">
+      <Link>Src\XLuaGenerate.cs</Link>
+    </Compile>
+    <Compile Include="..\Src\XLuaTemplates.Designer.cs">
+      <Link>Src\XLuaTemplates.Designer.cs</Link>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>XLuaTemplates.resx</DependentUpon>
+    </Compile>
+    <EmbeddedResource Include="..\Src\XLuaTemplates.resx">
+      <Link>Src\XLuaTemplates.resx</Link>
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>XLuaTemplates.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="XLua.Mini.csproj">
+      <Project>{9A2C7D34-0697-31AB-4FD5-E250BB7E0F00}</Project>
+      <Name>XLua.Mini</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

@@ -24,16 +24,65 @@ namespace XLua
 
     public partial class StaticLuaCallbacks
     {
-        internal LuaCSFunction GcMeta, ToStringMeta;
+        internal LuaCSFunction GcMeta, ToStringMeta, EnumAndMeta, EnumOrMeta;
 
         internal LuaCSFunction StaticCSFunctionWraper, FixCSFunctionWraper;
+
+        internal LuaCSFunction DelegateCtor;
         
         public StaticLuaCallbacks()
         {
             GcMeta = new LuaCSFunction(StaticLuaCallbacks.LuaGC);
             ToStringMeta = new LuaCSFunction(StaticLuaCallbacks.ToString);
+            EnumAndMeta = new LuaCSFunction(EnumAnd);
+            EnumOrMeta = new LuaCSFunction(EnumOr);
             StaticCSFunctionWraper = new LuaCSFunction(StaticLuaCallbacks.StaticCSFunction);
             FixCSFunctionWraper = new LuaCSFunction(StaticLuaCallbacks.FixCSFunction);
+            DelegateCtor = new LuaCSFunction(DelegateConstructor);
+        }
+
+        [MonoPInvokeCallback(typeof(LuaCSFunction))]
+        public static int EnumAnd(RealStatePtr L)
+        {
+            try
+            {
+                ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
+                object left = translator.FastGetCSObj(L, 1);
+                object right = translator.FastGetCSObj(L, 2);
+                Type typeOfLeft = left.GetType();
+                if (!typeOfLeft.IsEnum || typeOfLeft != right.GetType())
+                {
+                    return LuaAPI.luaL_error(L, "invalid argument for Enum BitwiseAnd");
+                }
+                translator.PushAny(L, Enum.ToObject(typeOfLeft, Convert.ToInt64(left) & Convert.ToInt64(right)));
+                return 1;
+            }
+            catch (Exception e)
+            {
+                return LuaAPI.luaL_error(L, "c# exception in Enum BitwiseAnd:" + e);
+            }
+        }
+
+        [MonoPInvokeCallback(typeof(LuaCSFunction))]
+        public static int EnumOr(RealStatePtr L)
+        {
+            try
+            {
+                ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
+                object left = translator.FastGetCSObj(L, 1);
+                object right = translator.FastGetCSObj(L, 2);
+                Type typeOfLeft = left.GetType();
+                if (!typeOfLeft.IsEnum || typeOfLeft != right.GetType())
+                {
+                    return LuaAPI.luaL_error(L, "invalid argument for Enum BitwiseOr");
+                }
+                translator.PushAny(L, Enum.ToObject(typeOfLeft, Convert.ToInt64(left) | Convert.ToInt64(right)));
+                return 1;
+            }
+            catch (Exception e)
+            {
+                return LuaAPI.luaL_error(L, "c# exception in Enum BitwiseOr:" + e);
+            }
         }
 
         [MonoPInvokeCallback(typeof(LuaCSFunction))]
@@ -67,8 +116,28 @@ namespace XLua
             }
         }
 
+#if GEN_CODE_MINIMIZE
+        [MonoPInvokeCallback(typeof(LuaDLL.CSharpWrapperCaller))]
+        internal static int CSharpWrapperCallerImpl(RealStatePtr L, int funcidx, int top)
+        {
+            try
+            {
+                ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
+                return translator.CallCSharpWrapper(L, funcidx, top);
+            }
+            catch (Exception e)
+            {
+                return LuaAPI.luaL_error(L, "c# exception:" + e);
+            }
+        }
+#endif
+
+#if GEN_CODE_MINIMIZE
+        public static int DelegateCall(RealStatePtr L, int top)
+#else
         [MonoPInvokeCallback(typeof(LuaCSFunction))]
         public static int DelegateCall(RealStatePtr L)
+#endif
         {
             try
             {
@@ -121,8 +190,12 @@ namespace XLua
             }
         }
 
+#if GEN_CODE_MINIMIZE
+        public static int DelegateCombine(RealStatePtr L, int top)
+#else
         [MonoPInvokeCallback(typeof(LuaCSFunction))]
         public static int DelegateCombine(RealStatePtr L)
+#endif
         {
             try
             {
@@ -143,8 +216,12 @@ namespace XLua
             }
         }
 
+#if GEN_CODE_MINIMIZE
+        public static int DelegateRemove(RealStatePtr L, int top)
+#else
         [MonoPInvokeCallback(typeof(LuaCSFunction))]
         public static int DelegateRemove(RealStatePtr L)
+#endif
         {
             try
             {
@@ -168,16 +245,10 @@ namespace XLua
             }
         }
 
-        delegate bool TryArrayGet(Type type, RealStatePtr L, ObjectTranslator translator, object obj, int index);
-        public delegate bool TryArraySet(Type type, RealStatePtr L, ObjectTranslator translator, object obj, int array_idx, int obj_idx);
-
-        static TryArrayGet genTryArrayGetPtr = null;
-        internal static TryArraySet GenTryArraySetPtr = null;
-
         static bool tryPrimitiveArrayGet(Type type, RealStatePtr L, object obj, int index)
         {
             bool ok = true;
-            
+
             if (type == typeof(int[]))
             {
                 int[] array = obj as int[];
@@ -256,8 +327,12 @@ namespace XLua
             return ok;
         }
 
+#if GEN_CODE_MINIMIZE
+        public static int ArrayIndexer(RealStatePtr L, int top)
+#else
         [MonoPInvokeCallback(typeof(LuaCSFunction))]
         public static int ArrayIndexer(RealStatePtr L)
+#endif
         {
             try
             {
@@ -282,11 +357,11 @@ namespace XLua
                     return 1;
                 }
 
-                if (genTryArrayGetPtr != null)
+                if (InternalGlobals.genTryArrayGetPtr != null)
                 {
                     try
                     {
-                        if (genTryArrayGetPtr(type, L, translator, array, i))
+                        if (InternalGlobals.genTryArrayGetPtr(type, L, translator, array, i))
                         {
                             return 1;
                         }
@@ -412,8 +487,12 @@ namespace XLua
             return ok;
         }
 
+#if GEN_CODE_MINIMIZE
+        public static int ArrayNewIndexer(RealStatePtr L, int top)
+#else
         [MonoPInvokeCallback(typeof(LuaCSFunction))]
         public static int ArrayNewIndexer(RealStatePtr L)
+#endif
         {
             try
             {
@@ -438,11 +517,11 @@ namespace XLua
                     return 0;
                 }
 
-                if (GenTryArraySetPtr != null)
+                if (InternalGlobals.genTryArraySetPtr != null)
                 {
                     try
                     {
-                        if (GenTryArraySetPtr(type, L, translator, array, i, 3))
+                        if (InternalGlobals.genTryArraySetPtr(type, L, translator, array, i, 3))
                         {
                             return 0;
                         }
@@ -464,8 +543,12 @@ namespace XLua
             }
         }
 
+#if GEN_CODE_MINIMIZE
+        public static int ArrayLength(RealStatePtr L, int top)
+#else
         [MonoPInvokeCallback(typeof(LuaCSFunction))]
         public static int ArrayLength(RealStatePtr L)
+#endif
         {
             try
             {
@@ -600,7 +683,7 @@ namespace XLua
                 }
                 else
                 {
-                    if (LuaAPI.luaL_loadbuffer(L, file.text, "@" + filename) != 0)
+                    if (LuaAPI.xluaL_loadbuffer(L, file.bytes, file.bytes.Length, "@" + filename) != 0)
                     {
                         return LuaAPI.luaL_error(L, String.Format("error loading module {0} from resource, {1}",
                             LuaAPI.lua_tostring(L, 1), LuaAPI.lua_tostring(L, -1)));
@@ -637,7 +720,7 @@ namespace XLua
                         else
                         {
                             UnityEngine.Debug.LogWarning("load lua file from StreamingAssets is obsolete, filename:" + filename);
-                            if (LuaAPI.luaL_loadbuffer(L, www.text, "@" + filename) != 0)
+                            if (LuaAPI.xluaL_loadbuffer(L, www.bytes, www.bytes.Length , "@" + filename) != 0)
                             {
                                 return LuaAPI.luaL_error(L, String.Format("error loading module {0} from streamingAssetsPath, {1}",
                                     LuaAPI.lua_tostring(L, 1), LuaAPI.lua_tostring(L, -1)));
@@ -649,13 +732,11 @@ namespace XLua
 #else
                 if (File.Exists(filepath))
                 {
-                    Stream stream = File.Open(filepath, FileMode.Open, FileAccess.Read);
-                    StreamReader reader = new StreamReader(stream);
-                    string text = reader.ReadToEnd();
-                    stream.Close();
+                    // string text = File.ReadAllText(filepath);
+                    var bytes = File.ReadAllBytes(filepath);
 
                     UnityEngine.Debug.LogWarning("load lua file from StreamingAssets is obsolete, filename:" + filename);
-                    if (LuaAPI.luaL_loadbuffer(L, text, "@" + filename) != 0)
+                    if (LuaAPI.xluaL_loadbuffer(L, bytes, bytes.Length, "@" + filename) != 0)
                     {
                         return LuaAPI.luaL_error(L, String.Format("error loading module {0} from streamingAssetsPath, {1}",
                             LuaAPI.lua_tostring(L, 1), LuaAPI.lua_tostring(L, -1)));
@@ -712,6 +793,9 @@ namespace XLua
         [MonoPInvokeCallback(typeof(LuaCSFunction))]
         public static int LoadAssembly(RealStatePtr L)
         {
+#if UNITY_WSA && !UNITY_EDITOR
+            return LuaAPI.luaL_error(L, "xlua.load_assembly no support in uwp!");
+#else
             try
             {
                 ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
@@ -743,6 +827,7 @@ namespace XLua
             {
                 return LuaAPI.luaL_error(L, "c# exception in xlua.load_assembly:" + e);
             }
+#endif
         }
 
 
@@ -804,26 +889,34 @@ namespace XLua
             }
         }
 
+        static Type getType(RealStatePtr L, ObjectTranslator translator, int idx)
+        {
+            if (LuaAPI.lua_type(L, idx) == LuaTypes.LUA_TTABLE)
+            {
+                LuaTable tbl;
+                translator.Get(L, idx, out tbl);
+                return tbl.Get<Type>("UnderlyingSystemType");
+            }
+            else if (LuaAPI.lua_type(L, idx) == LuaTypes.LUA_TSTRING)
+            {
+                string className = LuaAPI.lua_tostring(L, idx);
+                return translator.FindType(className);
+            }
+            else
+            {
+                return null;
+            }
+        }
+
         [MonoPInvokeCallback(typeof(LuaCSFunction))]
         public static int XLuaAccess(RealStatePtr L)
         {
             try
             {
                 ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
-                Type type = null;
+                Type type = getType(L, translator, 1);
                 object obj = null;
-                if (LuaAPI.lua_type(L, 1) == LuaTypes.LUA_TTABLE)
-                {
-                    LuaTable tbl;
-                    translator.Get(L, 1, out tbl);
-                    type = tbl.Get<Type>("UnderlyingSystemType");
-                }
-                else if (LuaAPI.lua_type(L, 1) == LuaTypes.LUA_TSTRING)
-                {
-                    string className = LuaAPI.lua_tostring(L, 1);
-                    type = translator.FindType(className);
-                }
-                else if (LuaAPI.lua_type(L, 1) == LuaTypes.LUA_TUSERDATA)
+                if (type == null && LuaAPI.lua_type(L, 1) == LuaTypes.LUA_TUSERDATA)
                 {
                     obj = translator.SafeGetCSObj(L, 1);
                     if (obj == null)
@@ -874,7 +967,7 @@ namespace XLua
                 }
                 return LuaAPI.luaL_error(L, "xlua.access, no field " + fieldName);
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 return LuaAPI.luaL_error(L, "c# exception in xlua.access: " + e);
             }
@@ -886,23 +979,7 @@ namespace XLua
             try
             {
                 ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
-                Type type = null;
-                if (LuaAPI.lua_type(L, 1) == LuaTypes.LUA_TTABLE)
-                {
-                    LuaTable tbl;
-                    translator.Get(L, 1, out tbl);
-                    type = tbl.Get<Type>("UnderlyingSystemType");
-                }
-                else if (LuaAPI.lua_type(L, 1) == LuaTypes.LUA_TSTRING)
-                {
-                    string className = LuaAPI.lua_tostring(L, 1);
-                    type = translator.FindType(className);
-                }
-                else
-                {
-                    return LuaAPI.luaL_error(L, "xlua.private_accessible, #1 parameter must a type/string");
-                }
-
+                Type type = getType(L, translator, 1); ;
                 if (type == null)
                 {
                     return LuaAPI.luaL_error(L, "xlua.private_accessible, can not find c# type");
@@ -914,6 +991,70 @@ namespace XLua
             catch (Exception e)
             {
                 return LuaAPI.luaL_error(L, "c# exception in xlua.private_accessible: " + e);
+            }
+        }
+
+        [MonoPInvokeCallback(typeof(LuaCSFunction))]
+        public static int XLuaMetatableOperation(RealStatePtr L)
+        {
+            try
+            {
+                ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
+                Type type = getType(L, translator, 1);
+                if (type == null)
+                {
+                    return LuaAPI.luaL_error(L, "xlua.metatable_operation, can not find c# type");
+                }
+
+                bool is_first = false;
+                int type_id = translator.getTypeId(L, type, out is_first);
+
+                var param_num = LuaAPI.lua_gettop(L);
+
+                if (param_num == 1) //get
+                {
+                    LuaAPI.xlua_rawgeti(L, LuaIndexes.LUA_REGISTRYINDEX, type_id);
+                    return 1;
+                }
+                else if (param_num == 2) //set
+                {
+                    if (LuaAPI.lua_type(L, 2) != LuaTypes.LUA_TTABLE)
+                    {
+                        return LuaAPI.luaL_error(L, "argument #2 must be a table");
+                    }
+                    LuaAPI.lua_pushnumber(L, type_id);
+                    LuaAPI.xlua_rawseti(L, 2, 1);
+                    LuaAPI.xlua_rawseti(L, LuaIndexes.LUA_REGISTRYINDEX, type_id);
+                    return 0;
+                }
+                else
+                {
+                    return LuaAPI.luaL_error(L, "invalid argument num for xlua.metatable_operation: " + param_num);
+                }
+            }
+            catch (Exception e)
+            {
+                return LuaAPI.luaL_error(L, "c# exception in xlua.metatable_operation: " + e);
+            }
+        }
+
+        [MonoPInvokeCallback(typeof(LuaCSFunction))]
+        public static int DelegateConstructor(RealStatePtr L)
+        {
+            try
+            {
+                ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
+                Type type = getType(L, translator, 1);
+                if (type == null || !typeof(Delegate).IsAssignableFrom(type))
+                {
+                    return LuaAPI.luaL_error(L, "delegate constructor: #1 argument must be a Delegate's type");
+                }
+                translator.PushAny(L, translator.GetObject(L, 2, type));
+                return 1;
+            }
+            catch (Exception e)
+            {
+                return LuaAPI.luaL_error(L, "c# exception in delegate constructor: " + e);
             }
         }
     }

@@ -1,0 +1,56 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XLua.Mini", "XLua.Mini.csproj", "{9A2C7D34-0697-31AB-4FD5-E250BB7E0F00}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XLuaGenerate", "XLuaGenerate.csproj", "{6A24C3AC-5687-5251-FF0C-8B07EB4E1ED4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XLuaHotfixInject", "XLuaHotfixInject.csproj", "{0E713D15-FA69-5C67-239C-41EC0FF43B73}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KeyPairsGen", "KeyPairsGen.csproj", "{67F72FA1-D3AC-A896-5CA1-A26DC8559F9A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FilesSignature", "FilesSignature.csproj", "{2A7BAA8E-1649-9E94-FFDC-0EBBEB497AF9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XLuaTest", "XLuaTest.csproj", "{DF2795A4-CBF4-EFAF-F40D-DE57E039253E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XLuaUnitTest", "XLuaUnitTest.csproj", "{7F2D7E42-6B90-0DE7-1416-469D0058D969}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{9A2C7D34-0697-31AB-4FD5-E250BB7E0F00}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9A2C7D34-0697-31AB-4FD5-E250BB7E0F00}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9A2C7D34-0697-31AB-4FD5-E250BB7E0F00}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9A2C7D34-0697-31AB-4FD5-E250BB7E0F00}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6A24C3AC-5687-5251-FF0C-8B07EB4E1ED4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6A24C3AC-5687-5251-FF0C-8B07EB4E1ED4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6A24C3AC-5687-5251-FF0C-8B07EB4E1ED4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6A24C3AC-5687-5251-FF0C-8B07EB4E1ED4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0E713D15-FA69-5C67-239C-41EC0FF43B73}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0E713D15-FA69-5C67-239C-41EC0FF43B73}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0E713D15-FA69-5C67-239C-41EC0FF43B73}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0E713D15-FA69-5C67-239C-41EC0FF43B73}.Release|Any CPU.Build.0 = Release|Any CPU
+		{67F72FA1-D3AC-A896-5CA1-A26DC8559F9A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{67F72FA1-D3AC-A896-5CA1-A26DC8559F9A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{67F72FA1-D3AC-A896-5CA1-A26DC8559F9A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{67F72FA1-D3AC-A896-5CA1-A26DC8559F9A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2A7BAA8E-1649-9E94-FFDC-0EBBEB497AF9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2A7BAA8E-1649-9E94-FFDC-0EBBEB497AF9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2A7BAA8E-1649-9E94-FFDC-0EBBEB497AF9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2A7BAA8E-1649-9E94-FFDC-0EBBEB497AF9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DF2795A4-CBF4-EFAF-F40D-DE57E039253E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DF2795A4-CBF4-EFAF-F40D-DE57E039253E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DF2795A4-CBF4-EFAF-F40D-DE57E039253E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DF2795A4-CBF4-EFAF-F40D-DE57E039253E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7F2D7E42-6B90-0DE7-1416-469D0058D969}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7F2D7E42-6B90-0DE7-1416-469D0058D969}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7F2D7E42-6B90-0DE7-1416-469D0058D969}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7F2D7E42-6B90-0DE7-1416-469D0058D969}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

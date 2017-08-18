@@ -1,12 +1,20 @@
-## 约束
+## 使用方式
 
-为了不影响开发，这个特性默认是关闭的，需要添加HOTFIX_ENABLE宏打开（在Unity3D的File->Build Setting->Scripting Define Symbols下添加）。使用该特性的切记build手机版本时不要忘记了！
+1、添加HOTFIX_ENABLE宏打开该特性（在Unity3D的File->Build Setting->Scripting Define Symbols下添加）。编辑器、各手机平台这个宏要分别设置！如果是自动化打包，要注意在代码里头用API设置的宏是不生效的，需要在编辑器设置。
 
-热补丁特性依赖Cecil，添加HOTFIX_ENABLE宏之后，可能会报找不到Cecil。这时你需要到Unity安装目录下找到Mono.Cecil.dll，Mono.Cecil.Pdb.dll，Mono.Cecil.Mdb.dll，拷贝到项目里头。
+（建议平时开发业务代码不打开HOTFIX_ENABLE，只在build手机版本或者要在编译器下开发补丁时打开HOTFIX_ENABLE）
+
+2、执行XLua/Generate Code菜单。
+
+3、注入，构建手机包这个步骤会在构建时自动进行，编辑器下开发补丁需要手动执行"XLua/Hotfix Inject In Editor"菜单。注入成功会打印“hotfix inject finish!”或者“had injected!”。
+
+## 内嵌模式
+
+默认通过小工具执行代码注入，也可以采用内嵌到编辑器的方式，定义INJECT_WITHOUT_TOOL宏即可。
+
+定义INJECT_WITHOUT_TOOL宏后，热补丁特性依赖Cecil，添加HOTFIX_ENABLE宏之后，可能会报找不到Cecil。这时你需要到Unity安装目录下找到Mono.Cecil.dll，Mono.Cecil.Pdb.dll，Mono.Cecil.Mdb.dll，拷贝到项目里头。
 
 注意：如果你的Unity安装目录没有Mono.Cecil.Pdb.dll，Mono.Cecil.Mdb.dll（往往是一些老版本），那就只拷贝Mono.Cecil.dll（你从别的版本的Unity拷贝一套可能会导致编辑器不稳定），这时你需要定义HOTFIX_SYMBOLS_DISABLE，这会导致C#代码没法调试以及Log的栈源文件及行号错乱（所以赶紧升级Unity）。
-
-热补丁需要执行XLua/Generate Code才能正常运行。（建议的开发方式是平时不打开HOTFIX_ENABLE，这样不用生成代码，开发更便捷，build手机版本或者要在编译器下开发补丁时打开HOTFIX_ENABLE）
 
 参考命令（可能Unity版本不同会略有不同）：
 
@@ -15,11 +23,13 @@ OSX命令行 cp /Applications/Unity/Unity.app/Contents/Managed/Mono.Cecil.* Proj
 Win命令行 copy UnityPath\Editor\Data\Managed\Mono.Cecil.* Project\Assets\XLua\Src\Editor\
 ```
 
+## 约束
+
 不支持静态构造函数。
 
-目前只支持Assets下代码的热补丁，不支持引擎，c#系统库的热补丁。
+不支持在子类override函数通过base调用父类实现。
 
-注意：要等打印了hotfix inject finish!后才运行例子，否则会类似xlua.access, no field __Hitfix0_Update的错误
+目前只支持Assets下代码的热补丁，不支持引擎，c#系统库的热补丁。
 
 ## API
 xlua.hotfix(class, [method_name], fix)
@@ -33,6 +43,12 @@ xlua.private_accessible(class)
 
 * 描述          ： 让一个类的私有字段，属性，方法等可用
 * class         ： 同xlua.hotfix的class参数
+
+util.hotfix_ex(class, method_name, fix)
+
+* 描述         ： xlua.hotfix的增强版本，可以在fix函数里头执行原来的函数，缺点是fix的执行会略慢。
+* method_name  ： 方法名；
+* fix          ： 用来替换C#方法的lua function。
 
 ## 标识要热更新的类型
 
@@ -64,6 +80,100 @@ public static class HotfixCfg
     }
 }
 ~~~
+
+## Hotfix Flag
+
+Hotfix标签可以设置一些标志位对生成代码及插桩定制化
+
+* Stateless
+
+Stateless和Stateful的区别请看下下节。
+
+* Stateful
+
+同上。
+
+* ValueTypeBoxing
+
+值类型的适配delegate会收敛到object，好处是代码量更少，不好的是值类型会产生boxing及gc，适用于对text段敏感的业务。
+
+* IgnoreProperty
+
+不对属性注入及生成适配代码，一般而言，大多数属性的实现都很简单，出错几率比较小，建议不注入。
+
+* IgnoreNotPublic
+
+不对非public的方法注入及生成适配代码。除了像MonoBehaviour那种会被反射调用的私有方法必须得注入，其它仅被本类调用的非public方法可以不注入，只不过修复时会工作量稍大，所有引用到这个函数的public方法都要重写。
+
+* Inline
+
+不生成适配delegate，直接在函数体注入处理代码。
+
+* IntKey
+
+不生成静态字段，而是把所有注入点放到一个数组集中管理。
+
+好处：对text段影响小。
+
+坏处：使用不像默认方式那么方便，需要通过id来指明hotfix哪个函数，而这个id是代码注入工具时分配的，函数到id的映射会保存在Gen/Resources/hotfix_id_map.lua.txt，并且自动加时间戳备份到hotfix_id_map.lua.txt同级目录，发布手机版本后请妥善保存该文件。
+
+该文件的格式大概如下：
+
+~~~lua
+return {
+    ["HotfixTest"] = {
+        [".ctor"] = {
+            5
+        },
+        ["Start"] = {
+            6
+        },
+        ["Update"] = {
+            7
+        },
+        ["FixedUpdate"] = {
+            8
+        },
+        ["Add"] = {
+            9,10
+        },
+        ["OnGUI"] = {
+            11
+        },
+    },
+}
+~~~
+
+想要替换HotfixTest的Update函数，你得
+
+~~~lua
+CS.XLua.HotfixDelegateBridge.Set(7, func)
+~~~
+
+如果是重载函数，将会一个函数名对应多个id，比如上面的Add函数。
+
+能不能自动化一些呢？可以，xlua.util提供了auto_id_map函数，执行一次后你就可以像以前那样直接用类，方法名去指明修补的函数。
+
+~~~lua
+(require 'xlua.util').auto_id_map()
+xlua.hotfix(CS.HotfixTest, 'Update', function(self)
+		self.tick = self.tick + 1
+		if (self.tick % 50) == 0 then
+			print('<<<<<<<<Update in lua, tick = ' .. self.tick)
+		end
+	end)
+~~~
+
+前提是hotfix_id_map.lua.txt放到可以通过require 'hotfix_id_map'引用到的地方。
+
+ps：虽然xlua执行代码注入时会把hotfix_id_map.lua.txt放到Resources下，但那时似乎Unity已经不再处理新增的文件。貌似可以通过提前执行“Hotfix inject in Editor”来提前生成，但id不一定一样，比如有的类型里头有平台/编辑器专用的api，编辑器下和真机下的id将不一样。
+
+## 使用建议
+
+* 对所有较大可能变动的类型加上Hotfix标识；
+* 建议用反射找出所有函数参数、字段、属性、事件涉及的delegate类型，标注CSharpCallLua；
+* 业务代码、引擎API、系统API，需要在Lua补丁里头高性能访问的类型，加上LuaCallCSharp；
+* 引擎API、系统API可能被代码剪裁调（C#无引用的地方都会被剪裁），如果觉得可能会新增C#代码之外的API调用，这些API所在的类型要么加LuaCallCSharp，要么加ReflectionUse；
 
 ## Stateless和Stateful
 

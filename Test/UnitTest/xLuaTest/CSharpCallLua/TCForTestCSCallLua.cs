@@ -1,4 +1,6 @@
+#if !XLUA_GENERAL
 using UnityEngine;
+#endif
 using System.Collections;
 using System.Collections.Generic;
 using XLua;
@@ -15,7 +17,10 @@ public class LuaEnvSingletonForTest  {
 			if(instance == null)
 			{
 				instance = new LuaEnv();
-			}
+#if XLUA_GENERAL
+                instance.DoString("package.path = package.path..';../Test/UnitTest/xLuaTest/CSharpCallLua/Resources/?.lua.txt;../Test/UnitTest/StreamingAssets/?.lua'");
+#endif
+            }
 			
 			return instance;
 		}
@@ -38,7 +43,8 @@ public struct Pedding
     public byte c;
 }
 
-[LuaCallCSharp(GenFlag.GCOptimize)]
+[GCOptimize]
+[LuaCallCSharp]
 public struct TestStruct
 {
     public TestStruct(int p1, int p2)
@@ -360,7 +366,6 @@ public class TCForTestCSCallLua{
 	public TestResult testDoString2LoadLua_Step_1()
 	{
 		/*
-		 *对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486934,第1步
 		 */
 		string caseName = "testDoString2LoadLua_Step_1: ";
 		LOG ("*************" + caseName);
@@ -388,7 +393,6 @@ public class TCForTestCSCallLua{
 	public TestResult testDoString2LoadLua_Step_2()
 	{
 		/*
-		 *对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486934，第2步
 		 *
 		 */
 		string caseName = "testDoString2LoadLua_Step_2: ";
@@ -419,7 +423,6 @@ public class TCForTestCSCallLua{
 	public TestResult testDoString2LoadLua_Step_3()
 	{
 		/*
-		 *对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486934，第3步
 		 *
 		 */
 		string caseName = "testDoString2LoadLua_Step_3: ";
@@ -447,7 +450,6 @@ public class TCForTestCSCallLua{
 	public TestResult testRequire2LoadLua_Step_1_3()
 	{
 		/*
-		 *对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486935,第1~3,8,9步
 		 */
 		string caseName = "testRequire2LoadLua_Step_1_3: ";
 		LOG ("*************" + caseName);
@@ -476,7 +478,6 @@ public class TCForTestCSCallLua{
 	public TestResult testRequire2LoadLua_Step_4()
 	{
 		/*
-		 *对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486935,第4步
 		 */
 		string caseName = "testRequire2LoadLua_Step_4: ";
 		LOG ("*************" + caseName);
@@ -503,7 +504,6 @@ public class TCForTestCSCallLua{
 	public TestResult testRequire2LoadLua_Step_5()
 	{
 		/*
-		 *对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486935,第5步
 		 */
 		string caseName = "testRequire2LoadLua_Step_5: ";
 		LOG ("*************" + caseName);
@@ -526,7 +526,6 @@ public class TCForTestCSCallLua{
 	public TestResult testRequire2LoadLua_Step_6()
 	{
 		/*
-		 *对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486935,第6步
 		 */
 		string caseName = "testRequire2LoadLua_Step_6: ";
 		LOG ("*************" + caseName);
@@ -549,7 +548,6 @@ public class TCForTestCSCallLua{
 	public TestResult testRequire2LoadLua_Step_7()
 	{
 		/*
-		 *对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486935,第7步
 		 */
 		string caseName = "testRequire2LoadLua_Step_7: ";
 		LOG ("*************" + caseName);
@@ -572,7 +570,6 @@ public class TCForTestCSCallLua{
 	public TestResult testAddLoader2LoadLua_Step_1_2()
 	{
 		/*
-		 *对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486936,第1~2,5步
 		 */
 		string caseName = "testAddLoader2LoadLua_Step_1_2: ";
 		LOG ("*************" + caseName);
@@ -591,8 +588,8 @@ public class TCForTestCSCallLua{
 		{  
 			setResult(false, e.Message , out result);
 		}
-		Debug.Log ("InMemory.ccc=" + luaEnv.Global.Get<int> ("inmemory"));
-        Debug.Log("InFile.filestring=" + luaEnv.Global.Get<string>("filestring"));
+		LuaTestCommon.Log ("InMemory.ccc=" + luaEnv.Global.Get<int> ("inmemory"));
+        LuaTestCommon.Log("InFile.filestring=" + luaEnv.Global.Get<string>("filestring"));
 
 		LOG (caseName + result.ToString());
 		return result;
@@ -601,7 +598,6 @@ public class TCForTestCSCallLua{
 	public TestResult testAddLoader2LoadLua_Step_3()
 	{
 		/*
-		 *对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486936,第3步
 		 */
 		string caseName = "testAddLoader2LoadLua_Step_3: ";
 		LOG ("*************" + caseName);
@@ -625,7 +621,6 @@ public class TCForTestCSCallLua{
 	public TestResult testAddLoader2LoadLua_Step_6()
 	{
 		/*
-		 *对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486936,第6步
 		 */
 		string caseName = "testAddLoader2LoadLua_Step_6: ";
 		LOG ("*************" + caseName);
@@ -649,7 +644,6 @@ public class TCForTestCSCallLua{
 	public TestResult testAddLoader2LoadLua_Step_7()
 	{
 		/*
-		 *对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486936,第7步
 		 */
 		string caseName = "testAddLoader2LoadLua_Step_7: ";
 		LOG ("*************" + caseName);
@@ -670,7 +664,7 @@ public class TCForTestCSCallLua{
         {
             setResult(false, "shoulde load loader defined, but loadfile in Resources.", out result);
 		}
-		Debug.Log ("InFile.filestring=" + filestring);
+		LuaTestCommon.Log ("InFile.filestring=" + filestring);
 		
 		LOG (caseName + result.ToString());
 		return result;
@@ -679,7 +673,6 @@ public class TCForTestCSCallLua{
 	public TestResult testGetBasicDataTypeBool_Step_1()
 	{
 		/*
-		 *对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486937,第1步
 		 */
 		string caseName = "testGetBasicDataTypeBool_step_1: ";
 		LOG ("*************" + caseName);
@@ -703,7 +696,6 @@ public class TCForTestCSCallLua{
 	public TestResult testGetBasicDataTypeString_Step_2()
 	{
 		/*
-		 *对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486937,第2步
 		 */
 		string caseName = "testGetBasicDataTypeString_step_2: ";
 		LOG ("*************" + caseName);
@@ -763,7 +755,6 @@ public class TCForTestCSCallLua{
 	public TestResult testGetBasicDataTypeNumberToSByte()
 	{
 		/*
-		 *对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486937,第3步
 		 */
 		string caseName = "testGetBasicDataTypeNumberToSByte: ";
 		LOG ("*************" + caseName);
@@ -800,7 +791,6 @@ public class TCForTestCSCallLua{
 	public TestResult testGetBasicDataTypeNumberToByte()
 	{
 		/*
-		 *对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486937,第3步
 		 */
 		string caseName = "testGetBasicDataTypeNumberToByte: ";
 		LOG ("*************" + caseName);
@@ -837,7 +827,6 @@ public class TCForTestCSCallLua{
 	public TestResult testGetBasicDataTypeNumberToShort()
 	{
 		/*
-		 *对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486937,第3步
 		 */
 		string caseName = "testGetBasicDataTypeNumberToShort: ";
 		LOG ("*************" + caseName);
@@ -866,7 +855,6 @@ public class TCForTestCSCallLua{
 	public TestResult testGetBasicDataTypeNumberToUShort()
 	{
 		/*
-		 *对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486937,第3步
 		 */
 		string caseName = "testGetBasicDataTypeNumberToUShort: ";
 		LOG ("*************" + caseName);
@@ -895,7 +883,6 @@ public class TCForTestCSCallLua{
 	public TestResult testGetBasicDataTypeNumberToInt()
 	{
 		/*
-		 *对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486937,第3步
 		 */
 		string caseName = "testGetBasicDataTypeNumberToInt: ";
 		LOG ("*************" + caseName);
@@ -936,7 +923,6 @@ public class TCForTestCSCallLua{
 	public TestResult testGetBasicDataTypeNumberToUInt()
 	{
 		/*
-		 *对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486937,第3步
 		 */
 		string caseName = "testGetBasicDataTypeNumberToUInt: ";
 		LOG ("*************" + caseName);
@@ -965,7 +951,6 @@ public class TCForTestCSCallLua{
 	public TestResult testGetBasicDataTypeNumberToLong()
 	{
 		/*
-		 *对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486937,第3步
 		 */
 		string caseName = "testGetBasicDataTypeNumberToLong: ";
 		LOG ("*************" + caseName);
@@ -977,7 +962,7 @@ public class TCForTestCSCallLua{
 		long longValue2 = luaEnv.Global.Get<long> ("longValue2");
 		
 		LOG ("longValue=" + longValue + "; longValue2=" + longValue2);
-        Debug.LogWarning("longValue=" + longValue + "; longValue2=" + longValue2);
+        LuaTestCommon.Log("longValue=" + longValue + "; longValue2=" + longValue2);
 		
 		if (longValue == 42949672960) {
 			setResult (true, "pass", out result);
@@ -995,7 +980,6 @@ public class TCForTestCSCallLua{
 	public TestResult testGetBasicDataTypeNumberToULong()
 	{
 		/*
-		 *对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486937,第3步,不支持number转64位，会报错
 		 */
 		string caseName = "testGetBasicDataTypeNumberToULong: ";
 		LOG ("*************" + caseName);
@@ -1024,7 +1008,6 @@ public class TCForTestCSCallLua{
 	public TestResult testGetBasicDataTypeNumberToDouble()
 	{
 		/*
-		 *对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486937,第3步
 		 */
 		string caseName = "testGetBasicDataTypeNumberToDouble: ";
 		LOG ("*************" + caseName);
@@ -1053,7 +1036,6 @@ public class TCForTestCSCallLua{
 	public TestResult testGetBasicDataTypeNumberToChar()
 	{
 		/*
-		 *对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486937,第3步
 		 */
 		string caseName = "testGetBasicDataTypeNumberToChar: ";
 		LOG ("*************" + caseName);
@@ -1082,7 +1064,6 @@ public class TCForTestCSCallLua{
 	public TestResult testGetBasicDataTypeNumberToFloat()
 	{
 		/*
-		 *对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486937,第3步
 		 */
 		string caseName = "testGetBasicDataTypeNumberToFloat: ";
 		LOG ("*************" + caseName);
@@ -1111,7 +1092,6 @@ public class TCForTestCSCallLua{
 	public TestResult testGetBasicDataTypeNumberToDecimal()
 	{
 		/*
-		 *对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486937,第3步
 		 */
 		string caseName = "testGetBasicDataTypeNumberToDecimal: ";
 		LOG ("*************" + caseName);
@@ -1142,7 +1122,6 @@ public class TCForTestCSCallLua{
 	public TestResult testGetBasicDataType_Step_4()
 	{
 		/*
-		 *对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486937,第4步
 		 */
 		string caseName = "testGetBasicDataType_Step_4: ";
 		LOG ("*************" + caseName);
@@ -1170,7 +1149,6 @@ public class TCForTestCSCallLua{
 	public TestResult testGetBasicDataType_Step_5()
 	{
 		/*
-		 *对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486937,第5步
 		 */
 		string caseName = "testGetBasicDataType_Step_5: ";
 		LOG ("*************" + caseName);
@@ -1203,7 +1181,6 @@ public class TCForTestCSCallLua{
 	public TestResult testGetTableToClass_Step_1()
 	{
 		/*
-		 *对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486938,第1和1.2步
 		 */
 		string caseName = "testGetTableToClass_Step_1: ";
 		LOG ("*************" + caseName);
@@ -1240,7 +1217,6 @@ public class TCForTestCSCallLua{
 	public TestResult testGetTableToClass_Step_2()
 	{
 		/*
-		 *对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486938,第2步
 		 */
 		string caseName = "testGetTableToClass_Step_2: ";
 		LOG ("*************" + caseName);
@@ -1266,7 +1242,6 @@ public class TCForTestCSCallLua{
 	public TestResult testGetTableToClass_Step_3()
 	{
 		/*
-		 *对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486938,第3步
 		 */
 		string caseName = "testGetTableToClass_Step_3: ";
 		LOG ("*************" + caseName);
@@ -1300,7 +1275,6 @@ public class TCForTestCSCallLua{
 	public TestResult testGetTableToClass_Step_4()
 	{
 		/*
-		 *对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486938,第4步
 		 */
 		string caseName = "testGetTableToClass_Step_4: ";
 		LOG ("*************" + caseName);
@@ -1332,7 +1306,6 @@ public class TCForTestCSCallLua{
 	public TestResult testGetTableToClass_Step_5()
 	{
 		/*
-		 *对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486938,第5步
 		 */
 		string caseName = "testGetTableToClass_Step_5: ";
 		LOG ("*************" + caseName);
@@ -1363,7 +1336,6 @@ public class TCForTestCSCallLua{
 	public TestResult testGetTableToClass_Step_1_1()
 	{
 		/*
-		 *对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486938,第1.1步
 		 */
 		string caseName = "testGetTableToClass_Step_1_1: ";
 		LOG ("*************" + caseName);
@@ -1388,7 +1360,6 @@ public class TCForTestCSCallLua{
 	public TestResult testGetTableToClass_Step_1_3()
 	{
 		/*
-		 *对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486938,第1.3步
 		 */
 		string caseName = "testGetTableToClass_Step_1_3: ";
 		LOG ("*************" + caseName);
@@ -1419,7 +1390,6 @@ public class TCForTestCSCallLua{
 	public TestResult testGetTableToClass_Step_1_4()
 	{
 		/*
-		 *对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486938,第1.4步
 		 */
 		string caseName = "testGetTableToClass_Step_1_4: ";
 		LOG ("*************" + caseName);
@@ -1441,7 +1411,6 @@ public class TCForTestCSCallLua{
 
 	public TestResult testGetTableToInterface_Step_6()
 	{
-		 //对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486938,第6步
 
 		string caseName = "testGetTableToInterface_Step_6: ";
 		LOG ("*************" + caseName);
@@ -1483,7 +1452,6 @@ public class TCForTestCSCallLua{
 	public TestResult testGetTableToInterface_Step_7()
 	{
 		/*
-		 *对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486938,第7步
 		 */
 		string caseName = "testGetTableToInterface_Step_7: ";
 		LOG ("*************" + caseName);
@@ -1515,7 +1483,6 @@ public class TCForTestCSCallLua{
 	public TestResult testGetTableToInterface_Step_8()
 	{
 		/*
-		 *对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486938,第8步
 		 */
 		string caseName = "testGetTableToInterface_Step_8: ";
 		LOG ("*************" + caseName);
@@ -1539,7 +1506,6 @@ public class TCForTestCSCallLua{
 	public TestResult testGetTableToInterface_Step_9()
 	{
 		/*
-		 *对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486938,第9步
 		 */
 		string caseName = "testGetTableToInterface_Step_9: ";
 		LOG ("*************" + caseName);
@@ -1572,7 +1538,6 @@ public class TCForTestCSCallLua{
 	public TestResult testGetTableToInterface_Step_6_1()
 	{
 		/*
-		 *对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486938,第6.1步
 		 */
 		string caseName = "testGetTableToInterface_Step_6_1: ";
 		LOG ("*************" + caseName);
@@ -1601,7 +1566,6 @@ public class TCForTestCSCallLua{
 	public TestResult testGetTableToDic_Step_10()
 	{
 		/*
-		 *对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486938,第10步
 		 */
 		string caseName = "testGetTableToDic_Step_10: ";
 		LOG ("*************" + caseName);
@@ -1627,7 +1591,6 @@ public class TCForTestCSCallLua{
 	public TestResult testGetTableToDic_Step_11_1()
 	{
 		/*
-		 *对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486938,第11.1步
 		 */
 		string caseName = "testGetTableToDic_Step_11_1: ";
 		LOG ("*************" + caseName);
@@ -1650,7 +1613,6 @@ public class TCForTestCSCallLua{
 	public TestResult testGetTableToDic_Step_11_2()
 	{
 		/*
-		 *对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486938,第11.2步
 		 */
 		string caseName = "testGetTableToDic_Step_11_2: ";
 		LOG ("*************" + caseName);
@@ -1674,7 +1636,6 @@ public class TCForTestCSCallLua{
 	public TestResult testGetTableToDic_Step_11_3()
 	{
 		/*
-		 *对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486938,第11.3步
 		 */
 		string caseName = "testGetTableToDic_Step_11_3: ";
 		LOG ("*************" + caseName);
@@ -1697,7 +1658,6 @@ public class TCForTestCSCallLua{
 	public TestResult testGetTableToList_Step_12()
 	{
 		/*
-		 *对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486938,第12步
 		 */
 		string caseName = "testGetTableToList_Step_12: ";
 		LOG ("*************" + caseName);
@@ -1721,7 +1681,6 @@ public class TCForTestCSCallLua{
 	public TestResult testGetTableToList_Step_13_1_int()
 	{
 		/*
-		 *对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486938,第13.1步
 		 */
 		string caseName = "testGetTableToList_Step_13_1_int: ";
 		LOG ("*************" + caseName);
@@ -1744,7 +1703,6 @@ public class TCForTestCSCallLua{
 	public TestResult testGetTableToList_Step_13_1_string()
 	{
 		/*
-		 *对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486938,第13.1步
 		 */
 		string caseName = "testGetTableToList_Step_13_1_string: ";
 		LOG ("*************" + caseName);
@@ -1767,7 +1725,6 @@ public class TCForTestCSCallLua{
 	public TestResult testGetTableToList_Step_13_2()
 	{
 		/*
-		 *对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486938,第13.2步
 		 */
 		string caseName = "testGetTableToList_Step_13_2: ";
 		LOG ("*************" + caseName);
@@ -1790,7 +1747,6 @@ public class TCForTestCSCallLua{
 	public TestResult testGetTableToLuaTable_Step_14()
 	{
 		/*
-		 *对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486938,第14, 15步
 		 */
 		string caseName = "testGetTableToLuaTable_Step_14: ";
 		LOG ("*************" + caseName);
@@ -1828,7 +1784,6 @@ public class TCForTestCSCallLua{
 	public TestResult testGetFuncToDelegate_Step_1()
 	{
 		/*
-		 *对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486939,第1步
 		 */
 		string caseName = "testGetFuncToDelegate_Step_1: ";
 		LOG ("*************" + caseName);
@@ -1853,7 +1808,6 @@ public class TCForTestCSCallLua{
 	public TestResult testGetFuncToDelegate_Step_2_1()
 	{
 		/*
-		 *对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486939,第2.1步
 		 */
 		string caseName = "testGetFuncToDelegate_Step_2_1: ";
 		LOG ("*************" + caseName);
@@ -1895,7 +1849,6 @@ public class TCForTestCSCallLua{
 	public TestResult testGetFuncToDelegate_Step_2_2()
 	{
 		/*
-		 *对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486939,第2.2步
 		 */
 		string caseName = "testGetFuncToDelegate_Step_2_2: ";
 		LOG ("*************" + caseName);
@@ -1931,7 +1884,6 @@ public class TCForTestCSCallLua{
 	public TestResult testGetFuncToDelegate_Step_2_3()
 	{
 		/*
-		 *对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486939,第2.3步
 		 */
 		string caseName = "testGetFuncToDelegate_Step_2_3: ";
 		LOG ("*************" + caseName);
@@ -1965,7 +1917,6 @@ public class TCForTestCSCallLua{
 	public TestResult testGetFuncToDelegate_Step_2_4()
 	{
 		/*
-		 *对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486939,第2.4步
 		 */
 		string caseName = "testGetFuncToDelegate_Step_2_4: ";
 		LOG ("*************" + caseName);
@@ -1991,7 +1942,6 @@ public class TCForTestCSCallLua{
 	public TestResult testGetFuncToDelegate_Step_3()
 	{
 		/*
-		 *对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486939,第3步
 		 */
 		string caseName = "testGetFuncToDelegate_Step_3: ";
 		LOG ("*************" + caseName);
@@ -2016,7 +1966,6 @@ public class TCForTestCSCallLua{
 	public TestResult testGetFuncToDelegate_Step_5()
 	{
 		/*
-		 *对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486939,第5步
 		 */
 		string caseName = "testGetFuncToDelegate_Step_5: ";
 		LOG ("*************" + caseName);
@@ -2054,7 +2003,6 @@ public class TCForTestCSCallLua{
 	public TestResult testGetFuncToDelegate_Step_5_1()
 	{
 		/*
-		 *对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486939,第5.1和5.2步, 1个function映射到2个delegate,第2个预期抛异常----->v2.0.5调整为一个function可以映射到多个delegate上
 		 */
 		string caseName = "testGetFuncToDelegate_Step_5_1: ";
 		LOG ("*************" + caseName);
@@ -2090,7 +2038,6 @@ public class TCForTestCSCallLua{
 	public TestResult testGetFuncToDelegate_Step_5_1_0()
 	{
 		/*
-		 *对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486939,第5.1和5.2步, 1个function映射到1个delegate
 		 */
 		string caseName = "testGetFuncToDelegate_Step_5_1_0: ";
 		LOG ("*************" + caseName);
@@ -2129,7 +2076,6 @@ public class TCForTestCSCallLua{
 	public TestResult testGetFuncToDelegate_Step_5_2()
 	{
 
-		 //对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486939,第5步，返回function
 
 		string caseName = "testGetFuncToDelegate_Step_5_2: ";
 		LOG ("*************" + caseName);
@@ -2162,7 +2108,6 @@ public class TCForTestCSCallLua{
 	public TestResult testGetFuncToDelegate_Step_6()
 	{
 		/*
-		 *对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486939,第6步
 		 */
 		string caseName = "testGetFuncToDelegate_Step_6: ";
 		LOG ("*************" + caseName);
@@ -2195,7 +2140,6 @@ public class TCForTestCSCallLua{
 	public TestResult testGetFuncToLuaFunc_Step_8()
 	{
 		/*
-		 *对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486939,第8步
 		 */
 		string caseName = "testGetFuncToLuaFunc_Step_8: ";
 		LOG ("*************" + caseName);
@@ -2220,7 +2164,6 @@ public class TCForTestCSCallLua{
 	public TestResult testGetFuncToLuaFunc_Step_9_1()
 	{
 		/*
-		 *对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486939,第9.1步
 		 */
 		string caseName = "testGetFuncToLuaFunc_Step_9_1: ";
 		LOG ("*************" + caseName);
@@ -2266,7 +2209,6 @@ public class TCForTestCSCallLua{
 	public TestResult testGetFuncToLuaFunc_Step_10()
 	{
 		/*
-		 *对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486939,第10步
 		 */
 		string caseName = "testGetFuncToLuaFunc_Step_10: ";
 		LOG ("*************" + caseName);
@@ -2292,7 +2234,6 @@ public class TCForTestCSCallLua{
 	public TestResult testGetFuncToLuaFunc_Step_12()
 	{
 		/*
-		 *对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486939,第12步
 		 */
 		string caseName = "testGetFuncToLuaFunc_Step_12: ";
 		LOG ("*************" + caseName);
@@ -2335,7 +2276,6 @@ public class TCForTestCSCallLua{
 	public TestResult testGetFuncToLuaFunc_Step_13()
 	{
 		/*
-		 *对应测试用例http://itest.oa.com/v1/2272/case/home/detail/8486939,第13步
 		 */
 		string caseName = "testGetFuncToLuaFunc_Step_13: ";
 		LOG ("*************" + caseName);
@@ -2382,7 +2322,7 @@ public class TCForTestCSCallLua{
 		FuncReturnObjectDelegate delegate1 = luaEnv.Global.Get<FuncReturnObjectDelegate> ("func_return_object");
 		System.Object ret = delegate1(0);
 		
-		Debug.Log ("ret= " + ret );
+		LuaTestCommon.Log ("ret= " + ret );
 		
 		if ( ret == null){
 			setResult (true, "pass", out result);
@@ -2406,7 +2346,7 @@ public class TCForTestCSCallLua{
 		FuncReturnObjectDelegate delegate1 = luaEnv.Global.Get<FuncReturnObjectDelegate> ("func_return_object");
 		System.Object ret = delegate1(1);
 		
-		Debug.Log ("ret= " + ret );
+		LuaTestCommon.Log ("ret= " + ret );
 		
 		if ( Convert.ToInt64(ret)== System.Int64.MaxValue){
 			setResult (true, "pass", out result);
@@ -2430,7 +2370,7 @@ public class TCForTestCSCallLua{
 		FuncReturnObjectDelegate delegate1 = luaEnv.Global.Get<FuncReturnObjectDelegate> ("func_return_object");
 		System.Object ret = delegate1(2);
 		
-		Debug.Log ("ret= " + ret );
+		LuaTestCommon.Log ("ret= " + ret );
 		
 		//if ( Convert.ToUInt64(ret) == System.UInt64.MaxValue){
 		if ( Convert.ToInt64(ret) == -1){
@@ -2454,7 +2394,7 @@ public class TCForTestCSCallLua{
 
         int ret = luaEnv.Global.Get<int>("intValueMax");
 
-        Debug.Log("ret= " + ret);
+        LuaTestCommon.Log("ret= " + ret);
 
         if (ret == System.Int32.MaxValue)
         {
@@ -2467,7 +2407,7 @@ public class TCForTestCSCallLua{
         luaEnv.Global.Set("intValueMax", 12345);
         ret = luaEnv.Global.Get<int>("intValueMax");
 
-        Debug.Log("ret= " + ret);
+        LuaTestCommon.Log("ret= " + ret);
 
         if (ret == 12345)
         {
@@ -2479,7 +2419,7 @@ public class TCForTestCSCallLua{
         }
         ret = 0;
         luaEnv.Global.Get("intValueMax", out ret);
-        Debug.Log("out ret= " + ret);
+        LuaTestCommon.Log("out ret= " + ret);
         if (ret == 12345)
         {
             updateResult(true, "pass", ref result);
@@ -2505,7 +2445,7 @@ public class TCForTestCSCallLua{
         luaEnv.Global.Set(123, 12345);
         ret = luaEnv.Global.Get<int>(123);
 
-        Debug.Log("ret= " + ret);
+        LuaTestCommon.Log("ret= " + ret);
 
         if (ret == 12345)
         {
@@ -2517,7 +2457,7 @@ public class TCForTestCSCallLua{
         }
         ret = 0;
         luaEnv.Global.Get(123, out ret);
-        Debug.Log("out ret= " + ret);
+        LuaTestCommon.Log("out ret= " + ret);
         if (ret == 12345)
         {
             updateResult(true, "pass", ref result);
@@ -2543,7 +2483,7 @@ public class TCForTestCSCallLua{
         luaEnv.Global.Set("strValueChin", "中文字符串mix12345587");
         luaEnv.Global.Get("strValueChin", out ret);
 
-        Debug.Log("ret= " + ret);
+        LuaTestCommon.Log("ret= " + ret);
 
         if (ret == "中文字符串mix12345587")
         {
@@ -2571,7 +2511,7 @@ public class TCForTestCSCallLua{
         luaEnv.Global.Set((sbyte)12, (sbyte)23);
         luaEnv.Global.Get((sbyte)12, out ret);
 
-        Debug.Log("ret= " + ret);
+        LuaTestCommon.Log("ret= " + ret);
 
         if (ret == (sbyte)23)
         {
@@ -2607,7 +2547,7 @@ public class TCForTestCSCallLua{
         luaEnv.Global.Set((byte)255, (byte)23);
         luaEnv.Global.Get((byte)255, out ret);
 
-        Debug.Log("ret= " + ret);
+        LuaTestCommon.Log("ret= " + ret);
 
         if (ret == (byte)23)
         {
@@ -2643,7 +2583,7 @@ public class TCForTestCSCallLua{
         luaEnv.Global.Set((short)256, (short)512);
         luaEnv.Global.Get((short)256, out ret);
 
-        Debug.Log("ret= " + ret);
+        LuaTestCommon.Log("ret= " + ret);
 
         if (ret == 512)
         {
@@ -2679,7 +2619,7 @@ public class TCForTestCSCallLua{
         luaEnv.Global.Set((ushort)1024, (ushort)32768);
         luaEnv.Global.Get((ushort)1024, out ret);
 
-        Debug.Log("ret= " + ret);
+        LuaTestCommon.Log("ret= " + ret);
 
         if (ret == 32768)
         {
@@ -2715,7 +2655,7 @@ public class TCForTestCSCallLua{
         luaEnv.Global.Set("test", (long)3276800000);
         luaEnv.Global.Get("test", out ret);
 
-        Debug.Log("ret= " + ret);
+        LuaTestCommon.Log("ret= " + ret);
 
         if (ret == 3276800000)
         {
@@ -2751,7 +2691,7 @@ public class TCForTestCSCallLua{
         luaEnv.Global.Set("test", (ulong)42949672960);
         luaEnv.Global.Get("test", out ret);
 
-        Debug.Log("ret= " + ret);
+        LuaTestCommon.Log("ret= " + ret);
 
         if (ret == 42949672960)
         {
@@ -2786,7 +2726,7 @@ public class TCForTestCSCallLua{
         luaEnv.Global.Set((double)0.0000001, (double)1.000124587);
         luaEnv.Global.Get((double)0.0000001, out ret);
 
-        Debug.Log("ret= " + ret);
+        LuaTestCommon.Log("ret= " + ret);
 
         if (ret == 1.000124587)
         {
@@ -2822,7 +2762,7 @@ public class TCForTestCSCallLua{
         luaEnv.Global.Set((float)3.14, (float)3.15);
         luaEnv.Global.Get((float)3.14, out ret);
 
-        Debug.Log("ret= " + ret);
+        LuaTestCommon.Log("ret= " + ret);
 
         if (System.Math.Abs(ret - 3.15) < 0.000001)
         {
@@ -2859,7 +2799,7 @@ public class TCForTestCSCallLua{
         luaEnv.Global.Set('a', 'b');
         luaEnv.Global.Get('a', out ret);
 
-        Debug.Log("ret= " + ret);
+        LuaTestCommon.Log("ret= " + ret);
 
         if (ret == 'b')
         {
@@ -2897,7 +2837,7 @@ public class TCForTestCSCallLua{
         luaEnv.Global.Set(123.01, value);
         luaEnv.Global.Get(123.01, out ret);
 
-        Debug.Log("ret= " + ret);
+        LuaTestCommon.Log("ret= " + ret);
 
         if (ret == value)
         {
@@ -2934,7 +2874,7 @@ public class TCForTestCSCallLua{
         luaEnv.Global.Set(123, mystruct);
         luaEnv.Global.Get(123, out mystruct2);
 
-        Debug.Log("ret= " + mystruct2);
+        LuaTestCommon.Log("ret= " + mystruct2);
 
         if (mystruct.a == mystruct2.a)
         {

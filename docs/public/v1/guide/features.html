@@ -1,0 +1,426 @@
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+
+    <title>特性 — XLua</title>
+    <meta charset="utf-8">
+    <meta name="description" content="XLua">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+    <link rel="stylesheet" href="/xLua/public/css/page.css">
+
+    <script src="/xLua/public/js/vue.js"></script>
+    <script src="/xLua/public/js/jquery.js"></script>
+    </head>
+
+    <body>
+        
+            <nav class="nav">
+    <div class="border">
+        <img src="/xLua/public/images/logo.png" />
+        <button class="hiden-in-phone">V2.1</button>
+        <button id="btn-menu" class="hiden-in-pc">菜单</button>
+        <ul class="nav-link hiden-in-phone">
+            <!--li>
+                <form id="search-form">
+                    <input type="text" id="search-query" class="search-query">
+                </form>
+            </li!-->
+            <li><a href="https://github.com/Tencent/xLua" class="nav-link-li">下载项目</a></li>
+            <li><a href="/xLua/public/v1/guide/use.html" class="nav-link-li">使用案例</a></li>
+            <li><a href="/xLua/public/v1/guide/version.html" class="nav-link-li">更新记录</a></li>
+            <li><a href="/xLua/public/v1/guide/contribution.html" class="nav-link-li">贡献指南</li>
+            <li><a href="/xLua/public/v1/guide/index.html" class="nav-link-li">教程</a></li>
+            <li><a href="/xLua/public/" class="nav-link-li current">首页</a></li>
+        </ul>
+    </div>
+</nav>
+
+<div id="container" class="container clear">
+    <section class="sidebar clearfix">
+    <ul>
+        
+            
+            
+                <li><h3>基础</h3></li>
+            
+            
+            
+            <li>
+                <p><a href="/xLua/public/v1/guide/index.html" class="sidebar-link">介绍</a></p>
+            </li>
+        
+            
+            
+            
+            
+            <li>
+                <p><a href="/xLua/public/v1/guide/version.html" class="sidebar-link">更新记录</a></p>
+            </li>
+        
+            
+            
+            
+            
+            <li>
+                <p><a href="/xLua/public/v1/guide/use.html" class="sidebar-link">商业案例</a></p>
+            </li>
+        
+            
+            
+            
+            
+            <li>
+                <p><a href="/xLua/public/v1/guide/faq.html" class="sidebar-link">FAQ</a></p>
+            </li>
+        
+            
+            
+            
+                <li><h3>教程</h3></li>
+            
+            
+            <li>
+                <p><a href="/xLua/public/v1/guide/tutorial.html" class="sidebar-link">从零开始</a></p>
+            </li>
+        
+            
+            
+            
+            
+            <li>
+                <p><a href="/xLua/public/v1/guide/configure.html" class="sidebar-link">XLua的配置</a></p>
+            </li>
+        
+            
+            
+            
+            
+            <li>
+                <p><a href="/xLua/public/v1/guide/api.html" class="sidebar-link">C# API</a></p>
+            </li>
+        
+            
+            
+            
+            
+            <li>
+                <p><a href="/xLua/public/v1/guide/crtdel-3rd.html" class="sidebar-link">添加删除第三方库</a></p>
+            </li>
+        
+            
+            
+            
+            
+            <li>
+                <p><a href="/xLua/public/v1/guide/gc-optimization.html" class="sidebar-link">GC优化指南</a></p>
+            </li>
+        
+            
+            
+            
+            
+            <li>
+                <p><a href="/xLua/public/v1/guide/performance-analysis.html" class="sidebar-link">性能分析工具</a></p>
+            </li>
+        
+            
+            
+            
+            
+            <li>
+                <p><a href="/xLua/public/v1/guide/signature.html" class="sidebar-link">数字签名</a></p>
+            </li>
+        
+            
+            
+            
+            
+                <li><h3>其他</h3></li>
+            
+            <li>
+                <p><a href="/xLua/public/v1/guide/hotfix.html" class="sidebar-link">热标识</a></p>
+            </li>
+        
+            
+            
+            
+            
+            <li>
+                <p><a href="/xLua/public/v1/guide/features.html" class="sidebar-link current">特性</a></p>
+            </li>
+        
+    </ul>
+</section>
+    <article class="clearfix">
+    <h2 id="特性"><a href="#特性" class="headerlink" title="特性"></a>特性</h2><h3 id="总体"><a href="#总体" class="headerlink" title="总体"></a>总体</h3><ul>
+<li><strong>Lua虚拟机支持</strong><ul>
+<li>Lua5.3.3</li>
+<li>Luajit2.1beta2<br><br></li>
+</ul>
+</li>
+<li><strong>Unity3D版本支持</strong><ul>
+<li>Unity5</li>
+<li>Unity4<br><br></li>
+</ul>
+</li>
+<li><strong>平台支持</strong><ul>
+<li>windows 64/32</li>
+<li>android</li>
+<li>ios 64/32/bitcode</li>
+<li>osx<br><br></li>
+</ul>
+</li>
+<li><strong>互访技术</strong><ul>
+<li>生成适配代码</li>
+<li>反射<br><br></li>
+</ul>
+</li>
+<li><strong>易用性</strong><ul>
+<li>解压即可用</li>
+<li>开发期无需生成代码</li>
+<li>生成代码和反射间可无缝切换</li>
+<li>更简单的无GC api</li>
+<li>菜单简单易懂</li>
+<li>配置可以多份，按模块划分，也可以直接在目标类型上打Attribute标签</li>
+<li>自动生成link.xml防止代码剪裁</li>
+<li>Plugins部分采用cmake编译，更简单</li>
+<li>核心代码不依赖生成代码，可以随时删除生成目录<br><br></li>
+</ul>
+</li>
+<li><strong>性能</strong><ul>
+<li>Lazyload技术，避免用不上的类型的开销</li>
+<li>lua函数映射到c# delegate，lua table映射到interface，可实现接口层面无C# gc alloc开销</li>
+<li>所有基本值类型，所有枚举，字段都是值类型的struct，在Lua和C#间传递无C# gc alloc</li>
+<li>LuaTable，LuaFunction提供无gc访问接口</li>
+<li>通过代码生成期的静态分析，生成最优代码</li>
+<li>支持C#和Lua间指针传递</li>
+<li>自动解除已经Destroy的UnityEngine.Object的引用<br><br></li>
+</ul>
+</li>
+<li><strong>扩展性</strong><ul>
+<li>不用改代码就可以加入Lua第三方扩展</li>
+<li>生成引擎提供接口做二次开发</li>
+</ul>
+</li>
+</ul>
+<h3 id="支持为如下C-实现打补丁"><a href="#支持为如下C-实现打补丁" class="headerlink" title="支持为如下C#实现打补丁"></a>支持为如下C#实现打补丁</h3><ul>
+<li>构造函数</li>
+<li>析构函数</li>
+<li>成员函数</li>
+<li>静态函数</li>
+<li>泛化函数</li>
+<li>操作符重载</li>
+<li>成员属性</li>
+<li>静态属性</li>
+<li>事件</li>
+</ul>
+<h3 id="Lua代码加载"><a href="#Lua代码加载" class="headerlink" title="Lua代码加载"></a>Lua代码加载</h3><ul>
+<li><strong>加载字符串</strong><ul>
+<li>支持加载后立即执行</li>
+<li>支持加载后返回一个delegate或者LuaFunction，调用delegate或者LuaFunction后可传脚本参数<br><br></li>
+</ul>
+</li>
+<li><strong>Resources目录的文件</strong><ul>
+<li>直接require<br><br></li>
+</ul>
+</li>
+<li><strong>自定义loader</strong><ul>
+<li>Lua里头require时触发</li>
+<li>require参数透传给loader，loader读取Lua代码返回<br><br></li>
+</ul>
+</li>
+<li><strong>Lua原有的方式</strong><ul>
+<li>Lua原有的方式都保留</li>
+</ul>
+</li>
+</ul>
+<h3 id="Lua调用C"><a href="#Lua调用C" class="headerlink" title="Lua调用C"></a>Lua调用C</h3><ul>
+<li>创建C#对象</li>
+<li>C#静态属性，字段</li>
+<li>C#静态方法</li>
+<li>C#成员属性，字段</li>
+<li>C#成员方法<br><br></li>
+<li><strong>C#继承</strong><ul>
+<li>子类对象可以直接调用父类的方法，访问父类属性</li>
+<li>子类模块可以直接调用父类的静态方法，静态属性<br><br></li>
+</ul>
+</li>
+<li><strong>扩展方法（Extension methods）</strong><ul>
+<li>就像普通成员方法一样使用<br><br></li>
+</ul>
+</li>
+<li><strong>参数的输入输出属性（out，ref）</strong><ul>
+<li>out对应一个lua返回值</li>
+<li>ref对应一个lua参数以及一个lua返回值<br><br></li>
+</ul>
+</li>
+<li><strong>函数重载</strong><ul>
+<li>支持重载</li>
+<li>由于lua数据类型远比C#要少，会出现无法判断的情况，可通过扩展方法来来调用。<br><br></li>
+</ul>
+</li>
+<li><strong>操作符重载</strong><ul>
+<li>支持的操作符：+，-，*，/，==，一元-，&lt;，&lt;=， %，[]</li>
+<li>其它操作符可以借助扩展方法调用<br><br></li>
+</ul>
+</li>
+<li><strong>参数默认值</strong><ul>
+<li>C#参数有默认值，在lua可以不传<br><br></li>
+</ul>
+</li>
+<li><strong>可变参数</strong><ul>
+<li>在对应可变参数部分，直接输入一个个参数即可，不需要把这些参数扩到一个数组里头<br><br></li>
+</ul>
+</li>
+<li><strong>泛化方法调用</strong><ul>
+<li>静态方法可以自行封装使用</li>
+<li>成员函数可通过扩展方法封装使用<br><br></li>
+</ul>
+</li>
+<li><strong>枚举类型</strong><ul>
+<li>数字或字符串到枚举的转换<br><br></li>
+</ul>
+</li>
+<li><strong>delegate</strong><ul>
+<li>调用一个C# delegate</li>
+<li>+操作符</li>
+<li>-操作符</li>
+<li>把一个lua函数作为一个c# delegate传递给c#<br><br></li>
+</ul>
+</li>
+<li><strong>event</strong><ul>
+<li>增加事件回调</li>
+<li>移除事件回调<br><br></li>
+</ul>
+</li>
+<li><strong>64位整数</strong><ul>
+<li>传递无gc而且无精度损失</li>
+<li>lua53下使用原生64位支持</li>
+<li>可以和number运算</li>
+<li>以java的方式支持无符号64位整数<br><br></li>
+</ul>
+</li>
+<li><strong>table的自动转换到C#复杂类型</strong><ul>
+<li>obj.complexField = {a = 1, b = {c = 1}}，obj是一个C#对象，complexField是两层嵌套的struct或者class<br><br></li>
+</ul>
+</li>
+<li><strong>typeof</strong><ul>
+<li>对应C#的typeof操作符，返回Type对象<br><br></li>
+</ul>
+</li>
+<li>lua侧直接clone<br><br></li>
+<li><strong>decimal</strong><ul>
+<li>传递无gc而且无精度损失</li>
+</ul>
+</li>
+</ul>
+<h3 id="C-调用Lua"><a href="#C-调用Lua" class="headerlink" title="C#调用Lua"></a>C#调用Lua</h3><ul>
+<li><strong>调用Lua函数</strong><ul>
+<li>以delegate方式调用Lua函数</li>
+<li>以LuaFunction调用lua函数<br><br></li>
+</ul>
+</li>
+<li><strong>访问Lua的table</strong><ul>
+<li>LuaTable的泛化Get/Set接口，调用无gc，可指明Key，Value的类型</li>
+<li>用标注了CSharpCallLua的interface访问</li>
+<li>值拷贝到struct，class</li>
+</ul>
+</li>
+</ul>
+<h3 id="Lua虚拟机"><a href="#Lua虚拟机" class="headerlink" title="Lua虚拟机"></a>Lua虚拟机</h3><ul>
+<li>虚拟机gc参数读取及设置</li>
+</ul>
+<h3 id="工具链"><a href="#工具链" class="headerlink" title="工具链"></a>工具链</h3><ul>
+<li><strong>Lua Profiler</strong><ul>
+<li>可根据函数调用总时长，平均每次调用时长，调用次数排序</li>
+<li>显示lua函数名及其所在文件的名字及行号</li>
+<li>如果C#函数，会显示这个是C#函数<br><br></li>
+</ul>
+</li>
+<li>支持真机调试</li>
+</ul>
+
+    <div class="footer">
+        发现错误？想参与编辑？ 
+        <a href="https://github.com/Tencent/xLua/tree/master/docs/source/src/v1/guide/features.md" target="_blank">
+            在 Github 上编辑此页！
+        </a>
+    </div>
+</article>
+
+<div class="sub-nav hiden-in-phone">
+    <dl id="sub-nav">
+        <dt>本文内容</dt>
+        <dd v-for="(ele, index) in sub_nav">
+           <a v-bind:href="ele.href">{{ ele.name }}</a>
+        </dd>
+    </dl>
+</div> 
+</div>
+
+<footer>
+    <div>
+        <p>© Copyright 2017 Tencent All Rights Reserved</p>
+        <p>Tencent 2017</p>
+    </div>
+</footer>
+
+
+<script>
+var vm = new Vue({
+    el : '#container',
+    data: {
+        sub_nav : [ ]
+    },
+    created:function(){
+        var obj = [];
+        $("article h3").each(function(){
+            obj.push({name :  $(this).find("a").attr("title") , href : "#"+$(this).attr("id") });
+        });
+
+        this.sub_nav = obj;       
+    }
+});
+
+var isShow = false;
+$("nav").on("click","#btn-menu" , function(){
+
+    if(!isShow){
+        
+        if($(document).scrollTop() > $(".sidebar").height() - 100){
+
+            $('html, body').animate({scrollTop:0} , 300, "swing",function(){
+
+                $(".sidebar").fadeIn();
+                $(".container").animate({"left" : "15rem"}, 500,"swing");
+            });
+        }else{
+
+                $(".sidebar").fadeIn();
+                $(".container").animate({"left" : "15rem"}, 500,"swing");
+
+        }
+
+    }else{
+        $(".sidebar").fadeOut();
+        $(".container").animate({"left" : "0rem"}, 500,"swing");
+    }
+    isShow = !isShow;
+
+});
+
+$(".container").on("click" , "article" , function(){
+
+    if(isShow){
+        $(".sidebar").fadeOut();
+        $(".container").animate({"left" : "0rem"}, 500,"swing");
+        isShow = false;    
+    }
+
+});
+</script>
+        
+    </body>
+</html>

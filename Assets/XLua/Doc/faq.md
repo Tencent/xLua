@@ -2,11 +2,21 @@
 
 ## xLua发布包怎么用？
 
-xLua目前以zip包形式发布，在Assets目录下解压即可。
+xLua目前以zip包形式发布，在工程目录下解压即可。
 
 ## xLua可以放别的目录吗？
 
 可以，但生成代码目录需要配置一下（默认放Assets\XLua\Gen目录），具体可以看《XLua的配置.doc》的GenPath配置介绍。
+
+## lua源码只能以txt后缀？
+
+什么后缀都可以。
+
+如果你想以TextAsset打包到安装包（比如放到Resources目录），Unity不认lua后缀，这是Unity的规则。
+
+如果你不打包到安装包，就没有后缀的限制：比如自行下载到某个目录（这也是热更的正确姿势），然后通过CustomLoader或者设置package.path去读这个目录。
+
+那为啥xLua本身带的lua源码（包括示例）为什么都是txt结尾呢？因为xLua本身就一个库，不含下载功能，也不方便运行时去某个地方下载代码，通过TextAsset是较简单的方式。
 
 ## Plugins源码在哪里可以找到，怎么使用？
 
@@ -22,13 +32,19 @@ ios和osx需要在mac下编译。
 
 ## 报类似“xlua.access, no field __Hitfix0_Update”的错误怎么解决？
 
-要等打印了hotfix inject finish!才点击运行
+按[Hotfix操作指南](hotfix.md)一步步操作。
+
+## 报“please install the Tools”
+
+没有把Tools安装到Assets平级目录，安装包，或者master下都能找到这个目录。
 
 ## 报“This delegate/interface must add to CSharpCallLua : XXX”异常怎么解决？
 
 在编辑器下xLua不生成代码都可以运行，出现这种提示，要么是该类型没加CSharpCallLua，要么是加之前生成过代码，没重新执行生成。
 
 解决办法，确认XXX（类型名）加上CSharpCallLua后，清除代码后运行。
+
+如果编辑器下没问题，发布到手机报这错，表示你发布前没生成代码（执行“XLua/Generate Code”）。
 
 ## hotfix下怎么触发一个event
 
@@ -38,7 +54,7 @@ ios和osx需要在mac下编译。
 
 ## 怎么对Unity Coroutine的实现函数打补丁？
 
-见hotfix.md相应章节。
+见[Hotfix操作指南](hotfix.md)相应章节。
 
 ## 支持NGUI（或者UGUI/DOTween等等）么？
 
@@ -129,3 +145,138 @@ end)
 ## 编辑器下运行正常，打包的时候生成代码报“没有某方法/属性/字段定义”怎么办？
 
 往往是由于该方法/属性/字段是扩在条件编译里头，只在UNITY_EDITOR下有效，这是可以通过把这方法/属性/字段加到黑名单来解决，加了之后要等编译完成后重新执行代码生成。
+
+## this[string field]或者this[object field]操作符重载为什么在lua无法访问？（比如Dictionary\<string, xxx\>, Dictionary\<object, xxx\>在lua中无法通过dic['abc']或者dic.abc检索值）
+
+在2.1.5~2.1.6版本把这个特性去掉，因为：1、这个特性会导致基类定义的方法、属性、字段等无法访问（比如Animation无法访问到GetComponent方法）；2、key为当前类某方法、属性、字段的名字的数据无法检索，比如Dictionary类型，dic['TryGetValue']返回的是一个函数，指向Dictionary的TryGetValue方法。
+
+建议直接方法该操作符的等效方法，比如Dictionary的TryGetValue，如果该方法没有提供，可以在C#那通过Extension method封装一个使用。
+
+## 有的Unity对象，在C#为null，在lua为啥不为nil呢？比如一个已经Destroy的GameObject
+
+其实那C#对象并不为null，是UnityEngine.Object重载的==操作符，当一个对象被Destroy，未初始化等情况，obj == null返回true，但这C#对象并不为null，可以通过System.Object.ReferenceEquals(null, obj)来验证下。
+
+对应这种情况，可以为UnityEngine.Object写一个扩展方法：
+
+~~~csharp
+[LuaCallCSharp]
+[ReflectionUse]
+public static class UnityEngineObjectExtention
+{
+    public static bool IsNull(this UnityEngine.Object o) // 或者名字叫IsDestroyed等等
+    {
+        return o == null;
+    }
+}
+~~~
+
+然后在lua那你对所有UnityEngine.Object实例都使用IsNull判断
+
+~~~lua
+print(go:GetComponent('Animator'):IsNull())
+~~~
+
+## 泛型实例怎么构造
+
+涉及的类型都在mscorlib，Assembly-CSharp程序集的话，泛型实例的构造和普通类型是一样的，都是CS.namespace.typename()，可能比较特殊的是typename的表达，泛型实例的typename的表达包含了标识符非法符号，最后一部分要换成["typename"]，以List<string>为例
+
+~~~lua
+local lst = CS.System.Collections.Generic["List`1[System.String]"]()
+~~~
+
+如果某个泛型实例的typename不确定，可以在C#测打印下typeof(不确定的类型).ToString()
+
+如果涉及mscorlib，Assembly-CSharp程序集之外的类型的话，可以用C#的反射来做：
+
+~~~lua
+local dic = CS.System.Activator.CreateInstance(CS.System.Type.GetType('System.Collections.Generic.Dictionary`2[[System.String, mscorlib],[UnityEngine.Vector3, UnityEngine]],mscorlib'))
+dic:Add('a', CS.UnityEngine.Vector3(1, 2, 3))
+print(dic:TryGetValue('a'))
+~~~
+
+## 调用LuaEnv.Dispose时，报“try to dispose a LuaEnv with C# callback!”错是什么原因？
+
+这是由于C#还存在指向lua虚拟机里头某个函数的delegate，为了防止业务在虚拟机释放后调用这些无效（因为其引用的lua函数所在虚拟机都释放了）delegate导致的异常甚至崩溃，做了这个检查。
+
+怎么解决？释放这些delegate即可，所谓释放，在C#中，就是没有引用：
+
+你是在C#通过LuaTable.Get获取并保存到对象成员，赋值该成员为null；
+
+你是在lua那把lua函数注册到一些事件事件回调，反注册这些回调；
+
+如果你是通过xlua.hotfix(class, method, func)注入到C#，则通过xlua.hotfix(class, method, nil)删除；
+
+要注意以上操作在Dispose之前完成。
+
+## C#参数（或字段）类型是object时，传递整数默认是以long类型传递，如何指明其它类型？比如int
+
+看[例子11](../Examples/11_RawObject/RawObjectTest.cs)
+
+
+## 如何做到先执行原来的C#逻辑，然后再执行补丁
+
+用util.hotfix_ex，可以调用原先的C#逻辑
+
+~~~lua
+local util = require 'xlua.util'
+util.hotfix_ex(CS.HotfixTest, 'Add', function(self, a, b)
+   local org_sum = self:Add(a, b)
+   print('org_sum', org_sum)
+   return a + b
+end)
+~~~
+
+## 怎么把C#的函数赋值给一个委托字段
+
+2.1.8及之前版本，你把C#函数当成一个lua函数即可，性能会略低，因为委托调用时先通过Birdage适配代码调用lua，然后lua再调用回C#。
+
+2.1.9 xlua.util新增createdelegate函数
+
+比如如下C#代码
+
+~~~csharp
+public class TestClass
+{
+    public void Foo(int a)
+    { 
+    }
+	
+    public static void SFoo(int a)
+    {
+    }
+｝
+public delegate void TestDelegate(int a);
+~~~
+
+你可以指明用Foo函数创建一个TestDelegate实例
+~~~lua
+local util = require 'xlua.util'
+
+local d1 = util.createdelegate(CS.TestDelegate, obj, CS.TestClass, 'Foo', {typeof(CS.System.Int32)}) --由于Foo是实例方法，所以参数2需要传TestClass实例
+local d2 = util.createdelegate(CS.TestDelegate, nil, CS.TestClass, 'SFoo', {typeof(CS.System.Int32)})
+
+obj_has_TestDelegate.field = d1 + d2 --到时调用field的时候将会触发Foo和SFoo，这不会经过Lua适配
+
+~~~
+
+## 为什么有时Lua错误直接中断了而没错误信息？
+
+一般两种情况：
+
+1、你的错误代码用协程跑，而标准的lua，协程出错是通过resume返回值来表示，可以查阅相关的lua官方文档。如果你希望协程出错直接抛异常，可以在你的resume调用那加个assert。
+
+把类似下面的代码：
+
+~~~lua
+coroutine.resume(co, ...)
+~~~
+
+改为：
+
+~~~lua
+assert(coroutine.resume(co, ...))
+~~~
+
+2、上层catch后，不打印
+
+比如某些sdk，在回调业务时，try-catch后把异常吃了。

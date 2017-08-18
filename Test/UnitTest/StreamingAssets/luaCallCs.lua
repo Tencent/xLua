@@ -163,6 +163,7 @@ end
 
 function CMyTestCaseLuaCallCS.CaseGetType3(self)
     self.count = 1 + self.count
+    if CS.LuaTestCommon.IsXLuaGeneral() then return end
 	local ret = CS.LuaTestObj.TestGetType(typeof(CS.UnityEngine.Vector3))
 	ASSERT_EQ(ret, "UnityEngine.Vector3")
 end
@@ -2273,6 +2274,7 @@ end
 
 function CMyTestCaseLuaCallCS.CaseTestImplicit(self)
 	self.count = 1 + self.count
+    if CS.LuaTestCommon.IsXLuaGeneral() then return end
 	local ret = CS.LuaTestObj.TestImplicit():GetType()
 	ASSERT_EQ(ret, typeof(CS.UnityEngine.LayerMask))
 end
@@ -2290,4 +2292,29 @@ function CMyTestCaseLuaCallCS.CaseFirstPushEnum(self)
 	ASSERT_EQ(ret, "1")
 	local ret = CS.LuaTestObj.FirstPushEnumFunc(2)
 	ASSERT_EQ(ret, "4")
+end
+
+function CMyTestCaseLuaCallCS.CaseReferTestClass(self)
+	self.count = 1 + self.count
+	local int_x = 10
+	local int_y = 12
+	local str_z = "abc"
+	local class1, ret_y, ret_z = CS.ReferTestClass(int_x, int_y)
+	local ret = class1:Get_X_Y_ADD()
+	ASSERT_EQ(ret, 22)
+	ASSERT_EQ(ret_y, 11)
+	ASSERT_EQ(ret_z, "test1")
+
+	local class3, ret_z = CS.ReferTestClass(int_x)
+	local ret = class3:Get_X_Y_ADD()
+	ASSERT_EQ(ret, 20)
+	ASSERT_EQ(ret_z, "test3")
+end
+
+function CMyTestCaseLuaCallCS.CaseVariableParamFuncNoParam(self)
+    self.count = 1 + self.count
+	local ret = CS.LuaTestObj.VariableParamFunc2()
+	ASSERT_EQ(ret, 0)
+	local ret = CS.LuaTestObj.VariableParamFunc2("abc", "haha")
+	ASSERT_EQ(ret, 2)
 end

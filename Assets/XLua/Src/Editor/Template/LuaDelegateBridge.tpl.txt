@@ -18,7 +18,8 @@ namespace XLua
     public partial class DelegateBridge : DelegateBridgeBase
     {
 		<%
-		ForEachCsList(delegates, function(delegate)
+		ForEachCsList(delegates_groups, function(delegates_group, group_idx)
+		local delegate = delegates_group.Key
 		local parameters = delegate:GetParameters()
 		local in_num = CalcCsList(parameters, function(p) return p.IsIn or not p.IsOut end)
 		local out_num = CalcCsList(parameters, function(p) return p.IsOut or p.ParameterType.IsByRef end)
@@ -28,9 +29,7 @@ namespace XLua
 		local out_idx = has_return and 2 or 1
 		if has_return then out_num = out_num + 1 end
 		%>
-		public <%=return_type_name%> <%=CSVariableName(delegate.ReturnType)%>(<%ForEachCsList(parameters, function(parameter, pi) 
-			local pname = parameter.Name
-			if pname == '' or pname == 'object' then pname = 'p' .. tostring(pi) end
+		public <%=return_type_name%> __Gen_Delegate_Imp<%=group_idx%>(<%ForEachCsList(parameters, function(parameter, pi) 
 			if pi ~= 0 then 
 				%>, <% 
 			end
@@ -39,14 +38,14 @@ namespace XLua
 			elseif parameter.ParameterType.IsByRef then
 				%>ref <%
 			end 
-			%><%=CsFullTypeName(parameter.ParameterType)%> <%=pname%><% 
+			%><%=CsFullTypeName(parameter.ParameterType)%> p<%=pi%><% 
 		end) %>)
 		{
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
             lock (luaEnv.luaEnvLock)
             {
 #endif
-                RealStatePtr L = luaEnv.L;
+                RealStatePtr L = luaEnv.rawL;
                 int err_func =LuaAPI.load_error_func(L, errorFuncRef);
                 <%if CallNeedTranslator(delegate, "") then %>ObjectTranslator translator = luaEnv.translator;<%end%>
                 
@@ -56,20 +55,18 @@ namespace XLua
                 local param_count = parameters.Length
                 local has_v_params = param_count > 0 and parameters[param_count - 1].IsParamArray
                 ForEachCsList(parameters, function(parameter, pi) 
-					local pname = parameter.Name
-					if pname == '' or pname == 'object' then pname = 'p' .. tostring(pi) end
                     if parameter.IsIn or not parameter.IsOut then 
-                        %><%=GetPushStatement(parameter.ParameterType, pname, has_v_params and pi == param_count - 1)%>;
+                        %><%=GetPushStatement(parameter.ParameterType, 'p' .. pi, has_v_params and pi == param_count - 1)%>;
                 <% 
                     end
                 end) %>
-                int __gen_error = LuaAPI.lua_pcall(L, <%=has_v_params and ((in_num - 1) .. " + " .. parameters[param_count - 1].Name .. ".Length" ) or in_num%>, <%=out_num%>, err_func);
+                int __gen_error = LuaAPI.lua_pcall(L, <%=has_v_params and ((in_num - 1) .. " + (p".. (param_count - 1) .. " == null ? 0 : p" .. (param_count - 1) .. ".Length)" ) or in_num%>, <%=out_num%>, err_func);
                 if (__gen_error != 0)
                     luaEnv.ThrowExceptionFromError(err_func - 1);
                 
-                <%ForEachCsList(parameters, function(parameter) 
+                <%ForEachCsList(parameters, function(parameter, pi) 
                     if parameter.IsOut or parameter.ParameterType.IsByRef then 
-                        %><%=GetCasterStatement(parameter.ParameterType, "err_func" .. (" + "..out_idx), parameter.Name)%>;
+                        %><%=GetCasterStatement(parameter.ParameterType, "err_func" .. (" + "..out_idx), 'p' .. pi)%>;
                 <%
                     out_idx = out_idx + 1
                     end
@@ -77,7 +74,7 @@ namespace XLua
                 <%if has_return then %><%=GetCasterStatement(delegate.ReturnType, "err_func + 1", "__gen_ret", true)%>;<% end%>
                 LuaAPI.lua_settop(L, err_func - 1);
                 <%if has_return then %>return  __gen_ret;<% end%>
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
             }
 #endif
 		}
@@ -90,27 +87,23 @@ namespace XLua
 		
 		public override Delegate GetDelegateByType(Type type)
 		{
-		<%ForEachCsList(types, function(type)%>
-		    if (type == typeof(<%=CsFullTypeName(type)%>))
+		<%
+		ForEachCsList(delegates_groups, function(delegates_group, group_idx)
+		    ForEachCsList(delegates_group.Value, function(delegate)
+            if delegate.DeclaringType then
+			local delegate_type_name = CsFullTypeName(delegate.DeclaringType)
+		%>
+		    if (type == typeof(<%=delegate_type_name%>))
 			{
-			    return new <%=CsFullTypeName(type)%>(<%=CSVariableName(type:GetMethod("Invoke").ReturnType)%>);
+			    return new <%=delegate_type_name%>(__Gen_Delegate_Imp<%=group_idx%>);
 			}
-		<%end)%>
-        <%ForEachCsList(hotfx_delegates, function(hotfx_delegate, idx)%>
-            if (type == typeof(__Gen_Hotfix_Delegate<%=idx%>))
-			{
-                return new __Gen_Hotfix_Delegate<%=idx%>(<%=CSVariableName(hotfx_delegate.ReturnType)%>);
-            }
-        <%end)%>
-		    throw new InvalidCastException("This delegate must add to CSharpCallLua: " + type);
+		<%
+            end
+		    end)
+		end)
+		%>
+		    return null;
 		}
 	}
     
-    <%ForEachCsList(hotfx_delegates, function(hotfx_delegate, idx)
-    local parameters = hotfx_delegate:GetParameters()
-    %>
-    [HotfixDelegate]
-    public delegate <%=CsFullTypeName(hotfx_delegate.ReturnType)%> __Gen_Hotfix_Delegate<%=idx%>(<%ForEachCsList(parameters, function(parameter, pi)
-        %><%if pi ~= 0 then%>, <%end%><%=(parameter.IsOut and "out " or (parameter.ParameterType.IsByRef and "ref " or ""))%><%=CsFullTypeName(parameter.ParameterType)%> p<%=pi%><%end)%>);
-    <%end)%>
 }

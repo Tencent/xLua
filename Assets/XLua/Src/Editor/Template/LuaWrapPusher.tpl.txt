@@ -72,13 +72,27 @@ namespace XLua
             {
 			    return;
 			}
-			<%end%>
+			<%
+			end
+			if type_info.Flag == CS.XLua.OptimizeFlag.PackAsTable then
+			%>
+			var translator = this;
+			LuaAPI.xlua_pushcstable(L, <%=type_info.FieldInfos.Count%>, <%=type_id_var_name%>);
+			<%ForEachCsList(type_info.FieldInfos, function(fieldInfo)%>
+			LuaAPI.xlua_pushasciistring(L, "<%=fieldInfo.Name%>");
+			<%=GetPushStatement(fieldInfo.Type, "val."..fieldInfo.Name)%>;
+			LuaAPI.lua_rawset(L, -3);
+			<%end)%>
+			<%else%>
             IntPtr buff = LuaAPI.xlua_pushstruct(L, <%=is_enum and 4 or type_info.Size%>, <%=type_id_var_name%>);
             if (!CopyByValue.Pack(buff, 0, <%=is_enum and "(int)" or ""%>val))
             {
                 throw new Exception("pack fail fail for <%=full_type_name%> ,value="+val);
             }
-			<%if is_enum then%>
+			<%
+			end
+			if is_enum then
+			%>
 			LuaAPI.lua_getref(L, <%=enum_ref_var_name%>);
 			LuaAPI.lua_pushvalue(L, -2);
 			LuaAPI.xlua_rawseti(L, -2, (int)val);
@@ -117,6 +131,12 @@ namespace XLua
 		
         public void Update<%=CSVariableName(type_info.Type)%>(RealStatePtr L, int index, <%=full_type_name%> val)
         {
+		    <%if type_info.Flag == CS.XLua.OptimizeFlag.PackAsTable then%>
+			if (LuaAPI.lua_type(L, index) == LuaTypes.LUA_TTABLE)
+            {
+			    return;
+			}
+			<%else%>
             if (LuaAPI.lua_type(L, index) == LuaTypes.LUA_TUSERDATA)
             {
 			    if (LuaAPI.xlua_gettypeid(L, index) != <%=type_id_var_name%>)
@@ -130,6 +150,7 @@ namespace XLua
                     throw new Exception("pack fail for <%=full_type_name%> ,value="+val);
                 }
             }
+			<%end%>
             else
             {
                 throw new Exception("try to update a data with lua type:" + LuaAPI.lua_type(L, index));
@@ -171,7 +192,7 @@ namespace XLua
 	
 	public partial class StaticLuaCallbacks
     {
-	    static bool __tryArrayGet(Type type, RealStatePtr L, ObjectTranslator translator, object obj, int index)
+	    internal static bool __tryArrayGet(Type type, RealStatePtr L, ObjectTranslator translator, object obj, int index)
 		{
 		<%ForEachCsList(purevaluetypes, function(type_info, idx)
 		if not type_info.Type.IsValueType then return end
@@ -187,7 +208,7 @@ namespace XLua
             return false;
 		}
 		
-		static bool __tryArraySet(Type type, RealStatePtr L, ObjectTranslator translator, object obj, int array_idx, int obj_idx)
+		internal static bool __tryArraySet(Type type, RealStatePtr L, ObjectTranslator translator, object obj, int array_idx, int obj_idx)
 		{
 		<%
 		local is_first = true
@@ -204,11 +225,5 @@ namespace XLua
 		end)%>
             return false;
 		}
-		
-		static StaticLuaCallbacks()
-        {
-            genTryArrayGetPtr = __tryArrayGet;
-            GenTryArraySetPtr = __tryArraySet;
-        }
 	}
 }

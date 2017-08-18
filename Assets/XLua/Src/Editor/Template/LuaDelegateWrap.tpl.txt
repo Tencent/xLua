@@ -20,7 +20,7 @@ local in_pos = 0
 local has_return = (delegate.ReturnType.Name ~= "Void")
 %>
 
-namespace CSObjectWrap
+namespace XLua.CSObjectWrap
 {
     using Utils = XLua.Utils;
     public class <%=CSVariableName(type)%>Wrap
@@ -32,7 +32,6 @@ namespace CSObjectWrap
 			Utils.EndObjectRegister(typeof(<%=CsFullTypeName(type)%>), L, translator, null, null, null, null, null);
 			
 			Utils.BeginClassRegister(typeof(<%=CsFullTypeName(type)%>), L, null, 1, 0, 0);
-            Utils.RegisterObject(L, translator, Utils.CLS_IDX, "UnderlyingSystemType", typeof(<%=CsFullTypeName(type)%>));
             Utils.EndClassRegister(typeof(<%=CsFullTypeName(type)%>), L, translator);
         }
 		

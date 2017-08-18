@@ -47,6 +47,7 @@ function CMyTestCaseGenCode.CaseAccess2(self)
     if CS.LuaTestCommon.IsIOSPlatform() then
         return
     end
+    if CS.LuaTestCommon.IsXLuaGeneral() then return end
 	local resultPath = CS.LuaTestCommon.resultPath
 	resultPath = resultPath.."ltest_case_list_co.txt"
 	local fileInfo = CS.System.IO.FileInfo(resultPath)

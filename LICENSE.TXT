@@ -35,6 +35,9 @@ Copyright (C) 2005-2016 Mike Pall. All rights reserved.
 3. luasocket  3.0-rc1
 Copyright ? 1999-2013 Diego Nehab. All rights reserved.
 
+4. Cecil 0.9.6
+Copyright (c) 2008 - 2015 Jb Evain
+Copyright (c) 2008 - 2011 Novell, Inc.
 
 Terms of the MIT License:
 --------------------------------------------------------------------

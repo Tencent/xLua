@@ -23,5 +23,5 @@ local co = coroutine.create(function()
 	end
 end)
 
-coroutine.resume(co)
+assert(coroutine.resume(co))
 

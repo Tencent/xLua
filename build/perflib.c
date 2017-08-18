@@ -77,7 +77,7 @@ static void lua_rawgetp(lua_State *L, int idx, const void *p) {
 #define lua_objlen(L,i)		lua_rawlen(L, (i))
 #endif
 
-static void make_root(lua_State *L, const void *p, const char *name, int type, const char *used_in) {
+static void make_root(lua_State *L, const void *p, const char *name, int type, const char *used_in, int need_stat) {
 	lua_rawgetp(L, ROOT_TABLE, p);
 	if (lua_isnil(L, -1)) {
 		lua_pop(L, 1);
@@ -88,10 +88,12 @@ static void make_root(lua_State *L, const void *p, const char *name, int type, c
 			lua_setfield(L, -2, used_in);
 		}
 		lua_setfield(L, -2, "used_in");
-		lua_pushstring(L, name);
-		lua_setfield(L, -2, "name");
-		lua_pushnumber(L, type);
-		lua_setfield(L, -2, "type");
+		if (need_stat) {
+		    lua_pushstring(L, name);
+		    lua_setfield(L, -2, "name");
+		    lua_pushnumber(L, type);
+		    lua_setfield(L, -2, "type");
+		}
 		
 		lua_pushvalue(L, -1);
 		lua_rawsetp(L, ROOT_TABLE, p); //ROOT_TABLE[p] = root
@@ -133,9 +135,9 @@ static void marked(lua_State *L, const void *p, int len) {
     lua_rawsetp(L, MARKED_TABLE, p);
 }
 
-static void mark_object(lua_State *L, lua_State *dL, const void *root);
+static void mark_object(lua_State *L, lua_State *dL);
 
-static void mark_table(lua_State *L, lua_State *dL, const void *root) {
+static void mark_table(lua_State *L, lua_State *dL) {
 	const void *p = lua_topointer(L, -1);
 	int len = 0;
 	
@@ -145,16 +147,16 @@ static void mark_table(lua_State *L, lua_State *dL, const void *root) {
 		lua_pushnil(L);
 		while (lua_next(L, -2) != 0) {
 			++len;
-			mark_object(L, dL, root);
+			mark_object(L, dL);
 			lua_pop(L, 1);
-			mark_object(L, dL, root);
+			mark_object(L, dL);
 		}
 		
 		marked(dL, p, len);
 	}
 }
 
-static void mark_function(lua_State *L, lua_State *dL, const void *root) {
+static void mark_function(lua_State *L, lua_State *dL) {
 	const void *p = lua_topointer(L, -1);
 	int i;
 	lua_Debug ar;
@@ -162,10 +164,8 @@ static void mark_function(lua_State *L, lua_State *dL, const void *root) {
 	const char *name;
 	
 	
-	if (root == NULL || !is_marked(dL, p)) {
-		if (root != NULL) {
-			marked(dL, p, 0); //已经在table里头算了
-		}
+	if (!is_marked(dL, p)) {
+		marked(dL, p, 0); //已经在table里头算了
 		
 		lua_pushvalue(L, -1);
 		lua_getinfo(L, ">S", &ar);
@@ -179,25 +179,25 @@ static void mark_function(lua_State *L, lua_State *dL, const void *root) {
 			p = lua_topointer(L, -1);
 			
 			if (*name != '\0' && LUA_TTABLE == lua_type(L, -1)) {
-				make_root(dL, p, name, RT_UPVALUE, used_in);
+				make_root(dL, p, name, RT_UPVALUE, used_in, 1);
 				lua_insert(dL, MARKED_TABLE);
-				mark_object(L, dL, p);
+				mark_object(L, dL);
 				lua_remove(dL, MARKED_TABLE);
 			} else if (LUA_TFUNCTION == lua_type(L, -1)) {
-				mark_function(L, dL, root);
+				mark_function(L, dL);
 			}
 			lua_pop(L, 1);
 		}
 	}
 }
 
-static void mark_object(lua_State *L, lua_State *dL, const void *root) {
+static void mark_object(lua_State *L, lua_State *dL) {
 	switch (lua_type(L, -1)) {
 	case LUA_TTABLE:
-		mark_table(L, dL, root);
+		mark_table(L, dL);
 		break;
 	case LUA_TFUNCTION:
-		mark_function(L, dL, root);
+		mark_function(L, dL);
 		break;
 	default:
 		break;
@@ -213,6 +213,14 @@ static void make_report(lua_State* L, lua_State* dL) {
 	
 	lua_pushnil(dL);
 	while (lua_next(dL, ROOT_TABLE) != 0) {
+		lua_getfield(dL, -1, "name");
+		if (lua_isnil(dL, -1)) {
+			lua_pop(dL, 2);
+			continue;
+		} else {
+			lua_pop(dL, 1);
+		}
+		
 		lua_newtable(L);
 		size = 0;
 		
@@ -261,33 +269,27 @@ static void make_report(lua_State* L, lua_State* dL) {
 
 static int mark_root_table(lua_State* L, lua_State* dL, int type) {
 	int len = 0;
-	const void *root;
 	
 	lua_pushnil(L);
 	while (lua_next(L, -2) != 0) {
 		++len;
 		if (LUA_TTABLE == lua_type(L, -1)) {
-			root = lua_topointer(L, -1);
 			lua_pushvalue(L, -2);
 			
-			make_root(dL, root, lua_tostring(L, -1), type, NULL);
+			make_root(dL, lua_topointer(L, -2), lua_tostring(L, -1), type, NULL, 1);
 			lua_pop(L, 1);
-			mark_table(L, dL, root);
+			mark_table(L, dL);
 			lua_pop(dL, 1);
 		} else {
-			mark_object(L, dL, NULL);
+		    make_root(dL, lua_topointer(L, -1), "FUNCTION", type, NULL, 0);
+			mark_object(L, dL);
+			lua_pop(dL, 1);
 		}
 		lua_pop(L, 1);
 		
-		if (LUA_TTABLE == lua_type(L, -1)) { // key is tables
-			root = lua_topointer(L, -1);
-			
-			make_root(dL, root, "[KEY]", type, NULL);
-			mark_object(L, dL, root);
-			lua_pop(dL, 1);
-		} else {
-			mark_object(L, dL, NULL);
-		}
+		make_root(dL, lua_topointer(L, -1), "[KEY]", type, NULL, LUA_TTABLE == lua_type(L, -1));
+		mark_object(L, dL);
+		lua_pop(dL, 1);
 	}
 	
 	return len;

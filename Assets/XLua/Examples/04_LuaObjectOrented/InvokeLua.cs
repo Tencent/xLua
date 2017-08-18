@@ -20,7 +20,7 @@ public class InvokeLua : MonoBehaviour
     }
 
     [CSharpCallLua]
-    public delegate ICalc CalcNew(int mult, params string[] arg);
+    public delegate ICalc CalcNew(int mult, params string[] args);
 
     private string script = @"
                 local calc_mt = {
@@ -42,17 +42,23 @@ public class InvokeLua : MonoBehaviour
     void Start()
     {
         LuaEnv luaenv = new LuaEnv();
+        Test(luaenv);//调用了带可变参数的delegate，函数结束都不会释放delegate，即使置空并调用GC
+        luaenv.Dispose();
+    }
+
+    void Test(LuaEnv luaenv)
+    {
         luaenv.DoString(script);
         CalcNew calc_new = luaenv.Global.GetInPath<CalcNew>("Calc.New");
         ICalc calc = calc_new(10, "hi", "john"); //constructor
         Debug.Log("sum(*10) =" + calc.Add(1, 2));
         calc.Mult = 100;
         Debug.Log("sum(*100)=" + calc.Add(1, 2));
-        luaenv.Dispose();
     }
-	
-	// Update is called once per frame
-	void Update () {
-	
-	}
+
+    // Update is called once per frame
+    void Update()
+    {
+
+    }
 }
