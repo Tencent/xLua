@@ -1446,9 +1446,9 @@ namespace XLua
 
                 for (int j = 0; j < paramInfos.Length; j++)
                 {
-                    if (paramInfos[i].ParameterType.IsByRef)
+                    if (paramInfos[j].ParameterType.IsByRef)
                     {
-                        emitPush(il, paramInfos[i].ParameterType.GetElementType(),
+                        emitPush(il, paramInfos[j].ParameterType.GetElementType(),
                             (short)(argStoreStart + j), false, L, translator, false);
                     }
                 }
