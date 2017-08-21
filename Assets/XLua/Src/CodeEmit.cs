@@ -1059,12 +1059,12 @@ namespace XLua
 
             foreach (var group in instanceMethods)
             {
-                emitRegisterFunc(il, emitMethodWrap(wrapTypeBuilder, group.Cast<MethodBase>().ToList(), false), Utils.METHOD_IDX, group.Key);
+                emitRegisterFunc(il, emitMethodWrap(wrapTypeBuilder, group.Cast<MethodBase>().ToList(), false, toBeWrap), Utils.METHOD_IDX, group.Key);
             }
 
             foreach (var group in supportOperators)
             {
-                emitRegisterFunc(il, emitMethodWrap(wrapTypeBuilder, group.Cast<MethodBase>().ToList(), false), Utils.OBJ_META_IDX, InternalGlobals.supportOp[group.Key]);
+                emitRegisterFunc(il, emitMethodWrap(wrapTypeBuilder, group.Cast<MethodBase>().ToList(), false, toBeWrap), Utils.OBJ_META_IDX, InternalGlobals.supportOp[group.Key]);
             }
 
             foreach (var ev in toBeWrap.GetEvents(instanceFlag))
@@ -1080,13 +1080,13 @@ namespace XLua
             il.Emit(OpCodes.Ldnull);
             if (itemGetter.Count > 0)
             {
-                il.Emit(OpCodes.Ldftn, emitMethodWrap(wrapTypeBuilder, itemGetter, true));
+                il.Emit(OpCodes.Ldftn, emitMethodWrap(wrapTypeBuilder, itemGetter, true, toBeWrap));
                 il.Emit(OpCodes.Newobj, LuaCSFunction_Constructor);
             }
             il.Emit(OpCodes.Ldnull);
             if (itemSetter.Count > 0)
             {
-                il.Emit(OpCodes.Ldftn, emitMethodWrap(wrapTypeBuilder, itemSetter, true));
+                il.Emit(OpCodes.Ldftn, emitMethodWrap(wrapTypeBuilder, itemSetter, true, toBeWrap));
                 il.Emit(OpCodes.Newobj, LuaCSFunction_Constructor);
             }
             il.Emit(OpCodes.Ldnull);
@@ -1101,7 +1101,7 @@ namespace XLua
             il.Emit(OpCodes.Ldnull);
             il.Emit(OpCodes.Ldftn, emitMethodWrap(wrapTypeBuilder,
                 toBeWrap.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.IgnoreCase)
-                .Cast<MethodBase>().ToList(), false));
+                .Cast<MethodBase>().ToList(), false, toBeWrap, toBeWrap.ToString() + " constructor"));
             il.Emit(OpCodes.Newobj, LuaCSFunction_Constructor);
             il.Emit(OpCodes.Ldc_I4_1);
             il.Emit(OpCodes.Ldc_I4_1);
@@ -1117,7 +1117,7 @@ namespace XLua
 
             foreach (var group in staticMethods)
             {
-                emitRegisterFunc(il, emitMethodWrap(wrapTypeBuilder, group.Cast<MethodBase>().ToList(), false), Utils.CLS_IDX, group.Key);
+                emitRegisterFunc(il, emitMethodWrap(wrapTypeBuilder, group.Cast<MethodBase>().ToList(), false, toBeWrap), Utils.CLS_IDX, group.Key);
             }
 
             foreach (var ev in toBeWrap.GetEvents(staticFlag))
@@ -1278,14 +1278,17 @@ namespace XLua
 
         //private MethodInfo UnityEngine_Debug_Log = typeof(UnityEngine.Debug).GetMethod("Log", new Type[] { typeof(object)});
 
-        MethodBuilder emitMethodWrap(TypeBuilder typeBuilder, List<MethodBase> methodsToCall, bool isIndexer)
+        MethodBuilder emitMethodWrap(TypeBuilder typeBuilder, List<MethodBase> methodsToCall, bool isIndexer, Type declaringType, string methodDesciption = null)
         {
             var methodBuilder = typeBuilder.DefineMethod("Wrap" + (genID++), MethodAttributes.Static, typeof(int), parameterTypeOfWrap);
             methodBuilder.DefineParameter(1,  ParameterAttributes.None, "L");
 
-            bool isStatic = methodsToCall[0].IsStatic;
+            bool needCheckParameterType = (methodsToCall.Count > 1)  || isIndexer;
 
-            bool needCheckParameterType = (methodsToCall.Count > 1)  || isIndexer || methodsToCall[0].IsConstructor;
+            if (methodsToCall.Count == 0 || methodsToCall[0].IsConstructor)
+            {
+                needCheckParameterType = true;
+            }
 
             ILGenerator il = methodBuilder.GetILGenerator();
 
@@ -1314,6 +1317,7 @@ namespace XLua
             for (int i = 0; i < methodsToCall.Count; i++)
             {
                 var method = methodsToCall[i];
+                bool isStatic = method.IsStatic;
                 var paramInfos = method.GetParameters();
                 int inParamCount = 0;
                 int outParamCount = 0;
@@ -1349,9 +1353,9 @@ namespace XLua
                     }
 
                     int argPos = method.IsConstructor ? 2 : 1;
-                    foreach (var type in inTypes)
+                    foreach (var ptype in inTypes)
                     {
-                        checkType(il, type, translator, argPos++);
+                        checkType(il, ptype, translator, argPos++);
                         il.Emit(OpCodes.Brfalse, endOfBlock);
                     }
                 }
@@ -1451,6 +1455,24 @@ namespace XLua
                 }
             }
 
+            if (declaringType.IsValueType && (methodsToCall.Count == 0 || methodsToCall[0].IsConstructor))
+            {
+                Label endOfBlock = il.DefineLabel();
+                il.Emit(OpCodes.Ldloc, top);
+                il.Emit(OpCodes.Ldc_I4_1);
+                il.Emit(OpCodes.Bne_Un, endOfBlock);
+
+                var methodReturn = il.DeclareLocal(declaringType);
+
+                il.Emit(OpCodes.Ldloca, methodReturn);
+                il.Emit(OpCodes.Initobj, declaringType);
+                emitPush(il, declaringType, (short)methodReturn.LocalIndex, false, L, translator, false);
+                il.Emit(OpCodes.Ldc_I4_1);
+                il.Emit(OpCodes.Stloc, wrapRet);
+                il.Emit(OpCodes.Leave_S, retPoint);
+                il.MarkLabel(endOfBlock);
+            }
+
             il.Emit(OpCodes.Leave, exceptionBlock);
             emitCatchBlock(il, ex, wrapRet, retPoint, exceptionBlock);
 
@@ -1467,7 +1489,18 @@ namespace XLua
                 else
                 {
                     il.Emit(OpCodes.Ldarg_0);
-                    il.Emit(OpCodes.Ldstr, "invalid arguments to " + methodsToCall[0].DeclaringType + "." + methodsToCall[0].Name + "!");
+                    if (methodDesciption == null)
+                    {
+                        if (methodsToCall.Count > 0)
+                        {
+                            methodDesciption = declaringType + "." + methodsToCall[0].Name;
+                        }
+                        else
+                        {
+                            methodDesciption = "unknow method in " + declaringType;
+                        }
+                    }
+                    il.Emit(OpCodes.Ldstr, "invalid arguments to " + methodDesciption + "!");
                     il.Emit(OpCodes.Call, LuaAPI_luaL_error);
                     il.Emit(OpCodes.Ret);
                 }
