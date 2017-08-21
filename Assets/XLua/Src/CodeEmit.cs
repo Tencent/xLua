@@ -44,6 +44,7 @@ namespace XLua
         private MethodInfo LuaAPI_lua_pcall = typeof(LuaAPI).GetMethod("lua_pcall");
         private MethodInfo ObjectTranslator_GetObject = typeof(ObjectTranslator).GetMethod("GetObject", new Type[] { typeof(RealStatePtr),
                typeof(int), typeof(Type)});
+        private MethodInfo ObjectTranslator_GetParams = typeof(ObjectTranslator).GetMethod("GetParams", new Type[] { typeof(RealStatePtr), typeof(int) });
         private MethodInfo LuaAPI_lua_pushvalue = typeof(LuaAPI).GetMethod("lua_pushvalue");
         private MethodInfo LuaAPI_lua_remove = typeof(LuaAPI).GetMethod("lua_remove");
         private MethodInfo LuaAPI_lua_pushstring = typeof(LuaAPI).GetMethod("lua_pushstring", new Type[] { typeof(RealStatePtr), typeof(string)});
@@ -266,7 +267,7 @@ namespace XLua
             return impl_type_builder.CreateType();
         }
 
-        private void EmitGetObject(ILGenerator il, int offset, Type type, LocalBuilder L, LocalBuilder translator, LocalBuilder offsetBase)
+        private void EmitGetObject(ILGenerator il, int offset, Type type, LocalBuilder L, LocalBuilder translator, LocalBuilder offsetBase, bool isParam = false)
         {
             if (!fixCaster.ContainsKey(type) && !typedCaster.ContainsKey(type))
             {
@@ -324,9 +325,16 @@ namespace XLua
             }
             else
             {
-                il.Emit(OpCodes.Ldtoken, type);
-                il.Emit(OpCodes.Call, Type_GetTypeFromHandle); // typeof(type)
-                il.Emit(OpCodes.Callvirt, ObjectTranslator_GetObject);
+                if (isParam)
+                {
+                    il.Emit(OpCodes.Callvirt, ObjectTranslator_GetParams.MakeGenericMethod(new Type[] { type.GetElementType() }));
+                }
+                else
+                {
+                    il.Emit(OpCodes.Ldtoken, type);
+                    il.Emit(OpCodes.Call, Type_GetTypeFromHandle); // typeof(type)
+                    il.Emit(OpCodes.Callvirt, ObjectTranslator_GetObject);
+                }
                 if (type.IsValueType)
                 {
                     Label not_null = il.DefineLabel();
@@ -1376,7 +1384,8 @@ namespace XLua
                     }
                     if (!paramInfo.IsOut)
                     {
-                        EmitGetObject(il, luaPos++, paramRawType, L, translator, null);
+                        bool isParam = paramInfo.IsDefined(typeof(ParamArrayAttribute), false);
+                        EmitGetObject(il, luaPos++, paramRawType, L, translator, null, isParam);
                         il.Emit(OpCodes.Stloc, argStore);
                     }
                 }
