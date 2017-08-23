@@ -45,6 +45,7 @@ namespace XLua
         private MethodInfo ObjectTranslator_GetObject = typeof(ObjectTranslator).GetMethod("GetObject", new Type[] { typeof(RealStatePtr),
                typeof(int), typeof(Type)});
         private MethodInfo ObjectTranslator_GetParams = typeof(ObjectTranslator).GetMethod("GetParams", new Type[] { typeof(RealStatePtr), typeof(int) });
+        private MethodInfo ObjectTranslator_Update = typeof(ObjectTranslator).GetMethod("Update");
         private MethodInfo LuaAPI_lua_pushvalue = typeof(LuaAPI).GetMethod("lua_pushvalue");
         private MethodInfo LuaAPI_lua_remove = typeof(LuaAPI).GetMethod("lua_remove");
         private MethodInfo LuaAPI_lua_pushstring = typeof(LuaAPI).GetMethod("lua_pushstring", new Type[] { typeof(RealStatePtr), typeof(string)});
@@ -894,14 +895,19 @@ namespace XLua
                 if (!field.IsStatic)
                 {
                     EmitGetObject(il, 1, field.DeclaringType, L, translator, null);
+                    LocalBuilder self = null;
                     if (field.DeclaringType.IsValueType)
                     {
-                        var self = il.DeclareLocal(field.DeclaringType);
+                        self = il.DeclareLocal(field.DeclaringType);
                         il.Emit(OpCodes.Stloc, self);
                         il.Emit(OpCodes.Ldloca, self);
                     }
                     EmitGetObject(il, 2, field.FieldType, L, translator, null);
                     il.Emit(OpCodes.Stfld, field);
+                    if (self != null)
+                    {
+                        emitUpdateIfNeeded(il, L, translator, field.DeclaringType, 1, self.LocalIndex);
+                    }
                 }
                 else
                 {
@@ -958,6 +964,7 @@ namespace XLua
                         il.Emit(OpCodes.Stloc, self);
                         il.Emit(OpCodes.Ldloca, self);
                         il.Emit(OpCodes.Call, op);
+                        emitUpdateIfNeeded(il, L, translator, prop.DeclaringType, 1, self.LocalIndex);
                     }
                     else
                     {
@@ -976,14 +983,19 @@ namespace XLua
                 if (!op.IsStatic)
                 {
                     EmitGetObject(il, 1, prop.DeclaringType, L, translator, null);
+                    LocalBuilder self = null;
                     if (prop.DeclaringType.IsValueType)
                     {
-                        var self = il.DeclareLocal(prop.DeclaringType);
+                        self = il.DeclareLocal(prop.DeclaringType);
                         il.Emit(OpCodes.Stloc, self);
                         il.Emit(OpCodes.Ldloca, self);
                     }
                     EmitGetObject(il, 2, prop.PropertyType, L, translator, null);
                     il.Emit(prop.DeclaringType.IsValueType ? OpCodes.Call : OpCodes.Callvirt, op);
+                    if (self != null)
+                    {
+                        emitUpdateIfNeeded(il, L, translator, prop.DeclaringType, 1, self.LocalIndex);
+                    }
                 }
                 else
                 {
@@ -1319,6 +1331,20 @@ namespace XLua
             return methodBuilder;
         }
 
+        void emitUpdateIfNeeded(ILGenerator il, LocalBuilder L, LocalBuilder translator, Type type, int luaIndex, int localIndex)
+        {
+            if (type.IsValueType && !type.IsPrimitive && !type.IsEnum && type != typeof(decimal))
+            {
+                //UnityEngine.Debug.LogWarning("-----------------emit update:" + type);
+                il.Emit(OpCodes.Ldloc, translator);
+                il.Emit(OpCodes.Ldloc, L);
+                il.Emit(OpCodes.Ldc_I4, luaIndex);
+                il.Emit(OpCodes.Ldloc, localIndex);
+                il.Emit(OpCodes.Box, type);
+                il.Emit(OpCodes.Callvirt, ObjectTranslator_Update);
+            }
+        }
+
         //private MethodInfo UnityEngine_Debug_Log = typeof(UnityEngine.Debug).GetMethod("Log", new Type[] { typeof(object)});
 
         MethodBuilder emitMethodWrap(TypeBuilder typeBuilder, List<MethodBase> methodsToCall, bool isIndexer, Type declaringType, string methodDesciption = null)
@@ -1374,7 +1400,7 @@ namespace XLua
                     {
                         inParamCount++;
                     }
-                    else if (paramInfos[j].ParameterType.IsByRef)
+                    if (paramInfos[j].ParameterType.IsByRef)
                     {
                         outParamCount++;
                     }
@@ -1434,6 +1460,8 @@ namespace XLua
                     }
                 }
 
+                LocalBuilder valueTypeTmp = null;
+
                 if (!isStatic && (!method.IsConstructor || method.DeclaringType.IsValueType))
                 {
                     EmitGetObject(il, 1, method.DeclaringType, L, translator, null);
@@ -1447,7 +1475,7 @@ namespace XLua
                         }
                         else
                         {
-                            var valueTypeTmp = il.DeclareLocal(method.DeclaringType);
+                            valueTypeTmp = il.DeclareLocal(method.DeclaringType);
                             il.Emit(OpCodes.Stloc, valueTypeTmp);
                             il.Emit(OpCodes.Ldloca, valueTypeTmp);
                         }
@@ -1476,6 +1504,11 @@ namespace XLua
                     il.Emit(isStatic ? OpCodes.Call : OpCodes.Callvirt, method as MethodInfo);
                 }
 
+                if (valueTypeTmp != null)
+                {
+                    emitUpdateIfNeeded(il, L, translator, method.DeclaringType, 1, valueTypeTmp.LocalIndex);
+                }
+
                 if (isIndexer)
                 {
                     il.Emit(OpCodes.Ldarg_0);
@@ -1498,12 +1531,22 @@ namespace XLua
                     emitPush(il, returnType, (short)methodReturn.LocalIndex, false, L, translator, false);
                 }
 
+                int luaIndex = isStatic ? 1 : 2;
                 for (int j = 0; j < paramInfos.Length; j++)
                 {
                     if (paramInfos[j].ParameterType.IsByRef)
                     {
-                        emitPush(il, paramInfos[j].ParameterType.GetElementType(),
+                        var rawParamType = paramInfos[j].ParameterType.GetElementType();
+                        emitPush(il, rawParamType,
                             (short)(argStoreStart + j), false, L, translator, false);
+                        if (!paramInfos[j].IsOut)
+                        {
+                            emitUpdateIfNeeded(il, L, translator, rawParamType, luaIndex, argStoreStart + j);
+                        }
+                    }
+                    if (!paramInfos[j].IsOut)
+                    {
+                        luaIndex++;
                     }
                 }
 
