@@ -95,15 +95,24 @@ namespace XLua
                    select type;
         }
 #else
-        public static IEnumerable<Type> GetAllTypes(bool exclude_generic_definition = true)
+        public static List<Type> GetAllTypes(bool exclude_generic_definition = true)
         {
-            return from assembly in AppDomain.CurrentDomain.GetAssemblies()
-#if UNITY_EDITOR || XLUA_GENERAL
-                                          where !(assembly.ManifestModule is System.Reflection.Emit.ModuleBuilder)
-#endif
-                                          from type in assembly.GetTypes()
-                                          where exclude_generic_definition ? !type.IsGenericTypeDefinition() : true
-                                          select type;
+            List<Type> allTypes = new List<Type>();
+            var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+            for(int i = 0; i < assemblies.Length; i++)
+            {
+                try
+                {
+                    allTypes.AddRange(assemblies[i].GetTypes()
+                    .Where(type => exclude_generic_definition ? !type.IsGenericTypeDefinition() : true)
+                    );
+                }
+                catch (Exception)
+                {
+                }
+            }
+
+            return allTypes;
         }
 #endif
 
@@ -446,7 +455,7 @@ namespace XLua
 
                 InternalGlobals.extensionMethodMap = (from type in type_def_extention_method
                                         from method in type.GetMethods(BindingFlags.Static | BindingFlags.Public)
-                                        where IsSupportedExtensionMethod(method)
+                                        where method.IsDefined(typeof(ExtensionAttribute), false) && IsSupportedMethod(method)
                                         group method by getExtendedType(method)).ToDictionary(g => g.Key, g => g as IEnumerable<MethodInfo>);
             }
             IEnumerable<MethodInfo> ret = null;
@@ -1305,10 +1314,8 @@ namespace XLua
             return true;
         }
 
-        public static bool IsSupportedExtensionMethod(MethodBase method)
+        public static bool IsSupportedMethod(MethodBase method)
         {
-            if (!method.IsDefined(typeof(ExtensionAttribute), false))
-                return false;
             if (!method.ContainsGenericParameters)
                 return true;
             var methodParameters = method.GetParameters();

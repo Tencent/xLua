@@ -854,7 +854,7 @@ namespace XLua
 
         public MethodBuilder emitFieldWrap(TypeBuilder typeBuilder, FieldInfo field, bool genGetter)
         {
-            MethodBuilder methodBuilder = typeBuilder.DefineMethod("Wrap" + (genID++), MethodAttributes.Static, typeof(int), parameterTypeOfWrap);
+            MethodBuilder methodBuilder = typeBuilder.DefineMethod(field.Name + (genID++), MethodAttributes.Static, typeof(int), parameterTypeOfWrap);
             methodBuilder.DefineParameter(1, ParameterAttributes.None, "L");
 
             ILGenerator il = methodBuilder.GetILGenerator();
@@ -894,6 +894,12 @@ namespace XLua
                 if (!field.IsStatic)
                 {
                     EmitGetObject(il, 1, field.DeclaringType, L, translator, null);
+                    if (field.DeclaringType.IsValueType)
+                    {
+                        var self = il.DeclareLocal(field.DeclaringType);
+                        il.Emit(OpCodes.Stloc, self);
+                        il.Emit(OpCodes.Ldloca, self);
+                    }
                     EmitGetObject(il, 2, field.FieldType, L, translator, null);
                     il.Emit(OpCodes.Stfld, field);
                 }
@@ -920,7 +926,7 @@ namespace XLua
 
         public MethodBuilder emitPropertyWrap(TypeBuilder typeBuilder, PropertyInfo prop, MethodInfo op, bool genGetter)
         {
-            MethodBuilder methodBuilder = typeBuilder.DefineMethod("Wrap" + (genID++), MethodAttributes.Static, typeof(int), parameterTypeOfWrap);
+            MethodBuilder methodBuilder = typeBuilder.DefineMethod(prop.Name + (genID++), MethodAttributes.Static, typeof(int), parameterTypeOfWrap);
             methodBuilder.DefineParameter(1, ParameterAttributes.None, "L");
 
             ILGenerator il = methodBuilder.GetILGenerator();
@@ -946,7 +952,17 @@ namespace XLua
                 if (!op.IsStatic)
                 {
                     EmitGetObject(il, 1, prop.DeclaringType, L, translator, null);
-                    il.Emit(prop.DeclaringType.IsValueType ? OpCodes.Call : OpCodes.Callvirt, op);
+                    if (prop.DeclaringType.IsValueType)
+                    {
+                        var self = il.DeclareLocal(prop.DeclaringType);
+                        il.Emit(OpCodes.Stloc, self);
+                        il.Emit(OpCodes.Ldloca, self);
+                        il.Emit(OpCodes.Call, op);
+                    }
+                    else
+                    {
+                        il.Emit(OpCodes.Callvirt, op);
+                    }
                 }
                 else
                 {
@@ -960,6 +976,12 @@ namespace XLua
                 if (!op.IsStatic)
                 {
                     EmitGetObject(il, 1, prop.DeclaringType, L, translator, null);
+                    if (prop.DeclaringType.IsValueType)
+                    {
+                        var self = il.DeclareLocal(prop.DeclaringType);
+                        il.Emit(OpCodes.Stloc, self);
+                        il.Emit(OpCodes.Ldloca, self);
+                    }
                     EmitGetObject(il, 2, prop.PropertyType, L, translator, null);
                     il.Emit(prop.DeclaringType.IsValueType ? OpCodes.Call : OpCodes.Callvirt, op);
                 }
@@ -986,7 +1008,7 @@ namespace XLua
 
         public Type EmitTypeWrap(Type toBeWrap)
         {
-            TypeBuilder wrapTypeBuilder = CodeEmitModule.DefineType("XLuaGenWrap" + (genID++), TypeAttributes.Public | TypeAttributes.Class | TypeAttributes.Abstract | TypeAttributes.Sealed);
+            TypeBuilder wrapTypeBuilder = CodeEmitModule.DefineType(toBeWrap.Name + "Wrap" + (genID++), TypeAttributes.Public | TypeAttributes.Class | TypeAttributes.Abstract | TypeAttributes.Sealed);
 
             var methodBuilder = wrapTypeBuilder.DefineMethod("__Register", MethodAttributes.Static | MethodAttributes.Public, null, parameterTypeOfWrap);
             methodBuilder.DefineParameter(1, ParameterAttributes.None, "L");
@@ -1007,6 +1029,7 @@ namespace XLua
             var extensionMethods = Utils.GetExtensionMethodsOf(toBeWrap);
             var instanceMethods = toBeWrap.GetMethods(instanceFlag)
                 .Concat(extensionMethods == null ? Enumerable.Empty<MethodInfo>() : Utils.GetExtensionMethodsOf(toBeWrap))
+                .Where(m => !m.ContainsGenericParameters) // TODO: generic
                 .Where(m => !m.IsSpecialName).GroupBy(m => m.Name).ToList();
             var supportOperators = toBeWrap.GetMethods(staticFlag)
                 .Where(m => m.IsSpecialName && InternalGlobals.supportOp.ContainsKey(m.Name))
@@ -1150,7 +1173,7 @@ namespace XLua
 
             foreach (var field in staticFields)
             {
-                if (field.IsInitOnly || field.IsLiteral)
+                if (field.IsInitOnly)
                 {
                     il.Emit(OpCodes.Ldarg_0);
                     il.Emit(OpCodes.Ldloc, translator);
@@ -1163,7 +1186,7 @@ namespace XLua
                     }
                     il.Emit(OpCodes.Call, Utils_RegisterObject);
                 }
-                else
+                else if (!field.IsLiteral)
                 {
                     emitRegisterFunc(il, emitFieldWrap(wrapTypeBuilder, field, true), Utils.CLS_GETTER_IDX, field.Name);
                     emitRegisterFunc(il, emitFieldWrap(wrapTypeBuilder, field, false), Utils.CLS_SETTER_IDX, field.Name);
@@ -1194,7 +1217,7 @@ namespace XLua
 
             bool isStatic = addEvent != null ? addEvent.IsStatic : removeEvent.IsStatic;
 
-            var methodBuilder = typeBuilder.DefineMethod("Wrap" + (genID++), MethodAttributes.Static, typeof(int), parameterTypeOfWrap);
+            var methodBuilder = typeBuilder.DefineMethod(ev.Name + (genID++), MethodAttributes.Static, typeof(int), parameterTypeOfWrap);
             methodBuilder.DefineParameter(1, ParameterAttributes.None, "L");
 
             ILGenerator il = methodBuilder.GetILGenerator();
@@ -1240,6 +1263,12 @@ namespace XLua
                 if (!isStatic)
                 {
                     EmitGetObject(il, 1, ev.DeclaringType, L, translator, null);
+                    if (ev.DeclaringType.IsValueType)
+                    {
+                        var self = il.DeclareLocal(ev.DeclaringType);
+                        il.Emit(OpCodes.Stloc, self);
+                        il.Emit(OpCodes.Ldloca, self);
+                    }
                 }
                 il.Emit(OpCodes.Ldloc, callback);
                 il.Emit(OpCodes.Call, addEvent);
@@ -1260,6 +1289,12 @@ namespace XLua
                 if (!isStatic)
                 {
                     EmitGetObject(il, 1, ev.DeclaringType, L, translator, null);
+                    if (ev.DeclaringType.IsValueType)
+                    {
+                        var self = il.DeclareLocal(ev.DeclaringType);
+                        il.Emit(OpCodes.Stloc, self);
+                        il.Emit(OpCodes.Ldloca, self);
+                    }
                 }
                 il.Emit(OpCodes.Ldloc, callback);
                 il.Emit(OpCodes.Call, removeEvent);
@@ -1288,7 +1323,8 @@ namespace XLua
 
         MethodBuilder emitMethodWrap(TypeBuilder typeBuilder, List<MethodBase> methodsToCall, bool isIndexer, Type declaringType, string methodDesciption = null)
         {
-            var methodBuilder = typeBuilder.DefineMethod("Wrap" + (genID++), MethodAttributes.Static, typeof(int), parameterTypeOfWrap);
+            string wrapName = (methodsToCall.Count > 0 ? methodsToCall[0].Name : "Constructor");
+            var methodBuilder = typeBuilder.DefineMethod(wrapName + (genID++), MethodAttributes.Static, typeof(int), parameterTypeOfWrap);
             methodBuilder.DefineParameter(1,  ParameterAttributes.None, "L");
 
             bool needCheckParameterType = (methodsToCall.Count > 1)  || isIndexer;
@@ -1378,15 +1414,23 @@ namespace XLua
                     var paramRawType = paramInfo.ParameterType.IsByRef ? paramInfo.ParameterType.GetElementType() :
                         paramInfo.ParameterType;
                     var argStore = il.DeclareLocal(paramRawType);
+                    //UnityEngine.Debug.LogWarning(declaringType.Name + "." + method.Name + "." + paramInfos[j].Name + " pos(d):" + argStore.LocalIndex + ", pt:" + paramRawType + ", j:" + j);
                     if (argStoreStart == -1)
                     {
                         argStoreStart = argStore.LocalIndex;
                     }
+                    
+                }
+                for (int j = 0; j < paramInfos.Length; j++)
+                {
+                    var paramInfo = paramInfos[j];
+                    var paramRawType = paramInfo.ParameterType.IsByRef ? paramInfo.ParameterType.GetElementType() :
+                        paramInfo.ParameterType;
                     if (!paramInfo.IsOut)
                     {
                         bool isParam = paramInfo.IsDefined(typeof(ParamArrayAttribute), false);
                         EmitGetObject(il, luaPos++, paramRawType, L, translator, null, isParam);
-                        il.Emit(OpCodes.Stloc, argStore);
+                        il.Emit(OpCodes.Stloc, argStoreStart + j);
                     }
                 }
 
@@ -1395,14 +1439,24 @@ namespace XLua
                     EmitGetObject(il, 1, method.DeclaringType, L, translator, null);
                     if (method.DeclaringType.IsValueType)
                     {
-                        methodReturn = il.DeclareLocal(method.DeclaringType);
-                        il.Emit(OpCodes.Stloc, methodReturn);
-                        il.Emit(OpCodes.Ldloca, methodReturn);
+                        if (method.IsConstructor)
+                        {
+                            methodReturn = il.DeclareLocal(method.DeclaringType);
+                            il.Emit(OpCodes.Stloc, methodReturn);
+                            il.Emit(OpCodes.Ldloca, methodReturn);
+                        }
+                        else
+                        {
+                            var valueTypeTmp = il.DeclareLocal(method.DeclaringType);
+                            il.Emit(OpCodes.Stloc, valueTypeTmp);
+                            il.Emit(OpCodes.Ldloca, valueTypeTmp);
+                        }
                     }
                 }
 
                 for (int j = 0; j < paramInfos.Length; j++)
                 {
+                    //UnityEngine.Debug.LogWarning(declaringType.Name + "." + method.Name + "." + paramInfos[j].Name +" pos:" + (argStoreStart + j) + ", op:" + (paramInfos[j].ParameterType.IsByRef ? OpCodes.Ldloca : OpCodes.Ldloc) + ", j:" + j );
                     il.Emit(paramInfos[j].ParameterType.IsByRef ? OpCodes.Ldloca : OpCodes.Ldloc, argStoreStart + j);
                 }
 

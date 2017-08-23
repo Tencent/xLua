@@ -21,7 +21,7 @@ using System;
 
 namespace XLua
 {
-	internal class ObjectTranslatorPool
+	public class ObjectTranslatorPool
 	{
 		private Dictionary<RealStatePtr, WeakReference> translators = new Dictionary<RealStatePtr, WeakReference>();
 		
