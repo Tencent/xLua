@@ -103,9 +103,16 @@ namespace XLua
             {
                 try
                 {
-                    allTypes.AddRange(assemblies[i].GetTypes()
-                    .Where(type => exclude_generic_definition ? !type.IsGenericTypeDefinition() : true)
-                    );
+#if UNITY_EDITOR || XLUA_GENERAL
+                    if (!(assemblies[i].ManifestModule is System.Reflection.Emit.ModuleBuilder))
+                    {
+#endif
+                        allTypes.AddRange(assemblies[i].GetTypes()
+                        .Where(type => exclude_generic_definition ? !type.IsGenericTypeDefinition() : true)
+                        );
+#if UNITY_EDITOR || XLUA_GENERAL
+                    }
+#endif
                 }
                 catch (Exception)
                 {
