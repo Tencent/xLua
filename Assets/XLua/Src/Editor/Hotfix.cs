@@ -444,6 +444,7 @@ namespace XLua
                 return;
             }
             HotfixInject("./Library/ScriptAssemblies/Assembly-CSharp.dll", null, CSObjectWrapEditor.GeneratorConfig.common_path + "Resources/hotfix_id_map.lua.txt", Utils.GetAllTypes());
+            AssetDatabase.Refresh();
         }
 #endif
         
@@ -1114,6 +1115,7 @@ namespace XLua
             hotfix_injection.WaitForExit();
             File.Delete(hotfix_cfg_in_editor);
             UnityEngine.Debug.Log(hotfix_injection.StandardOutput.ReadToEnd());
+            AssetDatabase.Refresh();
         }
     }
 }
