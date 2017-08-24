@@ -272,7 +272,7 @@ end
 
 function NeedUpdate(t)
     if t.IsByRef then t = t:GetElementType() end
-    return t.IsValueType and not t.IsPrimitive and not IsEnum and t ~= typeof(CS.System.Decimal)
+    return t.IsValueType and not t.IsPrimitive and not t.IsEnum and t ~= typeof(CS.System.Decimal)
 end
 
 function GetCasterStatement(t, idx, var_name, need_declare, is_v_params)
