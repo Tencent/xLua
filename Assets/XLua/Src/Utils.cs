@@ -1321,12 +1321,14 @@ namespace XLua
             return true;
         }
 
-        public static bool IsSupportedMethod(MethodBase method)
+        public static bool IsSupportedMethod(MethodInfo method)
         {
             if (!method.ContainsGenericParameters)
                 return true;
             var methodParameters = method.GetParameters();
+            var returnType = method.ReturnType;
             var hasValidGenericParameter = false;
+            var returnTypeValid = !returnType.IsGenericParameter;
             for (var i = 0; i < methodParameters.Length; i++)
             {
                 var parameterType = methodParameters[i].ParameterType;
@@ -1340,9 +1342,16 @@ namespace XLua
                             return false;
                     }
                     hasValidGenericParameter = true;
+                    if (!returnTypeValid)
+                    {
+                        if (parameterType == returnType)
+                        {
+                            returnTypeValid = true;
+                        }
+                    }
                 }
             }
-            return hasValidGenericParameter;
+            return hasValidGenericParameter && returnTypeValid;
         }
 
         private static Type getExtendedType(MethodInfo method)

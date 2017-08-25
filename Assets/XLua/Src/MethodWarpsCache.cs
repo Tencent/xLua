@@ -536,7 +536,11 @@ namespace XLua
                 if (mb == null)
                     continue;
 
-                if (mb.IsGenericMethodDefinition && !tryMakeGenericMethod(ref mb))
+                if (mb.IsGenericMethodDefinition
+#if !ENABLE_IL2CPP
+                     && !tryMakeGenericMethod(ref mb)
+#endif
+                    )
                     continue;
 
                 var overload = new OverloadMethodWrap(translator, type, mb);
@@ -550,14 +554,16 @@ namespace XLua
         {
             try
             {
+                if (!(method is MethodInfo) || !Utils.IsSupportedMethod(method as MethodInfo) )
+                {
+                    return false;
+                }
                 var genericArguments = method.GetGenericArguments();
                 var constraintedArgumentTypes = new Type[genericArguments.Length];
                 for (var i = 0; i < genericArguments.Length; i++)
                 {
                     var argumentType = genericArguments[i];
                     var parameterConstraints = argumentType.GetGenericParameterConstraints();
-                    if (parameterConstraints.Length == 0 || !parameterConstraints[0].IsClass())
-                        return false;
                     constraintedArgumentTypes[i] = parameterConstraints[0];
                 }
                 method = ((MethodInfo)method).MakeGenericMethod(constraintedArgumentTypes);
