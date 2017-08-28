@@ -1121,9 +1121,9 @@ end
 
 function CMyTestCaseLuaCallCSReflect.CaseVariableParamFunc2_1_4(self)
     self.count = 1 + self.count
-	local ret, error = pcall(function() CS.LuaTestObjReflect.VariableParamFunc(0, CS.LuaTestObjReflect()) end)
+	local ret, err = pcall(function() CS.LuaTestObjReflect.VariableParamFunc(0, CS.LuaTestObjReflect()) end)
 	ASSERT_EQ(ret, false)
-	ASSERT_EQ(error, "invalid arguments to VariableParamFunc")
+	ASSERT_TRUE(err:find("invalid arguments"))
 end
 
 function CMyTestCaseLuaCallCSReflect.CaseFirstPushEnum(self)
