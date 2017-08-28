@@ -1634,13 +1634,15 @@ namespace XLua
 
                 if (!isStatic && (!method.IsConstructor || method.DeclaringType.IsValueType))
                 {
-                    EmitGetObject(il, 1, method.DeclaringType, L, translator, null);
+                    if (!method.IsConstructor)
+                    {
+                        EmitGetObject(il, 1, method.DeclaringType, L, translator, null);
+                    }
                     if (method.DeclaringType.IsValueType)
                     {
                         if (method.IsConstructor)
                         {
                             methodReturn = il.DeclareLocal(method.DeclaringType);
-                            il.Emit(OpCodes.Stloc, methodReturn);
                             il.Emit(OpCodes.Ldloca, methodReturn);
                         }
                         else
