@@ -341,7 +341,7 @@ function GetPushStatement(t, variable, is_v_params)
 	    local item_push = GetPushStatement(t:GetElementType(), variable..'[__gen_i]')
 		return 'if ('.. variable ..' != null)  { for (int __gen_i = 0; __gen_i < ' .. variable .. '.Length; ++__gen_i) ' .. item_push .. '; }'
 	end
-    
+    if t.IsByRef then t = t:GetElementType() end
     local testname = getSafeFullName(t)
     if fixPush[testname] then
         return fixPush[testname] .. "(L, ".. variable ..")" 
@@ -355,6 +355,7 @@ function GetPushStatement(t, variable, is_v_params)
 end
 
 function GetUpdateStatement(t, idx, variable)
+    if t.IsByRef then t = t:GetElementType() end
     if typeof(CS.System.Decimal) == t then error('Decimal not update!') end
     if genPushAndUpdateTypes[t] then
         return "translator.Update".. CSVariableName(t) .."(L, ".. idx ..", "..variable..")"
