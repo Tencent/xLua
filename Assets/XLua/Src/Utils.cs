@@ -1354,6 +1354,26 @@ namespace XLua
             return hasValidGenericParameter && returnTypeValid;
         }
 
+        public static MethodInfo MakeGenericMethodWithConstraints(MethodInfo method)
+        {
+            try
+            {
+                var genericArguments = method.GetGenericArguments();
+                var constraintedArgumentTypes = new Type[genericArguments.Length];
+                for (var i = 0; i < genericArguments.Length; i++)
+                {
+                    var argumentType = genericArguments[i];
+                    var parameterConstraints = argumentType.GetGenericParameterConstraints();
+                    constraintedArgumentTypes[i] = parameterConstraints[0];
+                }
+                return method.MakeGenericMethod(constraintedArgumentTypes);
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
         private static Type getExtendedType(MethodInfo method)
         {
             var type = method.GetParameters()[0].ParameterType;

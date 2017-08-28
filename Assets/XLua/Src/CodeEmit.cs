@@ -1142,7 +1142,7 @@ namespace XLua
             var extensionMethods = Utils.GetExtensionMethodsOf(toBeWrap);
             var instanceMethods = toBeWrap.GetMethods(instanceFlag)
                 .Concat(extensionMethods == null ? Enumerable.Empty<MethodInfo>() : Utils.GetExtensionMethodsOf(toBeWrap))
-                .Where(m => !m.ContainsGenericParameters) // TODO: generic
+                .Where(m => Utils.IsSupportedMethod(m))
                 .Where(m => !m.IsSpecialName).GroupBy(m => m.Name).ToList();
             var supportOperators = toBeWrap.GetMethods(staticFlag)
                 .Where(m => m.IsSpecialName && InternalGlobals.supportOp.ContainsKey(m.Name))
@@ -1253,7 +1253,7 @@ namespace XLua
             il.Emit(OpCodes.Call, Utils_BeginClassRegister);
 
             var staticMethods = toBeWrap.GetMethods(staticFlag)
-                .Where(m => !m.ContainsGenericParameters)
+                .Where(m => Utils.IsSupportedMethod(m))
                 .Where(m => !m.IsSpecialName).GroupBy(m => m.Name);
 
             var staticFields = toBeWrap.GetFields(staticFlag);
@@ -1513,6 +1513,10 @@ namespace XLua
             for (int i = 0; i < methodsToCall.Count; i++)
             {
                 var method = methodsToCall[i];
+                if ((method is MethodInfo) && method.ContainsGenericParameters)
+                {
+                    method = Utils.MakeGenericMethodWithConstraints(method as MethodInfo);
+                }
                 bool isStatic = method.IsStatic;
                 var paramInfos = method.GetParameters();
                 int minInParamCount = 0;
