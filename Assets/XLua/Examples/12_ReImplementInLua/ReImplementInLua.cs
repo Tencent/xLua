@@ -14,6 +14,7 @@ public class ReImplementInLua : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
         LuaEnv luaenv = new LuaEnv();
+        //这两个例子都必须生成代码才能正常运行
         //例子1：改造Vector3
         //沿用Vector3原来的映射方案Vector3 -> userdata，但是把Vector3的方法实现改为lua实现，通过xlua.genaccessor实现不经过C#直接操作内存
         //改为不经过C#的好处是性能更高，而且你可以省掉相应的生成代码以达成省text段的效果
