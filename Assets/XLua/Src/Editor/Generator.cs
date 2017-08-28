@@ -1489,6 +1489,10 @@ namespace CSObjectWrapEditor
                 {
                     Debug.LogError("gen file fail! template=" + template_src + ", err=" + e.Message + ", stack=" + e.StackTrace);
                 }
+                finally
+                {
+                    gen_task.Output.Close();
+                }
             }
         }
 
