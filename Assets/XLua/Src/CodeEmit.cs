@@ -1287,20 +1287,30 @@ namespace XLua
 
             foreach (var field in staticFields)
             {
-                if (field.IsInitOnly)
+                if (field.IsInitOnly || field.IsLiteral)
                 {
                     il.Emit(OpCodes.Ldarg_0);
                     il.Emit(OpCodes.Ldloc, translator);
                     il.Emit(OpCodes.Ldc_I4, Utils.CLS_IDX);
                     il.Emit(OpCodes.Ldstr, field.Name);
-                    il.Emit(OpCodes.Ldsfld, field);
+                    if (field.IsLiteral)
+                    {
+                        LocalBuilder literalStore = il.DeclareLocal(field.FieldType);
+                        emitLiteralLoad(il, field.FieldType, field.GetValue(null), literalStore.LocalIndex);
+                        il.Emit(OpCodes.Stloc, literalStore);
+                        il.Emit(OpCodes.Ldloc, literalStore);
+                    }
+                    else
+                    {
+                        il.Emit(OpCodes.Ldsfld, field);
+                    }
                     if (field.FieldType.IsValueType)
                     {
                         il.Emit(OpCodes.Box, field.FieldType);
                     }
                     il.Emit(OpCodes.Call, Utils_RegisterObject);
                 }
-                else if (!field.IsLiteral)
+                else
                 {
                     emitRegisterFunc(il, emitFieldWrap(wrapTypeBuilder, field, true), Utils.CLS_GETTER_IDX, field.Name);
                     emitRegisterFunc(il, emitFieldWrap(wrapTypeBuilder, field, false), Utils.CLS_SETTER_IDX, field.Name);
