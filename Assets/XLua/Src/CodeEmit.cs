@@ -632,6 +632,92 @@ namespace XLua
             return method_builder;
         }
 
+        ConstructorInfo decimalConstructor = typeof(decimal).GetConstructor(new Type[] {
+            typeof(int), typeof(int), typeof(int), typeof(bool), typeof(byte)
+        });
+
+        private void emitLiteralLoad(ILGenerator il, Type type, object obj, int localIndex)
+        {
+            if (ReferenceEquals(obj, null))
+            {
+                il.Emit(OpCodes.Ldnull);
+            }
+            else if(type.IsPrimitive || type.IsEnum)
+            {
+                if (type.IsEnum)
+                {
+                    type = Enum.GetUnderlyingType(type);
+                }
+                if (typeof(bool) == type)
+                {
+                    if ((bool)obj == true)
+                    {
+                        il.Emit(OpCodes.Ldc_I4_1);
+                    }
+                    else
+                    {
+                        il.Emit(OpCodes.Ldc_I4_0);
+                    }
+                }
+                else if (typeof(uint) == type)
+                {
+                    il.Emit(OpCodes.Ldc_I4, (int)Convert.ToUInt32(obj));
+                }
+                else if(typeof(byte) == type || typeof(sbyte) == type || typeof(short) == type ||
+                    typeof(ushort) == type || typeof(int) == type || typeof(char) == type)
+                {
+                    il.Emit(OpCodes.Ldc_I4, Convert.ToInt32(obj));
+                }
+                else if (typeof(long) == type || typeof(ulong) == type)
+                {
+                    il.Emit(OpCodes.Ldc_I8, Convert.ToInt64(obj));
+                }
+                else if (typeof(IntPtr) == type || typeof(IntPtr) == type)
+                {
+                    il.Emit(OpCodes.Ldloca, localIndex);
+                    il.Emit(OpCodes.Initobj, type);
+                    il.Emit(OpCodes.Ldloc, localIndex);
+                }
+                else if (typeof(float) == type)
+                {
+                    il.Emit(OpCodes.Ldc_R4, Convert.ToSingle(obj));
+                }
+                else if (typeof(double) == type)
+                {
+                    il.Emit(OpCodes.Ldc_R8, Convert.ToDouble(obj));
+                }
+                else
+                {
+                    throw new Exception(type + " is not primitive or enum!");
+                }
+            }
+            else if (type == typeof(string))
+            {
+                il.Emit(OpCodes.Ldstr, obj as string);
+            }
+            else if (type == typeof(decimal))
+            {
+                var buffer = decimal.GetBits(Convert.ToDecimal(obj));
+                il.Emit(OpCodes.Ldc_I4, buffer[0]);
+                il.Emit(OpCodes.Ldc_I4, buffer[1]);
+                il.Emit(OpCodes.Ldc_I4, buffer[2]);
+                //UnityEngine.Debug.Log(string.Format("{0}.{1}.{2}.{3}--{4}", buffer[0], buffer[1], buffer[2], buffer[3], obj));
+                il.Emit(OpCodes.Ldc_I4, (buffer[3] & 0x80000000) == 0 ? 0 : 1);
+                il.Emit(OpCodes.Ldc_I4, (buffer[3] >> 16) & 0xFF);
+                il.Emit(OpCodes.Newobj, decimalConstructor);
+            }
+            else if (type.IsValueType) 
+            {
+                il.Emit(OpCodes.Ldloca, localIndex);
+                il.Emit(OpCodes.Initobj, type);
+                il.Emit(OpCodes.Ldloc, localIndex);
+            }
+            else
+            {
+                il.Emit(OpCodes.Ldnull);
+            }
+        }
+
         private void emitMethodImpl(MethodInfo to_be_impl, ILGenerator il, bool isObj)
         {
             var parameters = to_be_impl.GetParameters();
@@ -817,11 +903,11 @@ namespace XLua
 
         private MethodInfo String_Concat = typeof(string).GetMethod("Concat", new Type[] { typeof(object), typeof(object) });
 
-        void checkType(ILGenerator il, Type type, LocalBuilder translator, int argPos, Label endOfBlock, bool isVParam)
+        void checkType(ILGenerator il, Type type, LocalBuilder translator, int argPos, Label endOfBlock, bool isVParam, bool isDefault)
         {
             Label endOfCheckType = il.DefineLabel();
 
-            if (isVParam)
+            if (isVParam || isDefault)
             {
                 il.Emit(OpCodes.Ldarg_0);
                 il.Emit(OpCodes.Ldc_I4, argPos);
@@ -1362,6 +1448,15 @@ namespace XLua
         }
 
         //private MethodInfo UnityEngine_Debug_Log = typeof(UnityEngine.Debug).GetMethod("Log", new Type[] { typeof(object)});
+        int firstDefaultValue(MethodBase method)
+        {
+            var parameters = method.GetParameters();
+            for(int i = 0; i < parameters.Length; i++)
+            {
+                if (parameters[i].IsOptional) return i;
+            }
+            return -1;
+        }
 
         MethodBuilder emitMethodWrap(TypeBuilder typeBuilder, List<MethodBase> methodsToCall, bool isIndexer, Type declaringType, string methodDesciption = null)
         {
@@ -1372,6 +1467,11 @@ namespace XLua
             bool needCheckParameterType = (methodsToCall.Count > 1)  || isIndexer;
 
             if (methodsToCall.Count == 0 || methodsToCall[0].IsConstructor)
+            {
+                needCheckParameterType = true;
+            }
+
+            if (methodsToCall.Count == 1 && firstDefaultValue(methodsToCall[0]) != -1)
             {
                 needCheckParameterType = true;
             }
@@ -1405,8 +1505,11 @@ namespace XLua
                 var method = methodsToCall[i];
                 bool isStatic = method.IsStatic;
                 var paramInfos = method.GetParameters();
-                int inParamCount = 0;
+                int minInParamCount = 0;
+                int maxInParamCount = 0;
                 int outParamCount = 0;
+                bool hasParams = paramInfos.Length > 0 && paramInfos[paramInfos.Length - 1].IsDefined(typeof(ParamArrayAttribute), false);
+                bool hasOptional = false;
 
                 LocalBuilder methodReturn = null;
 
@@ -1414,7 +1517,15 @@ namespace XLua
                 {
                     if (!paramInfos[j].IsOut)
                     {
-                        inParamCount++;
+                        if (!paramInfos[j].IsOptional && (!hasParams || j != paramInfos.Length - 1))
+                        {
+                            minInParamCount++;
+                        }
+                        maxInParamCount++;
+                    }
+                    if (paramInfos[j].IsOptional)
+                    {
+                        hasOptional = true;
                     }
                     if (paramInfos[j].ParameterType.IsByRef)
                     {
@@ -1424,17 +1535,22 @@ namespace XLua
 
                 Label endOfBlock = endOfBlock = il.DefineLabel();
 
-                bool hasParams = paramInfos.Length > 0 && paramInfos[paramInfos.Length - 1].IsDefined(typeof(ParamArrayAttribute), false);
-
                 if (needCheckParameterType)
                 {
                     il.Emit(OpCodes.Ldloc, top);
-                    il.Emit(OpCodes.Ldc_I4, inParamCount + (isStatic ? 0 : 1) + (hasParams ? -1 : 0));
-                    il.Emit(hasParams ? OpCodes.Blt : OpCodes.Bne_Un, endOfBlock);
+                    il.Emit(OpCodes.Ldc_I4, minInParamCount + (isStatic ? 0 : 1));
+                    il.Emit((hasParams || hasOptional) ? OpCodes.Blt : OpCodes.Bne_Un, endOfBlock);
+
+                    if (hasOptional && !hasParams)
+                    {
+                        il.Emit(OpCodes.Ldloc, top);
+                        il.Emit(OpCodes.Ldc_I4, maxInParamCount + (isStatic ? 0 : 1));
+                        il.Emit(OpCodes.Bgt, endOfBlock);
+                    }
                     
                     if (!isStatic && !method.IsConstructor)
                     {
-                        checkType(il, method.DeclaringType, translator, 1, endOfBlock, false);
+                        checkType(il, method.DeclaringType, translator, 1, endOfBlock, false, false);
                     }
 
                     int argPos = isStatic ? 1 : 2;
@@ -1450,7 +1566,7 @@ namespace XLua
                                 rawParamType = rawParamType.GetElementType();
                             }
                             checkType(il, rawParamType, translator, argPos++, endOfBlock, 
-                                hasParams && (j == paramInfos.Length - 1));
+                                hasParams && (j == paramInfos.Length - 1), paramInfo.IsOptional);
                         }
                     }
                 }
@@ -1465,6 +1581,12 @@ namespace XLua
                     var paramRawType = paramInfo.ParameterType.IsByRef ? paramInfo.ParameterType.GetElementType() :
                         paramInfo.ParameterType;
                     var argStore = il.DeclareLocal(paramRawType);
+                    if (paramInfo.IsOptional)
+                    {
+                        //UnityEngine.Debug.Log(paramInfo.Name + "," + paramRawType + "," + paramInfo.DefaultValue);
+                        emitLiteralLoad(il, paramRawType, paramInfo.DefaultValue, argStore.LocalIndex);
+                        il.Emit(OpCodes.Stloc, argStore);
+                    }
                     //UnityEngine.Debug.LogWarning(declaringType.Name + "." + method.Name + "." + paramInfos[j].Name + " pos(d):" + argStore.LocalIndex + ", pt:" + paramRawType + ", j:" + j);
                     if (argStoreStart == -1)
                     {
@@ -1479,8 +1601,18 @@ namespace XLua
                         paramInfo.ParameterType;
                     if (!paramInfo.IsOut)
                     {
+                        Label endOfGetValue = il.DefineLabel();
+                        if (paramInfo.IsOptional)
+                        {
+                            il.Emit(OpCodes.Ldarg_0);
+                            il.Emit(OpCodes.Ldc_I4, luaPos);
+                            il.Emit(OpCodes.Call, LuaAPI_lua_type);
+                            il.Emit(OpCodes.Ldc_I4_M1);
+                            il.Emit(OpCodes.Beq, endOfGetValue);
+                        }
                         EmitGetObject(il, luaPos++, paramRawType, L, translator, null, hasParams && (j == paramInfos.Length - 1));
                         il.Emit(OpCodes.Stloc, argStoreStart + j);
+                        il.MarkLabel(endOfGetValue);
                     }
                 }
 
