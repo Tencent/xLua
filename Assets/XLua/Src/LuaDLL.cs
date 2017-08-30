@@ -33,7 +33,7 @@ namespace XLua.LuaDLL
 
     public partial class Lua
 	{
-#if UNITY_IPHONE && !UNITY_EDITOR
+#if (UNITY_IPHONE || UNITY_WEBGL) && !UNITY_EDITOR
         const string LUADLL = "__Internal";
 #else
         const string LUADLL = "xlua";
