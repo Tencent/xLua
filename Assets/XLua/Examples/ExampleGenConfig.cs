@@ -62,6 +62,9 @@ public static class ExampleGenConfig
     [BlackList]
     public static List<List<string>> BlackList = new List<List<string>>()  {
                 new List<string>(){"UnityEngine.WWW", "movie"},
+    #if UNITY_WEBGL
+                new List<string>(){"UnityEngine.WWW", "threadPriority"},
+    #endif
                 new List<string>(){"UnityEngine.Texture2D", "alphaIsTransparency"},
                 new List<string>(){"UnityEngine.Security", "GetChainOfTrustValue"},
                 new List<string>(){"UnityEngine.CanvasRenderer", "onRequestRebuild"},
