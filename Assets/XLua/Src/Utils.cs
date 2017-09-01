@@ -1397,5 +1397,15 @@ namespace XLua
             return csFunction.Method.IsStatic && Attribute.IsDefined(csFunction.Method, typeof(MonoPInvokeCallbackAttribute));
 #endif
         }
+
+        public static bool IsPublic(Type type)
+        {
+            if (type.IsNested)
+            {
+                if (!type.IsNestedPublic) return false;
+                return IsPublic(type.DeclaringType);
+            }
+            return type.IsPublic;
+        }
     }
 }

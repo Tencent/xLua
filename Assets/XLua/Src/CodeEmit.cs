@@ -68,6 +68,7 @@ namespace XLua
         private MethodInfo LuaAPI_lua_pushbytes = typeof(LuaAPI).GetMethod("lua_pushstring", new Type[] { typeof(RealStatePtr), typeof(byte[]) });
         private MethodInfo LuaAPI_lua_pushlightuserdata = typeof(LuaAPI).GetMethod("lua_pushlightuserdata");
         private MethodInfo ObjectTranslator_PushDecimal = typeof(ObjectTranslator).GetMethod("PushDecimal");
+        private MethodInfo ObjectTranslator_GetDecimal = typeof(ObjectTranslator).GetMethod("GetDecimal");
 
         private Dictionary<Type, MethodInfo> fixPush;
 
@@ -324,6 +325,10 @@ namespace XLua
                 {
                     throw new InvalidProgramException(type + " is not a type need cast");
                 }
+            }
+            else if (type == typeof(decimal))
+            {
+                il.Emit(OpCodes.Callvirt, ObjectTranslator_GetDecimal);
             }
             else
             {

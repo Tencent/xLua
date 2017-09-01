@@ -150,7 +150,20 @@ namespace XLua
             }
             else
             {
+#if !GEN_CODE_MINIMIZE && !ENABLE_IL2CPP && (UNITY_EDITOR || XLUA_GENERAL) && !FORCE_REFLECTION
+                if (!DelegateBridge.Gen_Flag && !type.IsEnum && !typeof(Delegate).IsAssignableFrom(type) && Utils.IsPublic(type))
+                {
+                    Type wrap = ce.EmitTypeWrap(type);
+                    MethodInfo method = wrap.GetMethod("__Register", BindingFlags.Static | BindingFlags.Public);
+                    method.Invoke(null, new object[] { L });
+                }
+                else
+                {
+                    Utils.ReflectionWrap(L, type);
+                }
+#else
                 Utils.ReflectionWrap(L, type);
+#endif
 #if NOT_GEN_WARNING
 #if !XLUA_GENERAL
                 UnityEngine.Debug.LogWarning(string.Format("{0} not gen, using reflection instead", type));
@@ -842,6 +855,12 @@ namespace XLua
         //only store the type id to type map for struct
         Dictionary<int, Type> typeMap = new Dictionary<int, Type>();
 
+        public int GetTypeId(RealStatePtr L, Type type)
+        {
+            bool isFirst;
+            return getTypeId(L, type, out isFirst);
+        }
+
         internal int getTypeId(RealStatePtr L, Type type, out bool is_first, LOGLEVEL log_level = LOGLEVEL.WARN)
         {
             int type_id;
@@ -1469,6 +1488,13 @@ namespace XLua
         {
             if (decimal_type_id == -1) return false;
             return LuaAPI.xlua_gettypeid(L, index) == decimal_type_id;
+        }
+
+        public decimal GetDecimal(RealStatePtr L, int index)
+        {
+            decimal ret;
+            Get(L, index, out ret);
+            return ret;
         }
 
         public void Get(RealStatePtr L, int index, out decimal val)
