@@ -24,6 +24,8 @@
 
 #ifdef _WIN32
 #define LUASOCKET_INET_PTON
+#else
+#define inet_pton_w32 inet_pton
 #endif
 
 int inet_open(lua_State *L);

@@ -830,6 +830,29 @@ LUA_API void xlua_pushcstable(lua_State *L, unsigned int size, int meta_ref) {
 	lua_setmetatable(L, -2);
 }
 
+LUA_API void xlua_pushstructbyptr(lua_State *L, void *ptr, unsigned int size, int meta_ref) {
+	CSharpStruct *css = (CSharpStruct *)lua_newuserdata(L, size + sizeof(int) + sizeof(unsigned int));
+	css->fake_id = -1;
+	css->len = size;
+	memcpy(css->data, ptr, size);
+    lua_rawgeti(L, LUA_REGISTRYINDEX, meta_ref);
+	lua_setmetatable(L, -2);
+}
+
+LUALIB_API void xlua_getstructbyptr(lua_State *L, int index, void *ptr) {
+	CSharpStruct *css = (CSharpStruct *)lua_touserdata(L, index);
+	if (css != NULL && css->fake_id == -1) {
+		memcpy(ptr, css->data, css->len);
+	}
+}
+
+LUALIB_API void xlua_updatestructbyptr(lua_State *L, int index, void *ptr) {
+	CSharpStruct *css = (CSharpStruct *)lua_touserdata(L, index);
+	if (css != NULL && css->fake_id == -1) {
+		memcpy(css->data, ptr, css->len);
+	}
+}
+
 LUA_API int xlua_gettypeid(lua_State *L, int idx) {
 	int type_id = -1;
 	if (lua_type(L, idx) == LUA_TUSERDATA) {
