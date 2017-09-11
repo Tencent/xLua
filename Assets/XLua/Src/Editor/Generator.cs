@@ -385,32 +385,18 @@ namespace CSObjectWrapEditor
         {
             parameters.Set("type", type);
 
-            var getters = type.GetProperties().Where(prop => prop.CanRead);
-            var setters = type.GetProperties().Where(prop => prop.CanWrite);
-
-            List<string> methodNames = type.GetMethods(BindingFlags.Public | BindingFlags.Instance
-                | BindingFlags.Static | BindingFlags.IgnoreCase | BindingFlags.DeclaredOnly).Select(method => method.Name).ToList();
-            foreach (var getter in getters)
-            {
-                methodNames.Remove("get_" + getter.Name);
-            }
-
-            foreach (var setter in setters)
-            {
-                methodNames.Remove("set_" + setter.Name);
-            }
-
-            parameters.Set("methods", type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.IgnoreCase | BindingFlags.DeclaredOnly)
-                .Where(method => methodNames.Contains(method.Name) && !method.IsGenericMethod && !method.Name.StartsWith("op_") && !method.Name.StartsWith("add_") && !method.Name.StartsWith("remove_")) //GenericMethod can not be invoke becuase not static info available!
+            var itfs = new Type[] { type }.Concat(type.GetInterfaces());
+            parameters.Set("methods", itfs.SelectMany(i => i.GetMethods())
+                .Where(method => !method.IsSpecialName && !method.IsGenericMethod && !method.Name.StartsWith("op_") && !method.Name.StartsWith("add_") && !method.Name.StartsWith("remove_")) //GenericMethod can not be invoke becuase not static info available!
                     .ToList());
 
-            parameters.Set("propertys", type.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.IgnoreCase | BindingFlags.DeclaredOnly)
+            parameters.Set("propertys", itfs.SelectMany(i => i.GetProperties())
                 .Where(prop => (prop.CanRead || prop.CanWrite) && prop.Name != "Item")
                     .ToList());
 
-            parameters.Set("events", type.GetEvents(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.IgnoreCase | BindingFlags.DeclaredOnly).ToList());
+            parameters.Set("events", itfs.SelectMany(i => i.GetEvents()).ToList());
 
-            parameters.Set("indexers", type.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.IgnoreCase | BindingFlags.DeclaredOnly)
+            parameters.Set("indexers", itfs.SelectMany(i => i.GetProperties())
                 .Where(prop => (prop.CanRead || prop.CanWrite) && prop.Name == "Item")
                     .ToList());
         }
