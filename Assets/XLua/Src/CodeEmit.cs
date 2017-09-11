@@ -395,7 +395,7 @@ namespace XLua
 
             TypeBuilder impl_type_builder = CodeEmitModule.DefineType("XLuaGenInterfaceImpl" + (genID++), TypeAttributes.Public | TypeAttributes.Class, typeof(LuaBase), new Type[] { to_be_impl});
 
-            foreach(var member in to_be_impl.GetMembers())
+            foreach(var member in (new Type[] { to_be_impl }.Concat(to_be_impl.GetInterfaces()).SelectMany(i=> i.GetMembers())))
             {
                 if (member.MemberType == MemberTypes.Method)
                 {
