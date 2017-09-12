@@ -243,6 +243,11 @@ namespace CSObjectWrapEditor
             return hasValidGenericParameter || !method.ContainsGenericParameters;
         }
 
+        static bool IsDoNotGen(Type type, string name)
+        {
+            return DoNotGen.ContainsKey(type) && DoNotGen[type].Contains(name);
+        }
+
         static void getClassInfo(Type type, LuaTable parameters)
         {
             parameters.Set("type", type);
@@ -310,6 +315,7 @@ namespace CSObjectWrapEditor
                 .Where(method => !method.IsDefined(typeof (ExtensionAttribute), false) || method.DeclaringType != type)
                 .Where(method => methodNames.ContainsKey(method.Name)) //GenericMethod can not be invoke becuase not static info available!
                 .Concat(extension_methods)
+                .Where(method => !IsDoNotGen(type, method.Name))
                 .Where(method => !isMethodInBlackList(method) && (!method.IsGenericMethod || extension_methods.Contains(method) || isSupportedGenericMethod(method)) && !isObsolete(method) && !method.Name.StartsWith("op_") && !method.Name.StartsWith("add_") && !method.Name.StartsWith("remove_"))
                 .GroupBy(method => (method.Name + ((method.IsStatic && !method.IsDefined(typeof (ExtensionAttribute), false)) ? "_xlua_st_" : "")), (k, v) =>
                 {
@@ -352,7 +358,7 @@ namespace CSObjectWrapEditor
                     type.GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.IgnoreCase | BindingFlags.DeclaredOnly)
                     .Where(field => !isObsolete(field) && !isMemberInBlackList(field))
                     .Select(field => new { field.Name, field.IsStatic, ReadOnly = field.IsInitOnly || field.IsLiteral, Type = field.FieldType })
-                )/*.Where(getter => !typeof(Delegate).IsAssignableFrom(getter.Type))*/.ToList());
+                ).Where(info => !IsDoNotGen(type, info.Name))/*.Where(getter => !typeof(Delegate).IsAssignableFrom(getter.Type))*/.ToList());
 
             parameters.Set("setters", type.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.IgnoreCase | BindingFlags.DeclaredOnly)
                 .Where(prop => prop.CanWrite && (prop.GetSetMethod() != null) && prop.Name != "Item" && !isObsolete(prop) && !isMemberInBlackList(prop)).Select(prop => new { prop.Name, IsStatic = prop.GetSetMethod().IsStatic, Type = prop.PropertyType, IsProperty = true })
@@ -360,7 +366,7 @@ namespace CSObjectWrapEditor
                     type.GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.IgnoreCase | BindingFlags.DeclaredOnly)
                     .Where(field => !isObsolete(field) && !isMemberInBlackList(field) && !field.IsInitOnly && !field.IsLiteral)
                     .Select(field => new { field.Name, field.IsStatic, Type = field.FieldType, IsProperty = false })
-                )/*.Where(setter => !typeof(Delegate).IsAssignableFrom(setter.Type))*/.ToList());
+                ).Where(info => !IsDoNotGen(type, info.Name))/*.Where(setter => !typeof(Delegate).IsAssignableFrom(setter.Type))*/.ToList());
 
             parameters.Set("operators", type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.IgnoreCase | BindingFlags.DeclaredOnly)
                 .Where(method => OpMethodNames.Contains(method.Name))
@@ -376,9 +382,95 @@ namespace CSObjectWrapEditor
 
             parameters.Set("events", type.GetEvents(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.IgnoreCase | BindingFlags.DeclaredOnly).Where(e => !isObsolete(e) && !isMemberInBlackList(e))
                 .Where(ev=> ev.GetAddMethod() != null || ev.GetRemoveMethod() != null)
+                .Where(ev => !IsDoNotGen(type, ev.Name))
                 .Select(ev => new { IsStatic = ev.GetAddMethod() != null? ev.GetAddMethod().IsStatic: ev.GetRemoveMethod().IsStatic, ev.Name,
                     CanSet = false, CanAdd = ev.GetRemoveMethod() != null, CanRemove = ev.GetRemoveMethod() != null, Type = ev.EventHandlerType})
                 .ToList());
+            List<LazyMemberInfo> lazyMemberInfos = new List<LazyMemberInfo>();
+            parameters.Set("lazymembers", lazyMemberInfos);
+            foreach (var member in type.GetMembers(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.IgnoreCase | BindingFlags.DeclaredOnly)
+                .Where(m => IsDoNotGen(type, m.Name))
+                .GroupBy(m=>m.Name).Select(g => g.First())
+                )
+            {
+                switch(member.MemberType)
+                {
+                    case MemberTypes.Method:
+                        MethodBase mb = member as MethodBase;
+                        lazyMemberInfos.Add(new LazyMemberInfo
+                        {
+                            Index = mb.IsStatic ? "CLS_IDX" : "METHOD_IDX",
+                            Name = member.Name,
+                            MemberType = "LazyMemberTypes.Method",
+                            IsStatic = mb.IsStatic ? "true" : "false"
+                        });
+                        break;
+                    case MemberTypes.Event:
+                        EventInfo ev = member as EventInfo;
+                        if (ev.GetAddMethod() == null && ev.GetRemoveMethod() == null) break;
+                        bool eventIsStatic = ev.GetAddMethod() != null ? ev.GetAddMethod().IsStatic : ev.GetRemoveMethod().IsStatic;
+                        lazyMemberInfos.Add(new LazyMemberInfo {
+                            Index = eventIsStatic ? "CLS_IDX" : "METHOD_IDX",
+                            Name = member.Name,
+                            MemberType = "LazyMemberTypes.Event",
+                            IsStatic = eventIsStatic ? "true" : "false"
+                        });
+                        break;
+                    case MemberTypes.Field:
+                        FieldInfo field = member as FieldInfo;
+                        lazyMemberInfos.Add(new LazyMemberInfo
+                        {
+                            Index = field.IsStatic ? "CLS_GETTER_IDX" : "GETTER_IDX",
+                            Name = member.Name,
+                            MemberType = "LazyMemberTypes.FieldGet",
+                            IsStatic = field.IsStatic ? "true" : "false"
+                        });
+                        lazyMemberInfos.Add(new LazyMemberInfo
+                        {
+                            Index = field.IsStatic ? "CLS_SETTER_IDX" : "SETTER_IDX",
+                            Name = member.Name,
+                            MemberType = "LazyMemberTypes.FieldSet",
+                            IsStatic = field.IsStatic ? "true" : "false"
+                        });
+                        break;
+                    case MemberTypes.Property:
+                        PropertyInfo prop = member as PropertyInfo;
+                        if (prop.Name != "Item" || prop.GetIndexParameters().Length == 0)
+                        {
+                            if (prop.CanRead && prop.GetGetMethod() != null)
+                            {
+                                var isStatic = prop.GetGetMethod().IsStatic;
+                                lazyMemberInfos.Add(new LazyMemberInfo
+                                {
+                                    Index = isStatic ? "CLS_GETTER_IDX" : "GETTER_IDX",
+                                    Name = member.Name,
+                                    MemberType = "LazyMemberTypes.PropertyGet",
+                                    IsStatic = isStatic ? "true" : "false"
+                                });
+                            }
+                            if (prop.CanWrite && prop.GetSetMethod() != null)
+                            {
+                                var isStatic = prop.GetSetMethod().IsStatic;
+                                lazyMemberInfos.Add(new LazyMemberInfo
+                                {
+                                    Index = isStatic ? "CLS_SETTER_IDX" : "SETTER_IDX",
+                                    Name = member.Name,
+                                    MemberType = "LazyMemberTypes.PropertySet",
+                                    IsStatic = isStatic ? "true" : "false"
+                                });
+                            }
+                        }
+                        break;
+                }
+            }
+        }
+
+        class LazyMemberInfo
+        {
+            public string Index;
+            public string Name;
+            public string MemberType;
+            public string IsStatic;
         }
 
         static void getInterfaceInfo(Type type, LuaTable parameters)
@@ -1154,6 +1246,8 @@ namespace CSObjectWrapEditor
 
         public static Dictionary<Type, OptimizeFlag> OptimizeCfg = null;
 
+        public static Dictionary<Type, HashSet<string>> DoNotGen = null;
+
         static void AddToList(List<Type> list, Func<object> get, object attr)
         {
             object obj = get();
@@ -1248,6 +1342,22 @@ namespace CSObjectWrapEditor
                     }
                 }
             }
+
+            if (test.IsDefined(typeof(DoNotGenAttribute), false)
+                        && (typeof(Dictionary<Type, List<string>>)).IsAssignableFrom(cfg_type))
+            {
+                var cfg = get_cfg() as Dictionary<Type, List<string>>;
+                foreach (var kv in cfg)
+                {
+                    HashSet<string> set;
+                    if (!DoNotGen.TryGetValue(kv.Key, out set))
+                    {
+                        set = new HashSet<string>();
+                        DoNotGen.Add(kv.Key, set);
+                    }
+                    set.UnionWith(kv.Value);
+                }
+            }
         }
 
         public static void GetGenConfig(IEnumerable<Type> check_types)
@@ -1269,6 +1379,8 @@ namespace CSObjectWrapEditor
             HotfixCfg = new Dictionary<Type, HotfixFlag>();
 
             OptimizeCfg = new Dictionary<Type, OptimizeFlag>();
+
+            DoNotGen = new Dictionary<Type, HashSet<string>>();
 
             foreach (var t in check_types)
             {
