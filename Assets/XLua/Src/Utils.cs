@@ -1515,7 +1515,7 @@ namespace XLua
                     if (parameterConstraints.Length == 0) return false;
                     foreach (var parameterConstraint in parameterConstraints)
                     {
-                        if (!parameterConstraint.IsClass || (parameterConstraint == typeof(ValueType)))
+                        if (!parameterConstraint.IsClass() || (parameterConstraint == typeof(ValueType)))
                             return false;
                     }
                     hasValidGenericParameter = true;
