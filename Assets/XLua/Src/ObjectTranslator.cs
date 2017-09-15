@@ -151,7 +151,7 @@ namespace XLua
             else
             {
 #if !GEN_CODE_MINIMIZE && !ENABLE_IL2CPP && (UNITY_EDITOR || XLUA_GENERAL) && !FORCE_REFLECTION
-                if (!DelegateBridge.Gen_Flag && !type.IsEnum && !typeof(Delegate).IsAssignableFrom(type) && Utils.IsPublic(type))
+                if (!DelegateBridge.Gen_Flag && !type.IsEnum() && !typeof(Delegate).IsAssignableFrom(type) && Utils.IsPublic(type))
                 {
                     Type wrap = ce.EmitTypeWrap(type);
                     MethodInfo method = wrap.GetMethod("__Register", BindingFlags.Static | BindingFlags.Public);
@@ -904,7 +904,7 @@ namespace XLua
                 }
                 else
                 {
-                    if (type.IsEnum)
+                    if (type.IsEnum())
                     {
                         LuaAPI.xlua_pushasciistring(L, "__band");
                         LuaAPI.lua_pushstdcallcfunction(L, metaFunctions.EnumAndMeta);
