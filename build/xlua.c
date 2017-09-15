@@ -34,7 +34,7 @@ LUA_API int xlua_get_registry_index() {
 }
 
 LUA_API int xlua_get_lib_version() {
-	return 102;
+	return 103;
 }
 
 LUA_API int xlua_tocsobj_safe(lua_State *L,int index) {
@@ -830,27 +830,28 @@ LUA_API void xlua_pushcstable(lua_State *L, unsigned int size, int meta_ref) {
 	lua_setmetatable(L, -2);
 }
 
-LUA_API void xlua_pushstructbyptr(lua_State *L, void *ptr, unsigned int size, int meta_ref) {
+LUA_API void *xlua_newstruct(lua_State *L, int size, int meta_ref) {
 	CSharpStruct *css = (CSharpStruct *)lua_newuserdata(L, size + sizeof(int) + sizeof(unsigned int));
 	css->fake_id = -1;
 	css->len = size;
-	memcpy(css->data, ptr, size);
     lua_rawgeti(L, LUA_REGISTRYINDEX, meta_ref);
 	lua_setmetatable(L, -2);
+	return css->data;
 }
 
-LUALIB_API void xlua_getstructbyptr(lua_State *L, int index, void *ptr) {
-	CSharpStruct *css = (CSharpStruct *)lua_touserdata(L, index);
-	if (css != NULL && css->fake_id == -1) {
-		memcpy(ptr, css->data, css->len);
+LUA_API void *xlua_tostruct(lua_State *L, int idx, int meta_ref) {
+	CSharpStruct *css = (CSharpStruct *)lua_touserdata(L, idx);
+	if (NULL != css) {
+		if (lua_getmetatable (L, idx)) {
+			lua_rawgeti(L, -1, 1);
+			if (lua_type(L, -1) == LUA_TNUMBER && (int)lua_tointeger(L, -1) == meta_ref) {
+				lua_pop(L, 2);
+				return css->data; 
+			}
+			lua_pop(L, 2);
+		}
 	}
-}
-
-LUALIB_API void xlua_updatestructbyptr(lua_State *L, int index, void *ptr) {
-	CSharpStruct *css = (CSharpStruct *)lua_touserdata(L, index);
-	if (css != NULL && css->fake_id == -1) {
-		memcpy(css->data, ptr, css->len);
-	}
+	return NULL;
 }
 
 LUA_API int xlua_gettypeid(lua_State *L, int idx) {
