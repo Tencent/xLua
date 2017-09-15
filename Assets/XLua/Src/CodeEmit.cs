@@ -1197,7 +1197,10 @@ namespace XLua
                 {
                     if (prop.Name == "Item" && prop.GetIndexParameters().Length > 0)
                     {
-                        itemSetter.Add(setter);
+                        if (!prop.GetIndexParameters()[0].ParameterType.IsAssignableFrom(typeof(string)))
+                        {
+                            itemSetter.Add(setter);
+                        }
                     }
                     else
                     {
