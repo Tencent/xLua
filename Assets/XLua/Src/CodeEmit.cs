@@ -643,7 +643,7 @@ namespace XLua
 
         private void emitLiteralLoad(ILGenerator il, Type type, object obj, int localIndex)
         {
-            if (ReferenceEquals(obj, null))
+            if (!type.IsValueType && ReferenceEquals(obj, null))
             {
                 il.Emit(OpCodes.Ldnull);
             }
