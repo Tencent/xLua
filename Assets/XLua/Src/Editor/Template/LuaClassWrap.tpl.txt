@@ -94,6 +94,26 @@ ForEachCsList(setters, function(setter)
     end 
 end)
 
+ForEachCsList(lazymembers, function(lazymember)
+    if lazymember.IsStatic == 'true' then
+	    if 'CLS_IDX' == lazymember.Index then
+		    cls_field_count = cls_field_count + 1
+	    elseif 'CLS_GETTER_IDX' == lazymember.Index then
+		    cls_getter_count = cls_getter_count + 1
+		elseif 'CLS_SETTER_IDX' == lazymember.Index then
+		    cls_setter_count = cls_setter_count + 1
+		end
+	else
+		if 'METHOD_IDX' == lazymember.Index then
+		    obj_method_count = obj_method_count + 1
+	    elseif 'GETTER_IDX' == lazymember.Index then
+		    obj_getter_count = obj_getter_count + 1
+		elseif 'SETTER_IDX' == lazymember.Index then
+		    obj_setter_count = obj_setter_count + 1
+		end
+	end
+end)
+
 local generic_arg_list, type_constraints = GenericArgumentList(type)
 
 %>
