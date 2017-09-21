@@ -53,7 +53,7 @@ public static List<Type> by_property
 {
     get
     {
-        return (from type in Assembly.GetExecutingAssembly().GetTypes()
+        return (from type in Assembly.Load("Assembly-CSharp").GetTypes()
                 where type.Namespace == "XXXX"
                 select type).ToList();
     }
