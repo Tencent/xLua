@@ -1057,5 +1057,27 @@ namespace XLua
                 return LuaAPI.luaL_error(L, "c# exception in delegate constructor: " + e);
             }
         }
+
+        [MonoPInvokeCallback(typeof(LuaCSFunction))]
+        public static int ToFunction(RealStatePtr L)
+        {
+            try
+            {
+                ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
+                MethodBase m;
+                translator.Get(L, 1, out m);
+                if (m == null)
+                {
+                    return LuaAPI.luaL_error(L, "ToFunction: #1 argument must be a MethodBase");
+                }
+                translator.PushFixCSFunction(L,
+                        new LuaCSFunction(translator.methodWrapsCache._GenMethodWrap(m.DeclaringType, m.Name, new MethodBase[] { m }).Call));
+                return 1;
+            }
+            catch (Exception e)
+            {
+                return LuaAPI.luaL_error(L, "c# exception in ToFunction: " + e);
+            }
+        }
     }
 }

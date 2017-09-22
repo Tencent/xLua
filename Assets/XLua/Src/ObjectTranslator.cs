@@ -562,6 +562,9 @@ namespace XLua
             LuaAPI.xlua_pushasciistring(L, "metatable_operation");
             LuaAPI.lua_pushstdcallcfunction(L, StaticLuaCallbacks.XLuaMetatableOperation);
             LuaAPI.lua_rawset(L, -3);
+            LuaAPI.xlua_pushasciistring(L, "tofunction");
+            LuaAPI.lua_pushstdcallcfunction(L, StaticLuaCallbacks.ToFunction);
+            LuaAPI.lua_rawset(L, -3);
             LuaAPI.lua_pop(L, 1);
 
             LuaAPI.lua_createtable(L, 1, 4); // 4 for __gc, __tostring, __index, __newindex

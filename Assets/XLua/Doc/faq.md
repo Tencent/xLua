@@ -280,3 +280,44 @@ assert(coroutine.resume(co, ...))
 2、上层catch后，不打印
 
 比如某些sdk，在回调业务时，try-catch后把异常吃了。
+
+## 重载含糊如何处理
+
+比如由于忽略out参数导致的Physics.Raycast其中一个重载调用不了，比如short，int无法区分的问题。
+
+首先out参数导致重载含糊比较少见，目前只反馈（截至2017-9-22）过Physics.Raycast一个，建议通过自行封装来解决，静态函数的直接封装个另外名字的，如果是成员方法则通过Extension method来封装。
+
+如果是hotfix场景，我们之前并没有提前封装，又希望调用指定重载怎么办？
+
+可以通过xlua.tofunction结合反射来处理，xlua.tofunction输入一个MethodBase对象，返回一个lua函数。比如下面的C#代码：
+
+~~~csharp
+class TestOverload
+{
+    public int Add(int a, int b)
+    {
+        Debug.Log("int version");
+        return a + b;
+    }
+
+    public short Add(short a, short b)
+    {
+        Debug.Log("short version");
+        return (short)(a + b);
+    }
+}
+~~~
+
+我们可以这么调用指定重载：
+
+~~~lua
+local m1 = typeof(CS.TestOverload):GetMethod('Add', {typeof(CS.System.Int16), typeof(CS.System.Int16)})
+local m2 = typeof(CS.TestOverload):GetMethod('Add', {typeof(CS.System.Int32), typeof(CS.System.Int32)})
+local f1 = xlua.tofunction(m1) --切记对于同一个MethodBase，只tofunction一次，然后重复使用
+local f2 = xlua.tofunction(m2)
+
+local obj = CS.TestOverload()
+
+f1(obj, 1, 2) --调用short版本，成员方法，所以要传对象，静态方法则不需要
+f2(obj, 1, 2) --调用int版本
+~~~
