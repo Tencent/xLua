@@ -83,6 +83,16 @@ xLua只会生成加了该配置的类型，不会自动生成其父类的适配�
 
 建议所有要在Lua访问的类型，要么加LuaCallCSharp，要么加上ReflectionUse，这才能够保证在各平台都能正常运行。
 
+### XLua.DoNotGen
+
+指明一个类里头的部分函数、字段、属性不生成代码，通过反射访问。
+
+只能标准Dictionary<Type, List<string>>的field或者property。key指明的是生效的类，value是一个列表，配置的是不生成代码的函数、字段、属性的名字。
+
+和ReflectionUse的区别是：1、ReflectionUse指明的是整个类；2、当第一次访问一个函数（字段、属性）时，ReflectionUse会把整个类都wrap，而DoNotGen只wrap该函数（字段、属性），换句话DoNotGen更lazy一些；
+
+和BlackList的区别是：1、BlackList配了就不能用；2、BlackList能指明某重载函数，DoNotGen不能；
+
 ### XLua.CSharpCallLua
 
 如果希望把一个lua函数适配到一个C# delegate（一类是C#侧各种回调：UI事件，delegate参数，比如List&lt;T&gt;:ForEach；另外一类场景是通过LuaTable的Get函数指明一个lua函数绑定到一个delegate）。或者把一个lua table适配到一个C# interface，该delegate或者interface需要加上该配置。
