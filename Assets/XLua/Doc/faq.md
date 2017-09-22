@@ -285,7 +285,7 @@ assert(coroutine.resume(co, ...))
 
 比如由于忽略out参数导致的Physics.Raycast其中一个重载调用不了，比如short，int无法区分的问题。
 
-首先out参数导致重载含糊比较少见，目前只反馈（截至2017-9-22）过Physics.Raycast一个，建议通过自行封装来解决，静态函数的直接封装个另外名字的，如果是成员方法则通过Extension method来封装。
+首先out参数导致重载含糊比较少见，目前只反馈（截至2017-9-22）过Physics.Raycast一个，建议通过自行封装来解决（short，int这种情况也适用）：静态函数的直接封装个另外名字的，如果是成员方法则通过Extension method来封装。
 
 如果是hotfix场景，我们之前并没有提前封装，又希望调用指定重载怎么办？
 
@@ -321,3 +321,5 @@ local obj = CS.TestOverload()
 f1(obj, 1, 2) --调用short版本，成员方法，所以要传对象，静态方法则不需要
 f2(obj, 1, 2) --调用int版本
 ~~~
+
+注意：xlua.tofunction由于使用不太方便，以及使用了反射，所以建议做作为临时方案，尽量用封装的方法来解决。
