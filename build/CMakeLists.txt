@@ -136,6 +136,7 @@ if (APPLE)
            ${XLUA_CORE}
            ${THIRDPART_SRC}
         )
+		set_xcode_property (xlua IPHONEOS_DEPLOYMENT_TARGET "7.0")
     else ()
         set(CMAKE_OSX_ARCHITECTURES "$(ARCHS_STANDARD_32_64_BIT)")
         add_library(xlua MODULE
