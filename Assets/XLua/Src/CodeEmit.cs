@@ -1555,7 +1555,7 @@ namespace XLua
                     }
                 }
 
-                Label endOfBlock = endOfBlock = il.DefineLabel();
+                Label endOfBlock = il.DefineLabel();
 
                 if (needCheckParameterType)
                 {
