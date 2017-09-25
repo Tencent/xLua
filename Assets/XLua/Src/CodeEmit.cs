@@ -1159,7 +1159,7 @@ namespace XLua
             il.Emit(OpCodes.Ldarg_0);
             il.Emit(OpCodes.Ldloc, translator);
             il.Emit(OpCodes.Ldc_I4_1);
-            il.Emit(OpCodes.Ldc_I4, instanceMethods.Count);
+            il.Emit(OpCodes.Ldc_I4_1);
             il.Emit(OpCodes.Ldc_I4_1);
             il.Emit(OpCodes.Ldc_I4_1);
             il.Emit(OpCodes.Ldc_I4_M1);
