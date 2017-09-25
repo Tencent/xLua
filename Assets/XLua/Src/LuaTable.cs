@@ -272,7 +272,7 @@ namespace XLua
         }
 
 #if THREAD_SAFE || HOTFIX_ENABLE
-        [Obsolete("not thread saft!", true)]
+        [Obsolete("not thread safe!", true)]
 #endif
         public IEnumerable GetKeys()
         {
@@ -290,7 +290,7 @@ namespace XLua
         }
 
 #if THREAD_SAFE || HOTFIX_ENABLE
-        [Obsolete("not thread saft!", true)]
+        [Obsolete("not thread safe!", true)]
 #endif
         public IEnumerable<T> GetKeys<T>()
         {
