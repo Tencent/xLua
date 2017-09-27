@@ -1,0 +1,37 @@
+diff a/Assets/XLua/Examples/08_Hotfix/HotfixTest.cs b/Assets/XLua/Examples/08_Hotfix/HotfixTest.cs	(rejected hunks)
+@@ -24,14 +24,27 @@
+     {
+         if (GUI.Button(new Rect(10, 100, 300, 150), "Hotfix"))
+         {
+-            luaenv.DoString(@"
+-                xlua.hotfix(CS.HotfixTest, 'Update', function(self)
+-                    self.tick = self.tick + 1
+-                    if (self.tick % 50) == 0 then
+-                        print('<<<<<<<<Update in lua, tick = ' .. self.tick)
+-                    end
+-                end)
+-            ");
++#if HOTFIX_ENABLE
++            try
++            {
++                luaenv.DoString(@"
++                    xlua.hotfix(CS.HotfixTest, 'Update', function(self)
++                        self.tick = self.tick + 1
++                        if (self.tick % 50) == 0 then
++                            print('<<<<<<<<Update in lua, tick = ' .. self.tick)
++                        end
++                    end)
++                ");
++            }
++            catch
++            {
++                Debug.LogWarning("Code not generated (menu: XLua > Generate Code) or inject not complete (menu: XLua > Hotfix Inject In Editor).");
++                Debug.LogWarning("Please read all documents(faq) before you run this example.");
++            }
++#else
++            Debug.LogWarning("HOTFIX_ENABLE not defined.");
++            Debug.LogWarning("Please read all documents(faq) before you run this example.");
++#endif
+         }
+     }
+ }
