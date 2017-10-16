@@ -113,5 +113,22 @@ namespace XLua
         }
 #endif
 
+        public static bool IsNestedPublic(this Type type)
+        {
+#if !UNITY_WSA || UNITY_EDITOR
+            return type.IsNestedPublic;
+#else
+            return type.GetTypeInfo().IsNestedPublic;
+#endif        
+        }
+
+        public static bool IsPublic(this Type type)
+        {
+#if !UNITY_WSA || UNITY_EDITOR
+            return type.IsPublic;
+#else
+            return type.GetTypeInfo().IsPublic;
+#endif        
+        }
     }
 }

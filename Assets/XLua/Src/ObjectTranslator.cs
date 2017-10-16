@@ -355,15 +355,19 @@ namespace XLua
             {
                 return null;
             }
-            
+
             // get by parameters
             MethodInfo delegateMethod = delegateType.GetMethod("Invoke");
             var methods = bridge.GetType().GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
-            for(int i = 0; i < methods.Length; i++)
+            for (int i = 0; i < methods.Length; i++)
             {
                 if (!methods[i].IsConstructor && Utils.IsParamsMatch(delegateMethod, methods[i]))
                 {
+#if UNITY_EDITOR || XLUA_GENERAL
                     return Delegate.CreateDelegate(delegateType, bridge, methods[i]);
+#else
+                    return methods[i].CreateDelegate(delegateType, bridge);
+#endif
                 }
             }
 
