@@ -1584,10 +1584,10 @@ namespace XLua
         {
             if (type.IsNested)
             {
-                if (!type.IsNestedPublic) return false;
+                if (!type.IsNestedPublic()) return false;
                 return IsPublic(type.DeclaringType);
             }
-            return type.IsPublic;
+            return type.IsPublic();
         }
     }
 }
