@@ -1,37 +1,38 @@
 ﻿using UnityEngine;
-using System.Collections;
+using UnityEngine.UI;
 using XLua;
 
 [Hotfix]
-public class HotfixTest : MonoBehaviour {
-    LuaEnv luaenv = new LuaEnv();
+public class HotfixTest : MonoBehaviour
+{
+    public Button btn_Hotfix;
 
+    LuaEnv luaenv = new LuaEnv();
     public int tick = 0; //如果是private的，在lua设置xlua.private_accessible(CS.HotfixTest)后即可访问
 
-    // Use this for initialization
-    void Start () {
+    void Start()
+    {
+        // 使用Hotfix功能需在指定平台添加宏定义"HOTFIX_ENABLE"，使用前请仔细阅读相关说明文档
+        btn_Hotfix.onClick.AddListener(Hotfix);
     }
 
-    // Update is called once per frame
-    void Update () {
-	    if (++tick % 50 == 0)
+    void Update()
+    {
+        if (++tick % 50 == 0)
         {
             Debug.Log(">>>>>>>>Update in C#, tick = " + tick);
         }
-	}
+    }
 
-    void OnGUI()
+    void Hotfix()
     {
-        if (GUI.Button(new Rect(10, 100, 300, 150), "Hotfix"))
-        {
-            luaenv.DoString(@"
-                xlua.hotfix(CS.HotfixTest, 'Update', function(self)
-                    self.tick = self.tick + 1
-                    if (self.tick % 50) == 0 then
-                        print('<<<<<<<<Update in lua, tick = ' .. self.tick)
-                    end
-                end)
-            ");
-        }
+        luaenv.DoString(@"
+            xlua.hotfix(CS.HotfixTest, 'Update', function(self)
+                self.tick = self.tick + 1
+                if (self.tick % 50) == 0 then
+                    print('<<<<<<<<Update in lua, tick = ' .. self.tick)
+                end
+            end)
+        ");
     }
 }
