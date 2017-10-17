@@ -1587,6 +1587,17 @@ namespace XLua
                 if (!type.IsNestedPublic()) return false;
                 return IsPublic(type.DeclaringType);
             }
+            if (type.IsGenericType())
+            {
+                var gas = type.GetGenericArguments();
+                for(int i = 0; i < gas.Length; i++)
+                {
+                    if (!IsPublic(gas[i]))
+                    {
+                        return false;
+                    }
+                }
+            }
             return type.IsPublic();
         }
     }
