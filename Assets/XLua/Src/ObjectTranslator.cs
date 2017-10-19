@@ -363,11 +363,7 @@ namespace XLua
             {
                 if (!methods[i].IsConstructor && Utils.IsParamsMatch(delegateMethod, methods[i]))
                 {
-#if UNITY_EDITOR || XLUA_GENERAL
                     return Delegate.CreateDelegate(delegateType, bridge, methods[i]);
-#else
-                    return methods[i].CreateDelegate(delegateType, bridge);
-#endif
                 }
             }
 
