@@ -18,3 +18,5 @@ script:
   - cp ../build/build_linux64_lj/libxlua.so Bin/
   - mono Bin/XLuaUnitTest.exe
   - mono Bin/XLuaUnitTestGenCode.exe
+  - mono Tools/XLuaHotfixInject.exe Bin/XLuaTestGenCode.exe ./
+  - mono Bin/XLuaTestGenCode.exe
