@@ -1058,10 +1058,18 @@ namespace XLua
 
 #if UNITY_EDITOR_OSX
 			var mono_path = Path.Combine(Path.GetDirectoryName(typeof(UnityEngine.Debug).Module.FullyQualifiedName),
-				"../MonoBleedingEdge/bin/mono");
+#if UNITY_5_5_OR_NEWER
+            "../Mono/bin/mono");
+#else
+            "../MonoBleedingEdge/bin/mono");
+#endif
 #elif UNITY_EDITOR_WIN
             var mono_path = Path.Combine(Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName),
+#if UNITY_5_5_OR_NEWER
+                "Data/Mono/bin/mono.exe");
+#else
                 "Data/MonoBleedingEdge/bin/mono.exe");
+#endif
 #endif
             var inject_tool_path = "./Tools/XLuaHotfixInject.exe";
             if (!File.Exists(inject_tool_path))
