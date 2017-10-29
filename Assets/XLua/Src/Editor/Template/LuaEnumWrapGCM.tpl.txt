@@ -1,0 +1,75 @@
+#if USE_UNI_LUA
+using LuaAPI = UniLua.Lua;
+using RealStatePtr = UniLua.ILuaState;
+using LuaCSFunction = UniLua.CSharpFunctionDelegate;
+#else
+using LuaAPI = XLua.LuaDLL.Lua;
+using RealStatePtr = System.IntPtr;
+using LuaCSFunction = XLua.LuaDLL.lua_CSFunction;
+#endif
+
+using XLua;
+using System.Collections.Generic;
+<%
+require "TemplateCommon"
+%>
+
+namespace XLua
+{
+	public partial class ObjectTranslator
+    {
+    <%ForEachCsList(types, function(type)
+	local fields = g_enum_get_fields_flag and type:GetFields(g_enum_get_fields_flag) or type:GetFields()
+	local v_type_name = CSVariableName(type)
+	%>
+		public void __Register<%=v_type_name%>(RealStatePtr L)
+        {
+		    Utils.BeginObjectRegister(typeof(<%=CsFullTypeName(type)%>), L, this, 0, 0, 0, 0);
+			Utils.EndObjectRegister(typeof(<%=CsFullTypeName(type)%>), L, this, null, null, null, null, null);
+			
+			Utils.BeginClassRegister(typeof(<%=CsFullTypeName(type)%>), L, null, <%=fields.Length + 1%>, 0, 0);
+            <% ForEachCsList(fields, function(field) 
+			if field.Name == "value__" or IsObsolute(field) then return end
+			%>
+            Utils.RegisterObject(L, this, Utils.CLS_IDX, "<%=field.Name%>", <%=CsFullTypeName(type)%>.<%=UnK(field.Name)%>);
+            <%end)%>
+			Utils.RegisterFunc(L, Utils.CLS_IDX, "__CastFrom", __CastFrom<%=v_type_name%>);
+            
+            Utils.EndClassRegister(typeof(<%=CsFullTypeName(type)%>), L, this);
+        }
+		
+        int __CastFrom<%=v_type_name%>(RealStatePtr L, int __gen_top)
+		{
+			LuaTypes lua_type = LuaAPI.lua_type(L, 1);
+            if (lua_type == LuaTypes.LUA_TNUMBER)
+            {
+                Push<%=v_type_name%>(L, (<%=CsFullTypeName(type)%>)LuaAPI.xlua_tointeger(L, 1));
+            }
+            else if(lua_type == LuaTypes.LUA_TSTRING)
+            {
+			    <%
+                local is_first = true
+				ForEachCsList(fields, function(field, i) 
+			        if field.Name == "value__" or IsObsolute(field) then return end
+			    %><%=(is_first and "" or "else ")%>if (LuaAPI.xlua_is_eq_str(L, 1, "<%=field.Name%>"))
+                {
+                    Push<%=v_type_name%>(L, <%=CsFullTypeName(type)%>.<%=UnK(field.Name)%>);
+                }
+				<%
+				is_first = false
+				end)
+                %>else
+                {
+                    return LuaAPI.luaL_error(L, "invalid string for <%=CsFullTypeName(type)%>!");
+                }
+            }
+            else
+            {
+                return LuaAPI.luaL_error(L, "invalid lua type for <%=CsFullTypeName(type)%>! Expect number or string, got + " + lua_type);
+            }
+
+            return 1;
+		}
+    <%end)%>
+	}
+}

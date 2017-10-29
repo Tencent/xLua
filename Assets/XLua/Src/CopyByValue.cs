@@ -143,7 +143,7 @@ namespace XLua
 
         public static bool IsStruct(Type type)
         {
-            return type.IsValueType && !type.IsEnum && !type.IsPrimitive;
+            return type.IsValueType() && !type.IsEnum() && !type.IsPrimitive();
         }
 
     }

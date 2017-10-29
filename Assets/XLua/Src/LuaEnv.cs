@@ -21,10 +21,23 @@ namespace XLua
 {
     using System;
     using System.Collections.Generic;
+    using System.Reflection;
 
     public class LuaEnv : IDisposable
     {
-        internal RealStatePtr L;
+        internal RealStatePtr rawL;
+
+        internal RealStatePtr L
+        {
+            get
+            {
+                if (rawL == RealStatePtr.Zero)
+                {
+                    throw new InvalidOperationException("this lua env had disposed!");
+                }
+                return rawL;
+            }
+        }
 
         private LuaTable _G;
 
@@ -32,90 +45,120 @@ namespace XLua
 
         internal int errorFuncRef = -1;
 
-#if THREAD_SAFT || HOTFIX_ENABLE
-        internal object luaEnvLock = new object();
+#if THREAD_SAFE || HOTFIX_ENABLE
+        internal static object luaLock = new object();
+
+        internal object luaEnvLock
+        {
+            get
+            {
+                return luaLock;
+            }
+        }
 #endif
+
+        const int LIB_VERSION_EXPECT = 103;
 
         public LuaEnv()
         {
-#if THREAD_SAFT || HOTFIX_ENABLE
+            if (LuaAPI.xlua_get_lib_version() != LIB_VERSION_EXPECT && LuaAPI.xlua_get_lib_version() != (LIB_VERSION_EXPECT -1))
+            {
+                throw new InvalidProgramException("wrong lib version expect:"
+                    + LIB_VERSION_EXPECT + " but got:" + LuaAPI.xlua_get_lib_version());
+            }
+
+#if THREAD_SAFE || HOTFIX_ENABLE
             lock(luaEnvLock)
             {
 #endif
-                LuaIndexes.LUA_REGISTRYINDEX = LuaAPI.xlua_get_registry_index(); ;
+                LuaIndexes.LUA_REGISTRYINDEX = LuaAPI.xlua_get_registry_index();
+#if GEN_CODE_MINIMIZE
+                LuaAPI.xlua_set_csharp_wrapper_caller(InternalGlobals.CSharpWrapperCallerPtr);
+#endif
                 // Create State
-                L = LuaAPI.luaL_newstate();
+                rawL = LuaAPI.luaL_newstate();
 
                 //Init Base Libs
-                LuaAPI.luaopen_xlua(L);
-                LuaAPI.luaopen_i64lib(L);
-                LuaAPI.luaopen_perflib(L);
+                LuaAPI.luaopen_xlua(rawL);
+                LuaAPI.luaopen_i64lib(rawL);
+                LuaAPI.luaopen_perflib(rawL);
 
-                translator = new ObjectTranslator(this, L);
-                translator.createFunctionMetatable(L);
-                translator.OpenLib(L);
-                ObjectTranslatorPool.Instance.Add(L, translator);
+                translator = new ObjectTranslator(this, rawL);
+                translator.createFunctionMetatable(rawL);
+                translator.OpenLib(rawL);
+                ObjectTranslatorPool.Instance.Add(rawL, translator);
 
-                LuaAPI.lua_atpanic(L, StaticLuaCallbacks.Panic);
+                LuaAPI.lua_atpanic(rawL, StaticLuaCallbacks.Panic);
 
-                LuaAPI.lua_pushstdcallcfunction(L, StaticLuaCallbacks.Print);
-                LuaAPI.lua_setglobal(L, "print");
+#if !XLUA_GENERAL
+                LuaAPI.lua_pushstdcallcfunction(rawL, StaticLuaCallbacks.Print);
+                if (0 != LuaAPI.xlua_setglobal(rawL, "print"))
+                {
+                    throw new Exception("call xlua_setglobal fail!");
+                }
+#endif
 
                 //template engine lib register
-                TemplateEngine.LuaTemplate.OpenLib(L);
+                TemplateEngine.LuaTemplate.OpenLib(rawL);
 
                 AddSearcher(StaticLuaCallbacks.LoadBuiltinLib, 2); // just after the preload searcher
                 AddSearcher(StaticLuaCallbacks.LoadFromCustomLoaders, 3);
+#if !XLUA_GENERAL
                 AddSearcher(StaticLuaCallbacks.LoadFromResource, 4);
                 AddSearcher(StaticLuaCallbacks.LoadFromStreamingAssetsPath, -1);
+#endif
                 DoString(init_xlua, "Init");
                 init_xlua = null;
 
                 AddBuildin("socket.core", StaticLuaCallbacks.LoadSocketCore);
                 AddBuildin("socket", StaticLuaCallbacks.LoadSocketCore);
 
-                LuaAPI.lua_newtable(L); //metatable of indexs and newindexs functions
-                LuaAPI.xlua_pushasciistring(L, "__index");
-                LuaAPI.lua_pushstdcallcfunction(L, StaticLuaCallbacks.MetaFuncIndex);
-                LuaAPI.lua_rawset(L, -3);
+                LuaAPI.lua_newtable(rawL); //metatable of indexs and newindexs functions
+                LuaAPI.xlua_pushasciistring(rawL, "__index");
+                LuaAPI.lua_pushstdcallcfunction(rawL, StaticLuaCallbacks.MetaFuncIndex);
+                LuaAPI.lua_rawset(rawL, -3);
 
-                LuaAPI.xlua_pushasciistring(L, Utils.LuaIndexsFieldName);
-                LuaAPI.lua_newtable(L);
-                LuaAPI.lua_pushvalue(L, -3);
-                LuaAPI.lua_setmetatable(L, -2);
-                LuaAPI.lua_rawset(L, LuaIndexes.LUA_REGISTRYINDEX);
+                LuaAPI.xlua_pushasciistring(rawL, Utils.LuaIndexsFieldName);
+                LuaAPI.lua_newtable(rawL);
+                LuaAPI.lua_pushvalue(rawL, -3);
+                LuaAPI.lua_setmetatable(rawL, -2);
+                LuaAPI.lua_rawset(rawL, LuaIndexes.LUA_REGISTRYINDEX);
 
-                LuaAPI.xlua_pushasciistring(L, Utils.LuaNewIndexsFieldName);
-                LuaAPI.lua_newtable(L);
-                LuaAPI.lua_pushvalue(L, -3);
-                LuaAPI.lua_setmetatable(L, -2);
-                LuaAPI.lua_rawset(L, LuaIndexes.LUA_REGISTRYINDEX);
+                LuaAPI.xlua_pushasciistring(rawL, Utils.LuaNewIndexsFieldName);
+                LuaAPI.lua_newtable(rawL);
+                LuaAPI.lua_pushvalue(rawL, -3);
+                LuaAPI.lua_setmetatable(rawL, -2);
+                LuaAPI.lua_rawset(rawL, LuaIndexes.LUA_REGISTRYINDEX);
 
-                LuaAPI.xlua_pushasciistring(L, Utils.LuaClassIndexsFieldName);
-                LuaAPI.lua_newtable(L);
-                LuaAPI.lua_pushvalue(L, -3);
-                LuaAPI.lua_setmetatable(L, -2);
-                LuaAPI.lua_rawset(L, LuaIndexes.LUA_REGISTRYINDEX);
+                LuaAPI.xlua_pushasciistring(rawL, Utils.LuaClassIndexsFieldName);
+                LuaAPI.lua_newtable(rawL);
+                LuaAPI.lua_pushvalue(rawL, -3);
+                LuaAPI.lua_setmetatable(rawL, -2);
+                LuaAPI.lua_rawset(rawL, LuaIndexes.LUA_REGISTRYINDEX);
 
-                LuaAPI.xlua_pushasciistring(L, Utils.LuaClassNewIndexsFieldName);
-                LuaAPI.lua_newtable(L);
-                LuaAPI.lua_pushvalue(L, -3);
-                LuaAPI.lua_setmetatable(L, -2);
-                LuaAPI.lua_rawset(L, LuaIndexes.LUA_REGISTRYINDEX);
+                LuaAPI.xlua_pushasciistring(rawL, Utils.LuaClassNewIndexsFieldName);
+                LuaAPI.lua_newtable(rawL);
+                LuaAPI.lua_pushvalue(rawL, -3);
+                LuaAPI.lua_setmetatable(rawL, -2);
+                LuaAPI.lua_rawset(rawL, LuaIndexes.LUA_REGISTRYINDEX);
 
-                LuaAPI.lua_pop(L, 1); // pop metatable of indexs and newindexs functions
+                LuaAPI.lua_pop(rawL, 1); // pop metatable of indexs and newindexs functions
 
-                LuaAPI.xlua_pushasciistring(L, "xlua_main_thread");
-                LuaAPI.lua_pushthread(L);
-                LuaAPI.lua_rawset(L, LuaIndexes.LUA_REGISTRYINDEX);
-
+                LuaAPI.xlua_pushasciistring(rawL, "xlua_main_thread");
+                LuaAPI.lua_pushthread(rawL);
+                LuaAPI.lua_rawset(rawL, LuaIndexes.LUA_REGISTRYINDEX);
+#if !XLUA_GENERAL && (!UNITY_WSA || UNITY_EDITOR)
                 translator.Alias(typeof(Type), "System.MonoType");
+#endif
 
-                LuaAPI.lua_getglobal(L, "_G");
-                translator.Get(L, -1, out _G);
-                LuaAPI.lua_pop(L, 1);
+            if (0 != LuaAPI.xlua_getglobal(rawL, "_G"))
+                {
+                    throw new Exception("call xlua_getglobal fail!");
+                }
+                translator.Get(rawL, -1, out _G);
+                LuaAPI.lua_pop(rawL, 1);
 
-                errorFuncRef = LuaAPI.get_error_func_ref(L);
+                errorFuncRef = LuaAPI.get_error_func_ref(rawL);
 
                 if (initers != null)
                 {
@@ -125,9 +168,9 @@ namespace XLua
                     }
                 }
 
-                translator.CreateArrayMetatable(L);
-                translator.CreateDelegateMetatable(L);
-#if THREAD_SAFT || HOTFIX_ENABLE
+                translator.CreateArrayMetatable(rawL);
+                translator.CreateDelegateMetatable(rawL);
+#if THREAD_SAFE || HOTFIX_ENABLE
             }
 #endif
         }
@@ -151,9 +194,9 @@ namespace XLua
             }
         }
 
-        public T LoadString<T>(string chunk, string chunkName = "chunk", LuaTable env = null)
+        public T LoadString<T>(byte[] chunk, string chunkName = "chunk", LuaTable env = null)
         {
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
             lock (luaEnvLock)
             {
 #endif
@@ -161,25 +204,31 @@ namespace XLua
                 {
                     throw new InvalidOperationException(typeof(T).Name + " is not a delegate type nor LuaFunction");
                 }
+                var _L = L;
+                int oldTop = LuaAPI.lua_gettop(_L);
 
-                int oldTop = LuaAPI.lua_gettop(L);
-
-                if (LuaAPI.luaL_loadbuffer(L, chunk, chunkName) != 0)
+                if (LuaAPI.xluaL_loadbuffer(_L, chunk, chunk.Length, chunkName) != 0)
                     ThrowExceptionFromError(oldTop);
 
                 if (env != null)
                 {
-                    env.push(L);
-                    LuaAPI.lua_setfenv(L, -2);
+                    env.push(_L);
+                    LuaAPI.lua_setfenv(_L, -2);
                 }
 
-                T result = (T)translator.GetObject(L, -1, typeof(T));
-                LuaAPI.lua_settop(L, oldTop);
+                T result = (T)translator.GetObject(_L, -1, typeof(T));
+                LuaAPI.lua_settop(_L, oldTop);
 
                 return result;
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
             }
 #endif
+        }
+
+        public T LoadString<T>(string chunk, string chunkName = "chunk", LuaTable env = null)
+        {
+            byte[] bytes = System.Text.Encoding.UTF8.GetBytes(chunk);
+            return LoadString<T>(bytes, chunkName, env);
         }
 
         public LuaFunction LoadString(string chunk, string chunkName = "chunk", LuaTable env = null)
@@ -187,26 +236,27 @@ namespace XLua
             return LoadString<LuaFunction>(chunk, chunkName, env);
         }
 
-        public object[] DoString(string chunk, string chunkName = "chunk", LuaTable env = null)
+        public object[] DoString(byte[] chunk, string chunkName = "chunk", LuaTable env = null)
         {
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
             lock (luaEnvLock)
             {
 #endif
-                int oldTop = LuaAPI.lua_gettop(L);
-                int errFunc = LuaAPI.load_error_func(L, errorFuncRef);
-                if (LuaAPI.luaL_loadbuffer(L, chunk, chunkName) == 0)
+                var _L = L;
+                int oldTop = LuaAPI.lua_gettop(_L);
+                int errFunc = LuaAPI.load_error_func(_L, errorFuncRef);
+                if (LuaAPI.xluaL_loadbuffer(_L, chunk, chunk.Length, chunkName) == 0)
                 {
                     if (env != null)
                     {
-                        env.push(L);
-                        LuaAPI.lua_setfenv(L, -2);
+                        env.push(_L);
+                        LuaAPI.lua_setfenv(_L, -2);
                     }
 
-                    if (LuaAPI.lua_pcall(L, 0, -1, errFunc) == 0)
+                    if (LuaAPI.lua_pcall(_L, 0, -1, errFunc) == 0)
                     {
-                        LuaAPI.lua_remove(L, errFunc);
-                        return translator.popValues(L, oldTop);
+                        LuaAPI.lua_remove(_L, errFunc);
+                        return translator.popValues(_L, oldTop);
                     }
                     else
                         ThrowExceptionFromError(oldTop);
@@ -215,34 +265,41 @@ namespace XLua
                     ThrowExceptionFromError(oldTop);
 
                 return null;
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
             }
 #endif
         }
 
+        public object[] DoString(string chunk, string chunkName = "chunk", LuaTable env = null)
+        {
+            byte[] bytes = System.Text.Encoding.UTF8.GetBytes(chunk);
+            return DoString(bytes, chunkName, env);
+        }
+
         private void AddSearcher(LuaCSFunction searcher, int index)
         {
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
             lock (luaEnvLock)
             {
 #endif
+                var _L = L;
                 //insert the loader
-                LuaAPI.xlua_getloaders(L);
-                if (!LuaAPI.lua_istable(L, -1))
+                LuaAPI.xlua_getloaders(_L);
+                if (!LuaAPI.lua_istable(_L, -1))
                 {
                     throw new Exception("Can not set searcher!");
                 }
-                uint len = LuaAPI.xlua_objlen(L, -1);
+                uint len = LuaAPI.xlua_objlen(_L, -1);
                 index = index < 0 ? (int)(len + index + 2) : index;
                 for (int e = (int)len + 1; e > index; e--)
                 {
-                    LuaAPI.xlua_rawgeti(L, -1, e - 1);
-                    LuaAPI.xlua_rawseti(L, -2, e);
+                    LuaAPI.xlua_rawgeti(_L, -1, e - 1);
+                    LuaAPI.xlua_rawseti(_L, -2, e);
                 }
-                LuaAPI.lua_pushstdcallcfunction(L, searcher);
-                LuaAPI.xlua_rawseti(L, -2, index);
-                LuaAPI.lua_pop(L, 1);
-#if THREAD_SAFT || HOTFIX_ENABLE
+                LuaAPI.lua_pushstdcallcfunction(_L, searcher);
+                LuaAPI.xlua_rawseti(_L, -2, index);
+                LuaAPI.lua_pop(_L, 1);
+#if THREAD_SAFE || HOTFIX_ENABLE
             }
 #endif
         }
@@ -252,6 +309,7 @@ namespace XLua
             translator.Alias(type, alias);
         }
 
+#if !XLUA_GENERAL
         int last_check_point = 0;
 
         int max_check_per_tick = 20;
@@ -262,23 +320,27 @@ namespace XLua
         }
 
         Func<object, bool> object_valid_checker = new Func<object, bool>(ObjectValidCheck);
+#endif
 
         public void Tick()
         {
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
             lock (luaEnvLock)
             {
 #endif
+                var _L = L;
                 lock (refQueue)
                 {
                     while (refQueue.Count > 0)
                     {
                         GCAction gca = refQueue.Dequeue();
-                        translator.ReleaseLuaBase(L, gca.Reference, gca.IsDelegate);
+                        translator.ReleaseLuaBase(_L, gca.Reference, gca.IsDelegate);
                     }
                 }
+#if !XLUA_GENERAL
                 last_check_point = translator.objects.Check(last_check_point, max_check_per_tick, object_valid_checker, translator.reverseMap);
-#if THREAD_SAFT || HOTFIX_ENABLE
+#endif
+#if THREAD_SAFE || HOTFIX_ENABLE
             }
 #endif
         }
@@ -291,18 +353,19 @@ namespace XLua
 
         public LuaTable NewTable()
         {
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
             lock (luaEnvLock)
             {
 #endif
-                int oldTop = LuaAPI.lua_gettop(L);
+                var _L = L;
+                int oldTop = LuaAPI.lua_gettop(_L);
 
-                LuaAPI.lua_newtable(L);
-                LuaTable returnVal = (LuaTable)translator.GetObject(L, -1, typeof(LuaTable));
+                LuaAPI.lua_newtable(_L);
+                LuaTable returnVal = (LuaTable)translator.GetObject(_L, -1, typeof(LuaTable));
 
-                LuaAPI.lua_settop(L, oldTop);
+                LuaAPI.lua_settop(_L, oldTop);
                 return returnVal;
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
             }
 #endif
         }
@@ -311,6 +374,10 @@ namespace XLua
 
         public void Dispose()
         {
+            FullGc();
+            System.GC.Collect();
+            System.GC.WaitForPendingFinalizers();
+
             Dispose(true);
 
             System.GC.Collect();
@@ -319,32 +386,34 @@ namespace XLua
 
         public virtual void Dispose(bool dispose)
         {
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
             lock (luaEnvLock)
             {
 #endif
                 if (disposed) return;
                 Tick();
 
+                if (!translator.AllDelegateBridgeReleased())
+                {
+                    throw new InvalidOperationException("try to dispose a LuaEnv with C# callback!");
+                }
+
                 LuaAPI.lua_close(L);
 
                 ObjectTranslatorPool.Instance.Remove(L);
-                if (translator != null)
-                {
-                    translator = null;
-                }
+                translator = null;
 
-                L = IntPtr.Zero;
+                rawL = IntPtr.Zero;
 
                 disposed = true;
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
             }
 #endif
         }
 
         public void ThrowExceptionFromError(int oldTop)
         {
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
             lock (luaEnvLock)
             {
 #endif
@@ -358,7 +427,7 @@ namespace XLua
                 // A non-wrapped Lua error (best interpreted as a string) - wrap it and throw it
                 if (err == null) err = "Unknown Lua Error";
                 throw new LuaException(err.ToString());
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
             }
 #endif
         }
@@ -457,6 +526,7 @@ namespace XLua
             end
 
             xlua.hotfix = function(cs, field, func)
+                if func == nil then func = false end
                 local tbl = (type(field) == 'table') and field or {[field] = func}
                 for k, v in pairs(tbl) do
                     local cflag = ''
@@ -464,13 +534,24 @@ namespace XLua
                         cflag = '_c'
                         k = 'ctor'
                     end
-                    xlua.access(cs, cflag .. '__Hitfix0_'..k, v) -- at least one
+                    local f = type(v) == 'function' and v or nil
+                    xlua.access(cs, cflag .. '__Hotfix0_'..k, f) -- at least one
                     pcall(function()
                         for i = 1, 99 do
-                            xlua.access(cs, '__Hitfix'..i..'_'..k, v)
+                            xlua.access(cs, cflag .. '__Hotfix'..i..'_'..k, f)
                         end
                     end)
                 end
+            end
+            xlua.getmetatable = function(cs)
+                return xlua.metatable_operation(cs)
+            end
+            xlua.setmetatable = function(cs, mt)
+                return xlua.metatable_operation(cs, mt)
+            end
+            xlua.setclass = function(parent, name, impl)
+                impl.UnderlyingSystemType = parent[name].UnderlyingSystemType
+                rawset(parent, name, impl)
             end
             ";
 
@@ -489,7 +570,7 @@ namespace XLua
 
         public void AddBuildin(string name, LuaCSFunction initer)
         {
-            if (!initer.Method.IsStatic || !Attribute.IsDefined(initer.Method, typeof(MonoPInvokeCallbackAttribute)))
+            if (!Utils.IsStaticPInvokeCSFunction(initer))
             {
                 throw new Exception("initer must be static and has MonoPInvokeCallback Attribute!");
             }
@@ -504,25 +585,25 @@ namespace XLua
         {
             get
             {
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
                 lock (luaEnvLock)
                 {
 #endif
                     int val = LuaAPI.lua_gc(L, LuaGCOptions.LUA_GCSETPAUSE, 200);
                     LuaAPI.lua_gc(L, LuaGCOptions.LUA_GCSETPAUSE, val);
                     return val;
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
                 }
 #endif
             }
             set
             {
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
                 lock (luaEnvLock)
                 {
 #endif
                     LuaAPI.lua_gc(L, LuaGCOptions.LUA_GCSETPAUSE, value);
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
                 }
 #endif
             }
@@ -537,25 +618,25 @@ namespace XLua
         {
             get
             {
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
                 lock (luaEnvLock)
                 {
 #endif
                     int val = LuaAPI.lua_gc(L, LuaGCOptions.LUA_GCSETSTEPMUL, 200);
                     LuaAPI.lua_gc(L, LuaGCOptions.LUA_GCSETSTEPMUL, val);
                     return val;
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
                 }
 #endif
             }
             set
             {
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
                 lock (luaEnvLock)
                 {
 #endif
                     LuaAPI.lua_gc(L, LuaGCOptions.LUA_GCSETSTEPMUL, value);
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
                 }
 #endif
             }
@@ -563,48 +644,48 @@ namespace XLua
 
         public void FullGc()
         {
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
             lock (luaEnvLock)
             {
 #endif
                 LuaAPI.lua_gc(L, LuaGCOptions.LUA_GCCOLLECT, 0);
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
             }
 #endif
         }
 
         public void StopGc()
         {
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
             lock (luaEnvLock)
             {
 #endif
                 LuaAPI.lua_gc(L, LuaGCOptions.LUA_GCSTOP, 0);
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
             }
 #endif
         }
 
         public void RestartGc()
         {
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
             lock (luaEnvLock)
             {
 #endif
                 LuaAPI.lua_gc(L, LuaGCOptions.LUA_GCRESTART, 0);
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
             }
 #endif
         }
 
         public bool GcStep(int data)
         {
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
             lock (luaEnvLock)
             {
 #endif
                 return LuaAPI.lua_gc(L, LuaGCOptions.LUA_GCSTEP, data) != 0;
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
             }
 #endif
         }
@@ -613,12 +694,12 @@ namespace XLua
         {
             get
             {
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
                 lock (luaEnvLock)
                 {
 #endif
                     return LuaAPI.lua_gc(L, LuaGCOptions.LUA_GCCOUNT, 0);
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
                 }
 #endif
             }

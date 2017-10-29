@@ -18,6 +18,7 @@ using LuaCSFunction = XLua.LuaDLL.lua_CSFunction;
 
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 
 namespace XLua
 {
@@ -79,18 +80,161 @@ namespace XLua
 
         public virtual Delegate GetDelegateByType(Type type)
         {
-            throw new InvalidCastException("This delegate must add to CSharpCallLua: " + type);
+            return null;
+        }
+    }
+
+    public static class HotfixDelegateBridge
+    {
+#if UNITY_IPHONE && !UNITY_EDITOR
+        [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
+        public static extern bool xlua_get_hotfix_flag(int idx);
+
+        
+        [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void xlua_set_hotfix_flag(int idx, bool flag);
+#else
+        public static bool xlua_get_hotfix_flag(int idx)
+        {
+            return (idx < DelegateBridge.DelegateBridgeList.Length) && (DelegateBridge.DelegateBridgeList[idx] != null);
+        }
+#endif
+
+        public static DelegateBridge Get(int idx)
+        {
+            return DelegateBridge.DelegateBridgeList[idx];
+        }
+
+        public static void Set(int idx, DelegateBridge val)
+        {
+            if (idx >= DelegateBridge.DelegateBridgeList.Length)
+            {
+                DelegateBridge[] newList = new DelegateBridge[idx + 1];
+                for (int i = 0; i < DelegateBridge.DelegateBridgeList.Length; i++)
+                {
+                    newList[i] = DelegateBridge.DelegateBridgeList[i];
+                }
+                DelegateBridge.DelegateBridgeList = newList;
+            }
+            DelegateBridge.DelegateBridgeList[idx] = val;
+#if UNITY_IPHONE && !UNITY_EDITOR
+            xlua_set_hotfix_flag(idx, val != null);
+#endif
         }
     }
 
     public partial class DelegateBridge : DelegateBridgeBase
     {
-        public static object DelegateBridgeLock = new object();
+        internal static DelegateBridge[] DelegateBridgeList = new DelegateBridge[0];
 
-        internal static bool Gen_Flag = false;
+        public static bool Gen_Flag = false;
 
         public DelegateBridge(int reference, LuaEnv luaenv) : base(reference, luaenv)
         {
         }
+
+
+#if HOTFIX_ENABLE
+
+        private int _oldTop = 0;
+        private Stack<int> _stack = new Stack<int>();
+
+        public void InvokeSessionStart()
+        {
+            System.Threading.Monitor.Enter(luaEnv.luaEnvLock);
+            var L = luaEnv.L;
+            _stack.Push(_oldTop);
+            _oldTop = LuaAPI.lua_gettop(L);
+            LuaAPI.load_error_func(L, luaEnv.errorFuncRef);
+            LuaAPI.lua_getref(L, luaReference);
+        }
+
+        public void Invoke(int nRet)
+        {
+            int error = LuaAPI.lua_pcall(luaEnv.L, LuaAPI.lua_gettop(luaEnv.L) - _oldTop - 2, nRet, _oldTop + 1);
+            if (error != 0)
+            {
+                var lastOldTop = _oldTop;
+                InvokeSessionEnd();
+                luaEnv.ThrowExceptionFromError(lastOldTop);
+            }
+        }
+
+        public void InvokeSessionEnd()
+        {
+            LuaAPI.lua_settop(luaEnv.L, _oldTop);
+            _oldTop = _stack.Pop();
+            System.Threading.Monitor.Exit(luaEnv.luaEnvLock);
+        }
+
+        public TResult InvokeSessionEndWithResult<TResult>()
+        {
+            if (LuaAPI.lua_gettop(luaEnv.L) < _oldTop + 2)
+            {
+                InvokeSessionEnd();
+                throw new InvalidOperationException("no result!");
+            }
+
+            try
+            {
+                TResult ret;
+                luaEnv.translator.Get(luaEnv.L, _oldTop + 2, out ret);
+                return ret;
+            }
+            finally
+            {
+                InvokeSessionEnd();
+            }
+        }
+
+        public void InParam<T>(T p)
+        {
+            try
+            {
+                luaEnv.translator.PushByType(luaEnv.L, p);
+            }
+            catch (Exception e)
+            {
+                InvokeSessionEnd();
+                throw e;
+            }
+        }
+
+        public void InParams<T>(T[] ps)
+        {
+            try
+            {
+                for (int i = 0; i < ps.Length; i++)
+                {
+                    luaEnv.translator.PushByType<T>(luaEnv.L, ps[i]);
+                }
+            }
+            catch (Exception e)
+            {
+                InvokeSessionEnd();
+                throw e;
+            }
+        }
+
+        //pos start from 0
+        public void OutParam<TResult>(int pos, out TResult ret)
+        {
+            if (LuaAPI.lua_gettop(luaEnv.L) < _oldTop + 2 + pos)
+            {
+                InvokeSessionEnd();
+                throw new InvalidOperationException("no result in " + pos);
+            }
+
+            try
+            {
+                luaEnv.translator.Get(luaEnv.L, _oldTop + 2 + pos, out ret);
+            }
+            catch (Exception e)
+            {
+                InvokeSessionEnd();
+                throw e;
+            }
+        }
+#endif
     }
 }

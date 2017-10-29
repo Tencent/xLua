@@ -1,0 +1,318 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{F433BFDC-6095-9CEA-E902-E39C5563D3A9}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>XLuaUnitTestGenCode</RootNamespace>
+    <AssemblyName>XLuaUnitTestGenCode</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>..\Bin\</OutputPath>
+    <BaseIntermediateOutputPath>obj\Any CPU\Debug\XLuaUnitTestGenCode\</BaseIntermediateOutputPath>
+    <IntermediateOutputPath>$(BaseIntermediateOutputPath)</IntermediateOutputPath>
+    <DefineConstants>_DEBUG;DEBUG;TRACE;;XLUA_GENERAL</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>..\Bin\</OutputPath>
+    <BaseIntermediateOutputPath>obj\Any CPU\Release\XLuaUnitTestGenCode\</BaseIntermediateOutputPath>
+    <IntermediateOutputPath>$(BaseIntermediateOutputPath)</IntermediateOutputPath>
+    <DefineConstants>;XLUA_GENERAL</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\..\Assets\XLua\Src\CodeEmit.cs">
+      <Link>Assets\XLua\Src\CodeEmit.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Assets\XLua\Src\CopyByValue.cs">
+      <Link>Assets\XLua\Src\CopyByValue.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Assets\XLua\Src\DelegateBridge.cs">
+      <Link>Assets\XLua\Src\DelegateBridge.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Assets\XLua\Src\GenAttributes.cs">
+      <Link>Assets\XLua\Src\GenAttributes.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Assets\XLua\Src\InternalGlobals.cs">
+      <Link>Assets\XLua\Src\InternalGlobals.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Assets\XLua\Src\LuaBase.cs">
+      <Link>Assets\XLua\Src\LuaBase.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Assets\XLua\Src\LuaDLL.cs">
+      <Link>Assets\XLua\Src\LuaDLL.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Assets\XLua\Src\LuaEnv.cs">
+      <Link>Assets\XLua\Src\LuaEnv.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Assets\XLua\Src\LuaException.cs">
+      <Link>Assets\XLua\Src\LuaException.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Assets\XLua\Src\LuaFunction.cs">
+      <Link>Assets\XLua\Src\LuaFunction.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Assets\XLua\Src\LuaTable.cs">
+      <Link>Assets\XLua\Src\LuaTable.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Assets\XLua\Src\MethodWarpsCache.cs">
+      <Link>Assets\XLua\Src\MethodWarpsCache.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Assets\XLua\Src\ObjectCasters.cs">
+      <Link>Assets\XLua\Src\ObjectCasters.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Assets\XLua\Src\ObjectPool.cs">
+      <Link>Assets\XLua\Src\ObjectPool.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Assets\XLua\Src\ObjectTranslator.cs">
+      <Link>Assets\XLua\Src\ObjectTranslator.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Assets\XLua\Src\ObjectTranslatorPool.cs">
+      <Link>Assets\XLua\Src\ObjectTranslatorPool.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Assets\XLua\Src\RawObject.cs">
+      <Link>Assets\XLua\Src\RawObject.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Assets\XLua\Src\SignatureLoader.cs">
+      <Link>Assets\XLua\Src\SignatureLoader.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Assets\XLua\Src\StaticLuaCallbacks.cs">
+      <Link>Assets\XLua\Src\StaticLuaCallbacks.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Assets\XLua\Src\TemplateEngine\TemplateEngine.cs">
+      <Link>Assets\XLua\Src\TemplateEngine\TemplateEngine.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Assets\XLua\Src\TypeExtensions.cs">
+      <Link>Assets\XLua\Src\TypeExtensions.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Assets\XLua\Src\Utils.cs">
+      <Link>Assets\XLua\Src\Utils.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Test\UnitTest\xLuaTest\CSharpCallLua\CSObjectForTestCSCallLua.cs">
+      <Link>Test\UnitTest\xLuaTest\CSharpCallLua\CSObjectForTestCSCallLua.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Test\UnitTest\xLuaTest\CSharpCallLua\TCForTestCSCallLua.cs">
+      <Link>Test\UnitTest\xLuaTest\CSharpCallLua\TCForTestCSCallLua.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Test\UnitTest\xLuaTest\CSharpCallLua\TestCSCallLua.cs">
+      <Link>Test\UnitTest\xLuaTest\CSharpCallLua\TestCSCallLua.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Test\UnitTest\xLuaTest\LuaCallCS\CSObjectForLuaCallCS.cs">
+      <Link>Test\UnitTest\xLuaTest\LuaCallCS\CSObjectForLuaCallCS.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Test\UnitTest\xLuaTest\LuaTestCommon.cs">
+      <Link>Test\UnitTest\xLuaTest\LuaTestCommon.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Test\UnitTest\xLuaTest\LuaTestObj.cs">
+      <Link>Test\UnitTest\xLuaTest\LuaTestObj.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Test\UnitTest\xLuaTest\LuaTestObjReflect.cs">
+      <Link>Test\UnitTest\xLuaTest\LuaTestObjReflect.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Test\UnitTest\xLuaTest\Main.cs">
+      <Link>Test\UnitTest\xLuaTest\Main.cs</Link>
+    </Compile>
+    <Compile Include="..\Gen2\AClassWrap.cs">
+      <Link>Gen2\AClassWrap.cs</Link>
+    </Compile>
+    <Compile Include="..\Gen2\CClassWrap.cs">
+      <Link>Gen2\CClassWrap.cs</Link>
+    </Compile>
+    <Compile Include="..\Gen2\DelegatesGensBridge.cs">
+      <Link>Gen2\DelegatesGensBridge.cs</Link>
+    </Compile>
+    <Compile Include="..\Gen2\EmployeeTemplateWrap.cs">
+      <Link>Gen2\EmployeeTemplateWrap.cs</Link>
+    </Compile>
+    <Compile Include="..\Gen2\EmployeestructWrap.cs">
+      <Link>Gen2\EmployeestructWrap.cs</Link>
+    </Compile>
+    <Compile Include="..\Gen2\EnumWrap.cs">
+      <Link>Gen2\EnumWrap.cs</Link>
+    </Compile>
+    <Compile Include="..\Gen2\Gen2FloatStructWrap.cs">
+      <Link>Gen2\Gen2FloatStructWrap.cs</Link>
+    </Compile>
+    <Compile Include="..\Gen2\Gen3FloatStructWrap.cs">
+      <Link>Gen2\Gen3FloatStructWrap.cs</Link>
+    </Compile>
+    <Compile Include="..\Gen2\Gen4FloatStructWrap.cs">
+      <Link>Gen2\Gen4FloatStructWrap.cs</Link>
+    </Compile>
+    <Compile Include="..\Gen2\Gen5FloatStructWrap.cs">
+      <Link>Gen2\Gen5FloatStructWrap.cs</Link>
+    </Compile>
+    <Compile Include="..\Gen2\Gen6FloatStructWrap.cs">
+      <Link>Gen2\Gen6FloatStructWrap.cs</Link>
+    </Compile>
+    <Compile Include="..\Gen2\GenCodeBaseClassWrap.cs">
+      <Link>Gen2\GenCodeBaseClassWrap.cs</Link>
+    </Compile>
+    <Compile Include="..\Gen2\GenCodeDrivedClassWrap.cs">
+      <Link>Gen2\GenCodeDrivedClassWrap.cs</Link>
+    </Compile>
+    <Compile Include="..\Gen2\GenCodeStructWrap.cs">
+      <Link>Gen2\GenCodeStructWrap.cs</Link>
+    </Compile>
+    <Compile Include="..\Gen2\HasConstructStructWrap.cs">
+      <Link>Gen2\HasConstructStructWrap.cs</Link>
+    </Compile>
+    <Compile Include="..\Gen2\IGenCodeTestWrap.cs">
+      <Link>Gen2\IGenCodeTestWrap.cs</Link>
+    </Compile>
+    <Compile Include="..\Gen2\ITestLuaClassWrap.cs">
+      <Link>Gen2\ITestLuaClassWrap.cs</Link>
+    </Compile>
+    <Compile Include="..\Gen2\LongStaticWrap.cs">
+      <Link>Gen2\LongStaticWrap.cs</Link>
+    </Compile>
+    <Compile Include="..\Gen2\LuaTestCommonWrap.cs">
+      <Link>Gen2\LuaTestCommonWrap.cs</Link>
+    </Compile>
+    <Compile Include="..\Gen2\LuaTestObjWrap.cs">
+      <Link>Gen2\LuaTestObjWrap.cs</Link>
+    </Compile>
+    <Compile Include="..\Gen2\ManagerWrap.cs">
+      <Link>Gen2\ManagerWrap.cs</Link>
+    </Compile>
+    <Compile Include="..\Gen2\NoContClassWrap.cs">
+      <Link>Gen2\NoContClassWrap.cs</Link>
+    </Compile>
+    <Compile Include="..\Gen2\PackUnpack.cs">
+      <Link>Gen2\PackUnpack.cs</Link>
+    </Compile>
+    <Compile Include="..\Gen2\ReferTestClassWrap.cs">
+      <Link>Gen2\ReferTestClassWrap.cs</Link>
+    </Compile>
+    <Compile Include="..\Gen2\StaticPusherStructAWrap.cs">
+      <Link>Gen2\StaticPusherStructAWrap.cs</Link>
+    </Compile>
+    <Compile Include="..\Gen2\StaticPusherStructAllWrap.cs">
+      <Link>Gen2\StaticPusherStructAllWrap.cs</Link>
+    </Compile>
+    <Compile Include="..\Gen2\StaticPusherStructBWrap.cs">
+      <Link>Gen2\StaticPusherStructBWrap.cs</Link>
+    </Compile>
+    <Compile Include="..\Gen2\TCForTestCSCallLuaWrap.cs">
+      <Link>Gen2\TCForTestCSCallLuaWrap.cs</Link>
+    </Compile>
+    <Compile Include="..\Gen2\TableAutoTransComplexClassWrap.cs">
+      <Link>Gen2\TableAutoTransComplexClassWrap.cs</Link>
+    </Compile>
+    <Compile Include="..\Gen2\TableAutoTransComplexStructWrap.cs">
+      <Link>Gen2\TableAutoTransComplexStructWrap.cs</Link>
+    </Compile>
+    <Compile Include="..\Gen2\TableAutoTransSimpleClassWrap.cs">
+      <Link>Gen2\TableAutoTransSimpleClassWrap.cs</Link>
+    </Compile>
+    <Compile Include="..\Gen2\TableAutoTransSimpleStructWrap.cs">
+      <Link>Gen2\TableAutoTransSimpleStructWrap.cs</Link>
+    </Compile>
+    <Compile Include="..\Gen2\TestCastClassWrap.cs">
+      <Link>Gen2\TestCastClassWrap.cs</Link>
+    </Compile>
+    <Compile Include="..\Gen2\TestChineseStringWrap.cs">
+      <Link>Gen2\TestChineseStringWrap.cs</Link>
+    </Compile>
+    <Compile Include="..\Gen2\TestExtensionMethodTestExtensionMethodFOrClassWrap.cs">
+      <Link>Gen2\TestExtensionMethodTestExtensionMethodFOrClassWrap.cs</Link>
+    </Compile>
+    <Compile Include="..\Gen2\TestExtensionMethodTestExtensionMethodForStructWrap.cs">
+      <Link>Gen2\TestExtensionMethodTestExtensionMethodForStructWrap.cs</Link>
+    </Compile>
+    <Compile Include="..\Gen2\TestGenFloatStructClassWrap.cs">
+      <Link>Gen2\TestGenFloatStructClassWrap.cs</Link>
+    </Compile>
+    <Compile Include="..\Gen2\TestStructWrap.cs">
+      <Link>Gen2\TestStructWrap.cs</Link>
+    </Compile>
+    <Compile Include="..\Gen2\TestTableAutoTransClassWrap.cs">
+      <Link>Gen2\TestTableAutoTransClassWrap.cs</Link>
+    </Compile>
+    <Compile Include="..\Gen2\WrapPusher.cs">
+      <Link>Gen2\WrapPusher.cs</Link>
+    </Compile>
+    <Compile Include="..\Gen2\XLuaGenAutoRegister.cs">
+      <Link>Gen2\XLuaGenAutoRegister.cs</Link>
+    </Compile>
+    <Compile Include="..\Gen2\tableValue1InfEqualBridge.cs">
+      <Link>Gen2\tableValue1InfEqualBridge.cs</Link>
+    </Compile>
+    <Compile Include="..\Gen2\tableValue1InfLessBridge.cs">
+      <Link>Gen2\tableValue1InfLessBridge.cs</Link>
+    </Compile>
+    <Compile Include="..\Gen2\tableValue1InfMoreBridge.cs">
+      <Link>Gen2\tableValue1InfMoreBridge.cs</Link>
+    </Compile>
+    <Compile Include="..\Gen2\tableValue1InfTypeDiffBridge.cs">
+      <Link>Gen2\tableValue1InfTypeDiffBridge.cs</Link>
+    </Compile>
+    <Compile Include="..\Gen2\tableValue2InfBridge.cs">
+      <Link>Gen2\tableValue2InfBridge.cs</Link>
+    </Compile>
+    <Compile Include="..\Gen2\tableVarIncludeInfBridge.cs">
+      <Link>Gen2\tableVarIncludeInfBridge.cs</Link>
+    </Compile>
+    <Compile Include="..\Gen2\testLuaCallCSChildCalssWrap.cs">
+      <Link>Gen2\testLuaCallCSChildCalssWrap.cs</Link>
+    </Compile>
+    <Compile Include="..\Gen2\testLuaCallCSMultiContClassWrap.cs">
+      <Link>Gen2\testLuaCallCSMultiContClassWrap.cs</Link>
+    </Compile>
+    <Compile Include="..\Gen2\testLuaCallCSOneParamContClassWrap.cs">
+      <Link>Gen2\testLuaCallCSOneParamContClassWrap.cs</Link>
+    </Compile>
+    <Compile Include="..\Gen2\testLuaCallCSOverClassAWrap.cs">
+      <Link>Gen2\testLuaCallCSOverClassAWrap.cs</Link>
+    </Compile>
+    <Compile Include="..\Gen2\testLuaCallCSOverClassBWrap.cs">
+      <Link>Gen2\testLuaCallCSOverClassBWrap.cs</Link>
+    </Compile>
+    <Compile Include="..\Gen2\testLuaCallCSOverClassCDeriveNGAWrap.cs">
+      <Link>Gen2\testLuaCallCSOverClassCDeriveNGAWrap.cs</Link>
+    </Compile>
+    <Compile Include="..\Gen2\testLuaCallCSOverClassCWrap.cs">
+      <Link>Gen2\testLuaCallCSOverClassCWrap.cs</Link>
+    </Compile>
+    <Compile Include="..\Gen2\testLuaCallCSStaticTestClassWrap.cs">
+      <Link>Gen2\testLuaCallCSStaticTestClassWrap.cs</Link>
+    </Compile>
+    <Compile Include="..\Gen2\testLuaCallCSTwoParamsContClassWrap.cs">
+      <Link>Gen2\testLuaCallCSTwoParamsContClassWrap.cs</Link>
+    </Compile>
+    <Compile Include="..\Gen2\testLuaCallCSabstractFatherClassWrap.cs">
+      <Link>Gen2\testLuaCallCSabstractFatherClassWrap.cs</Link>
+    </Compile>
+    <Compile Include="..\Src\XLuaUnitTest.cs">
+      <Link>Src\XLuaUnitTest.cs</Link>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

@@ -15,7 +15,7 @@ require "TemplateCommon"
 
 %>
 
-namespace CSObjectWrap
+namespace XLua.CSObjectWrap
 {
     public class <%=CSVariableName(type)%>Bridge : LuaBase, <%=CsFullTypeName(type)%>
     {
@@ -51,7 +51,7 @@ namespace CSObjectWrap
 			%><%=CsFullTypeName(parameter.ParameterType)%> <%=parameter.Name%><% 
 		end) %>)
 		{
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
             lock (luaEnv.luaEnvLock)
             {
 #endif
@@ -72,13 +72,17 @@ namespace CSObjectWrap
 				}
 				LuaAPI.lua_pushvalue(L, -2);
 				LuaAPI.lua_remove(L, -3);
-				<%ForEachCsList(parameters, function(parameter) 
+				<%
+				local param_count = parameters.Length
+                local has_v_params = param_count > 0 and IsParams(parameters[param_count - 1])
+
+				ForEachCsList(parameters, function(parameter, pi) 
 					if parameter.IsIn or not parameter.IsOut then 
-						%><%=GetPushStatement(parameter.ParameterType, parameter.Name)%>;
+						%><%=GetPushStatement(parameter.ParameterType, parameter.Name, has_v_params and pi == param_count - 1)%>;
 				<% 
 					end
 				end) %>
-				int __gen_error = LuaAPI.lua_pcall(L, <%=in_num + 1%>, <%=out_num%>, err_func);
+				int __gen_error = LuaAPI.lua_pcall(L, <%=has_v_params and ((in_num) .. " + " .. parameters[param_count - 1].Name .. ".Length" ) or (in_num + 1)%>, <%=out_num%>, err_func);
 				if (__gen_error != 0)
 					luaEnv.ThrowExceptionFromError(err_func - 1);
 				
@@ -92,7 +96,7 @@ namespace CSObjectWrap
 				<%if has_return then %><%=GetCasterStatement(method.ReturnType, "err_func + 1", "__gen_ret", true)%>;<% end%>
 				LuaAPI.lua_settop(L, err_func - 1);
 				<%if has_return then %>return  __gen_ret;<% end%>
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
             }
 #endif
 		}
@@ -106,7 +110,7 @@ namespace CSObjectWrap
             <%if property.CanRead then%>
             get 
             {
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
                 lock (luaEnv.luaEnvLock)
                 {
 #endif
@@ -122,7 +126,7 @@ namespace CSObjectWrap
 					<%=GetCasterStatement(property.PropertyType, "-1", "__gen_ret", true)%>;
 					LuaAPI.lua_pop(L, 2);
 					return __gen_ret;
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
                 }
 #endif
             }
@@ -130,7 +134,7 @@ namespace CSObjectWrap
             <%if property.CanWrite then%>
             set
             {
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
                 lock (luaEnv.luaEnvLock)
                 {
 #endif
@@ -145,7 +149,7 @@ namespace CSObjectWrap
 						luaEnv.ThrowExceptionFromError(oldTop);
 					}
 					LuaAPI.lua_pop(L, 1);
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
                 }
 #endif
             }

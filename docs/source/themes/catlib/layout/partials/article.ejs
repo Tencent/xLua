@@ -1,0 +1,18 @@
+<article class="clearfix">
+    <%- page.content %>
+    <div class="footer">
+        发现错误？想参与编辑？ 
+        <a href="<%- theme.modify_github %><%- page.path.replace(/\.html$/, '.md') %>" target="_blank">
+            在 Github 上编辑此页！
+        </a>
+    </div>
+</article>
+
+<div class="sub-nav hiden-in-phone">
+    <dl id="sub-nav">
+        <dt>本文内容</dt>
+        <dd v-for="(ele, index) in sub_nav">
+           <a v-bind:href="ele.href">{{ ele.name }}</a>
+        </dd>
+    </dl>
+</div> 

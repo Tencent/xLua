@@ -13,7 +13,7 @@ public class LinkXmlGen : ScriptableObject
     public static IEnumerable<CustomGenTask> GetTasks(LuaEnv lua_env, UserConfig user_cfg)
     {
         LuaTable data = lua_env.NewTable();
-        var assembly_infos = (from type in user_cfg.ReflectionUse
+        var assembly_infos = (from type in (user_cfg.ReflectionUse.Concat(user_cfg.LuaCallCSharp))
                               group type by type.Assembly.GetName().Name into assembly_info
                               select new { FullName = assembly_info.Key, Types = assembly_info.ToList()}).ToList();
         data.Set("assembly_infos", assembly_infos);

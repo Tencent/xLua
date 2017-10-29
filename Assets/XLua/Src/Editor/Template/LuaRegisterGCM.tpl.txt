@@ -1,0 +1,102 @@
+#if USE_UNI_LUA
+using LuaAPI = UniLua.Lua;
+using RealStatePtr = UniLua.ILuaState;
+using LuaCSFunction = UniLua.CSharpFunctionDelegate;
+#else
+using LuaAPI = XLua.LuaDLL.Lua;
+using RealStatePtr = System.IntPtr;
+using LuaCSFunction = XLua.LuaDLL.lua_CSFunction;
+#endif
+
+using System;
+using System.Collections.Generic;
+using System.Reflection;
+<%
+require "TemplateCommon"
+%>
+
+namespace XLua.CSObjectWrap
+{
+    public class XLua_Gen_Initer_Register__
+	{
+	    static XLua_Gen_Initer_Register__()
+        {
+		    XLua.LuaEnv.AddIniter((luaenv, translator) => {
+			    <%ForEachCsList(wraps, function(wrap)%>
+				translator.DelayWrapLoader(typeof(<%=CsFullTypeName(wrap)%>), translator.__Register<%=CSVariableName(wrap)%>);
+				<%end)%>
+				<% if generic_wraps then 
+				for generic_def, instances in pairs(generic_wraps) do
+				for _, args in ipairs(instances) do
+				local generic_arg_list = "<"
+				ForEachCsList(args, function(generic_arg, gai)
+					if gai ~= 0 then generic_arg_list = generic_arg_list .. ", " end
+					generic_arg_list = generic_arg_list .. CsFullTypeName(generic_arg)
+				end)
+				generic_arg_list = generic_arg_list .. ">"
+				
+				%>
+				translator.DelayWrapLoader(typeof(<%=generic_def.Name:gsub("`%d+", "") .. generic_arg_list%>), translator.__Register<%=CSVariableName(generic_def)%><%=generic_arg_list%>);
+				<%
+				end
+				end
+				end%>
+				<%ForEachCsList(itf_bridges, function(itf_bridge)%>
+				translator.AddInterfaceBridgeCreator(typeof(<%=CsFullTypeName(itf_bridge)%>), <%=CSVariableName(itf_bridge)%>Bridge.__Create);
+				<%end)%>
+			});
+		}
+		
+		
+	}
+	
+}
+namespace XLua
+{
+	public partial class ObjectTranslator
+	{
+		static XLua.CSObjectWrap.XLua_Gen_Initer_Register__ s_gen_reg_dumb_obj = new XLua.CSObjectWrap.XLua_Gen_Initer_Register__();
+		static XLua.CSObjectWrap.XLua_Gen_Initer_Register__ gen_reg_dumb_obj {get{return s_gen_reg_dumb_obj;}}
+	}
+	
+	internal partial class InternalGlobals
+    {
+	    <%
+		local type_to_methods = {}
+		local seq_tbl = {}
+		ForEachCsList(extension_methods, function(extension_method, idx)
+		    local parameters = extension_method:GetParameters()
+			local type = parameters[0].ParameterType
+			if not type_to_methods[type] then
+				type_to_methods[type] = {type = type}
+				table.insert(seq_tbl, type_to_methods[type])
+			end
+			table.insert(type_to_methods[type], {method = extension_method, index = idx})
+		%>
+		delegate <%=CsFullTypeName(extension_method.ReturnType)%> __GEN_DELEGATE<%=idx%>(<%ForEachCsList(parameters, function(parameter, pi)
+		%><%if pi ~= 0 then%>, <%end%><%if parameter.IsOut then %>out <% elseif parameter.ParameterType.IsByRef then %>ref <% end %> <%=CsFullTypeName(parameter.ParameterType)%> <%=parameter.Name%><%
+		end)%>);
+		<%end)%>
+	    static InternalGlobals()
+		{
+		    extensionMethodMap = new Dictionary<Type, IEnumerable<MethodInfo>>()
+			{
+			    <%for _, methods_info in ipairs(seq_tbl) do%>
+				{typeof(<%=CsFullTypeName(methods_info.type)%>), new List<MethodInfo>(){
+				<%  for _, method_info in ipairs(methods_info) do%>
+				  new __GEN_DELEGATE<%=method_info.index%>(<%=CsFullTypeName(method_info.method.DeclaringType)%>.<%=method_info.method.Name%>)
+#if UNITY_WSA && !UNITY_EDITOR
+                                      .GetMethodInfo(),
+#else
+                                      .Method,
+#endif
+				<%  end%>
+				}},
+				<%end%>
+			};
+			
+			genTryArrayGetPtr = StaticLuaCallbacks.__tryArrayGet;
+            genTryArraySetPtr = StaticLuaCallbacks.__tryArraySet;
+		}
+	}
+}

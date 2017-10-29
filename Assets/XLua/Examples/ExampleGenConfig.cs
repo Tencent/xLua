@@ -55,12 +55,16 @@ public static class ExampleGenConfig
                 typeof(Action<string>),
                 typeof(Action<double>),
                 typeof(UnityEngine.Events.UnityAction),
+                typeof(System.Collections.IEnumerator)
             };
 
     //黑名单
     [BlackList]
     public static List<List<string>> BlackList = new List<List<string>>()  {
                 new List<string>(){"UnityEngine.WWW", "movie"},
+    #if UNITY_WEBGL
+                new List<string>(){"UnityEngine.WWW", "threadPriority"},
+    #endif
                 new List<string>(){"UnityEngine.Texture2D", "alphaIsTransparency"},
                 new List<string>(){"UnityEngine.Security", "GetChainOfTrustValue"},
                 new List<string>(){"UnityEngine.CanvasRenderer", "onRequestRebuild"},
@@ -77,5 +81,6 @@ public static class ExampleGenConfig
                 new List<string>(){"System.IO.DirectoryInfo", "SetAccessControl", "System.Security.AccessControl.DirectorySecurity"},
                 new List<string>(){"System.IO.DirectoryInfo", "CreateSubdirectory", "System.String", "System.Security.AccessControl.DirectorySecurity"},
                 new List<string>(){"System.IO.DirectoryInfo", "Create", "System.Security.AccessControl.DirectorySecurity"},
+                new List<string>(){"UnityEngine.MonoBehaviour", "runInEditMode"},
             };
 }

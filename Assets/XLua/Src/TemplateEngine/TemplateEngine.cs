@@ -24,7 +24,7 @@ using System.Collections;
 using System.Text;
 using XLua;
 
-namespace TemplateEngine
+namespace XLua.TemplateEngine
 {
     public enum TokenType
     {
@@ -153,16 +153,16 @@ namespace TemplateEngine
         {
             StringBuilder code = new StringBuilder();
 
-            code.Append("local __text_gen = ''\r\n");
+            code.Append("local __text_gen = {}\r\n");
             foreach (var chunk in chunks)
             {
                 switch (chunk.Type)
                 {
                     case TokenType.Text:
-                        code.Append("__text_gen = __text_gen .. \"" + chunk.Text + "\"\r\n");
+                        code.Append("table.insert(__text_gen, \"" + chunk.Text + "\")\r\n");
                         break;
                     case TokenType.Eval:
-                        code.Append("__text_gen = __text_gen .. (" + chunk.Text + ")\r\n");
+                        code.Append("table.insert(__text_gen, tostring(" + chunk.Text + "))\r\n");
                         break;
                     case TokenType.Code:
                         code.Append(chunk.Text + "\r\n");
@@ -170,7 +170,7 @@ namespace TemplateEngine
                 }
             }
 
-            code.Append("return __text_gen\r\n");
+            code.Append("return table.concat(__text_gen)\r\n");
             //UnityEngine.Debug.Log("code compose:"+code.ToString());
             return code.ToString();
         }
@@ -244,7 +244,10 @@ namespace TemplateEngine
             LuaAPI.xlua_pushasciistring(L, "execute");
             LuaAPI.lua_pushstdcallcfunction(L, templateExecuteFunction);
             LuaAPI.lua_rawset(L, -3);
-            LuaAPI.lua_setglobal(L, "template");
+            if (0 != LuaAPI.xlua_setglobal(L, "template"))
+            {
+                throw new Exception("call xlua_setglobal fail!");
+            }
         }
     }
 }

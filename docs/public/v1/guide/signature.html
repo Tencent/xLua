@@ -1,0 +1,242 @@
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+
+    <title>数字签名 — XLua</title>
+    <meta charset="utf-8">
+    <meta name="description" content="XLua">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+    <link rel="stylesheet" href="/xLua/public/css/page.css">
+
+    <script src="/xLua/public/js/vue.js"></script>
+    <script src="/xLua/public/js/jquery.js"></script>
+    </head>
+
+    <body>
+        
+            <nav class="nav">
+    <div class="border">
+        <img src="/xLua/public/images/logo.png" />
+        <button class="hiden-in-phone">V2.1</button>
+        <button id="btn-menu" class="hiden-in-pc">菜单</button>
+        <ul class="nav-link hiden-in-phone">
+            <!--li>
+                <form id="search-form">
+                    <input type="text" id="search-query" class="search-query">
+                </form>
+            </li!-->
+            <li><a href="https://github.com/Tencent/xLua" class="nav-link-li">下载项目</a></li>
+            <li><a href="/xLua/public/v1/guide/use.html" class="nav-link-li">使用案例</a></li>
+            <li><a href="/xLua/public/v1/guide/version.html" class="nav-link-li">更新记录</a></li>
+            <li><a href="/xLua/public/v1/guide/contribution.html" class="nav-link-li">贡献指南</li>
+            <li><a href="/xLua/public/v1/guide/index.html" class="nav-link-li">教程</a></li>
+            <li><a href="/xLua/public/" class="nav-link-li current">首页</a></li>
+        </ul>
+    </div>
+</nav>
+
+<div id="container" class="container clear">
+    <section class="sidebar clearfix">
+    <ul>
+        
+            
+            
+                <li><h3>基础</h3></li>
+            
+            
+            
+            <li>
+                <p><a href="/xLua/public/v1/guide/index.html" class="sidebar-link">介绍</a></p>
+            </li>
+        
+            
+            
+            
+            
+            <li>
+                <p><a href="/xLua/public/v1/guide/version.html" class="sidebar-link">更新记录</a></p>
+            </li>
+        
+            
+            
+            
+            
+            <li>
+                <p><a href="/xLua/public/v1/guide/use.html" class="sidebar-link">商业案例</a></p>
+            </li>
+        
+            
+            
+            
+            
+            <li>
+                <p><a href="/xLua/public/v1/guide/faq.html" class="sidebar-link">FAQ</a></p>
+            </li>
+        
+            
+            
+            
+                <li><h3>教程</h3></li>
+            
+            
+            <li>
+                <p><a href="/xLua/public/v1/guide/tutorial.html" class="sidebar-link">从零开始</a></p>
+            </li>
+        
+            
+            
+            
+            
+            <li>
+                <p><a href="/xLua/public/v1/guide/configure.html" class="sidebar-link">XLua的配置</a></p>
+            </li>
+        
+            
+            
+            
+            
+            <li>
+                <p><a href="/xLua/public/v1/guide/api.html" class="sidebar-link">C# API</a></p>
+            </li>
+        
+            
+            
+            
+            
+            <li>
+                <p><a href="/xLua/public/v1/guide/crtdel-3rd.html" class="sidebar-link">添加删除第三方库</a></p>
+            </li>
+        
+            
+            
+            
+            
+            <li>
+                <p><a href="/xLua/public/v1/guide/gc-optimization.html" class="sidebar-link">GC优化指南</a></p>
+            </li>
+        
+            
+            
+            
+            
+            <li>
+                <p><a href="/xLua/public/v1/guide/performance-analysis.html" class="sidebar-link">性能分析工具</a></p>
+            </li>
+        
+            
+            
+            
+            
+            <li>
+                <p><a href="/xLua/public/v1/guide/signature.html" class="sidebar-link current">数字签名</a></p>
+            </li>
+        
+            
+            
+            
+            
+                <li><h3>其他</h3></li>
+            
+            <li>
+                <p><a href="/xLua/public/v1/guide/hotfix.html" class="sidebar-link">热标识</a></p>
+            </li>
+        
+            
+            
+            
+            
+            <li>
+                <p><a href="/xLua/public/v1/guide/features.html" class="sidebar-link">特性</a></p>
+            </li>
+        
+    </ul>
+</section>
+    <article class="clearfix">
+    <h2 id="数字签名"><a href="#数字签名" class="headerlink" title="数字签名"></a>数字签名</h2><blockquote>
+<p>Todo:请在此处输入内容</p>
+</blockquote>
+
+    <div class="footer">
+        发现错误？想参与编辑？ 
+        <a href="https://github.com/Tencent/xLua/tree/master/docs/source/src/v1/guide/signature.md" target="_blank">
+            在 Github 上编辑此页！
+        </a>
+    </div>
+</article>
+
+<div class="sub-nav hiden-in-phone">
+    <dl id="sub-nav">
+        <dt>本文内容</dt>
+        <dd v-for="(ele, index) in sub_nav">
+           <a v-bind:href="ele.href">{{ ele.name }}</a>
+        </dd>
+    </dl>
+</div> 
+</div>
+
+<footer>
+    <div>
+        <p>© Copyright 2017 Tencent All Rights Reserved</p>
+        <p>Tencent 2017</p>
+    </div>
+</footer>
+
+
+<script>
+var vm = new Vue({
+    el : '#container',
+    data: {
+        sub_nav : [ ]
+    },
+    created:function(){
+        var obj = [];
+        $("article h3").each(function(){
+            obj.push({name :  $(this).find("a").attr("title") , href : "#"+$(this).attr("id") });
+        });
+
+        this.sub_nav = obj;       
+    }
+});
+
+var isShow = false;
+$("nav").on("click","#btn-menu" , function(){
+
+    if(!isShow){
+        
+        if($(document).scrollTop() > $(".sidebar").height() - 100){
+
+            $('html, body').animate({scrollTop:0} , 300, "swing",function(){
+
+                $(".sidebar").fadeIn();
+                $(".container").animate({"left" : "15rem"}, 500,"swing");
+            });
+        }else{
+
+                $(".sidebar").fadeIn();
+                $(".container").animate({"left" : "15rem"}, 500,"swing");
+
+        }
+
+    }else{
+        $(".sidebar").fadeOut();
+        $(".container").animate({"left" : "0rem"}, 500,"swing");
+    }
+    isShow = !isShow;
+
+});
+
+$(".container").on("click" , "article" , function(){
+
+    if(isShow){
+        $(".sidebar").fadeOut();
+        $(".container").animate({"left" : "0rem"}, 500,"swing");
+        isShow = false;    
+    }
+
+});
+</script>
+        
+    </body>
+</html>

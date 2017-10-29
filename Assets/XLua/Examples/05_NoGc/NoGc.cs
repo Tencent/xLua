@@ -12,13 +12,15 @@ using XLua;
 
 namespace XLuaTest
 {
-    [LuaCallCSharp(GenFlag.GCOptimize)]
+    [GCOptimize]
+    [LuaCallCSharp]
     public struct Pedding
     {
         public byte c;
     }
 
-    [LuaCallCSharp(GenFlag.GCOptimize)]
+    [GCOptimize]
+    [LuaCallCSharp]
     public struct MyStruct
     {
         public MyStruct(int p1, int p2)
@@ -83,10 +85,15 @@ namespace XLuaTest
 
         LuaFunction add;
 
+        [NonSerialized]
         public double[] a1 = new double[] { 1, 2 };
+        [NonSerialized]
         public Vector3[] a2 = new Vector3[] { new Vector3(1, 2, 3), new Vector3(4, 5, 6) };
+        [NonSerialized]
         public MyStruct[] a3 = new MyStruct[] { new MyStruct(1, 2), new MyStruct(3, 4) };
+        [NonSerialized]
         public MyEnum[] a4 = new MyEnum[] { MyEnum.E1, MyEnum.E2 };
+        [NonSerialized]
         public decimal[] a5 = new decimal[] { 1.00001M, 2.00002M };
 
         public float FloatParamMethod(float p)
@@ -236,6 +243,15 @@ namespace XLuaTest
 
         void OnDestroy()
         {
+            f1 =  null;
+            f2 = null;
+            f3 = null;
+            f4 = null;
+            f5 = null;
+            farr = null;
+            flua = null;
+            ie = null;
+            add = null;
             luaenv.Dispose();
         }
     }

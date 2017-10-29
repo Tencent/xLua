@@ -39,7 +39,7 @@
 
 LJLIB_CF(os_execute)
 {
-#if LJ_NO_SYSTEM
+//#if LJ_NO_SYSTEM
 #if LJ_52
   errno = ENOSYS;
   return luaL_fileresult(L, 0, NULL);
@@ -47,18 +47,18 @@ LJLIB_CF(os_execute)
   lua_pushinteger(L, -1);
   return 1;
 #endif
-#else
-  const char *cmd = luaL_optstring(L, 1, NULL);
-  int stat = system(cmd);
-#if LJ_52
-  if (cmd)
-    return luaL_execresult(L, stat);
-  setboolV(L->top++, 1);
-#else
-  setintV(L->top++, stat);
-#endif
-  return 1;
-#endif
+//#else
+//  const char *cmd = luaL_optstring(L, 1, NULL);
+//  int stat = system(cmd);
+//#if LJ_52
+//  if (cmd)
+//    return luaL_execresult(L, stat);
+//  setboolV(L->top++, 1);
+//#else
+//  setintV(L->top++, stat);
+//#endif
+//  return 1;
+//#endif
 }
 
 LJLIB_CF(os_remove)

@@ -1,6 +1,8 @@
 using XLua;
 using System;
+#if !XLUA_GENERAL
 using UnityEngine;
+#endif
 
 public enum LuaTestTypeReflect
 {
@@ -447,7 +449,7 @@ public class LuaTestObjReflect
 
 	public void GenericMethod<T>()
 	{
-		Debug.Log("GenericMethod<" + typeof(T) +">");
+		LuaTestCommon.Log("GenericMethod<" + typeof(T) +">");
 	}
 
     public IntPtr ptr = System.Runtime.InteropServices.Marshal.AllocHGlobal(100);
@@ -461,10 +463,10 @@ public class LuaTestObjReflect
 
     public byte PrintPtr(IntPtr p)
     {
-        Debug.Log("p == ptr?" + (p == ptr));
+        LuaTestCommon.Log("p == ptr?" + (p == ptr));
         byte[] abc = new byte[] { 0, 0, 0 };
         System.Runtime.InteropServices.Marshal.Copy(p, abc, 0, abc.Length);
-        Debug.Log(string.Format("{0},{1},{2}", abc[0], abc[1], abc[2]));
+        LuaTestCommon.Log(string.Format("{0},{1},{2}", abc[0], abc[1], abc[2]));
         return abc[0];
     }
     public int VariableParamFuncDefault(int d, int i = 1, params string[] strs)
@@ -500,16 +502,24 @@ public class LuaTestObjReflect
         int abc = 97;
         return abc;
     }
+
+#if !XLUA_GENERAL
     public static LayerMask TestImplicit()
     {
         return new LayerMask();
     }
+#endif
 
     public static int VariableParamFunc(int i, params int[] strs)
     {
         return 0;
     }
 
+	public static int VariableParamFunc2(params int[] strs)
+    {
+        return strs.Length;
+    }
+	
     public static string FirstPushEnumFunc(int i)
 	{
         string luaScript = @"
@@ -532,7 +542,7 @@ public class LuaTestObjReflect
         end";
         luaEnv.DoString(luaScript);
 		LuaFunction f1 = luaEnv.Global.Get<LuaFunction>("first_push_reflect");
-        Debug.Log("LuaFunction<" + f1);
+        LuaTestCommon.Log("LuaFunction<" + f1);
 		object[] ret = f1.Call(i, FirstPushEnumReflect.E1);
 		return ret[0].ToString();
 	}
@@ -755,7 +765,7 @@ public class BClassReflect:CClassReflect
 		outvar = invar;
 		outvar.x = invar.x - refvar.x;
 		refvar.x = invar.x;
-		Debug.Log ("refvar.x:" + refvar.x + ",refvar.y:" + refvar.y + ", refvar.z:" + refvar.z);
+		LuaTestCommon.Log ("refvar.x:" + refvar.x + ",refvar.y:" + refvar.y + ", refvar.z:" + refvar.z);
 	}
 	
 	private HasConstructStructReflect b_struct;
@@ -765,7 +775,7 @@ public class AClassReflect:BClassReflect
 {
 	public AClassReflect(int x, int y , string z):base(x, y, z)
 	{
-		Debug.Log ("AClass Constructor");
+		LuaTestCommon.Log ("AClass Constructor");
 	}
 
     public int Div(int x, int y)
@@ -787,7 +797,7 @@ namespace TestExtensionMethodReflect
 	{
 		public static void PrintSalary(this EmployeestructReflect i)
 		{
-			Debug.Log("Salary:" + i.Salary);
+			LuaTestCommon.Log("Salary:" + i.Salary);
 		}
 		
 		public static int GetIncomeForOneYear(this EmployeestructReflect i)
@@ -805,8 +815,8 @@ namespace TestExtensionMethodReflect
 			e = d;
 			e.Salary = 10000;
 			a.Salary = i.Salary - d.Salary;
-			Debug.Log ("e.name:" + e.Name +", e.salary:"+ e.Salary);
-			Debug.Log ("a.name:" + a.Name +", a.salary:"+ a.Salary);
+			LuaTestCommon.Log ("e.name:" + e.Name +", e.salary:"+ e.Salary);
+			LuaTestCommon.Log ("a.name:" + a.Name +", a.salary:"+ a.Salary);
 		}
 	}
 	
@@ -815,7 +825,7 @@ namespace TestExtensionMethodReflect
 	{
 		public static void PrintAllString(this TestChineseStringReflect i)
 		{
-			Debug.Log("GetLongChineString:" + i.GetLongChineString());
+			LuaTestCommon.Log("GetLongChineString:" + i.GetLongChineString());
 		}
 
 		public static int GetLongStringLength(this TestChineseStringReflect i)
@@ -852,13 +862,13 @@ public class ManagerReflect : EmployeeTemplateReflect
 {
 	public override int GetBasicSalary()
 	{
-		Console.WriteLine("Get Manager Basic Salary");
+		//Console.WriteLine("Get Manager Basic Salary");
 		return 1;
 	}
 	
 	public override int AddBonus()
 	{
-		Console.WriteLine("Add Manager Bonus");
+		//Console.WriteLine("Add Manager Bonus");
 		return 2;
 	}
 }
@@ -990,4 +1000,35 @@ public class TestTableAutoTransClassReflect
         }
         return value;
     }
+}
+
+
+//验证构造函数支持refer，out修饰符，add@2017.05.09 for v2.1.7
+public class ReferTestClassReflect
+{
+    public ReferTestClassReflect(int x, ref int y, out string z)
+    {
+        var_x = x;
+        var_y = y;
+        y = y - 1;
+        z = "test1";
+        var_z = z;
+    }
+
+    public ReferTestClassReflect(int x, out string z)
+    {
+        var_x = x;
+        var_y = 10;
+        z = "test3";
+        var_z = z;
+    }
+
+    public int Get_X_Y_ADD()
+    {
+        return var_x + var_y;
+    }
+
+    private int var_x;
+    private int var_y;
+    private string var_z;
 }

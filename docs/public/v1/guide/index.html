@@ -1,0 +1,307 @@
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+
+    <title>介绍 — XLua</title>
+    <meta charset="utf-8">
+    <meta name="description" content="XLua">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+    <link rel="stylesheet" href="/xLua/public/css/page.css">
+
+    <script src="/xLua/public/js/vue.js"></script>
+    <script src="/xLua/public/js/jquery.js"></script>
+    </head>
+
+    <body>
+        
+            <nav class="nav">
+    <div class="border">
+        <img src="/xLua/public/images/logo.png" />
+        <button class="hiden-in-phone">V2.1</button>
+        <button id="btn-menu" class="hiden-in-pc">菜单</button>
+        <ul class="nav-link hiden-in-phone">
+            <!--li>
+                <form id="search-form">
+                    <input type="text" id="search-query" class="search-query">
+                </form>
+            </li!-->
+            <li><a href="https://github.com/Tencent/xLua" class="nav-link-li">下载项目</a></li>
+            <li><a href="/xLua/public/v1/guide/use.html" class="nav-link-li">使用案例</a></li>
+            <li><a href="/xLua/public/v1/guide/version.html" class="nav-link-li">更新记录</a></li>
+            <li><a href="/xLua/public/v1/guide/contribution.html" class="nav-link-li">贡献指南</li>
+            <li><a href="/xLua/public/v1/guide/index.html" class="nav-link-li current">教程</a></li>
+            <li><a href="/xLua/public/" class="nav-link-li current">首页</a></li>
+        </ul>
+    </div>
+</nav>
+
+<div id="container" class="container clear">
+    <section class="sidebar clearfix">
+    <ul>
+        
+            
+            
+                <li><h3>基础</h3></li>
+            
+            
+            
+            <li>
+                <p><a href="/xLua/public/v1/guide/index.html" class="sidebar-link current">介绍</a></p>
+            </li>
+        
+            
+            
+            
+            
+            <li>
+                <p><a href="/xLua/public/v1/guide/version.html" class="sidebar-link">更新记录</a></p>
+            </li>
+        
+            
+            
+            
+            
+            <li>
+                <p><a href="/xLua/public/v1/guide/use.html" class="sidebar-link">商业案例</a></p>
+            </li>
+        
+            
+            
+            
+            
+            <li>
+                <p><a href="/xLua/public/v1/guide/faq.html" class="sidebar-link">FAQ</a></p>
+            </li>
+        
+            
+            
+            
+                <li><h3>教程</h3></li>
+            
+            
+            <li>
+                <p><a href="/xLua/public/v1/guide/tutorial.html" class="sidebar-link">从零开始</a></p>
+            </li>
+        
+            
+            
+            
+            
+            <li>
+                <p><a href="/xLua/public/v1/guide/configure.html" class="sidebar-link">XLua的配置</a></p>
+            </li>
+        
+            
+            
+            
+            
+            <li>
+                <p><a href="/xLua/public/v1/guide/api.html" class="sidebar-link">C# API</a></p>
+            </li>
+        
+            
+            
+            
+            
+            <li>
+                <p><a href="/xLua/public/v1/guide/crtdel-3rd.html" class="sidebar-link">添加删除第三方库</a></p>
+            </li>
+        
+            
+            
+            
+            
+            <li>
+                <p><a href="/xLua/public/v1/guide/gc-optimization.html" class="sidebar-link">GC优化指南</a></p>
+            </li>
+        
+            
+            
+            
+            
+            <li>
+                <p><a href="/xLua/public/v1/guide/performance-analysis.html" class="sidebar-link">性能分析工具</a></p>
+            </li>
+        
+            
+            
+            
+            
+            <li>
+                <p><a href="/xLua/public/v1/guide/signature.html" class="sidebar-link">数字签名</a></p>
+            </li>
+        
+            
+            
+            
+            
+                <li><h3>其他</h3></li>
+            
+            <li>
+                <p><a href="/xLua/public/v1/guide/hotfix.html" class="sidebar-link">热标识</a></p>
+            </li>
+        
+            
+            
+            
+            
+            <li>
+                <p><a href="/xLua/public/v1/guide/features.html" class="sidebar-link">特性</a></p>
+            </li>
+        
+    </ul>
+</section>
+    <article class="clearfix">
+    <h2 id="XLua"><a href="#XLua" class="headerlink" title="XLua"></a>XLua</h2><p><a href="https://github.com/Tencent/xLua/blob/master/LICENSE.TXT"><img src="http://img.shields.io/badge/license-MIT-blue.svg" alt="license"></a> <a href="https://github.com/Tencent/xLua/releases"><img src="https://img.shields.io/badge/release-v2.1.8-blue.svg" alt="release"></a> <a href="https://github.com/Tencent/xLua/pulls"><img src="https://img.shields.io/badge/PRs-welcome-blue.svg" alt="PRs Welcome"></a></p>
+<h3 id="C-下Lua编程支持"><a href="#C-下Lua编程支持" class="headerlink" title="C#下Lua编程支持"></a>C#下Lua编程支持</h3><p>xLua为Unity、 .Net、 Mono等C#环境增加Lua脚本编程的能力，借助xLua，这些Lua代码可以方便的和C#相互调用。</p>
+<h3 id="xLua的突破"><a href="#xLua的突破" class="headerlink" title="xLua的突破"></a>xLua的突破</h3><p>xLua在功能、性能、易用性都有不少突破，这几方面分别最具代表性的是：</p>
+<ul>
+<li>可以运行时把C#实现（方法，操作符，属性，事件等等）替换成lua实现；</li>
+<li>出色的GC优化，自定义struct，枚举在Lua和C#间传递无C# gc alloc；</li>
+<li>编辑器下无需生成代码，开发更轻量；</li>
+</ul>
+<blockquote>
+<p>更详细的特性、平台支持介绍请看<a href="features.html">这里</a>。</p>
+</blockquote>
+<h3 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h3><p>打开zip包，你会看到一个Assets目录，这目录就对应Unity工程的Assets目录，保持这目录结构放到你的Unity工程。</p>
+<p>如果希望安装到其它目录，请看<a href="faq.html">FAQ</a>相关介绍。</p>
+<h3 id="lua5-3-vs-luajit"><a href="#lua5-3-vs-luajit" class="headerlink" title="lua5.3 vs luajit"></a>lua5.3 vs luajit</h3><p>xLua有两个版本，分别集成了lua5.3和luajit，一个项目只能选择其一。这两个版本C#代码是一样的，不同的是Plugins部分。</p>
+<p>lua5.3的特性更丰富些，比如支持原生64位整数，支持苹果bitcode，支持utf8等。出现问题因为是纯c代码，也好定位。比起luajit，lua对安装包的影响也更小。</p>
+<p>而luajit胜在性能，如果其jit不出问题的话，可以比lua高一个数量级。目前luajit作者不打算维护luajit，在找人接替其维护，后续发展不太明朗。</p>
+<p>项目可以根据自己情况判断哪个更适合。因为目前lua53版本使用较多，所以xLua工程Plugins目录下默认配套是lua53版本。</p>
+<h3 id="快速入门"><a href="#快速入门" class="headerlink" title="快速入门"></a>快速入门</h3><p>一个完整的例子仅需3行代码：</p>
+<p>安装好xLua，建一个MonoBehaviour拖到场景，在Start加入如下代码：</p>
+<figure class="highlight csharp"><table><tr><td class="code"><pre><div class="line">XLua.LuaEnv luaenv = <span class="keyword">new</span> XLua.LuaEnv();</div><div class="line">luaenv.DoString(<span class="string">"CS.UnityEngine.Debug.Log('hello world')"</span>);</div><div class="line">luaenv.Dispose();</div></pre></td></tr></table></figure>
+<p>1、DoString参数为string，可输入任意合法的Lua代码，本示例在lua里调用C#的UnityEngine.Debug.Log打印了个日志。</p>
+<p>2、一个LuaEnv实例对应Lua虚拟机，出于开销的考虑，建议全局唯一。</p>
+<p>C#主动调用lua也很简单，比如要调用lua的系统函数，推荐方式是：</p>
+<ul>
+<li>声明</li>
+</ul>
+<figure class="highlight csharp"><table><tr><td class="code"><pre><div class="line">[<span class="meta">XLua.CSharpCallLua</span>]</div><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">delegate</span> <span class="keyword">double</span> <span class="title">LuaMax</span>(<span class="params"><span class="keyword">double</span> a, <span class="keyword">double</span> b</span>)</span>;</div></pre></td></tr></table></figure>
+<ul>
+<li>绑定</li>
+</ul>
+<figure class="highlight csharp"><table><tr><td class="code"><pre><div class="line"><span class="keyword">var</span> max = luaenv.Global.GetInPath&lt;LuaMax&gt;(<span class="string">"math.max"</span>);</div></pre></td></tr></table></figure>
+<ul>
+<li>调用</li>
+</ul>
+<figure class="highlight csharp"><table><tr><td class="code"><pre><div class="line">Debug.Log(<span class="string">"max:"</span> + max(<span class="number">32</span>, <span class="number">12</span>));</div></pre></td></tr></table></figure>
+<p>建议绑定一次，重复使用。生成了代码的话，调用max是不产生gc alloc的。</p>
+<h3 id="热补丁"><a href="#热补丁" class="headerlink" title="热补丁"></a>热补丁</h3><ul>
+<li>侵入性小，老项目原有代码不做任何调整就可使用。</li>
+<li>运行时影响小，不打补丁基本和原有程序一样。</li>
+<li>出问题了可以用Lua来打补丁，这时才会走到lua代码逻辑；</li>
+</ul>
+<blockquote>
+<p><a href="hotfix.html">这里</a>是使用指南。</p>
+</blockquote>
+<h3 id="更多示例"><a href="#更多示例" class="headerlink" title="更多示例"></a>更多示例</h3><ul>
+<li><a href="https://github.com/Tencent/xLua/tree/master/Assets/XLua/Examples/01_Helloworld/">01_Helloworld</a>: 快速入门的例子。</li>
+<li><a href="https://github.com/Tencent/xLua/tree/master/Assets/XLua/Examples/02_U3DScripting/">02_U3DScripting</a>: 展示怎么用lua来写MonoBehaviour。</li>
+<li><a href="https://github.com/Tencent/xLua/tree/master/Assets/XLua/Examples/03_UIEvent/">03_UIEvent</a>: 展示怎么用lua来写UI逻辑。</li>
+<li><a href="https://github.com/Tencent/xLua/tree/master/Assets/XLua/Examples/04_LuaObjectOrented/">04_LuaObjectOrented</a>: 展示lua面向对象和C#的配合。</li>
+<li><a href="https://github.com/Tencent/xLua/tree/master/Assets/XLua/Examples/05_NoGc/">05_NoGc</a>: 展示怎么去避免值类型的GC。</li>
+<li><a href="https://github.com/Tencent/xLua/tree/master/Assets/XLua/Examples/06_Coroutine/">06_Coroutine</a>: 展示lua协程怎么和Unity协程相配合。</li>
+<li><a href="https://github.com/Tencent/xLua/tree/master/Assets/XLua/Examples/07_AsyncTest/">07_AsyncTest</a>: 展示怎么用lua协程来把异步逻辑同步化。</li>
+<li><a href="https://github.com/Tencent/xLua/tree/master/Assets/XLua/Examples/08_Hotfix/">08_Hotfix</a>: 热补丁的示例（需要开启热补丁特性，如何开启请看<a href="Assets/XLua/Doc/hotfix.md">指南</a>）。</li>
+<li><a href="https://github.com/Tencent/xLua/tree/master/Assets/XLua/Examples/09_GenericMethod/">09_GenericMethod</a>: 泛化函数支持的演示。</li>
+<li><a href="https://github.com/Tencent/xLua/tree/master/Assets/XLua/Examples/10_SignatureLoader/">10_SignatureLoader</a>: 展示如何读取经数字签名的lua脚本，参见<a href="https://github.com/Tencent/xLua/tree/master/Assets/XLua/Doc/signature.md">数字签名</a>的文档介绍。</li>
+<li><a href="https://github.com/Tencent/xLua/tree/master/Assets/XLua/Examples/11_RawObject/">11_RawObject</a>: 当C#参数是object时，如何把一个lua number指定以boxing后的int传递过去。</li>
+</ul>
+<h3 id="文档"><a href="#文档" class="headerlink" title="文档"></a>文档</h3><ul>
+<li><a href="https://github.com/Tencent/xLua/tree/master/Assets/XLua/Doc/XLua教程.doc">XLua教程.doc</a>：教程，其配套代码<a href="https://github.com/Tencent/xLua/tree/master/Assets/XLua/Tutorial/">这里</a>。</li>
+<li><a href="https://github.com/Tencent/xLua/tree/master/Assets/XLua/Doc/configure.md">XLua的配置</a>：介绍如何配置xLua。</li>
+<li><a href="https://github.com/Tencent/xLua/tree/master/Assets/XLua/Doc/XLua增加删除第三方lua库.doc">XLua增加删除第三方lua库.doc</a>：如何增删第三方lua扩展库。</li>
+<li><a href="https://github.com/Tencent/xLua/tree/master/Assets/XLua/Doc/XLua_API.doc">XLua API.doc</a>：API文档。</li>
+<li><a href="https://github.com/Tencent/xLua/tree/master/Assets/XLua/Doc/custom_generate.md">生成引擎二次开发指南</a>：介绍如何做生成引擎的二次开发。</li>
+<li><a href="https://github.com/Tencent/xLua/tree/master/Assets/XLua/Doc/hotfix.md">热补丁操作指南</a>：介绍如何使用热补丁特性。</li>
+</ul>
+<h3 id="技术支持"><a href="#技术支持" class="headerlink" title="技术支持"></a>技术支持</h3><blockquote>
+<p>QQ群：612705778 验证答案：有问题先找FAQ</p>
+</blockquote>
+
+    <div class="footer">
+        发现错误？想参与编辑？ 
+        <a href="https://github.com/Tencent/xLua/tree/master/docs/source/src/v1/guide/index.md" target="_blank">
+            在 Github 上编辑此页！
+        </a>
+    </div>
+</article>
+
+<div class="sub-nav hiden-in-phone">
+    <dl id="sub-nav">
+        <dt>本文内容</dt>
+        <dd v-for="(ele, index) in sub_nav">
+           <a v-bind:href="ele.href">{{ ele.name }}</a>
+        </dd>
+    </dl>
+</div> 
+</div>
+
+<footer>
+    <div>
+        <p>© Copyright 2017 Tencent All Rights Reserved</p>
+        <p>Tencent 2017</p>
+    </div>
+</footer>
+
+
+<script>
+var vm = new Vue({
+    el : '#container',
+    data: {
+        sub_nav : [ ]
+    },
+    created:function(){
+        var obj = [];
+        $("article h3").each(function(){
+            obj.push({name :  $(this).find("a").attr("title") , href : "#"+$(this).attr("id") });
+        });
+
+        this.sub_nav = obj;       
+    }
+});
+
+var isShow = false;
+$("nav").on("click","#btn-menu" , function(){
+
+    if(!isShow){
+        
+        if($(document).scrollTop() > $(".sidebar").height() - 100){
+
+            $('html, body').animate({scrollTop:0} , 300, "swing",function(){
+
+                $(".sidebar").fadeIn();
+                $(".container").animate({"left" : "15rem"}, 500,"swing");
+            });
+        }else{
+
+                $(".sidebar").fadeIn();
+                $(".container").animate({"left" : "15rem"}, 500,"swing");
+
+        }
+
+    }else{
+        $(".sidebar").fadeOut();
+        $(".container").animate({"left" : "0rem"}, 500,"swing");
+    }
+    isShow = !isShow;
+
+});
+
+$(".container").on("click" , "article" , function(){
+
+    if(isShow){
+        $(".sidebar").fadeOut();
+        $(".container").animate({"left" : "0rem"}, 500,"swing");
+        isShow = false;    
+    }
+
+});
+</script>
+        
+    </body>
+</html>

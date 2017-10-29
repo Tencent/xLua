@@ -1,10 +1,16 @@
-﻿using UnityEngine;
+﻿#if !XLUA_GENERAL
+using UnityEngine;
+#endif
 using System.Collections;
 using System.Collections.Generic;
 using XLua;
 using System;
 
-public class TestCSCallLua : MonoBehaviour {
+public class TestCSCallLua
+#if !XLUA_GENERAL
+    : MonoBehaviour
+#endif
+{
     // Use this for initialization
     void Start()
     {

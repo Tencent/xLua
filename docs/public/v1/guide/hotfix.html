@@ -1,0 +1,377 @@
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+
+    <title>热标识 — XLua</title>
+    <meta charset="utf-8">
+    <meta name="description" content="XLua">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+    <link rel="stylesheet" href="/xLua/public/css/page.css">
+
+    <script src="/xLua/public/js/vue.js"></script>
+    <script src="/xLua/public/js/jquery.js"></script>
+    </head>
+
+    <body>
+        
+            <nav class="nav">
+    <div class="border">
+        <img src="/xLua/public/images/logo.png" />
+        <button class="hiden-in-phone">V2.1</button>
+        <button id="btn-menu" class="hiden-in-pc">菜单</button>
+        <ul class="nav-link hiden-in-phone">
+            <!--li>
+                <form id="search-form">
+                    <input type="text" id="search-query" class="search-query">
+                </form>
+            </li!-->
+            <li><a href="https://github.com/Tencent/xLua" class="nav-link-li">下载项目</a></li>
+            <li><a href="/xLua/public/v1/guide/use.html" class="nav-link-li">使用案例</a></li>
+            <li><a href="/xLua/public/v1/guide/version.html" class="nav-link-li">更新记录</a></li>
+            <li><a href="/xLua/public/v1/guide/contribution.html" class="nav-link-li">贡献指南</li>
+            <li><a href="/xLua/public/v1/guide/index.html" class="nav-link-li">教程</a></li>
+            <li><a href="/xLua/public/" class="nav-link-li current">首页</a></li>
+        </ul>
+    </div>
+</nav>
+
+<div id="container" class="container clear">
+    <section class="sidebar clearfix">
+    <ul>
+        
+            
+            
+                <li><h3>基础</h3></li>
+            
+            
+            
+            <li>
+                <p><a href="/xLua/public/v1/guide/index.html" class="sidebar-link">介绍</a></p>
+            </li>
+        
+            
+            
+            
+            
+            <li>
+                <p><a href="/xLua/public/v1/guide/version.html" class="sidebar-link">更新记录</a></p>
+            </li>
+        
+            
+            
+            
+            
+            <li>
+                <p><a href="/xLua/public/v1/guide/use.html" class="sidebar-link">商业案例</a></p>
+            </li>
+        
+            
+            
+            
+            
+            <li>
+                <p><a href="/xLua/public/v1/guide/faq.html" class="sidebar-link">FAQ</a></p>
+            </li>
+        
+            
+            
+            
+                <li><h3>教程</h3></li>
+            
+            
+            <li>
+                <p><a href="/xLua/public/v1/guide/tutorial.html" class="sidebar-link">从零开始</a></p>
+            </li>
+        
+            
+            
+            
+            
+            <li>
+                <p><a href="/xLua/public/v1/guide/configure.html" class="sidebar-link">XLua的配置</a></p>
+            </li>
+        
+            
+            
+            
+            
+            <li>
+                <p><a href="/xLua/public/v1/guide/api.html" class="sidebar-link">C# API</a></p>
+            </li>
+        
+            
+            
+            
+            
+            <li>
+                <p><a href="/xLua/public/v1/guide/crtdel-3rd.html" class="sidebar-link">添加删除第三方库</a></p>
+            </li>
+        
+            
+            
+            
+            
+            <li>
+                <p><a href="/xLua/public/v1/guide/gc-optimization.html" class="sidebar-link">GC优化指南</a></p>
+            </li>
+        
+            
+            
+            
+            
+            <li>
+                <p><a href="/xLua/public/v1/guide/performance-analysis.html" class="sidebar-link">性能分析工具</a></p>
+            </li>
+        
+            
+            
+            
+            
+            <li>
+                <p><a href="/xLua/public/v1/guide/signature.html" class="sidebar-link">数字签名</a></p>
+            </li>
+        
+            
+            
+            
+            
+                <li><h3>其他</h3></li>
+            
+            <li>
+                <p><a href="/xLua/public/v1/guide/hotfix.html" class="sidebar-link current">热标识</a></p>
+            </li>
+        
+            
+            
+            
+            
+            <li>
+                <p><a href="/xLua/public/v1/guide/features.html" class="sidebar-link">特性</a></p>
+            </li>
+        
+    </ul>
+</section>
+    <article class="clearfix">
+    <h2 id="热标识"><a href="#热标识" class="headerlink" title="热标识"></a>热标识</h2><h3 id="使用方式"><a href="#使用方式" class="headerlink" title="使用方式"></a>使用方式</h3><p>1、添加HOTFIX_ENABLE宏打开该特性（在Unity3D的File-&gt;Build Setting-&gt;Scripting Define Symbols下添加）。编辑器、各手机平台这个宏要分别设置！如果是自动化打包，要注意在代码里头用API设置的宏是不生效的，需要在编辑器设置。</p>
+<p>（建议平时开发业务代码不打开HOTFIX_ENABLE，只在build手机版本或者要在编译器下开发补丁时打开HOTFIX_ENABLE）</p>
+<p>2、执行XLua/Generate Code菜单。</p>
+<p>3、注入，构建手机包这个步骤会在构建时自动进行，编辑器下开发补丁需要手动执行”XLua/Hotfix Inject In Editor”菜单。注入成功会打印“hotfix inject finish!”或者“had injected!”。</p>
+<h3 id="内嵌模式"><a href="#内嵌模式" class="headerlink" title="内嵌模式"></a>内嵌模式</h3><p>默认通过小工具执行代码注入，也可以采用内嵌到编辑器的方式，定义INJECT_WITHOUT_TOOL宏即可。</p>
+<p>定义INJECT_WITHOUT_TOOL宏后，热补丁特性依赖Cecil，添加HOTFIX_ENABLE宏之后，可能会报找不到Cecil。这时你需要到Unity安装目录下找到Mono.Cecil.dll，Mono.Cecil.Pdb.dll，Mono.Cecil.Mdb.dll，拷贝到项目里头。</p>
+<p>注意：如果你的Unity安装目录没有Mono.Cecil.Pdb.dll，Mono.Cecil.Mdb.dll（往往是一些老版本），那就只拷贝Mono.Cecil.dll（你从别的版本的Unity拷贝一套可能会导致编辑器不稳定），这时你需要定义HOTFIX_SYMBOLS_DISABLE，这会导致C#代码没法调试以及Log的栈源文件及行号错乱（所以赶紧升级Unity）。</p>
+<p>参考命令（可能Unity版本不同会略有不同）：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><div class="line">OSX命令行 cp /Applications/Unity/Unity.app/Contents/Managed/Mono.Cecil.* Project/Assets/XLua/Src/Editor/</div><div class="line">Win命令行 copy UnityPath\Editor\Data\Managed\Mono.Cecil.* Project\Assets\XLua\Src\Editor\</div></pre></td></tr></table></figure>
+<h3 id="约束"><a href="#约束" class="headerlink" title="约束"></a>约束</h3><p>不支持静态构造函数。</p>
+<p>不支持在子类override函数通过base调用父类实现。</p>
+<p>目前只支持Assets下代码的热补丁，不支持引擎，c#系统库的热补丁。</p>
+<h3 id="API"><a href="#API" class="headerlink" title="API"></a>API</h3><p>xlua.hotfix(class, [method_name], fix)</p>
+<ul>
+<li>描述         ： 注入lua补丁</li>
+<li>class        ： C#类，两种表示方法，CS.Namespace.TypeName或者字符串方式”Namespace.TypeName”，字符串格式和C#的Type.GetType要求一致，如果是内嵌类型（Nested Type）是非Public类型的话，只能用字符串方式表示”Namespace.TypeName+NestedTypeName”；</li>
+<li>method_name  ： 方法名，可选；</li>
+<li>fix          ： 如果传了method_name，fix将会是一个function，否则通过table提供一组函数。table的组织按key是method_name，value是function的方式。</li>
+</ul>
+<p>xlua.private_accessible(class)</p>
+<ul>
+<li>描述          ： 让一个类的私有字段，属性，方法等可用</li>
+<li>class         ： 同xlua.hotfix的class参数</li>
+</ul>
+<h3 id="标识要热更新的类型"><a href="#标识要热更新的类型" class="headerlink" title="标识要热更新的类型"></a>标识要热更新的类型</h3><p>和其它配置一样，有两种方式</p>
+<p>方式一：直接在类里头打Hotfix标签；</p>
+<p>方式二：在一个static类的static字段或者属性里头配置一个列表。属性可以用于实现的比较复杂的配置，比如根据Namespace做白名单。</p>
+<figure class="highlight csharp"><table><tr><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">class</span> <span class="title">HotfixCfg</span></div><div class="line">&#123;</div><div class="line">    [<span class="meta">Hotfix</span>]</div><div class="line">    <span class="keyword">public</span> <span class="keyword">static</span> List&lt;Type&gt; by_field = <span class="keyword">new</span> List&lt;Type&gt;()</div><div class="line">    &#123;</div><div class="line">        <span class="keyword">typeof</span>(HotFixSubClass),</div><div class="line">        <span class="keyword">typeof</span>(GenericClass&lt;&gt;),</div><div class="line">    &#125;;</div><div class="line"></div><div class="line">    [<span class="meta">Hotfix</span>]</div><div class="line">    <span class="keyword">public</span> <span class="keyword">static</span> List&lt;Type&gt; by_property</div><div class="line">    &#123;</div><div class="line">        <span class="keyword">get</span></div><div class="line">        &#123;</div><div class="line">            <span class="keyword">return</span> (<span class="keyword">from</span> type <span class="keyword">in</span> Assembly.Load(<span class="string">"Assembly-CSharp"</span>).GetTypes()</div><div class="line">                    <span class="keyword">where</span> type.Namespace == <span class="string">"XXXX"</span></div><div class="line">                    <span class="keyword">select</span> type).ToList();</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h3 id="Hotfix-Flag"><a href="#Hotfix-Flag" class="headerlink" title="Hotfix Flag"></a>Hotfix Flag</h3><p>Hotfix标签可以设置一些标志位对生成代码及插桩定制化</p>
+<ul>
+<li>Stateless</li>
+</ul>
+<p>Stateless和Stateful的区别请看下下节。</p>
+<ul>
+<li>Stateful</li>
+</ul>
+<p>同上。</p>
+<ul>
+<li>ValueTypeBoxing</li>
+</ul>
+<p>值类型的适配delegate会收敛到object，好处是代码量更少，不好的是值类型会产生boxing及gc，适用于对text段敏感的业务。</p>
+<ul>
+<li>IgnoreProperty</li>
+</ul>
+<p>不对属性注入及生成适配代码，一般而言，大多数属性的实现都很简单，出错几率比较小，建议不注入。</p>
+<ul>
+<li>IgnoreNotPublic</li>
+</ul>
+<p>不对非public的方法注入及生成适配代码。除了像MonoBehaviour那种会被反射调用的私有方法必须得注入，其它仅被本类调用的非public方法可以不注入，只不过修复时会工作量稍大，所有引用到这个函数的public方法都要重写。</p>
+<ul>
+<li>Inline</li>
+</ul>
+<p>不生成适配delegate，直接在函数体注入处理代码。</p>
+<ul>
+<li>IntKey</li>
+</ul>
+<p>不生成静态字段，而是把所有注入点放到一个数组集中管理。</p>
+<p>好处：对text段影响小。</p>
+<p>坏处：使用不像默认方式那么方便，需要通过id来指明hotfix哪个函数，而这个id是代码注入工具时分配的，函数到id的映射会保存在Gen/Resources/hotfix_id_map.lua.txt，并且自动加时间戳备份到hotfix_id_map.lua.txt同级目录，发布手机版本后请妥善保存该文件。</p>
+<p>该文件的格式大概如下：</p>
+<figure class="highlight lua"><table><tr><td class="code"><pre><div class="line"><span class="keyword">return</span> &#123;</div><div class="line">    [<span class="string">"HotfixTest"</span>] = &#123;</div><div class="line">        [<span class="string">".ctor"</span>] = &#123;</div><div class="line">            <span class="number">5</span></div><div class="line">        &#125;,</div><div class="line">        [<span class="string">"Start"</span>] = &#123;</div><div class="line">            <span class="number">6</span></div><div class="line">        &#125;,</div><div class="line">        [<span class="string">"Update"</span>] = &#123;</div><div class="line">            <span class="number">7</span></div><div class="line">        &#125;,</div><div class="line">        [<span class="string">"FixedUpdate"</span>] = &#123;</div><div class="line">            <span class="number">8</span></div><div class="line">        &#125;,</div><div class="line">        [<span class="string">"Add"</span>] = &#123;</div><div class="line">            <span class="number">9</span>,<span class="number">10</span></div><div class="line">        &#125;,</div><div class="line">        [<span class="string">"OnGUI"</span>] = &#123;</div><div class="line">            <span class="number">11</span></div><div class="line">        &#125;,</div><div class="line">    &#125;,</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>想要替换HotfixTest的Update函数，你得</p>
+<figure class="highlight lua"><table><tr><td class="code"><pre><div class="line">CS.XLua.HotfixDelegateBridge.Set(<span class="number">7</span>, func)</div></pre></td></tr></table></figure>
+<p>如果是重载函数，将会一个函数名对应多个id，比如上面的Add函数。</p>
+<p>能不能自动化一些呢？可以，xlua.util提供了auto_id_map函数，执行一次后你就可以像以前那样直接用类，方法名去指明修补的函数。</p>
+<figure class="highlight lua"><table><tr><td class="code"><pre><div class="line">(<span class="built_in">require</span> <span class="string">'xlua.util'</span>).auto_id_map()</div><div class="line">xlua.hotfix(CS.HotfixTest, <span class="string">'Update'</span>, <span class="function"><span class="keyword">function</span><span class="params">(self)</span></span></div><div class="line">		self.tick = self.tick + <span class="number">1</span></div><div class="line">		<span class="keyword">if</span> (self.tick % <span class="number">50</span>) == <span class="number">0</span> <span class="keyword">then</span></div><div class="line">			<span class="built_in">print</span>(<span class="string">'&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;Update in lua, tick = '</span> .. self.tick)</div><div class="line">		<span class="keyword">end</span></div><div class="line">	<span class="keyword">end</span>)</div></pre></td></tr></table></figure>
+<p>前提是hotfix_id_map.lua.txt放到可以通过require ‘hotfix_id_map’引用到的地方。</p>
+<p>ps：虽然xlua执行代码注入时会把hotfix_id_map.lua.txt放到Resources下，但那时似乎Unity已经不再处理新增的文件。貌似可以通过提前执行“Hotfix inject in Editor”来提前生成，但id不一定一样，比如有的类型里头有平台/编辑器专用的api，编辑器下和真机下的id将不一样。</p>
+<h3 id="使用建议"><a href="#使用建议" class="headerlink" title="使用建议"></a>使用建议</h3><ul>
+<li>对所有较大可能变动的类型加上Hotfix标识；</li>
+<li>建议用反射找出所有函数参数、字段、属性、事件涉及的delegate类型，标注CSharpCallLua；</li>
+<li>业务代码、引擎API、系统API，需要在Lua补丁里头高性能访问的类型，加上LuaCallCSharp；</li>
+<li>引擎API、系统API可能被代码剪裁调（C#无引用的地方都会被剪裁），如果觉得可能会新增C#代码之外的API调用，这些API所在的类型要么加LuaCallCSharp，要么加ReflectionUse；</li>
+</ul>
+<h3 id="Stateless和Stateful"><a href="#Stateless和Stateful" class="headerlink" title="Stateless和Stateful"></a>Stateless和Stateful</h3><p>打Hotfix标签时，默认是Stateless方式，你也可以选Stateful方式，我们先说区别，再说使用场景。</p>
+<p>Stateless方式是指用Lua对成员函数修复时，C#对象直接透传给作为Lua函数的第一个参数。</p>
+<p>Stateful方式下你可以在Lua的构造函数返回一个table，然后后续成员函数调用会把这个table给传递过去。</p>
+<p>Stateless比较适合无状态的类，有状态的话，你得通过反射去操作私有成员，也没法新增状态（field）。Stateless有个好处，可以运行的任意时刻执行替换。</p>
+<p>Stateful的代价是会在类增加一个LuaTable类型的字段（中间层面增加，不会改源代码）。但这种方式是适用性更广，比如你不想要lua状态，可以在构造函数拦截那返回空。而且操作状态性能比反射操作C#私有变量要好，也可以随意新增任意的状态信息。缺点是，执行成员函数之前就new好的对象，接收到的状态会是空，所以需要重启，在一开始就执行替换。</p>
+<h3 id="打补丁"><a href="#打补丁" class="headerlink" title="打补丁"></a>打补丁</h3><p>xlua可以用lua函数替换C#的构造函数，函数，属性，事件的替换。lua实现都是函数，比如属性对于一个getter函数和一个setter函数，事件对应一个add函数和一个remove函数。</p>
+<ul>
+<li>函数</li>
+</ul>
+<p>method_name传函数名，支持重载，不同重载都是转发到同一个lua函数。</p>
+<p>比如：</p>
+<figure class="highlight csharp"><table><tr><td class="code"><pre><div class="line"></div><div class="line"><span class="comment">// 要fix的C#类</span></div><div class="line">[<span class="meta">Hotfix</span>]</div><div class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title">HotfixCalc</span></div><div class="line">&#123;</div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">Add</span>(<span class="params"><span class="keyword">int</span> a, <span class="keyword">int</span> b</span>)</span></div><div class="line">    &#123;</div><div class="line">        <span class="keyword">return</span> a - b;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> Vector3 <span class="title">Add</span>(<span class="params">Vector3 a, Vector3 b</span>)</span></div><div class="line">    &#123;</div><div class="line">        <span class="keyword">return</span> a - b;</div><div class="line">    &#125;</div><div class="line">｝</div></pre></td></tr></table></figure>
+<figure class="highlight lua"><table><tr><td class="code"><pre><div class="line"></div><div class="line">xlua.hotfix(CS.HotfixCalc, <span class="string">'Add'</span>, <span class="function"><span class="keyword">function</span><span class="params">(self, a, b)</span></span></div><div class="line">    <span class="keyword">return</span> a + b</div><div class="line"><span class="keyword">end</span>)</div></pre></td></tr></table></figure>
+<p>静态函数和成员函数的区别是，成员函数会加一个self参数，这个self在Stateless方式下是C#对象本身（对应C#的this），Stateful方式下传lua构造函数实现的返回值（一个table或者nil）</p>
+<p>普通参数对于lua的参数，ref参数对应lua的一个参数和一个返回值，out参数对于lua的一个返回值。</p>
+<p>泛化函数的打补丁规则和普通函数一样。</p>
+<ul>
+<li>构造函数</li>
+</ul>
+<p>构造函数对应的method_name是<code>.ctor</code>。</p>
+<p>如果是Stateful方式，你可以返回一个table作为这个对象的状态。</p>
+<p>和普通函数不一样的是，构造函数的热补丁并不是替换，而是执行原有逻辑后调用lua。</p>
+<ul>
+<li>属性</li>
+</ul>
+<p>对于名为“AProp”的属性，会对应一个getter，method_name等于get_AProp，setter的method_name等于set_AProp。</p>
+<ul>
+<li>[]操作符</li>
+</ul>
+<p>赋值对应set_Item，取值对应get_Item。第一个参数是self，赋值后面跟key，value，取值只有key参数，返回值是取出的值。</p>
+<ul>
+<li>其它操作符</li>
+</ul>
+<p>C#的操作符都有一套内部表示，比如+号的操作符函数名是op_Addition（其它操作符的内部表示可以去请参照相关资料），覆盖这函数就覆盖了C#的+号操作符。</p>
+<ul>
+<li>事件</li>
+</ul>
+<p>比如对于事件“AEvent”，+=操作符是add_AEvent，-=对应的是remove_AEvent。这两个函数均是第一个参数是self，第二个参数是操作符后面跟的delegate。</p>
+<p>通过xlua.private_accessible来直接访问事件对应的私有delegate的直接访问后，可以通过对象的”&amp;事件名”字段直接触发事件，例如self[‘&amp;MyEvent’]()，其中MyEvent是事件名。</p>
+<ul>
+<li>析构函数</li>
+</ul>
+<p>method_name是”Finalize”，传一个self参数。</p>
+<p>和普通函数不一样的是，析构函数的热补丁并不是替换，而是开头调用lua函数后继续原有逻辑。</p>
+<ul>
+<li>泛化类型</li>
+</ul>
+<p>其它规则一致，需要说明的是，每个泛化类型实例化后都是一个独立的类型，只能针对实例化后的类型分别打补丁。比如：</p>
+<figure class="highlight"><table><tr><td class="code"><pre><div class="line">public class GenericClass&lt;T&gt;</div><div class="line">&#123;</div><div class="line">｝</div></pre></td></tr></table></figure>
+<p>你只能对GenericClass<code>&lt;double&gt;</code>，GenericClass<code>&lt;int&gt;</code>这些类，而不是对GenericClass打补丁。</p>
+<p>另外值得一提的是，要注意泛化类型的命名方式，比如GenericClass<code>&lt;double&gt;</code>的命名是GenericClass`1[System.Double]，具体可以看<a href="https://msdn.microsoft.com/en-us/library/w3f99sx1.aspx" target="_blank" rel="external">MSDN</a>。</p>
+<p>对GenericClass<code>&lt;double&gt;</code>打补丁的实例如下：</p>
+<figure class="highlight csharp"><table><tr><td class="code"><pre><div class="line">luaenv.DoString(<span class="string">@"</span></div><div class="line">    xlua.hotfix(CS['GenericClass`1[System.Double]'], &#123;</div><div class="line">        ['.ctor'] = function(obj, a)</div><div class="line">            print('GenericClass&lt;double&gt;', obj, a)</div><div class="line">        end;</div><div class="line">        Func1 = function(obj)</div><div class="line">            print('GenericClass&lt;double&gt;.Func1', obj)</div><div class="line">        end;</div><div class="line">        Func2 = function(obj)</div><div class="line">            print('GenericClass&lt;double&gt;.Func2', obj)</div><div class="line">            return 1314</div><div class="line">        end</div><div class="line">    &#125;)</div><div class="line">");</div></pre></td></tr></table></figure>
+<ul>
+<li>Unity协程</li>
+</ul>
+<p>通过util.cs_generator可以用一个function模拟一个IEnumerator，在里头用coroutine.yield，就类似C#里头的yield return。比如下面的C#代码和对应的hotfix代码是等同效果的</p>
+<figure class="highlight csharp"><table><tr><td class="code"><pre><div class="line">[<span class="meta">XLua.Hotfix</span>]</div><div class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title">HotFixSubClass</span> : <span class="title">MonoBehaviour</span> &#123;</div><div class="line">    <span class="function">IEnumerator <span class="title">Start</span>(<span class="params"></span>)</span></div><div class="line">    &#123;</div><div class="line">        <span class="keyword">while</span> (<span class="literal">true</span>)</div><div class="line">        &#123;</div><div class="line">            <span class="function"><span class="keyword">yield</span> return new <span class="title">WaitForSeconds</span>(<span class="params"><span class="number">3</span></span>)</span>;</div><div class="line">            Debug.Log(<span class="string">"Wait for 3 seconds"</span>);</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight csharp"><table><tr><td class="code"><pre><div class="line">luaenv.DoString(<span class="string">@"</span></div><div class="line">    local util = require 'xlua.util'</div><div class="line">	xlua.hotfix(CS.HotFixSubClass,&#123;</div><div class="line">		Start = function(self)</div><div class="line">			return util.cs_generator(function()</div><div class="line">			    while true do</div><div class="line">				    coroutine.yield(CS.UnityEngine.WaitForSeconds(3))</div><div class="line">                    print('Wait for 3 seconds')</div><div class="line">                end				</div><div class="line">			end</div><div class="line">		end;</div><div class="line">	&#125;)</div><div class="line">");</div></pre></td></tr></table></figure>
+<ul>
+<li>整个类</li>
+</ul>
+<p>如果要替换整个类，不需要一次次的调用xlua.hotfix去替换，可以整个一次完成。只要给一个table，按method_name = function组织即可</p>
+<figure class="highlight lua"><table><tr><td class="code"><pre><div class="line"></div><div class="line">xlua.hotfix(CS.StatefullTest, &#123;</div><div class="line">    [<span class="string">'.ctor'</span>] = <span class="function"><span class="keyword">function</span><span class="params">(csobj)</span></span></div><div class="line">        <span class="keyword">return</span> &#123;evt = &#123;&#125;, start = <span class="number">0</span>&#125;</div><div class="line">    <span class="keyword">end</span>;</div><div class="line">    set_AProp = <span class="function"><span class="keyword">function</span><span class="params">(self, v)</span></span></div><div class="line">        <span class="built_in">print</span>(<span class="string">'set_AProp'</span>, v)</div><div class="line">        self.AProp = v</div><div class="line">    <span class="keyword">end</span>;</div><div class="line">    get_AProp = <span class="function"><span class="keyword">function</span><span class="params">(self)</span></span></div><div class="line">        <span class="keyword">return</span> self.AProp</div><div class="line">    <span class="keyword">end</span>;</div><div class="line">    get_Item = <span class="function"><span class="keyword">function</span><span class="params">(self, k)</span></span></div><div class="line">        <span class="built_in">print</span>(<span class="string">'get_Item'</span>, k)</div><div class="line">        <span class="keyword">return</span> <span class="number">1024</span></div><div class="line">    <span class="keyword">end</span>;</div><div class="line">    set_Item = <span class="function"><span class="keyword">function</span><span class="params">(self, k, v)</span></span></div><div class="line">        <span class="built_in">print</span>(<span class="string">'set_Item'</span>, k, v)</div><div class="line">    <span class="keyword">end</span>;</div><div class="line">    add_AEvent = <span class="function"><span class="keyword">function</span><span class="params">(self, cb)</span></span></div><div class="line">        <span class="built_in">print</span>(<span class="string">'add_AEvent'</span>, cb)</div><div class="line">        <span class="built_in">table</span>.<span class="built_in">insert</span>(self.evt, cb)</div><div class="line">    <span class="keyword">end</span>;</div><div class="line">    remove_AEvent = <span class="function"><span class="keyword">function</span><span class="params">(self, cb)</span></span></div><div class="line">       <span class="built_in">print</span>(<span class="string">'remove_AEvent'</span>, cb)</div><div class="line">       <span class="keyword">for</span> i, v <span class="keyword">in</span> <span class="built_in">ipairs</span>(self.evt) <span class="keyword">do</span></div><div class="line">           <span class="keyword">if</span> v == cb <span class="keyword">then</span></div><div class="line">               <span class="built_in">table</span>.<span class="built_in">remove</span>(self.evt, i)</div><div class="line">               <span class="keyword">break</span></div><div class="line">           <span class="keyword">end</span></div><div class="line">       <span class="keyword">end</span></div><div class="line">    <span class="keyword">end</span>;</div><div class="line">    Start = <span class="function"><span class="keyword">function</span><span class="params">(self)</span></span></div><div class="line">        <span class="built_in">print</span>(<span class="string">'Start'</span>)</div><div class="line">        <span class="keyword">for</span> _, cb <span class="keyword">in</span> <span class="built_in">ipairs</span>(self.evt) <span class="keyword">do</span></div><div class="line">            cb(self.start, <span class="number">2</span>)</div><div class="line">        <span class="keyword">end</span></div><div class="line">        self.start = self.start + <span class="number">1</span></div><div class="line">    <span class="keyword">end</span>;</div><div class="line">    StaticFunc = <span class="function"><span class="keyword">function</span><span class="params">(a, b, c)</span></span></div><div class="line">       <span class="built_in">print</span>(a, b, c)</div><div class="line">    <span class="keyword">end</span>;</div><div class="line">    Finalize = <span class="function"><span class="keyword">function</span><span class="params">(self)</span></span></div><div class="line">       <span class="built_in">print</span>(<span class="string">'Finalize'</span>, self)</div><div class="line">    <span class="keyword">end</span></div><div class="line">&#125;)</div></pre></td></tr></table></figure>
+
+    <div class="footer">
+        发现错误？想参与编辑？ 
+        <a href="https://github.com/Tencent/xLua/tree/master/docs/source/src/v1/guide/hotfix.md" target="_blank">
+            在 Github 上编辑此页！
+        </a>
+    </div>
+</article>
+
+<div class="sub-nav hiden-in-phone">
+    <dl id="sub-nav">
+        <dt>本文内容</dt>
+        <dd v-for="(ele, index) in sub_nav">
+           <a v-bind:href="ele.href">{{ ele.name }}</a>
+        </dd>
+    </dl>
+</div> 
+</div>
+
+<footer>
+    <div>
+        <p>© Copyright 2017 Tencent All Rights Reserved</p>
+        <p>Tencent 2017</p>
+    </div>
+</footer>
+
+
+<script>
+var vm = new Vue({
+    el : '#container',
+    data: {
+        sub_nav : [ ]
+    },
+    created:function(){
+        var obj = [];
+        $("article h3").each(function(){
+            obj.push({name :  $(this).find("a").attr("title") , href : "#"+$(this).attr("id") });
+        });
+
+        this.sub_nav = obj;       
+    }
+});
+
+var isShow = false;
+$("nav").on("click","#btn-menu" , function(){
+
+    if(!isShow){
+        
+        if($(document).scrollTop() > $(".sidebar").height() - 100){
+
+            $('html, body').animate({scrollTop:0} , 300, "swing",function(){
+
+                $(".sidebar").fadeIn();
+                $(".container").animate({"left" : "15rem"}, 500,"swing");
+            });
+        }else{
+
+                $(".sidebar").fadeIn();
+                $(".container").animate({"left" : "15rem"}, 500,"swing");
+
+        }
+
+    }else{
+        $(".sidebar").fadeOut();
+        $(".container").animate({"left" : "0rem"}, 500,"swing");
+    }
+    isShow = !isShow;
+
+});
+
+$(".container").on("click" , "article" , function(){
+
+    if(isShow){
+        $(".sidebar").fadeOut();
+        $(".container").animate({"left" : "0rem"}, 500,"swing");
+        isShow = false;    
+    }
+
+});
+</script>
+        
+    </body>
+</html>

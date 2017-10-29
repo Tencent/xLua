@@ -3,6 +3,33 @@ using System.Collections;
 
 [XLua.Hotfix(XLua.HotfixFlag.Stateful)]
 public class StatefullTest {
+    public StatefullTest()
+    {
+
+    }
+
+    public StatefullTest(int a, int b)
+    {
+        if (a > 0)
+        {
+            return;
+        }
+
+        Debug.Log("a=" + a);
+        if (b > 0)
+        {
+            return;
+        }
+        else
+        {
+            if (a + b > 0)
+            {
+                return;
+            }
+        }
+        Debug.Log("b=" + b);
+    }
+
     public int AProp
     {
         get;

@@ -21,20 +21,26 @@ using System;
 
 namespace XLua
 {
-	internal class ObjectTranslatorPool
+	public class ObjectTranslatorPool
 	{
-		private static volatile ObjectTranslatorPool instance = new ObjectTranslatorPool ();		
 		private Dictionary<RealStatePtr, WeakReference> translators = new Dictionary<RealStatePtr, WeakReference>();
 		
 		public static ObjectTranslatorPool Instance
 		{
 			get
 			{
-				return instance;
+				return InternalGlobals.objectTranslatorPool;
 			}
 		}
-		
-		public ObjectTranslatorPool ()
+
+#if UNITY_EDITOR || XLUA_GENERAL
+        public static ObjectTranslator FindTranslator(RealStatePtr L)
+        {
+            return InternalGlobals.objectTranslatorPool.Find(L);
+        }
+#endif
+
+        public ObjectTranslatorPool ()
 		{
 		}
 		

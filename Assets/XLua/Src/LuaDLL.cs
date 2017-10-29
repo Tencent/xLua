@@ -14,26 +14,45 @@ namespace XLua.LuaDLL
     using System.Text;
     using XLua;
 
-#if !UNITY_IPHONE
+#if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN || XLUA_GENERAL || (UNITY_WSA && !UNITY_EDITOR)
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-#endif
     public delegate int lua_CSFunction(IntPtr L);
-	
-	public partial class Lua
+
+#if GEN_CODE_MINIMIZE
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate int CSharpWrapperCaller(IntPtr L, int funcidx, int top);
+#endif
+#else
+    public delegate int lua_CSFunction(IntPtr L);
+
+#if GEN_CODE_MINIMIZE
+    public delegate int CSharpWrapperCaller(IntPtr L, int funcidx, int top);
+#endif
+#endif
+
+
+    public partial class Lua
 	{
-        public static int LUA_MULTRET = -1;
-#if UNITY_IPHONE && !UNITY_EDITOR
+#if (UNITY_IPHONE || UNITY_WEBGL) && !UNITY_EDITOR
         const string LUADLL = "__Internal";
 #else
         const string LUADLL = "xlua";
 #endif
 
-		[DllImport(LUADLL, CallingConvention = CallingConvention.Cdecl)]
-		public static extern IntPtr lua_tothread(IntPtr L, int index);
+        [DllImport(LUADLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern IntPtr lua_tothread(IntPtr L, int index);
+
+        [DllImport(LUADLL, CallingConvention = CallingConvention.Cdecl)]
+		public static extern int xlua_get_lib_version();
 
         [DllImport(LUADLL, CallingConvention = CallingConvention.Cdecl)]
         public static extern int lua_gc(IntPtr L, LuaGCOptions what, int data);
 
+        [DllImport(LUADLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern IntPtr lua_getupvalue(IntPtr L, int funcindex, int n);
+
+        [DllImport(LUADLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern IntPtr lua_setupvalue(IntPtr L, int funcindex, int n);
 
         [DllImport(LUADLL, CallingConvention = CallingConvention.Cdecl)]
 		public static extern int lua_pushthread(IntPtr L);
@@ -91,10 +110,10 @@ namespace XLua.LuaDLL
 		}
 
         [DllImport(LUADLL, CallingConvention = CallingConvention.Cdecl)]
-        public static extern int lua_getglobal(IntPtr L, string name);//[-1, +0, m]
+        public static extern int xlua_getglobal(IntPtr L, string name);//[-1, +0, m]
 
         [DllImport(LUADLL, CallingConvention = CallingConvention.Cdecl)]
-        public static extern void lua_setglobal(IntPtr L, string name);//[-1, +0, m]
+        public static extern int xlua_setglobal(IntPtr L, string name);//[-1, +0, m]
 
         [DllImport(LUADLL, CallingConvention = CallingConvention.Cdecl)]
         public static extern void xlua_getloaders(IntPtr L);
@@ -190,6 +209,9 @@ namespace XLua.LuaDLL
 
 		public static void lua_pushstdcallcfunction(IntPtr L, lua_CSFunction function, int n = 0)//[-0, +1, m]
         {
+#if XLUA_GENERAL || (UNITY_WSA && !UNITY_EDITOR)
+            GCHandle.Alloc(function);
+#endif
             IntPtr fn = Marshal.GetFunctionPointerForDelegate(function);
             xlua_push_csharp_function(L, fn, n);
         }
@@ -222,16 +244,23 @@ namespace XLua.LuaDLL
             IntPtr str = lua_tolstring(L, index, out strlen);
             if (str != IntPtr.Zero)
 			{
+#if XLUA_GENERAL || (UNITY_WSA && !UNITY_EDITOR)
+                int len = strlen.ToInt32();
+                byte[] buffer = new byte[len];
+                Marshal.Copy(str, buffer, 0, len);
+                return Encoding.UTF8.GetString(buffer);
+#else
                 string ret = Marshal.PtrToStringAnsi(str, strlen.ToInt32());
                 if (ret == null)
                 {
                     int len = strlen.ToInt32();
                     byte[] buffer = new byte[len];
                     Marshal.Copy(str, buffer, 0, len);
-                    return Encoding.ASCII.GetString(buffer);
+                    return Encoding.UTF8.GetString(buffer);
                 }
                 return ret;
-			}
+#endif
+            }
             else
 			{
                 return null;
@@ -261,15 +290,15 @@ namespace XLua.LuaDLL
             }
             else
             {
-                if (Encoding.UTF8.GetByteCount(str) > str_buff.Length)
+                if (Encoding.UTF8.GetByteCount(str) > InternalGlobals.strBuff.Length)
                 {
                     byte[] bytes = Encoding.UTF8.GetBytes(str);
                     xlua_pushlstring(L, bytes, bytes.Length);
                 }
                 else
                 {
-                    int bytes_len = Encoding.UTF8.GetBytes(str, 0, str.Length, str_buff, 0);
-                    xlua_pushlstring(L, str_buff, bytes_len);
+                    int bytes_len = Encoding.UTF8.GetBytes(str, 0, str.Length, InternalGlobals.strBuff, 0);
+                    xlua_pushlstring(L, InternalGlobals.strBuff, bytes_len);
                 }
             }
         }
@@ -277,8 +306,6 @@ namespace XLua.LuaDLL
         [DllImport(LUADLL, CallingConvention = CallingConvention.Cdecl)]
         public static extern void xlua_pushlstring(IntPtr L, byte[] str, int size);
 
-        
-        static byte[] str_buff = new byte[256];
         public static void xlua_pushasciistring(IntPtr L, string str) // for inner use only
         {
             if (str == null)
@@ -288,13 +315,13 @@ namespace XLua.LuaDLL
             else
             {
                 int str_len = str.Length;
-                if (str_buff.Length < str_len)
+                if (InternalGlobals.strBuff.Length < str_len)
                 {
-                    str_buff = new byte[str_len];
+                    InternalGlobals.strBuff = new byte[str_len];
                 }
 
-                int bytes_len = Encoding.UTF8.GetBytes(str, 0, str_len, str_buff, 0);
-                xlua_pushlstring(L, str_buff, bytes_len);
+                int bytes_len = Encoding.UTF8.GetBytes(str, 0, str_len, InternalGlobals.strBuff, 0);
+                xlua_pushlstring(L, InternalGlobals.strBuff, bytes_len);
             }
         }
 
@@ -471,6 +498,9 @@ namespace XLua.LuaDLL
         public static extern IntPtr xlua_pushstruct(IntPtr L, uint size, int meta_ref);
 
         [DllImport(LUADLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern void xlua_pushcstable(IntPtr L, uint field_count, int meta_ref);
+
+        [DllImport(LUADLL, CallingConvention = CallingConvention.Cdecl)]
         public static extern IntPtr lua_touserdata(IntPtr L, int idx);
 
         [DllImport(LUADLL, CallingConvention = CallingConvention.Cdecl)]
@@ -523,5 +553,20 @@ namespace XLua.LuaDLL
         [DllImport(LUADLL, CallingConvention = CallingConvention.Cdecl)]
         public static extern bool xlua_is_eq_str(IntPtr L, int index, string str, int str_len);
 
+#if GEN_CODE_MINIMIZE
+        [DllImport(LUADLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern void xlua_set_csharp_wrapper_caller(IntPtr wrapper);
+
+        [DllImport(LUADLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern void xlua_push_csharp_wrapper(IntPtr L, int wrapperID);
+
+        public static void xlua_set_csharp_wrapper_caller(CSharpWrapperCaller wrapper_caller)
+        {
+#if XLUA_GENERAL || (UNITY_WSA && !UNITY_EDITOR)
+            GCHandle.Alloc(wrapper);
+#endif
+            xlua_set_csharp_wrapper_caller(Marshal.GetFunctionPointerForDelegate(wrapper_caller));
+        }
+#endif
     }
 }

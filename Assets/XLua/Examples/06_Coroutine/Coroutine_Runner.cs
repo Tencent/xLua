@@ -22,10 +22,10 @@ public class Coroutine_Runner : MonoBehaviour
     }
 }
 
-public class CoroutineConfig : GenConfig
+public static class CoroutineConfig
 {
-
-    public List<Type> LuaCallCSharp
+    [LuaCallCSharp]
+    public static List<Type> LuaCallCSharp
     {
         get
         {
@@ -35,21 +35,5 @@ public class CoroutineConfig : GenConfig
                 typeof(WWW)
             };
         }
-    }
-
-    public List<Type> CSharpCallLua
-    {
-        get
-        {
-            return new List<Type>()
-            {
-                
-            };
-        }
-    }
-
-    public List<List<string>> BlackList
-    {
-        get { return null; }
     }
 }
