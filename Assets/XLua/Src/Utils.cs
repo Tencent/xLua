@@ -736,6 +736,17 @@ namespace XLua
             makeReflectionWrap(L, type, cls_field, cls_getter, cls_setter, obj_field, obj_getter, obj_setter, obj_meta,
                 out item_getter, out item_setter, true);
             LuaAPI.lua_settop(L, oldTop);
+
+            foreach (var nested_type in type.GetNestedTypes(BindingFlags.NonPublic))
+            {
+                if ((!nested_type.IsAbstract() && typeof(Delegate).IsAssignableFrom(nested_type))
+                    || nested_type.IsGenericTypeDefinition())
+                {
+                    continue;
+                }
+                ObjectTranslatorPool.Instance.Find(L).TryDelayWrapLoader(L, nested_type);
+                MakePrivateAccessible(L, nested_type);
+            }
         }
 
         [MonoPInvokeCallback(typeof(LuaCSFunction))]
