@@ -210,6 +210,10 @@ print(dic:TryGetValue('a'))
 
 要注意以上操作在Dispose之前完成。
 
+## 调用LuaEnv.Dispose崩溃
+
+很可能是这个Dispose操作是由lua那驱动执行，相当于在lua执行的过程中把lua虚拟机给释放了，改为只由C#执行即可。
+
 ## C#参数（或字段）类型是object时，传递整数默认是以long类型传递，如何指明其它类型？比如int
 
 看[例子11](../Examples/11_RawObject/RawObjectTest.cs)
