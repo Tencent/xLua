@@ -673,9 +673,13 @@ namespace XLua
                 {
                     il.Emit(OpCodes.Ldc_I4, Convert.ToInt32(obj));
                 }
-                else if (typeof(long) == type || typeof(ulong) == type)
+                else if (typeof(long) == type)
                 {
                     il.Emit(OpCodes.Ldc_I8, Convert.ToInt64(obj));
+                }
+                else if (typeof(ulong) == type)
+                {
+                    il.Emit(OpCodes.Ldc_I8, (long)Convert.ToUInt64(obj));
                 }
                 else if (typeof(IntPtr) == type || typeof(IntPtr) == type)
                 {
