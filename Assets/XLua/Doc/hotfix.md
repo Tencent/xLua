@@ -117,7 +117,7 @@ Stateless和Stateful的区别请看下下节。
 
 坏处：使用不像默认方式那么方便，需要通过id来指明hotfix哪个函数，而这个id是代码注入工具时分配的，函数到id的映射会保存在Gen/Resources/hotfix_id_map.lua.txt，并且自动加时间戳备份到hotfix_id_map.lua.txt同级目录，发布手机版本后请妥善保存该文件。
 
-该文件的格式大概如下：
+该文件的格式大概如下（注意：该文件仅IntKey模式使用，当你没类型指定IntKey模式注入，该文件只返回个空表）：
 
 ~~~lua
 return {
@@ -166,7 +166,6 @@ xlua.hotfix(CS.HotfixTest, 'Update', function(self)
 
 前提是hotfix_id_map.lua.txt放到可以通过require 'hotfix_id_map'引用到的地方。
 
-ps：虽然xlua执行代码注入时会把hotfix_id_map.lua.txt放到Resources下，但那时似乎Unity已经不再处理新增的文件。貌似可以通过提前执行“Hotfix inject in Editor”来提前生成，但id不一定一样，比如有的类型里头有平台/编辑器专用的api，编辑器下和真机下的id将不一样。
 
 ## 使用建议
 
