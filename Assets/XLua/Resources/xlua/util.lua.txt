@@ -49,7 +49,7 @@ local generator_mt = {
             else
                 return true
             end
-        end;
+        end,
         Reset = function(self)
             self.co = coroutine.wrap(self.w_func)
         end
