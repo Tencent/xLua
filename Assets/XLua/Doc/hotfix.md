@@ -10,6 +10,8 @@
 
 ## 内嵌模式
 
+注意：该模式慎用，一般仅有经验人士调试使用，因为这模式依赖cecil，可能会和unity本身或者一些第三方库的的cecil版本冲突。有的人可能发现unity5.5以上的版本会提示“WARNING: The runtime version supported by this application is unavailable.”，这是由于注入工具是.net3.5编译导致，目前为止没发现会导致问题。切换到嵌入模式没这提示，但弊大于利。
+
 默认通过小工具执行代码注入，也可以采用内嵌到编辑器的方式，定义INJECT_WITHOUT_TOOL宏即可。
 
 定义INJECT_WITHOUT_TOOL宏后，热补丁特性依赖Cecil，添加HOTFIX_ENABLE宏之后，可能会报找不到Cecil。这时你需要到Unity安装目录下找到Mono.Cecil.dll，Mono.Cecil.Pdb.dll，Mono.Cecil.Mdb.dll，拷贝到项目里头。
