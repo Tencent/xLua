@@ -200,102 +200,6 @@ namespace XLua
             }
         }
 
-        static LuaCSFunction genPropGetter(Type type, PropertyInfo prop, bool is_static)
-        {
-            if (is_static)
-            {
-                return (RealStatePtr L) =>
-                {
-                    ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
-                    try
-                    {
-                        translator.PushAny(L, prop.GetValue(null, null));
-                    }
-                    catch(Exception e)
-                    {
-                        return LuaAPI.luaL_error(L, "try to get " + type + "." + prop.Name + " throw a exception:" + e + ",stack:" + e.StackTrace);
-                    }
-                    return 1;
-                };
-            }
-            else
-            {
-                return (RealStatePtr L) =>
-                {
-                    ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
-                    object obj = translator.FastGetCSObj(L, 1);
-                    if (obj == null || !type.IsInstanceOfType(obj))
-                    {
-                        return LuaAPI.luaL_error(L, "Expected type " + type + ", but got " + (obj == null ? "null" : obj.GetType().ToString()) + ", while get prop " + prop);
-                    }
-
-                    try
-                    {
-                        translator.PushAny(L, prop.GetValue(obj, null));
-                    }
-                    catch (Exception e)
-                    {
-                        return LuaAPI.luaL_error(L, "try to get " + type + "." + prop.Name + " throw a exception:" + e + ",stack:" + e.StackTrace);
-                    }
-
-                    return 1;
-                };
-            }
-        }
-
-        static LuaCSFunction genPropSetter(Type type, PropertyInfo prop, bool is_static)
-        {
-            if (is_static)
-            {
-                return (RealStatePtr L) =>
-                {
-                    ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
-                    object val = translator.GetObject(L, 1, prop.PropertyType);
-                    if (prop.PropertyType.IsValueType() && val == null)
-                    {
-                        return LuaAPI.luaL_error(L, type.Name + "." + prop.Name + " Expected type " + prop.PropertyType);
-                    }
-                    try
-                    { 
-                        prop.SetValue(null, val, null);
-                    }
-                    catch (Exception e)
-                    {
-                        return LuaAPI.luaL_error(L, "try to set " + type + "." + prop.Name + " throw a exception:" + e + ",stack:" + e.StackTrace);
-                    }
-                    return 0;
-                };
-            }
-            else
-            {
-                return (RealStatePtr L) =>
-                {
-                    ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
-
-                    object obj = translator.FastGetCSObj(L, 1);
-                    if (obj == null || !type.IsInstanceOfType(obj))
-                    {
-                        return LuaAPI.luaL_error(L, "Expected type " + type + ", but got " + (obj == null ? "null" : obj.GetType().ToString()) + ", while set prop " + prop);
-                    }
-
-                    object val = translator.GetObject(L, 2, prop.PropertyType);
-                    if (prop.PropertyType.IsValueType() && val == null)
-                    {
-                        return LuaAPI.luaL_error(L, type.Name + "." + prop.Name + " Expected type " + prop.PropertyType);
-                    }
-                    try
-                    {
-                        prop.SetValue(obj, val, null);
-                    }
-                    catch (Exception e)
-                    {
-                        return LuaAPI.luaL_error(L, "try to set " + type + "." + prop.Name + " throw a exception:" + e + ",stack:" + e.StackTrace);
-                    }
-                    return 0;
-                };
-            }
-        }
-
         static LuaCSFunction genItemGetter(Type type, PropertyInfo[] props)
         {
             props = props.Where(prop => !prop.GetIndexParameters()[0].ParameterType.IsAssignableFrom(typeof(string))).ToArray();
@@ -605,7 +509,7 @@ namespace XLua
                         prop = type.GetProperty(prop_name);
                     }
                     LuaAPI.xlua_pushasciistring(L, prop.Name);
-                    translator.PushFixCSFunction(L, genPropGetter(type, prop, method.IsStatic));
+                    translator.PushFixCSFunction(L, translator.methodWrapsCache._GenMethodWrap(method.DeclaringType, prop.Name, new MethodBase[] { method }).Call);
                     LuaAPI.lua_rawset(L, method.IsStatic ? cls_getter : obj_getter);
                 }
                 else if (method_name.StartsWith("set_") && method.IsSpecialName) // setter of property
@@ -616,7 +520,7 @@ namespace XLua
                         prop = type.GetProperty(prop_name);
                     }
                     LuaAPI.xlua_pushasciistring(L, prop.Name);
-                    translator.PushFixCSFunction(L, genPropSetter(type, prop, method.IsStatic));
+                    translator.PushFixCSFunction(L, translator.methodWrapsCache._GenMethodWrap(method.DeclaringType, prop.Name, new MethodBase[] { method }).Call);
                     LuaAPI.lua_rawset(L, method.IsStatic ? cls_setter : obj_setter);
                 }
                 else if (method_name == ".ctor" && method.IsConstructor)
@@ -864,7 +768,7 @@ namespace XLua
                             return LuaAPI.luaL_error(L, "can not find the meta info for " + type);
                         }
 
-                        wrap = (memberType == LazyMemberTypes.PropertyGet) ? genPropGetter(type, prop, isStatic) : genPropSetter(type, prop, isStatic);
+                        wrap = translator.methodWrapsCache._GenMethodWrap(prop.DeclaringType, prop.Name, new MethodBase[] { (memberType == LazyMemberTypes.PropertyGet) ? prop.GetGetMethod() : prop.GetSetMethod() }).Call;
                         break;
                     case LazyMemberTypes.Event:
                         var eventInfo = type.GetEvent(memberName);
