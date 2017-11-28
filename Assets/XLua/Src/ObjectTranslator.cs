@@ -569,6 +569,9 @@ namespace XLua
             LuaAPI.xlua_pushasciistring(L, "tofunction");
             LuaAPI.lua_pushstdcallcfunction(L, StaticLuaCallbacks.ToFunction);
             LuaAPI.lua_rawset(L, -3);
+            LuaAPI.xlua_pushasciistring(L, "release");
+            LuaAPI.lua_pushstdcallcfunction(L, StaticLuaCallbacks.ReleaseCsObject);
+            LuaAPI.lua_rawset(L, -3);
             LuaAPI.lua_pop(L, 1);
 
             LuaAPI.lua_createtable(L, 1, 4); // 4 for __gc, __tostring, __index, __newindex
@@ -1215,6 +1218,15 @@ namespace XLua
 		internal object FastGetCSObj(RealStatePtr L,int index)
 		{
             return getCsObj(L, index, LuaAPI.xlua_tocsobj_fast(L,index));
+        }
+
+        internal void ReleaseCSObj(RealStatePtr L, int index)
+        {
+            int udata = LuaAPI.xlua_tocsobj_safe(L, index);
+            if (udata != -1)
+            {
+                objects.Replace(udata, null);
+            }
         }
 
         List<LuaCSFunction> fix_cs_functions = new List<LuaCSFunction>();
