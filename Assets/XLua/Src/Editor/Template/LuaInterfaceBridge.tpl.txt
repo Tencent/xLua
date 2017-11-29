@@ -104,8 +104,17 @@ namespace XLua.CSObjectWrap
 
         <%
         ForEachCsList(propertys, function(property)
+		local is_sub_interface_prop = property.DeclaringType ~= type
+		local parent_has_same_name = false
+		if is_sub_interface_prop then
+			ForEachCsList(propertys, function(p) 
+				if p.DeclaringType ~= type and p.Name == property.Name then
+				    parent_has_same_name = true
+				end
+			end)
+		end
         %>
-        public <%=CsFullTypeName(property.PropertyType)%> <%=property.Name%> 
+        <%if not parent_has_same_name then%>public <%end%><%=CsFullTypeName(property.PropertyType)%> <%if parent_has_same_name then%><%=CsFullTypeName(property.DeclaringType)%>.<%end%><%=property.Name%> 
         {
             <%if property.CanRead then%>
             get 
