@@ -1215,6 +1215,63 @@ static const luaL_Reg xlualib[] = {
 	{NULL, NULL}
 };
 
+LUA_API int xlua_copy_table(lua_State* L_src, lua_State* L_dst)
+{
+    if (lua_istable(L_src, -1))
+    {
+        int tableIdx = lua_absindex(L_src, -1);
+        lua_createtable(L_dst, 0, 0);
+        lua_pushnil(L_src);
+        while(lua_next(L_src, tableIdx) != 0)
+        {
+            int keyType = lua_type(L_src, -2);
+            int valueType = lua_type(L_src, -1);
+            
+            if ( (keyType == LUA_TNUMBER || keyType == LUA_TSTRING || keyType == LUA_TBOOLEAN) &&
+                (valueType == LUA_TNUMBER || valueType == LUA_TSTRING || valueType == LUA_TBOOLEAN || valueType == LUA_TTABLE))
+            {
+                switch (keyType)
+                {
+                    case LUA_TNUMBER:
+                        lua_pushnumber(L_dst, lua_tonumber(L_src, -2));
+                        break;
+                    case LUA_TSTRING:
+                        lua_pushstring(L_dst, lua_tostring(L_src, -2));
+                        break;
+                    case LUA_TBOOLEAN:
+                        lua_pushboolean(L_dst, lua_toboolean(L_src, -2));
+                        break;
+                    default:
+                        break;
+                }
+                
+                switch (valueType)
+                {
+                    case LUA_TNUMBER:
+                        if (lua_isinteger(L_src, -1)) lua_pushinteger(L_dst, lua_tointeger(L_src, -1));
+                        else lua_pushnumber(L_dst, lua_tonumber(L_src, -1));
+                        break;
+                    case LUA_TSTRING:
+                        lua_pushstring(L_dst, lua_tostring(L_src, -1));
+                        break;
+                    case LUA_TBOOLEAN:
+                        lua_pushboolean(L_dst, lua_toboolean(L_src, -1));
+                        break;
+                    case LUA_TTABLE:
+                        xlua_copy_table(L_src, L_dst);
+                        break;
+                    default:
+                        break;
+                }
+                lua_settable(L_dst, -3);
+            }
+            lua_pop(L_src, 1);
+        }
+        return 1;
+    }
+    return 0;
+}
+
 LUA_API void luaopen_xlua(lua_State *L) {
 	luaL_openlibs(L);
 	
