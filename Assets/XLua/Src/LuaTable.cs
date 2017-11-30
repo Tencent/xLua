@@ -390,9 +390,9 @@ namespace XLua
                 var oldTop_dst = LuaAPI.lua_gettop(L_dst);
 
                 luaEnv.translator.Push(L_src, this);
-                if (LuaAPI.xlua_copy_table(L_src, dstEnv.L) != 0)
+                if (LuaAPI.xlua_copy_table(L_src, L_dst) != 0)
                 {                
-                    dstEnv.translator.Get(dstEnv.L, -1, out result);
+                    dstEnv.translator.Get(L_dst, -1, out result);
                 }
 
                 LuaAPI.lua_settop(L_src, oldTop_src);
