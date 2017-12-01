@@ -374,5 +374,34 @@ namespace XLua
         {
             return "table :" + luaReference;
         }
+
+        public LuaTable CopyTo(LuaEnv dstEnv)
+        {
+#if THREAD_SAFE || HOTFIX_ENABLE
+            lock (luaEnv.luaEnvLock)
+            lock (dstEnv.luaEnvLock)
+            {
+#endif
+                LuaTable result = null;
+                var L_src = luaEnv.L;
+                var L_dst = dstEnv.L;
+
+                var oldTop_src = LuaAPI.lua_gettop(L_src);
+                var oldTop_dst = LuaAPI.lua_gettop(L_dst);
+
+                luaEnv.translator.Push(L_src, this);
+                if (LuaAPI.xlua_copy_table(L_src, L_dst) != 0)
+                {                
+                    dstEnv.translator.Get(L_dst, -1, out result);
+                }
+
+                LuaAPI.lua_settop(L_src, oldTop_src);
+                LuaAPI.lua_settop(L_dst, oldTop_dst);
+                
+                return result;
+#if THREAD_SAFE || HOTFIX_ENABLE
+            }
+#endif
+        }
     }
 }
