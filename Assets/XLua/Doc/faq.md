@@ -335,3 +335,8 @@ f2(obj, 1, 2) --调用int版本
 ~~~
 
 注意：xlua.tofunction由于使用不太方便，以及使用了反射，所以建议做作为临时方案，尽量用封装的方法来解决。
+
+## 支持interface扩展方法么？
+
+考虑到生成代码量，不支持通过obj:ExtentionMethod()的方式去调用，支持通过静态方法的方式去调用CS.ExtentionClass.ExtentionMethod(obj)
+

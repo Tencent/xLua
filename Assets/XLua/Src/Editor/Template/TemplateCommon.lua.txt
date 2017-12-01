@@ -256,6 +256,9 @@ function MethodParameters(method)
         return method:GetParameters()
     else
         local parameters = method:GetParameters()
+		if parameters[0].ParameterType.IsInterface then
+		    return parameters
+		end
         local ret = {}
         for i = 1, parameters.Length - 1 do 
             ret[i - 1] = parameters[i]
