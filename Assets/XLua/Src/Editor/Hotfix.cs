@@ -1059,6 +1059,15 @@ namespace XLua
 #if UNITY_EDITOR_OSX
 			var mono_path = Path.Combine(Path.GetDirectoryName(typeof(UnityEngine.Debug).Module.FullyQualifiedName),
 				"../MonoBleedingEdge/bin/mono");
+			if(!File.Exists(mono_path))
+			{
+				mono_path = Path.Combine(Path.GetDirectoryName(typeof(UnityEngine.Debug).Module.FullyQualifiedName),
+					"../../MonoBleedingEdge/bin/mono");
+			}
+			if(!File.Exists(mono_path))
+			{
+				UnityEngine.Debug.LogError("can not find mono!");
+			}
 #elif UNITY_EDITOR_WIN
             var mono_path = Path.Combine(Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName),
                 "Data/MonoBleedingEdge/bin/mono.exe");
