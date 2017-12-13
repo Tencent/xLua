@@ -1,0 +1,5 @@
+message at {
+        optional int32 aa = 1;
+        optional int32 bb = 2;
+        optional string cc = 3;
+}
