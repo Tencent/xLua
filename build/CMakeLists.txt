@@ -55,6 +55,7 @@ if (USING_LUAJIT)
 	    )
 
 	    set ( LUA_CORE )
+	    set_property( SOURCE xlua.c APPEND PROPERTY COMPILE_DEFINITIONS USING_LUAJIT )
     endif ()
 	set ( LUA_LIB )
 else ()
