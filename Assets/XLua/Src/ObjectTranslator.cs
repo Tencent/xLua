@@ -179,8 +179,7 @@ namespace XLua
 
             foreach (var nested_type in type.GetNestedTypes(BindingFlags.Public))
             {
-                if ((!nested_type.IsAbstract() && typeof(Delegate).IsAssignableFrom(nested_type))
-                    || nested_type.IsGenericTypeDefinition())
+                if (nested_type.IsGenericTypeDefinition())
                 {
                     continue;
                 }
