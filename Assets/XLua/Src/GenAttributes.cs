@@ -78,6 +78,12 @@ namespace XLua
 
     }
 
+    //只能标注Dictionary<Type, List<string>>的field或者property
+    public class DoNotGenAttribute : Attribute
+    {
+        
+    }
+
     public class AdditionalPropertiesAttribute : Attribute
     {
 

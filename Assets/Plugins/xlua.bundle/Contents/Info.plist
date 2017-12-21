@@ -9,7 +9,7 @@
 	<key>CFBundleExecutable</key>
 	<string>xlua</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.sineysoft.xlua</string>
+	<string>com.xlua</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
@@ -41,6 +41,6 @@
 	<key>DTXcodeBuild</key>
 	<string>7D1014</string>
 	<key>NSHumanReadableCopyright</key>
-	<string>Copyright © 2015 Johnche. All rights reserved.</string>
+	<string>Copyright @2017 THL A29 Limited, a Tencent company.  All rights reserved.</string>
 </dict>
 </plist>

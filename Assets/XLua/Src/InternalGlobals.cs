@@ -59,6 +59,8 @@ namespace XLua
 #if GEN_CODE_MINIMIZE
         internal static LuaDLL.CSharpWrapperCaller CSharpWrapperCallerPtr = new LuaDLL.CSharpWrapperCaller(StaticLuaCallbacks.CSharpWrapperCallerImpl);
 #endif
+
+        internal static LuaCSFunction LazyReflectionWrap = new LuaCSFunction(Utils.LazyReflectionCall);
     }
 
 }

@@ -274,7 +274,7 @@ static int opt_ip6_setmembership(lua_State *L, p_socket ps, int level, int name)
     lua_gettable(L, 3);
     if (!lua_isstring(L, -1)) 
         luaL_argerror(L, 3, "string 'multiaddr' field expected");
-    if (!inet_pton(AF_INET6, lua_tostring(L, -1), &val.ipv6mr_multiaddr)) 
+    if (!inet_pton_w32(AF_INET6, lua_tostring(L, -1), &val.ipv6mr_multiaddr)) 
         luaL_argerror(L, 3, "invalid 'multiaddr' ip address");
     lua_pushstring(L, "interface");
     lua_gettable(L, 3);

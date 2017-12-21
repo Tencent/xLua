@@ -1,4 +1,22 @@
-﻿v2.1.9 2017年8月10日
+﻿v2.1.10 2017年9月18日
+新增特性
+1、新增DoNotGen配置，支持一个类型部分函数用反射，部分用生成；
+2、新增wrapper的emit；
+3、webgl支持；
+4、lua实现interface支持interface继承；
+5、window下支持android编译（由xdestiny110提供）；
+6、打包时，如果没执行过“Generate Code”将报错；
+
+变更
+1、	async_to_sync的改为resume错误时报错；
+2、il2cpp下，暂时去掉泛型的反射调用；
+3、升级到lua5.3.4并合入2017-9-1为止所有官方patch；
+
+bug修复
+1、C#仅声明delegate和MulticastDelegate，通过反射创建lua function映射时crash；
+2、解决一些古老版本window（比如xp）的dll兼容问题；
+
+v2.1.9 2017年8月10日
 新增特性
 1、新增最小生成模式（通过GEN_CODE_MINIMIZE切换），可以节省50%的text段空间；
 2、新增xlua.util.createdelegate，支持在lua直接用C#函数创建delegate而不需要通过lua适配；

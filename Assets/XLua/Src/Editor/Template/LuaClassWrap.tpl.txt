@@ -94,6 +94,26 @@ ForEachCsList(setters, function(setter)
     end 
 end)
 
+ForEachCsList(lazymembers, function(lazymember)
+    if lazymember.IsStatic == 'true' then
+	    if 'CLS_IDX' == lazymember.Index then
+		    cls_field_count = cls_field_count + 1
+	    elseif 'CLS_GETTER_IDX' == lazymember.Index then
+		    cls_getter_count = cls_getter_count + 1
+		elseif 'CLS_SETTER_IDX' == lazymember.Index then
+		    cls_setter_count = cls_setter_count + 1
+		end
+	else
+		if 'METHOD_IDX' == lazymember.Index then
+		    obj_method_count = obj_method_count + 1
+	    elseif 'GETTER_IDX' == lazymember.Index then
+		    obj_getter_count = obj_getter_count + 1
+		elseif 'SETTER_IDX' == lazymember.Index then
+		    obj_setter_count = obj_setter_count + 1
+		end
+	end
+end)
+
 local generic_arg_list, type_constraints = GenericArgumentList(type)
 
 %>
@@ -105,7 +125,8 @@ namespace XLua.CSObjectWrap
         public static void __Register(RealStatePtr L)
         {
 			ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
-			Utils.BeginObjectRegister(typeof(<%=CsFullTypeName(type)%>), L, translator, <%=meta_func_count%>, <%=obj_method_count%>, <%=obj_getter_count%>, <%=obj_setter_count%>);
+			System.Type type = typeof(<%=CsFullTypeName(type)%>);
+			Utils.BeginObjectRegister(type, L, translator, <%=meta_func_count%>, <%=obj_method_count%>, <%=obj_getter_count%>, <%=obj_setter_count%>);
 			<%ForEachCsList(operators, function(operator)%>Utils.RegisterFunc(L, Utils.OBJ_META_IDX, "<%=(OpNameMap[operator.Name]):gsub('Meta', ''):lower()%>", <%=OpNameMap[operator.Name]%>);
             <%end)%>
 			<%ForEachCsList(methods, function(method) if not method.IsStatic then %>Utils.RegisterFunc(L, Utils.METHOD_IDX, "<%=method.Name%>", _m_<%=method.Name%>);
@@ -116,10 +137,12 @@ namespace XLua.CSObjectWrap
             <%end end)%>
 			<%ForEachCsList(setters, function(setter) if not setter.IsStatic then %>Utils.RegisterFunc(L, Utils.SETTER_IDX, "<%=setter.Name%>", _s_set_<%=setter.Name%>);
             <%end end)%>
-			Utils.EndObjectRegister(typeof(<%=CsFullTypeName(type)%>), L, translator, <% if type.IsArray or ((indexers.Count or 0) > 0) then %>__CSIndexer<%else%>null<%end%>, <%if type.IsArray or ((newindexers.Count or 0) > 0) then%>__NewIndexer<%else%>null<%end%>,
+			<%ForEachCsList(lazymembers, function(lazymember) if lazymember.IsStatic == 'false' then %>Utils.RegisterLazyFunc(L, Utils.<%=lazymember.Index%>, "<%=lazymember.Name%>", type, <%=lazymember.MemberType%>, <%=lazymember.IsStatic%>);
+            <%end end)%>
+			Utils.EndObjectRegister(type, L, translator, <% if type.IsArray or ((indexers.Count or 0) > 0) then %>__CSIndexer<%else%>null<%end%>, <%if type.IsArray or ((newindexers.Count or 0) > 0) then%>__NewIndexer<%else%>null<%end%>,
 			    null, null, null);
 
-		    Utils.BeginClassRegister(typeof(<%=CsFullTypeName(type)%>), L, __CreateInstance, <%=cls_field_count%>, <%=cls_getter_count%>, <%=cls_setter_count%>);
+		    Utils.BeginClassRegister(type, L, __CreateInstance, <%=cls_field_count%>, <%=cls_getter_count%>, <%=cls_setter_count%>);
 			<%ForEachCsList(methods, function(method) if method.IsStatic then %>Utils.RegisterFunc(L, Utils.CLS_IDX, "<%=method.Overloads[0].Name%>", _m_<%=method.Name%>);
             <% end end)%>
 			<%ForEachCsList(events, function(event) if event.IsStatic then %>Utils.RegisterFunc(L, Utils.CLS_IDX, "<%=event.Name%>", _e_<%=event.Name%>);
@@ -130,7 +153,9 @@ namespace XLua.CSObjectWrap
             <%end end)%>
 			<%ForEachCsList(setters, function(setter) if setter.IsStatic then %>Utils.RegisterFunc(L, Utils.CLS_SETTER_IDX, "<%=setter.Name%>", _s_set_<%=setter.Name%>);
             <%end end)%>
-			Utils.EndClassRegister(typeof(<%=CsFullTypeName(type)%>), L, translator);
+			<%ForEachCsList(lazymembers, function(lazymember) if lazymember.IsStatic == 'true' then %>Utils.RegisterLazyFunc(L, Utils.<%=lazymember.Index%>, "<%=lazymember.Name%>", type, <%=lazymember.MemberType%>, <%=lazymember.IsStatic%>);
+            <%end end)%>
+			Utils.EndClassRegister(type, L, translator);
         }
         
         [MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]

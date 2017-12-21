@@ -256,6 +256,9 @@ function MethodParameters(method)
         return method:GetParameters()
     else
         local parameters = method:GetParameters()
+		if parameters[0].ParameterType.IsInterface then
+		    return parameters
+		end
         local ret = {}
         for i = 1, parameters.Length - 1 do 
             ret[i - 1] = parameters[i]
@@ -349,6 +352,8 @@ function GetPushStatement(t, variable, is_v_params)
         return "translator.Push".. CSVariableName(t) .."(L, "..variable..")"
     elseif t.IsGenericParameter and not t.DeclaringMethod then
 	    return "translator.PushByType(L, "..variable..")"
+	elseif t.IsInterface then
+	    return "translator.PushAny(L, "..variable..")"
     else
         return "translator.Push(L, "..variable..")"
     end

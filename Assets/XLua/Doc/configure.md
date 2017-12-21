@@ -53,7 +53,7 @@ public static List<Type> by_property
 {
     get
     {
-        return (from type in Assembly.GetExecutingAssembly().GetTypes()
+        return (from type in Assembly.Load("Assembly-CSharp").GetTypes()
                 where type.Namespace == "XXXX"
                 select type).ToList();
     }
@@ -82,6 +82,16 @@ xLua只会生成加了该配置的类型，不会自动生成其父类的适配�
 对于扩展方法，必须加上LuaCallCSharp或者ReflectionUse才可以被访问到。
 
 建议所有要在Lua访问的类型，要么加LuaCallCSharp，要么加上ReflectionUse，这才能够保证在各平台都能正常运行。
+
+### XLua.DoNotGen
+
+指明一个类里头的部分函数、字段、属性不生成代码，通过反射访问。
+
+只能标准Dictionary<Type, List<string>>的field或者property。key指明的是生效的类，value是一个列表，配置的是不生成代码的函数、字段、属性的名字。
+
+和ReflectionUse的区别是：1、ReflectionUse指明的是整个类；2、当第一次访问一个函数（字段、属性）时，ReflectionUse会把整个类都wrap，而DoNotGen只wrap该函数（字段、属性），换句话DoNotGen更lazy一些；
+
+和BlackList的区别是：1、BlackList配了就不能用；2、BlackList能指明某重载函数，DoNotGen不能；
 
 ### XLua.CSharpCallLua
 

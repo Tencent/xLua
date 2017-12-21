@@ -8,6 +8,8 @@ xLua目前以zip包形式发布，在工程目录下解压即可。
 
 可以，但生成代码目录需要配置一下（默认放Assets\XLua\Gen目录），具体可以看《XLua的配置.doc》的GenPath配置介绍。
 
+更改目录要注意的是：生成代码和xLua核心代码必须在同一程序集。如果你要用热补丁特性，xLua核心代码必须在Assembly-CSharp程序集。
+
 ## lua源码只能以txt后缀？
 
 什么后缀都可以。
@@ -45,6 +47,12 @@ ios和osx需要在mac下编译。
 解决办法，确认XXX（类型名）加上CSharpCallLua后，清除代码后运行。
 
 如果编辑器下没问题，发布到手机报这错，表示你发布前没生成代码（执行“XLua/Generate Code”）。
+
+## unity5.5以上执行"XLua/Hotfix Inject In Editor"菜单会提示"WARNING: The runtime version supported by this application is unavailable."
+
+这是因为注入工具是用.net3.5编译，而unity5.5意思MonoBleedingEdge的mono环境并没3.5支持导致的，不过一般而言都向下兼容，目前为止也没发现该warning带来什么问题。
+
+可能有人发现定义INJECT_WITHOUT_TOOL用内嵌模式会没有该warning，但问题是这模式是调试问题用的，不建议使用，因为可能会有一些库冲突问题。
 
 ## hotfix下怎么触发一个event
 
@@ -208,6 +216,10 @@ print(dic:TryGetValue('a'))
 
 要注意以上操作在Dispose之前完成。
 
+## 调用LuaEnv.Dispose崩溃
+
+很可能是这个Dispose操作是由lua那驱动执行，相当于在lua执行的过程中把lua虚拟机给释放了，改为只由C#执行即可。
+
 ## C#参数（或字段）类型是object时，传递整数默认是以long类型传递，如何指明其它类型？比如int
 
 看[例子11](../Examples/11_RawObject/RawObjectTest.cs)
@@ -280,3 +292,51 @@ assert(coroutine.resume(co, ...))
 2、上层catch后，不打印
 
 比如某些sdk，在回调业务时，try-catch后把异常吃了。
+
+## 重载含糊如何处理
+
+比如由于忽略out参数导致的Physics.Raycast其中一个重载调用不了，比如short，int无法区分的问题。
+
+首先out参数导致重载含糊比较少见，目前只反馈（截至2017-9-22）过Physics.Raycast一个，建议通过自行封装来解决（short，int这种情况也适用）：静态函数的直接封装个另外名字的，如果是成员方法则通过Extension method来封装。
+
+如果是hotfix场景，我们之前并没有提前封装，又希望调用指定重载怎么办？
+
+可以通过xlua.tofunction结合反射来处理，xlua.tofunction输入一个MethodBase对象，返回一个lua函数。比如下面的C#代码：
+
+~~~csharp
+class TestOverload
+{
+    public int Add(int a, int b)
+    {
+        Debug.Log("int version");
+        return a + b;
+    }
+
+    public short Add(short a, short b)
+    {
+        Debug.Log("short version");
+        return (short)(a + b);
+    }
+}
+~~~
+
+我们可以这么调用指定重载：
+
+~~~lua
+local m1 = typeof(CS.TestOverload):GetMethod('Add', {typeof(CS.System.Int16), typeof(CS.System.Int16)})
+local m2 = typeof(CS.TestOverload):GetMethod('Add', {typeof(CS.System.Int32), typeof(CS.System.Int32)})
+local f1 = xlua.tofunction(m1) --切记对于同一个MethodBase，只tofunction一次，然后重复使用
+local f2 = xlua.tofunction(m2)
+
+local obj = CS.TestOverload()
+
+f1(obj, 1, 2) --调用short版本，成员方法，所以要传对象，静态方法则不需要
+f2(obj, 1, 2) --调用int版本
+~~~
+
+注意：xlua.tofunction由于使用不太方便，以及使用了反射，所以建议做作为临时方案，尽量用封装的方法来解决。
+
+## 支持interface扩展方法么？
+
+考虑到生成代码量，不支持通过obj:ExtentionMethod()的方式去调用，支持通过静态方法的方式去调用CS.ExtentionClass.ExtentionMethod(obj)
+

@@ -553,6 +553,9 @@ namespace XLua.LuaDLL
         [DllImport(LUADLL, CallingConvention = CallingConvention.Cdecl)]
         public static extern bool xlua_is_eq_str(IntPtr L, int index, string str, int str_len);
 
+        [DllImport(LUADLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern IntPtr xlua_gl(IntPtr L);
+
 #if GEN_CODE_MINIMIZE
         [DllImport(LUADLL, CallingConvention = CallingConvention.Cdecl)]
         public static extern void xlua_set_csharp_wrapper_caller(IntPtr wrapper);

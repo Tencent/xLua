@@ -395,7 +395,7 @@ namespace XLua
 
             TypeBuilder impl_type_builder = CodeEmitModule.DefineType("XLuaGenInterfaceImpl" + (genID++), TypeAttributes.Public | TypeAttributes.Class, typeof(LuaBase), new Type[] { to_be_impl});
 
-            foreach(var member in to_be_impl.GetMembers())
+            foreach(var member in (new Type[] { to_be_impl }.Concat(to_be_impl.GetInterfaces()).SelectMany(i=> i.GetMembers())))
             {
                 if (member.MemberType == MemberTypes.Method)
                 {
@@ -643,7 +643,7 @@ namespace XLua
 
         private void emitLiteralLoad(ILGenerator il, Type type, object obj, int localIndex)
         {
-            if (ReferenceEquals(obj, null))
+            if (!type.IsValueType && ReferenceEquals(obj, null))
             {
                 il.Emit(OpCodes.Ldnull);
             }
@@ -673,9 +673,13 @@ namespace XLua
                 {
                     il.Emit(OpCodes.Ldc_I4, Convert.ToInt32(obj));
                 }
-                else if (typeof(long) == type || typeof(ulong) == type)
+                else if (typeof(long) == type)
                 {
                     il.Emit(OpCodes.Ldc_I8, Convert.ToInt64(obj));
+                }
+                else if (typeof(ulong) == type)
+                {
+                    il.Emit(OpCodes.Ldc_I8, (long)Convert.ToUInt64(obj));
                 }
                 else if (typeof(IntPtr) == type || typeof(IntPtr) == type)
                 {
@@ -1159,7 +1163,7 @@ namespace XLua
             il.Emit(OpCodes.Ldarg_0);
             il.Emit(OpCodes.Ldloc, translator);
             il.Emit(OpCodes.Ldc_I4_1);
-            il.Emit(OpCodes.Ldc_I4, instanceMethods.Count);
+            il.Emit(OpCodes.Ldc_I4_1);
             il.Emit(OpCodes.Ldc_I4_1);
             il.Emit(OpCodes.Ldc_I4_1);
             il.Emit(OpCodes.Ldc_I4_M1);
@@ -1197,7 +1201,10 @@ namespace XLua
                 {
                     if (prop.Name == "Item" && prop.GetIndexParameters().Length > 0)
                     {
-                        itemSetter.Add(setter);
+                        if (!prop.GetIndexParameters()[0].ParameterType.IsAssignableFrom(typeof(string)))
+                        {
+                            itemSetter.Add(setter);
+                        }
                     }
                     else
                     {
@@ -1552,7 +1559,7 @@ namespace XLua
                     }
                 }
 
-                Label endOfBlock = endOfBlock = il.DefineLabel();
+                Label endOfBlock = il.DefineLabel();
 
                 if (needCheckParameterType)
                 {

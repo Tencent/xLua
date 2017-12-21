@@ -46,60 +46,53 @@ namespace XLua
 		
 		public void Add (RealStatePtr L, ObjectTranslator translator)
 		{
-			translators.Add(L , new WeakReference(translator));			
-		}
+            var ptr = LuaAPI.xlua_gl(L);
+            lastPtr = ptr;
+            lastTranslator = translator;
+#if !SINGLE_ENV
+            translators.Add(ptr , new WeakReference(translator));
+#endif   
+        }
 
-        RealStatePtr lastState = default(RealStatePtr);
+        RealStatePtr lastPtr = default(RealStatePtr);
         ObjectTranslator lastTranslator = default(ObjectTranslator);
 
 		public ObjectTranslator Find (RealStatePtr L)
 		{
-            if (lastState == L) return lastTranslator;
-            if (translators.ContainsKey(L))
+#if SINGLE_ENV
+            return lastTranslator;
+#else
+            var ptr = LuaAPI.xlua_gl(L);
+            if (lastPtr == ptr) return lastTranslator;
+            if (translators.ContainsKey(ptr))
             {
-                lastState = L;
-                lastTranslator = translators[L].Target as ObjectTranslator;
-                return lastTranslator;
-            }
-
-			RealStatePtr main = Utils.GetMainState (L);
-
-            if (translators.ContainsKey(main))
-            {
-                lastState = L;
-                lastTranslator = translators[main].Target as ObjectTranslator;
-                translators[L] = new WeakReference(lastTranslator);
+                lastPtr = ptr;
+                lastTranslator = translators[ptr].Target as ObjectTranslator;
                 return lastTranslator;
             }
 			
 			return null;
-		}
+#endif
+        }
 		
 		public void Remove (RealStatePtr L)
 		{
-			if (!translators.ContainsKey (L))
+#if SINGLE_ENV
+            lastPtr = default(RealStatePtr);
+            lastTranslator = default(ObjectTranslator);
+#else
+            var ptr = LuaAPI.xlua_gl(L);
+            if (!translators.ContainsKey (ptr))
 				return;
 			
-            if (lastState == L)
+            if (lastPtr == ptr)
             {
-                lastState = default(RealStatePtr);
+                lastPtr = default(RealStatePtr);
                 lastTranslator = default(ObjectTranslator);
             }
-            ObjectTranslator translator = translators[L].Target as ObjectTranslator;
-            List<RealStatePtr> toberemove = new List<RealStatePtr>();
 
-            foreach(var kv in translators)
-            {
-                if ((kv.Value.Target as ObjectTranslator) == translator)
-                {
-                    toberemove.Add(kv.Key);
-                }
-            }
-
-            foreach (var ls in toberemove)
-            {
-                translators.Remove(ls);
-            }
+            translators.Remove(ptr);
+#endif
         }
     }
 }
