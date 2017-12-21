@@ -397,10 +397,10 @@ namespace XLua
                 {
                     throw new InvalidOperationException("try to dispose a LuaEnv with C# callback!");
                 }
+                
+                ObjectTranslatorPool.Instance.Remove(L);
 
                 LuaAPI.lua_close(L);
-
-                ObjectTranslatorPool.Instance.Remove(L);
                 translator = null;
 
                 rawL = IntPtr.Zero;
