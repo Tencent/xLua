@@ -1224,7 +1224,11 @@ namespace XLua
             int udata = LuaAPI.xlua_tocsobj_safe(L, index);
             if (udata != -1)
             {
-                objects.Replace(udata, null);
+                object o = objects.Replace(udata, null);
+                if (o != null && reverseMap.ContainsKey(o))
+                {
+                    reverseMap.Remove(o);
+                }
             }
         }
 
