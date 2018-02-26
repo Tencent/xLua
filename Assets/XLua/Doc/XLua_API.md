@@ -82,7 +82,7 @@
 
 描述：
 
-    和Get的区别是，这个函数会识别path里头的“.”，比如var i = tbl.GetInPath<int>(“a.b.c”)相当于在lua里头执行i = tbl.a.b.c，避免了在C#和Lua之间多次穿越提高执行效率。
+    和Get的区别是，这个函数会识别path里头的“.”，比如var i = tbl.GetInPath<int>(“a.b.c”)相当于在lua里头执行i = tbl.a.b.c，避免仅为了获取中间变量而多次调用Get，执行效率更高。
 
 #### void SetInPath<T>(string path, T val)
 
