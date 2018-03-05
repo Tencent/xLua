@@ -558,7 +558,7 @@ namespace XLua
                                  else
                                     isKeyValuePair = false
                                  end
-                                 print(current, isKeyValuePair)
+                                 --print(current, isKeyValuePair)
                             end
                             if isKeyValuePair then
                                 return current.Key, current.Value
