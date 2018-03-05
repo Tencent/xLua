@@ -170,6 +170,7 @@ namespace XLua
 
                 translator.CreateArrayMetatable(rawL);
                 translator.CreateDelegateMetatable(rawL);
+                translator.CreateEnumerablePairs(rawL);
 #if THREAD_SAFE || HOTFIX_ENABLE
             }
 #endif
