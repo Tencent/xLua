@@ -902,6 +902,10 @@ namespace XLua
                 string className = LuaAPI.lua_tostring(L, idx);
                 return translator.FindType(className);
             }
+            else if (translator.GetObject(L, idx) is Type)
+            {
+                return translator.GetObject(L, idx) as Type;
+            }
             else
             {
                 return null;
