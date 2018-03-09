@@ -554,6 +554,19 @@ namespace XLua
                 impl.UnderlyingSystemType = parent[name].UnderlyingSystemType
                 rawset(parent, name, impl)
             end
+            
+            local base_mt = {
+                __index = function(t, k)
+                    local csobj = t['__csobj']
+                    local func = csobj['<>xLuaBaseProxy_'..k]
+                    return function(_, ...)
+                         func(csobj, ...)
+                    end
+                end
+            }
+            base = function(csobj)
+                return setmetatable({__csobj = csobj}, base_mt)
+            end
             ";
 
         public delegate byte[] CustomLoader(ref string filepath);

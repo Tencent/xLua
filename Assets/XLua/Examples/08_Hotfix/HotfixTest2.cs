@@ -106,6 +106,23 @@ public class InnerTypeTest
     }
 }
 
+public class BaseTestBase
+{
+    public virtual void Foo(int p)
+    {
+        Debug.Log("BaseTestBase.Foo, p = " + p);
+    }
+}
+
+[Hotfix]
+public class BaseTest : BaseTestBase
+{
+    public override void Foo(int p)
+    {
+        Debug.Log("BaseTest.Foo, p = " + p);
+    }
+}
+
 [Hotfix]
 public struct StructTest
 {
@@ -350,6 +367,18 @@ public class HotfixTest2 : MonoBehaviour {
         {
             Debug.Log("throw in lua an catch in c# ok, e.Message:" + e.Message);
         }
+
+
+        BaseTestBase bt = new BaseTest();
+        bt.Foo(1);
+
+        luaenv.DoString(@"
+            xlua.hotfix(CS.BaseTest, 'Foo', function(self, p)
+                    print('BaseTest', p)
+                    base(self):Foo(p)
+                end)
+        ");
+        bt.Foo(2);
     }
 
     void TestStateful()

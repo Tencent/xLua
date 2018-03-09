@@ -29,8 +29,6 @@ Win命令行 copy UnityPath\Editor\Data\Managed\Mono.Cecil.* Project\Assets\XLua
 
 不支持静态构造函数。
 
-不支持在子类override函数通过base调用父类实现。
-
 目前只支持Assets下代码的热补丁，不支持引擎，c#系统库的热补丁。
 
 ## API
@@ -45,6 +43,21 @@ xlua.private_accessible(class)
 
 * 描述          ： 让一个类的私有字段，属性，方法等可用
 * class         ： 同xlua.hotfix的class参数
+
+base(csobj)
+
+* 描述         ： 子类override函数通过base调用父类实现。
+* csobj        ： 对象
+* 返回值       ： 新对象，可以通过该对象base上的方法
+
+例子（位于HotfixTest2.cs）：
+
+```lua
+xlua.hotfix(CS.BaseTest, 'Foo', function(self, p)
+	print('BaseTest', p)
+	base(self):Foo(p)
+end)
+```
 
 util.hotfix_ex(class, method_name, fix)
 

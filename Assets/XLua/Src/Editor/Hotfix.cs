@@ -431,6 +431,29 @@ namespace XLua
                 }
             }
 
+            List<MethodDefinition> toAdd = new List<MethodDefinition>();
+            foreach (var method in type.Methods)
+            {
+                if (ignoreNotPublic && !method.IsPublic)
+                {
+                    continue;
+                }
+                if (ignoreProperty && method.IsSpecialName && (method.Name.StartsWith("get_") || method.Name.StartsWith("set_")))
+                {
+                    continue;
+                }
+                if (method.Name != ".cctor" && !method.IsAbstract && !method.IsPInvokeImpl && method.Body != null && !method.Name.Contains("<"))
+                {
+                    var proxyMethod = tryAddBaseProxy(method.DeclaringType, method);
+                    if (proxyMethod != null) toAdd.Add(proxyMethod);
+                }
+            }
+
+            foreach(var md in toAdd)
+            {
+                type.Methods.Add(md);
+            }
+
             return true;
         }
 
@@ -587,6 +610,87 @@ namespace XLua
                 {
                     posFound = true;
                 }
+            }
+            return null;
+        }
+
+        static MethodDefinition findOverride(TypeDefinition type, MethodReference vmethod)
+        {
+            foreach (var method in type.Methods)
+            {
+                if (method.Name == vmethod.Name && method.IsVirtual && isSameType(method.ReturnType, vmethod.ReturnType) && method.Parameters.Count == vmethod.Parameters.Count)
+                {
+                    bool isParamsMatch = true;
+                    for (int i = 0; i < method.Parameters.Count; i++)
+                    {
+                        if (method.Parameters[i].Attributes != vmethod.Parameters[i].Attributes
+                            || !isSameType(method.Parameters[i].ParameterType, vmethod.Parameters[i].ParameterType))
+                        {
+                            isParamsMatch = false;
+                            break;
+                        }
+                    }
+                    if (isParamsMatch) return method;
+                }
+            }
+            return null;
+        }
+
+        static MethodReference findBase(TypeDefinition type, MethodDefinition method)
+        {
+            if (method.IsVirtual && !method.IsNewSlot) //表明override
+            {
+                try
+                {
+                    TypeDefinition tbase = type.BaseType.Resolve();
+                    while (tbase != null)
+                    {
+                        var m = findOverride(tbase, method);
+                        if (m != null)
+                        {
+                            return m;
+                        }
+                        tbase = tbase.BaseType.Resolve();
+                    }
+                }
+                catch { }
+            }
+            return null;
+        }
+
+        const string BASE_RPOXY_PERFIX = "<>xLuaBaseProxy_";
+
+        static MethodDefinition tryAddBaseProxy(TypeDefinition type, MethodDefinition method)
+        {
+            var mbase = findBase(type, method);
+            if (mbase != null)
+            {
+                var proxyMethod = new MethodDefinition(BASE_RPOXY_PERFIX + method.Name, Mono.Cecil.MethodAttributes.Public, method.ReturnType);
+                for (int i = 0; i < method.Parameters.Count; i++)
+                {
+                    proxyMethod.Parameters.Add(new ParameterDefinition("P" + i, method.Parameters[i].IsOut ? Mono.Cecil.ParameterAttributes.Out : Mono.Cecil.ParameterAttributes.None, method.Parameters[i].ParameterType));
+                }
+                var instructions = proxyMethod.Body.Instructions;
+                var processor = proxyMethod.Body.GetILProcessor();
+                int paramCount = method.Parameters.Count + 1;
+                for (int i = 0; i < paramCount; i++)
+                {
+                    if (i < ldargs.Length)
+                    {
+                        instructions.Add(processor.Create(ldargs[i]));
+                    }
+                    else if (i < 256)
+                    {
+                        instructions.Add(processor.Create(OpCodes.Ldarg_S, (byte)i));
+                    }
+                    else
+                    {
+                        instructions.Add(processor.Create(OpCodes.Ldarg, (short)i));
+                    }
+                }
+                instructions.Add(Instruction.Create(OpCodes.Call, mbase));
+                instructions.Add(Instruction.Create(OpCodes.Ret));
+                return proxyMethod;
             }
             return null;
         }
