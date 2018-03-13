@@ -21,7 +21,7 @@ namespace XLuaTest
 
     [GCOptimize]
     [LuaCallCSharp]
-    public struct MyStruct : IEquatable<MyStruct>
+    public struct MyStruct
     {
         public MyStruct(int p1, int p2)
         {
@@ -34,25 +34,6 @@ namespace XLuaTest
         public int b;
         public decimal c;
         public Pedding e;
-
-        public bool Equals(MyStruct other)
-        {
-            return a == other.a && b == other.b && c == other.c && e.c == other.e.c;
-        }
-
-        public override bool Equals(object obj)
-        {
-            if (obj is MyStruct)
-            {
-                return Equals((MyStruct)obj);
-            }
-            return base.Equals(obj);
-        }
-
-        public override int GetHashCode()
-        {
-            return a.GetHashCode() ^ b.GetHashCode() ^ c.GetHashCode() ^ e.c.GetHashCode();
-        }
     }
 
     [LuaCallCSharp]
@@ -206,76 +187,48 @@ namespace XLuaTest
         void Update()
         {
             // c# call lua function with value type but no gc (using delegate)
-            int arg1 = 1;
-            Debug.Assert(f1(arg1) == arg1); // primitive type
-            
-            Vector3 arg2 = new Vector3(1, 2, 3); // vector3
-            Debug.Assert(f2(arg2) == arg2);
-
-            MyStruct arg3 = new MyStruct(5, 6); // custom complex value type
-            Debug.Assert(f3(arg3).Equals(arg3));
-
-            MyEnum arg4 = MyEnum.E1;
-            Debug.Assert(f4(arg4) == arg4); //enum 
-
-            decimal arg5 = -32132143143100109.00010001010M;
-            Debug.Assert(f5(arg5) == arg5); //decimal
+            f1(1); // primitive type
+            f2(new Vector3(1, 2, 3)); // vector3
+            MyStruct mystruct1 = new MyStruct(5, 6);
+            f3(mystruct1); // custom complex value type
+            f4(MyEnum.E1); //enum
+            decimal dec1 = -32132143143100109.00010001010M;
+            f5(dec1); //decimal
 
             // using LuaFunction.Func<T1, T2, TResult>
-            Debug.Assert(add.Func<int, int, int>(34, 56) == (34 + 56)); // LuaFunction.Func<T1, T2, TResult>
+            add.Func<int, int, int>(34, 56); // LuaFunction.Func<T1, T2, TResult>
 
             // lua access c# value type array no gc
-            double preA1 = a1[0];
             farr(a1); //primitive value type array
-            Debug.Assert(a1[1] == preA1);
-            
-            Vector3 preA2 = a2[0];
             farr(a2); //vector3 array
-            Debug.Assert(a2[1] == preA2);
-
-            MyStruct preA3 = a3[0];
             farr(a3); //custom struct array
-            Debug.Assert(a3[1].Equals(preA3));
-
-            MyEnum preA4 = a4[0];
             farr(a4); //enum arry
-            Debug.Assert(a4[1] == preA4);
-
-            decimal preA5 = a5[0];
             farr(a5); //decimal arry
-            Debug.Assert(a5[1] == preA5);
 
             // lua call c# no gc with value type
             flua();
 
             //c# call lua using interface
-            preA2 = a2[0];
             ie.exchange(a2);
-            Debug.Assert(a2[1] == preA2);
 
             //no gc LuaTable use
             luaenv.Global.Set("g_int", 456);
             int i;
             luaenv.Global.Get("g_int", out i);
-            Debug.Assert(i == 456);
 
-            luaenv.Global.Set(123.0001, arg3);
+            luaenv.Global.Set(123.0001, mystruct1);
             MyStruct mystruct2;
             luaenv.Global.Get(123.0001, out mystruct2);
-            Debug.Assert(mystruct2.Equals(arg3));
 
-            decimal dr2 = 0.0000001M;
-            luaenv.Global.Set((byte)12, arg5);
-            luaenv.Global.Get((byte)12, out dr2);
-            Debug.Assert(arg5 == dr2);
+            decimal dec2 = 0.0000001M;
+            luaenv.Global.Set((byte)12, dec1);
+            luaenv.Global.Get((byte)12, out dec2);
 
             int gdata = luaenv.Global.Get<int>("GDATA");
             luaenv.Global.SetInPath("GDATA", gdata + 1);
-            Debug.Assert(luaenv.Global.Get<int>("GDATA") == (gdata + 1));
 
             int abc = luaenv.Global.GetInPath<int>("A.B.C");
             luaenv.Global.SetInPath("A.B.C", abc + 1);
-            Debug.Assert(luaenv.Global.GetInPath<int>("A.B.C") == (abc + 1));
 
             luaenv.Tick();
         }
