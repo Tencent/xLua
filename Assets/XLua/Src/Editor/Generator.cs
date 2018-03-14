@@ -155,6 +155,12 @@ namespace CSObjectWrapEditor
             });
         }
 
+        static bool IsOverride(MethodBase method)
+        {
+            var m = method as MethodInfo;
+            return m != null && !m.IsConstructor && m.IsVirtual && (m.GetBaseDefinition().DeclaringType != m.DeclaringType);
+        }
+
         static int OverloadCosting(MethodBase mi)
         {
             int costing = 0;
@@ -310,6 +316,8 @@ namespace CSObjectWrapEditor
             }
             parameters.Set("namespaces", extension_methods_namespace.Distinct().ToList());
 
+            List<LazyMemberInfo> lazyMemberInfos = new List<LazyMemberInfo>();
+
             //warnning: filter all method start with "op_"  "add_" "remove_" may  filter some ordinary method
             parameters.Set("methods", type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.IgnoreCase | BindingFlags.DeclaredOnly)
                 .Where(method => !method.IsDefined(typeof (ExtensionAttribute), false) || method.GetParameters()[0].ParameterType.IsInterface || method.DeclaringType != type)
@@ -321,11 +329,17 @@ namespace CSObjectWrapEditor
                 {
                     var overloads = new List<MethodBase>();
                     List<int> def_vals = new List<int>();
+                    bool isOverride = false;
                     foreach (var overload in v.Cast<MethodBase>().OrderBy(mb => OverloadCosting(mb)))
                     {
                         int def_count = 0;
                         overloads.Add(overload);
                         def_vals.Add(def_count);
+
+                        if (!isOverride)
+                        {
+                            isOverride = IsOverride(overload);
+                        }
 
                         var ps = overload.GetParameters();
                         for (int i = ps.Length - 1; i >=0; i--)
@@ -343,6 +357,18 @@ namespace CSObjectWrapEditor
                             }
                         }
                     }
+#if HOTFIX_ENABLE
+                    if (isOverride)
+                    {
+                        lazyMemberInfos.Add(new LazyMemberInfo
+                        {
+                            Index = "METHOD_IDX",
+                            Name = "<>xLuaBaseProxy_" + k,
+                            MemberType = "LazyMemberTypes.Method",
+                            IsStatic = "false"
+                        });
+                    }
+#endif
                     return new {
                         Name = k,
                         IsStatic = overloads[0].IsStatic && (!overloads[0].IsDefined(typeof(ExtensionAttribute), false) || overloads[0].GetParameters()[0].ParameterType.IsInterface),
@@ -386,7 +412,7 @@ namespace CSObjectWrapEditor
                 .Select(ev => new { IsStatic = ev.GetAddMethod() != null? ev.GetAddMethod().IsStatic: ev.GetRemoveMethod().IsStatic, ev.Name,
                     CanSet = false, CanAdd = ev.GetRemoveMethod() != null, CanRemove = ev.GetRemoveMethod() != null, Type = ev.EventHandlerType})
                 .ToList());
-            List<LazyMemberInfo> lazyMemberInfos = new List<LazyMemberInfo>();
+            
             parameters.Set("lazymembers", lazyMemberInfos);
             foreach (var member in type.GetMembers(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.IgnoreCase | BindingFlags.DeclaredOnly)
                 .Where(m => IsDoNotGen(type, m.Name))
