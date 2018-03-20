@@ -648,7 +648,25 @@ namespace XLua
                         var m = findOverride(tbase, method);
                         if (m != null)
                         {
-                            return m;
+                            if (type.BaseType.IsGenericInstance)
+                            {
+                                //(type.BaseType as GenericInstanceType).GenericArguments
+                                var reference = new MethodReference(m.Name, m.ReturnType, type.BaseType)
+                                {
+                                    HasThis = m.HasThis,
+                                    ExplicitThis = m.ExplicitThis,
+                                    CallingConvention = m.CallingConvention
+                                };
+                                foreach (var parameter in m.Parameters)
+                                    reference.Parameters.Add(new ParameterDefinition(parameter.ParameterType));
+                                foreach (var generic_parameter in m.GenericParameters)
+                                    reference.GenericParameters.Add(new GenericParameter(generic_parameter.Name, reference));
+                                return reference;
+                            }
+                            else
+                            {
+                                return m;
+                            }
                         }
                         tbase = tbase.BaseType.Resolve();
                     }
