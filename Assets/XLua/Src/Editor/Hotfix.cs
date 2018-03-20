@@ -618,7 +618,7 @@ namespace XLua
         {
             foreach (var method in type.Methods)
             {
-                if (method.Name == vmethod.Name && method.IsVirtual && isSameType(method.ReturnType, vmethod.ReturnType) && method.Parameters.Count == vmethod.Parameters.Count)
+                if (method.Name == vmethod.Name && method.IsVirtual && !method.IsAbstract && isSameType(method.ReturnType, vmethod.ReturnType) && method.Parameters.Count == vmethod.Parameters.Count)
                 {
                     bool isParamsMatch = true;
                     for (int i = 0; i < method.Parameters.Count; i++)
