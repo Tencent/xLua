@@ -1209,6 +1209,11 @@ namespace XLua
             Assembly editor_assembly = typeof(Hotfix).Assembly;
             HotfixConfig.GetConfig(editor_cfg, Utils.GetAllTypes().Where(t => t.Assembly == editor_assembly));
 
+			if (!Directory.Exists(CSObjectWrapEditor.GeneratorConfig.common_path))
+            {
+                Directory.CreateDirectory(CSObjectWrapEditor.GeneratorConfig.common_path);
+            }
+			
             using (BinaryWriter writer = new BinaryWriter(new FileStream(hotfix_cfg_in_editor, FileMode.Create, FileAccess.Write)))
             {
                 writer.Write(editor_cfg.Count);
