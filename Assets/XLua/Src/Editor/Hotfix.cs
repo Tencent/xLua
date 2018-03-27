@@ -1209,7 +1209,7 @@ namespace XLua
             Assembly editor_assembly = typeof(Hotfix).Assembly;
             HotfixConfig.GetConfig(editor_cfg, Utils.GetAllTypes().Where(t => t.Assembly == editor_assembly));
 
-			if (!Directory.Exists(CSObjectWrapEditor.GeneratorConfig.common_path))
+            if (!Directory.Exists(CSObjectWrapEditor.GeneratorConfig.common_path))
             {
                 Directory.CreateDirectory(CSObjectWrapEditor.GeneratorConfig.common_path);
             }
