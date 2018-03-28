@@ -643,6 +643,11 @@ namespace XLua
             {
                 return null;
             }
+            if (type.IsGenericInstance && 
+                (method.Module.Assembly.FullName != type.Module.Assembly.FullName))
+            {
+                return null;
+            }
             var m = findOverride(td, method);
             if (m != null)
             {
@@ -685,7 +690,8 @@ namespace XLua
 
         static TypeReference tryImport(TypeReference type, TypeReference toImport)
         {
-            if (type.Module.Assembly.FullName == toImport.Module.Assembly.FullName)
+            if (type.Module.Assembly.FullName == toImport.Module.Assembly.FullName
+                && type.Module == toImport.Module)
             {
                 return toImport;
             }
@@ -697,7 +703,8 @@ namespace XLua
 
         static MethodReference tryImport(TypeReference type, MethodReference toImport)
         {
-            if (type.Module.Assembly.FullName == toImport.Module.Assembly.FullName)
+            if (type.Module.Assembly.FullName == toImport.Module.Assembly.FullName
+                && type.Module == toImport.Module)
             {
                 return toImport;
             }
