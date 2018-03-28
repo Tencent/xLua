@@ -988,7 +988,7 @@ namespace XLua
                 {
                     return LuaAPI.luaL_error(L, "xlua.private_accessible, can not find c# type");
                 }
-
+                translator.GetTypeId(L, type);//解决从未访问过一个类型，调用xlua.private_accessible会报错的问题
                 Utils.MakePrivateAccessible(L, type);
                 return 0;
             }
