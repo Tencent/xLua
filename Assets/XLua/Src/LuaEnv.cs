@@ -560,7 +560,7 @@ namespace XLua
                     local csobj = t['__csobj']
                     local func = csobj['<>xLuaBaseProxy_'..k]
                     return function(_, ...)
-                         func(csobj, ...)
+                         return func(csobj, ...)
                     end
                 end
             }

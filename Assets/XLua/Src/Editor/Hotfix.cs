@@ -618,13 +618,13 @@ namespace XLua
         {
             foreach (var method in type.Methods)
             {
-                if (method.Name == vmethod.Name && method.IsVirtual && !method.IsAbstract && isSameType(method.ReturnType, vmethod.ReturnType) && method.Parameters.Count == vmethod.Parameters.Count)
+                if (method.Name == vmethod.Name && method.IsVirtual && !method.IsAbstract && (method.ReturnType.FullName == vmethod.ReturnType.FullName) && method.Parameters.Count == vmethod.Parameters.Count)
                 {
                     bool isParamsMatch = true;
                     for (int i = 0; i < method.Parameters.Count; i++)
                     {
                         if (method.Parameters[i].Attributes != vmethod.Parameters[i].Attributes
-                            || !isSameType(method.Parameters[i].ParameterType, vmethod.Parameters[i].ParameterType))
+                            || (method.Parameters[i].ParameterType.FullName != vmethod.Parameters[i].ParameterType.FullName))
                         {
                             isParamsMatch = false;
                             break;
@@ -636,40 +636,45 @@ namespace XLua
             return null;
         }
 
+        static MethodReference _findBase(TypeReference type, MethodDefinition method)
+        {
+            TypeDefinition td = type.Resolve();
+            if (td == null)
+            {
+                return null;
+            }
+            var m = findOverride(td, method);
+            if (m != null)
+            {
+                if (type.IsGenericInstance)
+                {
+                    var reference = new MethodReference(m.Name, m.ReturnType, type)
+                    {
+                        HasThis = m.HasThis,
+                        ExplicitThis = m.ExplicitThis,
+                        CallingConvention = m.CallingConvention
+                    };
+                    foreach (var parameter in m.Parameters)
+                        reference.Parameters.Add(new ParameterDefinition(parameter.ParameterType));
+                    foreach (var generic_parameter in m.GenericParameters)
+                        reference.GenericParameters.Add(new GenericParameter(generic_parameter.Name, reference));
+                    return reference;
+                }
+                else
+                {
+                    return m;
+                }
+            }
+            return _findBase(td.BaseType, method);
+        }
+
         static MethodReference findBase(TypeDefinition type, MethodDefinition method)
         {
             if (method.IsVirtual && !method.IsNewSlot) //表明override
             {
                 try
                 {
-                    TypeDefinition tbase = type.BaseType.Resolve();
-                    while (tbase != null)
-                    {
-                        var m = findOverride(tbase, method);
-                        if (m != null)
-                        {
-                            if (type.BaseType.IsGenericInstance)
-                            {
-                                //(type.BaseType as GenericInstanceType).GenericArguments
-                                var reference = new MethodReference(m.Name, m.ReturnType, type.BaseType)
-                                {
-                                    HasThis = m.HasThis,
-                                    ExplicitThis = m.ExplicitThis,
-                                    CallingConvention = m.CallingConvention
-                                };
-                                foreach (var parameter in m.Parameters)
-                                    reference.Parameters.Add(new ParameterDefinition(parameter.ParameterType));
-                                foreach (var generic_parameter in m.GenericParameters)
-                                    reference.GenericParameters.Add(new GenericParameter(generic_parameter.Name, reference));
-                                return reference;
-                            }
-                            else
-                            {
-                                return m;
-                            }
-                        }
-                        tbase = tbase.BaseType.Resolve();
-                    }
+                    return _findBase(type.BaseType, method);
                 }
                 catch { }
             }
@@ -678,15 +683,40 @@ namespace XLua
 
         const string BASE_RPOXY_PERFIX = "<>xLuaBaseProxy_";
 
+        static TypeReference tryImport(TypeReference type, TypeReference toImport)
+        {
+            if (type.Module.Assembly.FullName == toImport.Module.Assembly.FullName)
+            {
+                return toImport;
+            }
+            else
+            {
+                return type.Module.ImportReference(toImport);
+            }
+        }
+
+        static MethodReference tryImport(TypeReference type, MethodReference toImport)
+        {
+            if (type.Module.Assembly.FullName == toImport.Module.Assembly.FullName)
+            {
+                return toImport;
+            }
+            else
+            {
+                return type.Module.ImportReference(toImport);
+            }
+        }
+
         static MethodDefinition tryAddBaseProxy(TypeDefinition type, MethodDefinition method)
         {
             var mbase = findBase(type, method);
             if (mbase != null)
             {
-                var proxyMethod = new MethodDefinition(BASE_RPOXY_PERFIX + method.Name, Mono.Cecil.MethodAttributes.Public, method.ReturnType);
+                var module = type.Module;
+                var proxyMethod = new MethodDefinition(BASE_RPOXY_PERFIX + method.Name, Mono.Cecil.MethodAttributes.Public, tryImport(type, method.ReturnType));
                 for (int i = 0; i < method.Parameters.Count; i++)
                 {
-                    proxyMethod.Parameters.Add(new ParameterDefinition("P" + i, method.Parameters[i].IsOut ? Mono.Cecil.ParameterAttributes.Out : Mono.Cecil.ParameterAttributes.None, method.Parameters[i].ParameterType));
+                    proxyMethod.Parameters.Add(new ParameterDefinition("P" + i, method.Parameters[i].IsOut ? Mono.Cecil.ParameterAttributes.Out : Mono.Cecil.ParameterAttributes.None, tryImport(type, method.Parameters[i].ParameterType)));
                 }
                 var instructions = proxyMethod.Body.Instructions;
                 var processor = proxyMethod.Body.GetILProcessor();
@@ -706,7 +736,7 @@ namespace XLua
                         instructions.Add(processor.Create(OpCodes.Ldarg, (short)i));
                     }
                 }
-                instructions.Add(Instruction.Create(OpCodes.Call, mbase));
+                instructions.Add(Instruction.Create(OpCodes.Call, tryImport(type, mbase)));
                 instructions.Add(Instruction.Create(OpCodes.Ret));
                 return proxyMethod;
             }
