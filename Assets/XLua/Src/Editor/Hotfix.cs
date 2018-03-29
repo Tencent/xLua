@@ -643,24 +643,25 @@ namespace XLua
             {
                 return null;
             }
-            if (type.IsGenericInstance && 
-                (method.Module.Assembly.FullName != type.Module.Assembly.FullName))
-            {
-                return null;
-            }
+            //if (type.IsGenericInstance && 
+            //    (method.Module.Assembly.FullName != type.Module.Assembly.FullName || method.Module.Assembly.FullName != td.Module.Assembly.FullName
+            //    || method.Module.FullyQualifiedName != type.Module.FullyQualifiedName || method.Module.FullyQualifiedName != td.Module.FullyQualifiedName))
+            //{
+            //    return _findBase(td.BaseType, method);
+            //}
             var m = findOverride(td, method);
             if (m != null)
             {
                 if (type.IsGenericInstance)
                 {
-                    var reference = new MethodReference(m.Name, m.ReturnType, type)
+                    var reference = new MethodReference(m.Name, tryImport(method.DeclaringType, m.ReturnType), tryImport(method.DeclaringType, type))
                     {
                         HasThis = m.HasThis,
                         ExplicitThis = m.ExplicitThis,
                         CallingConvention = m.CallingConvention
                     };
                     foreach (var parameter in m.Parameters)
-                        reference.Parameters.Add(new ParameterDefinition(parameter.ParameterType));
+                        reference.Parameters.Add(new ParameterDefinition(tryImport(method.DeclaringType, parameter.ParameterType)));
                     foreach (var generic_parameter in m.GenericParameters)
                         reference.GenericParameters.Add(new GenericParameter(generic_parameter.Name, reference));
                     return reference;
@@ -691,7 +692,7 @@ namespace XLua
         static TypeReference tryImport(TypeReference type, TypeReference toImport)
         {
             if (type.Module.Assembly.FullName == toImport.Module.Assembly.FullName
-                && type.Module == toImport.Module)
+                && type.Module.FullyQualifiedName == toImport.Module.FullyQualifiedName)
             {
                 return toImport;
             }
@@ -704,7 +705,7 @@ namespace XLua
         static MethodReference tryImport(TypeReference type, MethodReference toImport)
         {
             if (type.Module.Assembly.FullName == toImport.Module.Assembly.FullName
-                && type.Module == toImport.Module)
+                && type.Module.FullyQualifiedName == toImport.Module.FullyQualifiedName)
             {
                 return toImport;
             }
