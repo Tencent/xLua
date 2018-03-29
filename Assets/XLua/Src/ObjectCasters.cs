@@ -637,6 +637,14 @@ namespace XLua
                     }
                     /*foreach (PropertyInfo prop in type.GetProperties())
                     {
+                        var _setMethod = prop.GetSetMethod();
+
+                        if (_setMethod == null ||
+                            _setMethod.IsPrivate)
+                        {
+                            continue;
+                        }
+
                         LuaAPI.xlua_pushasciistring(L, prop.Name);
                         LuaAPI.lua_rawget(L, idx);
                         if (!LuaAPI.lua_isnil(L, -1))
@@ -644,7 +652,7 @@ namespace XLua
                             try
                             {
                                 prop.SetValue(obj, GetCaster(prop.PropertyType)(L, n + 1,
-                                    target == null || prop.PropertyType.IsPrimitive || prop.PropertyType == typeof(string) ? null : prop.GetValue(obj, null)), null);
+                                    target == null || prop.PropertyType.IsPrimitive() || prop.PropertyType == typeof(string) ? null : prop.GetValue(obj, null)), null);
                             }
                             catch (Exception e)
                             {
