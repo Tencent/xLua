@@ -152,6 +152,16 @@ public struct StructTest
     {
         return go;
     }
+
+    public override string ToString()
+    {
+        return base.ToString();
+    }
+
+    public string Proxy()
+    {
+        return base.ToString();
+    }
 }
 
 [Hotfix(HotfixFlag.Stateful)]

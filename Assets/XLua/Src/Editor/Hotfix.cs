@@ -444,7 +444,7 @@ namespace XLua
                 }
                 if (method.Name != ".cctor" && !method.IsAbstract && !method.IsPInvokeImpl && method.Body != null && !method.Name.Contains("<"))
                 {
-                    var proxyMethod = tryAddBaseProxy(method.DeclaringType, method);
+                    var proxyMethod = tryAddBaseProxy(type, method);
                     if (proxyMethod != null) toAdd.Add(proxyMethod);
                 }
             }
@@ -741,6 +741,11 @@ namespace XLua
                     else
                     {
                         instructions.Add(processor.Create(OpCodes.Ldarg, (short)i));
+                    }
+                    if (i == 0 && type.IsValueType)
+                    {
+                        instructions.Add(Instruction.Create(OpCodes.Ldobj, type));
+                        instructions.Add(Instruction.Create(OpCodes.Box, type));
                     }
                 }
                 instructions.Add(Instruction.Create(OpCodes.Call, tryImport(type, mbase)));
