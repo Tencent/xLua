@@ -71,6 +71,9 @@ public static class ExampleGenConfig
                 new List<string>(){"UnityEngine.Security", "GetChainOfTrustValue"},
                 new List<string>(){"UnityEngine.CanvasRenderer", "onRequestRebuild"},
                 new List<string>(){"UnityEngine.Light", "areaSize"},
+    #if UNITY_2017_1_OR_NEWER
+                new List<string>(){"UnityEngine.Light", "lightmapBakeType"},
+    #endif
                 new List<string>(){"UnityEngine.AnimatorOverrideController", "PerformOverrideClipListCleanup"},
     #if !UNITY_WEBPLAYER
                 new List<string>(){"UnityEngine.Application", "ExternalEval"},
@@ -84,5 +87,8 @@ public static class ExampleGenConfig
                 new List<string>(){"System.IO.DirectoryInfo", "CreateSubdirectory", "System.String", "System.Security.AccessControl.DirectorySecurity"},
                 new List<string>(){"System.IO.DirectoryInfo", "Create", "System.Security.AccessControl.DirectorySecurity"},
                 new List<string>(){"UnityEngine.MonoBehaviour", "runInEditMode"},
+    #if !UNITY_5_6_OR_NEWER
+
+    #endif
             };
 }
