@@ -73,6 +73,8 @@ public static class ExampleGenConfig
                 new List<string>(){"UnityEngine.Light", "areaSize"},
     #if UNITY_2017_1_OR_NEWER
                 new List<string>(){"UnityEngine.Light", "lightmapBakeType"},
+                new List<string>(){"UnityEngine.WWW", "MovieTexture"},
+                new List<string>(){"UnityEngine.WWW", "GetMovieTexture"},
     #endif
                 new List<string>(){"UnityEngine.AnimatorOverrideController", "PerformOverrideClipListCleanup"},
     #if !UNITY_WEBPLAYER
