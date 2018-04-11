@@ -46,12 +46,18 @@ namespace XLua
 		
 		public void Add (RealStatePtr L, ObjectTranslator translator)
 		{
-            var ptr = LuaAPI.xlua_gl(L);
-            lastPtr = ptr;
-            lastTranslator = translator;
+#if THREAD_SAFE || HOTFIX_ENABLE
+            lock (this)
+#endif
+            {
+                var ptr = LuaAPI.xlua_gl(L);
+                lastPtr = ptr;
+                lastTranslator = translator;
+            
 #if !SINGLE_ENV
-            translators.Add(ptr , new WeakReference(translator));
+                translators.Add(ptr , new WeakReference(translator));
 #endif   
+            }
         }
 
         RealStatePtr lastPtr = default(RealStatePtr);
@@ -59,40 +65,50 @@ namespace XLua
 
 		public ObjectTranslator Find (RealStatePtr L)
 		{
-#if SINGLE_ENV
-            return lastTranslator;
-#else
-            var ptr = LuaAPI.xlua_gl(L);
-            if (lastPtr == ptr) return lastTranslator;
-            if (translators.ContainsKey(ptr))
-            {
-                lastPtr = ptr;
-                lastTranslator = translators[ptr].Target as ObjectTranslator;
-                return lastTranslator;
-            }
-			
-			return null;
+#if THREAD_SAFE || HOTFIX_ENABLE
+            lock (this)
 #endif
+            {
+#if SINGLE_ENV
+                return lastTranslator;
+#else
+                var ptr = LuaAPI.xlua_gl(L);
+                if (lastPtr == ptr) return lastTranslator;
+                if (translators.ContainsKey(ptr))
+                {
+                    lastPtr = ptr;
+                    lastTranslator = translators[ptr].Target as ObjectTranslator;
+                    return lastTranslator;
+                }
+                
+                return null;
+#endif
+            }
         }
 		
 		public void Remove (RealStatePtr L)
 		{
-#if SINGLE_ENV
-            lastPtr = default(RealStatePtr);
-            lastTranslator = default(ObjectTranslator);
-#else
-            var ptr = LuaAPI.xlua_gl(L);
-            if (!translators.ContainsKey (ptr))
-				return;
-			
-            if (lastPtr == ptr)
+#if THREAD_SAFE || HOTFIX_ENABLE
+            lock (this)
+#endif
             {
+#if SINGLE_ENV
                 lastPtr = default(RealStatePtr);
                 lastTranslator = default(ObjectTranslator);
-            }
+#else
+                var ptr = LuaAPI.xlua_gl(L);
+                if (!translators.ContainsKey (ptr))
+                    return;
+                
+                if (lastPtr == ptr)
+                {
+                    lastPtr = default(RealStatePtr);
+                    lastTranslator = default(ObjectTranslator);
+                }
 
-            translators.Remove(ptr);
+                translators.Remove(ptr);
 #endif
+            }
         }
     }
 }
