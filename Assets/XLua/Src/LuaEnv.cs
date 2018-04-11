@@ -46,7 +46,7 @@ namespace XLua
         internal int errorFuncRef = -1;
 
 #if THREAD_SAFE || HOTFIX_ENABLE
-        internal static object luaLock = new object();
+        internal /*static*/ object luaLock = new object();
 
         internal object luaEnvLock
         {
