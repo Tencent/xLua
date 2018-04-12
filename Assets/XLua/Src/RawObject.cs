@@ -75,6 +75,13 @@ namespace XLua.Cast
         }
     }
 
+    public class Int64 : Any<long>
+    {
+        public Int64(long i) : base(i)
+        {
+        }
+    }
+
     public class UInt64 : Any<ulong>
     {
         public UInt64(ulong i) : base(i)
