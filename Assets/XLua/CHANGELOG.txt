@@ -1,4 +1,25 @@
-﻿v2.1.10 2017年9月18日
+﻿v2.1.11 2018年3月20日
+新增特性
+1、xlua.private_accessible支持私有内嵌类型
+2、添加xlua.release，用于主动解除lua对c#某对象的引用
+3、支持内嵌委托的显示构造
+4、需要传class的地方（比如xlua.private_accessible），支持传C#的Type对象
+5、支持用pairs遍历IEnumerable对象
+6、热补丁场景下，支持override函数调用被override函数（对应c# base关键字）
+
+变更
+1、简化property的反射访问，简化后有更好的兼容性；
+
+bug修复
+1、ios 11兼容（去除system调用）
+2、实现了interface的struct不走gc优化代码的问题
+3、emit特性的.net兼容性
+4、emit对于ulong的const值处理不当
+5、interface桥接代码，interface继承时，父interface和子interface有同名不同类型属性时的生成代码报错
+6、多虚拟机下，不断创建和销毁协程时，可能出现协程指针重复
+7、当参数为泛型类型时，如ICollectio时，不应该生成代码
+
+v2.1.10 2017年9月18日
 新增特性
 1、新增DoNotGen配置，支持一个类型部分函数用反射，部分用生成；
 2、新增wrapper的emit；
