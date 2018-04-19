@@ -258,6 +258,8 @@ namespace CSObjectWrapEditor
         {
             parameters.Set("type", type);
 
+            bool isMarkAsHotfix = HotfixCfg.ContainsKey(type);
+
             var constructors = new List<MethodBase>();
             var constructor_def_vals = new List<int>();
             if (!type.IsAbstract)
@@ -358,7 +360,7 @@ namespace CSObjectWrapEditor
                         }
                     }
 #if HOTFIX_ENABLE
-                    if (isOverride)
+                    if (isOverride && isMarkAsHotfix)
                     {
                         lazyMemberInfos.Add(new LazyMemberInfo
                         {
