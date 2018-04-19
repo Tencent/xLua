@@ -328,12 +328,12 @@ function GetSelfStatement(t)
     local fulltypename = CsFullTypeName(t)
     local is_struct = IsStruct(t)
     if is_struct then
-	    return fulltypename .. " __cl_gen_to_be_invoked;translator.Get(L, 1, out __cl_gen_to_be_invoked)"
+	    return fulltypename .. " gen_to_be_invoked;translator.Get(L, 1, out gen_to_be_invoked)"
 	else
 	    if t == objectType then
-            return "object __cl_gen_to_be_invoked = translator.FastGetCSObj(L, 1)"
+            return "object gen_to_be_invoked = translator.FastGetCSObj(L, 1)"
         else
-            return fulltypename .. " __cl_gen_to_be_invoked = (" .. fulltypename .. ")translator.FastGetCSObj(L, 1)"
+            return fulltypename .. " gen_to_be_invoked = (" .. fulltypename .. ")translator.FastGetCSObj(L, 1)"
         end
 	end
     
@@ -433,4 +433,8 @@ function GenericArgumentList(type)
         end
     end
     return generic_arg_list, type_constraints
+end
+
+function LocalName(name)
+    return "_" .. name
 end
