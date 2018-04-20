@@ -339,6 +339,8 @@ function GetSelfStatement(t)
     
 end
 
+local GetNullableUnderlyingType = CS.System.Nullable.GetUnderlyingType
+
 function GetPushStatement(t, variable, is_v_params)
     if is_v_params then
 	    local item_push = GetPushStatement(t:GetElementType(), variable..'[__gen_i]')
@@ -352,7 +354,7 @@ function GetPushStatement(t, variable, is_v_params)
         return "translator.Push".. CSVariableName(t) .."(L, "..variable..")"
     elseif t.IsGenericParameter and not t.DeclaringMethod then
 	    return "translator.PushByType(L, "..variable..")"
-	elseif t.IsInterface then
+	elseif t.IsInterface or GetNullableUnderlyingType(t) then
 	    return "translator.PushAny(L, "..variable..")"
     else
         return "translator.Push(L, "..variable..")"

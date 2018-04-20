@@ -169,7 +169,7 @@ namespace XLua
                 {
                     ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
                     object val = translator.GetObject(L, 1, field.FieldType);
-                    if (field.FieldType.IsValueType() && val == null)
+                    if (field.FieldType.IsValueType() && Nullable.GetUnderlyingType(field.FieldType) == null && val == null)
                     {
                         return LuaAPI.luaL_error(L, type.Name + "." + field.Name + " Expected type " + field.FieldType);
                     }
@@ -190,7 +190,7 @@ namespace XLua
                     }
 
                     object val = translator.GetObject(L, 2, field.FieldType);
-                    if (field.FieldType.IsValueType() && val == null)
+                    if (field.FieldType.IsValueType() && Nullable.GetUnderlyingType(field.FieldType) == null && val == null)
                     {
                         return LuaAPI.luaL_error(L, type.Name + "." + field.Name + " Expected type " + field.FieldType);
                     }
