@@ -265,9 +265,23 @@ namespace XLua
 
         static bool isSameType(TypeReference left, TypeReference right)
         {
-            return left.FullName == right.FullName
-                && left.Module.Assembly.FullName == right.Module.Assembly.FullName
-                && left.Module.FullyQualifiedName == right.Module.FullyQualifiedName;
+            if (left.FullName != right.FullName)
+            {
+                return false;
+            }
+
+            if (left.Module.Assembly.FullName == right.Module.Assembly.FullName
+                && left.Module.FullyQualifiedName == right.Module.FullyQualifiedName)
+            {
+                return true;
+            }
+            else
+            {
+                var lr = left.Resolve();
+                var rr = right.Resolve();
+                return lr.Module.Assembly.FullName == rr.Module.Assembly.FullName
+                    && lr.Module.FullyQualifiedName == rr.Module.FullyQualifiedName;
+            }
         }
 
         bool findHotfixDelegate(MethodDefinition method, out MethodReference invoke, HotfixFlagInTool hotfixType)
@@ -567,7 +581,7 @@ namespace XLua
 #endif
         }
 
-        public static void HotfixInject(string injectAssemblyPath, string xluaAssemblyPath, IEnumerable<string> search_directorys, string id_map_file_path, Dictionary<string, int> inject_types)
+        public static void HotfixInject(string injectAssemblyPath, string xluaAssemblyPath, IEnumerable<string> searchDirectorys, string idMapFilePath, Dictionary<string, int> hotfixConfig)
         {
             AssemblyDefinition injectAssembly = null;
             AssemblyDefinition xluaAssembly = null;
@@ -588,7 +602,7 @@ namespace XLua
                     injectAssembly : readAssembly(xluaAssemblyPath);
 
                 Hotfix hotfix = new Hotfix();
-                hotfix.Init(injectAssembly, xluaAssembly, search_directorys, inject_types);
+                hotfix.Init(injectAssembly, xluaAssembly, searchDirectorys, hotfixConfig);
 
                 //var hotfixDelegateAttributeType = assembly.MainModule.Types.Single(t => t.FullName == "XLua.HotfixDelegateAttribute");
                 var hotfixAttributeType = injectAssembly.MainModule.Types.Single(t => t.FullName == "XLua.HotfixAttribute");
@@ -600,12 +614,12 @@ namespace XLua
                     }
                 }
 
-                Directory.CreateDirectory(Path.GetDirectoryName(id_map_file_path));
-                hotfix.OutputIntKeyMapper(new FileStream(id_map_file_path, FileMode.Create, FileAccess.Write));
-                File.Copy(id_map_file_path, id_map_file_path + "." + DateTime.Now.ToString("yyyyMMddHHmmssfff"));
+                Directory.CreateDirectory(Path.GetDirectoryName(idMapFilePath));
+                hotfix.OutputIntKeyMapper(new FileStream(idMapFilePath, FileMode.Create, FileAccess.Write));
+                File.Copy(idMapFilePath, idMapFilePath + "." + DateTime.Now.ToString("yyyyMMddHHmmssfff"));
 
 #if HOTFIX_SYMBOLS_DISABLE
-                assembly.Write(inject_assembly_path);
+                assembly.Write(injectAssemblyPath);
                 Info("hotfix inject finish!(no symbols)");
 #else
                 var writerParameters = new WriterParameters { WriteSymbols = true };
@@ -1259,7 +1273,7 @@ namespace XLua
 }
 #else
 
-    namespace XLua
+namespace XLua
 {
     public static class Hotfix
     {
