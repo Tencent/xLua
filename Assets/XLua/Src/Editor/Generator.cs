@@ -258,7 +258,9 @@ namespace CSObjectWrapEditor
         {
             parameters.Set("type", type);
 
-            bool isMarkAsHotfix = HotfixCfg.ContainsKey(type);
+            var cas = type.GetCustomAttributes(typeof(HotfixAttribute), false);
+            bool isMarkAsHotfix = HotfixCfg.ContainsKey(type)
+                || (cas != null && cas.Length != 0);
 
             var constructors = new List<MethodBase>();
             var constructor_def_vals = new List<int>();
