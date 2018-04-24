@@ -241,6 +241,7 @@ namespace XLua
         private TypeReference objType = null;
         private TypeReference luaTableType = null;
         private TypeReference delegateBridgeType = null;
+        private AssemblyDefinition injectAssembly = null;
 
         private MethodReference delegateBridgeGetter = null;
         private MethodReference hotfixFlagGetter = null;
@@ -254,12 +255,12 @@ namespace XLua
 
         private Dictionary<string, int> hotfixCfg = null;
         private List<MethodDefinition> hotfixBridgesDef = null;
-        private List<MethodReference> hotfixBridges = null;
 
         private List<MethodDefinition> bridgeIndexByKey = null;
 
         public void Init(AssemblyDefinition injectAssembly, AssemblyDefinition xluaAssembly, IEnumerable<string> searchDirectorys, Dictionary<string, int> hotfixCfg)
         {
+            this.injectAssembly = injectAssembly;
             this.hotfixCfg = hotfixCfg;
             var injectModule = injectAssembly.MainModule;
             objType = injectModule.TypeSystem.Object;
@@ -285,11 +286,12 @@ namespace XLua
                               where method.Name.StartsWith("__Gen_Delegate_Imp")
                               select method).ToList();
 
-            hotfixBridges = hotfixBridgesDef.Select(m => injectModule.TryImport(m)).ToList();
+            //hotfixBridges = hotfixBridgesDef.Select(m => injectModule.TryImport(m)).ToList();
 
             bridgeIndexByKey = new List<MethodDefinition>();
 
             var resolver = injectAssembly.MainModule.AssemblyResolver as BaseAssemblyResolver;
+            resolver.AddSearchDirectory("./Library/ScriptAssemblies");
             foreach (var path in
                 (from asm in AppDomain.CurrentDomain.GetAssemblies() select asm.ManifestModule.FullyQualifiedName)
                  .Distinct())
@@ -389,7 +391,7 @@ namespace XLua
                     {
                         continue;
                     }
-                    invoke = hotfixBridges[i];
+                    invoke = hotfixBridgeDef;
                     return true;
                 }
             }
@@ -630,8 +632,15 @@ namespace XLua
 #if HOTFIX_SYMBOLS_DISABLE
             return AssemblyDefinition.ReadAssembly(assemblyPath);
 #else
-            var readerParameters = new ReaderParameters { ReadSymbols = true };
-            return AssemblyDefinition.ReadAssembly(assemblyPath, readerParameters);
+            if (File.Exists(assemblyPath + ".mdb"))
+            {
+                var readerParameters = new ReaderParameters { ReadSymbols = true };
+                return AssemblyDefinition.ReadAssembly(assemblyPath, readerParameters);
+            }
+            else
+            {
+                return AssemblyDefinition.ReadAssembly(assemblyPath);
+            }
 #endif
         }
 
@@ -937,6 +946,12 @@ namespace XLua
             {
                 throw new Exception("unknow exception!");
             }
+
+#if XLUA_GENERAL
+            invoke = injectAssembly.MainModule.ImportReference(invoke);
+#else
+            invoke = injectAssembly.MainModule.Import(invoke);
+#endif
 
             FieldReference fieldReference = null;
             VariableDefinition injection = null;
