@@ -1414,8 +1414,11 @@ namespace CSObjectWrapEditor
 
             DoNotGen = new Dictionary<Type, HashSet<string>>();
 
+#if UNITY_EDITOR
             assemblyList = HotfixConfig.GetHotfixAssembly().Select(a => a.GetName().Name).ToList();
-
+#else
+            assemblyList = new List<string>();
+#endif
             foreach (var t in check_types)
             {
                 MergeCfg(t, null, () => t);
