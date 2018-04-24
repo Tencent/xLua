@@ -1278,6 +1278,8 @@ namespace CSObjectWrapEditor
 
         public static Dictionary<Type, HashSet<string>> DoNotGen = null;
 
+        public static List<string> assemblyList = null;
+
         static void AddToList(List<Type> list, Func<object> get, object attr)
         {
             object obj = get();
@@ -1347,7 +1349,7 @@ namespace CSObjectWrapEditor
                             && !type.IsEnum && !typeof(Delegate).IsAssignableFrom(type)
                             && (!type.IsGenericType || type.IsGenericTypeDefinition) 
                             && (type.Namespace == null || (type.Namespace != "XLua" && !type.Namespace.StartsWith("XLua.")))
-                            && (type.Module.Assembly.GetName().Name == "Assembly-CSharp"))
+                            && (assemblyList.Contains(type.Module.Assembly.GetName().Name)))
                         {
                             HotfixCfg.Add(type, hotfixType);
                         }
@@ -1411,6 +1413,8 @@ namespace CSObjectWrapEditor
             OptimizeCfg = new Dictionary<Type, OptimizeFlag>();
 
             DoNotGen = new Dictionary<Type, HashSet<string>>();
+
+            assemblyList = HotfixConfig.GetHotfixAssembly().Select(a => a.GetName().Name).ToList();
 
             foreach (var t in check_types)
             {

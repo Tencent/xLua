@@ -20,7 +20,7 @@
     <OutputPath>..\Tools\</OutputPath>
     <BaseIntermediateOutputPath>obj\Any CPU\Debug\XLuaGenerate\</BaseIntermediateOutputPath>
     <IntermediateOutputPath>$(BaseIntermediateOutputPath)</IntermediateOutputPath>
-    <DefineConstants>_DEBUG;DEBUG;TRACE;;XLUA_GENERAL</DefineConstants>
+    <DefineConstants>_DEBUG;DEBUG;TRACE;;HOTFIX_ENABLE;XLUA_GENERAL</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -31,17 +31,29 @@
     <OutputPath>..\Tools\</OutputPath>
     <BaseIntermediateOutputPath>obj\Any CPU\Release\XLuaGenerate\</BaseIntermediateOutputPath>
     <IntermediateOutputPath>$(BaseIntermediateOutputPath)</IntermediateOutputPath>
-    <DefineConstants>;XLUA_GENERAL</DefineConstants>
+    <DefineConstants>;HOTFIX_ENABLE;XLUA_GENERAL</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="Mono.Cecil">
+      <HintPath>..\Lib\Mono.Cecil.dll</HintPath>
+    </Reference>
+    <Reference Include="Mono.Cecil.Mdb">
+      <HintPath>..\Lib\Mono.Cecil.Mdb.dll</HintPath>
+    </Reference>
+    <Reference Include="Mono.Cecil.Pdb">
+      <HintPath>..\Lib\Mono.Cecil.Pdb.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\..\Assets\XLua\Src\Editor\Generator.cs">
       <Link>Assets\XLua\Src\Editor\Generator.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Assets\XLua\Src\Editor\Hotfix.cs">
+      <Link>Assets\XLua\Src\Editor\Hotfix.cs</Link>
     </Compile>
     <None Include="..\..\Assets\XLua\Src\Editor\Template\LuaClassWrap.tpl.txt">
       <Link>Assets\XLua\Src\Editor\Template\LuaClassWrap.tpl.txt</Link>

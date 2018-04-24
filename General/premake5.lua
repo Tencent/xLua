@@ -54,11 +54,13 @@ files
     "./Src/XLuaTemplates.Designer.cs",
     "./Src/XLuaTemplates.resx",
     "../Assets/XLua/Src/Editor/Generator.cs",
+    "../Assets/XLua/Src/Editor/Hotfix.cs",
     "../Assets/XLua/Src/Editor/Template/*.txt",
 }
 
 defines
 {
+    "HOTFIX_ENABLE",
     "XLUA_GENERAL",
 }
 
@@ -67,6 +69,9 @@ links
     "System",
     "System.Core",
     "XLua.Mini",
+    "Lib/Mono.Cecil.dll",
+    "Lib/Mono.Cecil.Mdb.dll",
+    "Lib/Mono.Cecil.Pdb.dll",
 }
 
 project "XLuaHotfixInject"

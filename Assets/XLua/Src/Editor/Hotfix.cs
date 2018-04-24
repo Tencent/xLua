@@ -12,6 +12,7 @@ using System;
 using System.Reflection;
 using System.Linq;
 using System.IO;
+using System.Text.RegularExpressions;
 
 #if INJECT_WITHOUT_TOOL || XLUA_GENERAL
 using Mono.Cecil;
@@ -43,7 +44,7 @@ namespace XLua
             return -1;
         }
 
-        static void mergeConfig(Dictionary<string, int> hotfixCfg, MemberInfo test, Type cfg_type, Func<IEnumerable<Type>> get_cfg)
+        static void mergeConfig(MemberInfo test, Type cfg_type, Func<IEnumerable<Type>> get_cfg, Action<Type, int> on_cfg)
         {
             int hotfixType = getHotfixType(test);
             if (-1 == hotfixType || !typeof(IEnumerable<Type>).IsAssignableFrom(cfg_type))
@@ -57,10 +58,9 @@ namespace XLua
                     && !type.IsEnum && !typeof(Delegate).IsAssignableFrom(type)
                     && (!type.IsGenericType || type.IsGenericTypeDefinition))
                 {
-                    string key = type.FullName.Replace('+', '/');
-                    if (!hotfixCfg.ContainsKey(key) && (type.Namespace == null || (type.Namespace != "XLua" && !type.Namespace.StartsWith("XLua."))))
+                    if ((type.Namespace == null || (type.Namespace != "XLua" && !type.Namespace.StartsWith("XLua."))))
                     {
-                        hotfixCfg.Add(key, hotfixType);
+                        on_cfg(type, hotfixType);
                     }
                 }
             }
@@ -70,19 +70,69 @@ namespace XLua
         {
             if (cfg_check_types != null)
             {
+                Action<Type, int> on_cfg = (type, hotfixType) =>
+                {
+                    string key = type.FullName.Replace('+', '/');
+                    if (!hotfixCfg.ContainsKey(key))
+                    {
+                        hotfixCfg.Add(key, hotfixType);
+                    }
+                };
                 foreach (var type in cfg_check_types.Where(t => !t.IsGenericTypeDefinition && t.IsAbstract && t.IsSealed))
                 {
                     var flags = BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly;
                     foreach (var field in type.GetFields(flags))
                     {
-                        mergeConfig(hotfixCfg, field, field.FieldType, () => field.GetValue(null) as IEnumerable<Type>);
+                        mergeConfig(field, field.FieldType, () => field.GetValue(null) as IEnumerable<Type>, on_cfg);
                     }
                     foreach (var prop in type.GetProperties(flags))
                     {
-                        mergeConfig(hotfixCfg, prop, prop.PropertyType, () => prop.GetValue(null, null) as IEnumerable<Type>);
+                        mergeConfig(prop, prop.PropertyType, () => prop.GetValue(null, null) as IEnumerable<Type>, on_cfg);
                     }
                 }
             }
+        }
+
+        public static List<Assembly> GetHotfixAssembly()
+        {
+            var projectPath = Assembly.Load("Assembly-CSharp").ManifestModule.FullyQualifiedName;
+            Regex rgx = new Regex(@"^(.*)[\\/]Library[\\/]ScriptAssemblies[\\/]Assembly-CSharp.dll$");
+            MatchCollection matches = rgx.Matches(projectPath);
+            projectPath = matches[0].Groups[1].Value;
+
+            List<Type> types = new List<Type>();
+            Action<Type, int> on_cfg = (type, hotfixType) =>
+            {
+                types.Add(type);
+            };
+            foreach (var type in (from assmbly in AppDomain.CurrentDomain.GetAssemblies()
+                                  from type in assmbly.GetTypes() where !type.IsGenericTypeDefinition select type))
+            {
+                if (getHotfixType(type) != -1)
+                {
+                    types.Add(type);
+                }
+                else
+                {
+                    var flags = BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly;
+                    foreach (var field in type.GetFields(flags))
+                    {
+                        mergeConfig(field, field.FieldType, () => field.GetValue(null) as IEnumerable<Type>, on_cfg);
+                    }
+                    foreach (var prop in type.GetProperties(flags))
+                    {
+                        mergeConfig(prop, prop.PropertyType, () => prop.GetValue(null, null) as IEnumerable<Type>, on_cfg);
+                    }
+                }
+            }
+            return types.Select(t => t.Assembly).Distinct()
+                .Where(a => a.ManifestModule.FullyQualifiedName.IndexOf(projectPath) == 0)
+                .ToList();
+        }
+
+        public static List<string> GetHotfixAssemblyPaths()
+        {
+            return GetHotfixAssembly().Select(a => a.ManifestModule.FullyQualifiedName).Distinct().ToList();
         }
     }
 }
@@ -215,7 +265,7 @@ namespace XLua
             objType = injectModule.TypeSystem.Object;
 
             luaTableType = injectModule.TryImport(xluaAssembly.MainModule.Types.Single(t => t.FullName == "XLua.LuaTable"));
-            var delegateBridgeTypeDef = injectModule.Types.Single(t => t.FullName == "XLua.DelegateBridge");
+            var delegateBridgeTypeDef = xluaAssembly.MainModule.Types.Single(t => t.FullName == "XLua.DelegateBridge");
             delegateBridgeType = injectModule.TryImport(delegateBridgeTypeDef);
             delegateBridgeGetter = injectModule.TryImport(xluaAssembly.MainModule.Types.Single(t => t.FullName == "XLua.HotfixDelegateBridge")
                 .Methods.Single(m => m.Name == "Get"));
@@ -270,8 +320,8 @@ namespace XLua
                 return false;
             }
 
-            if (left.Module.Assembly.FullName == right.Module.Assembly.FullName
-                && left.Module.FullyQualifiedName == right.Module.FullyQualifiedName)
+            //TypeReference.Module.FullyQualifiedName不验证
+            if (left.Module.Assembly.FullName == right.Module.Assembly.FullName)
             {
                 return true;
             }
@@ -279,8 +329,7 @@ namespace XLua
             {
                 var lr = left.Resolve();
                 var rr = right.Resolve();
-                return lr.Module.Assembly.FullName == rr.Module.Assembly.FullName
-                    && lr.Module.FullyQualifiedName == rr.Module.FullyQualifiedName;
+                return lr.Module.Assembly.FullName == rr.Module.Assembly.FullName;
             }
         }
 
@@ -566,7 +615,12 @@ namespace XLua
             var hotfixCfg = new Dictionary<string, int>();
             HotfixConfig.GetConfig(hotfixCfg, Utils.GetAllTypes());
             var xluaAssemblyPath = typeof(LuaEnv).Module.FullyQualifiedName;
-            HotfixInject("./Library/ScriptAssemblies/Assembly-CSharp.dll", xluaAssemblyPath, null, CSObjectWrapEditor.GeneratorConfig.common_path + "Resources/hotfix_id_map.lua.txt", hotfixCfg);
+            
+            foreach (var injectAssemblyPath in HotfixConfig.GetHotfixAssemblyPaths())
+            {
+                Info("injecting " + injectAssemblyPath);
+                HotfixInject(injectAssemblyPath, xluaAssemblyPath, null, CSObjectWrapEditor.GeneratorConfig.common_path + "Resources/hotfix_id_map.lua.txt", hotfixCfg);
+            }
             AssetDatabase.Refresh();
         }
 #endif
@@ -592,7 +646,7 @@ namespace XLua
                 // injected flag check
                 if (injectAssembly.MainModule.Types.Any(t => t.Name == "__XLUA_GEN_FLAG"))
                 {
-                    Info("had injected!");
+                    Info(injectAssemblyPath + " had injected!");
                     return;
                 }
                 injectAssembly.MainModule.Types.Add(new TypeDefinition("__XLUA_GEN", "__XLUA_GEN_FLAG", Mono.Cecil.TypeAttributes.Class,
@@ -605,7 +659,7 @@ namespace XLua
                 hotfix.Init(injectAssembly, xluaAssembly, searchDirectorys, hotfixConfig);
 
                 //var hotfixDelegateAttributeType = assembly.MainModule.Types.Single(t => t.FullName == "XLua.HotfixDelegateAttribute");
-                var hotfixAttributeType = injectAssembly.MainModule.Types.Single(t => t.FullName == "XLua.HotfixAttribute");
+                var hotfixAttributeType = xluaAssembly.MainModule.Types.Single(t => t.FullName == "XLua.HotfixAttribute");
                 foreach (var type in (from module in injectAssembly.Modules from type in module.Types select type))
                 {
                     if (!hotfix.InjectType(hotfixAttributeType, type))
@@ -620,16 +674,16 @@ namespace XLua
 
 #if HOTFIX_SYMBOLS_DISABLE
                 assembly.Write(injectAssemblyPath);
-                Info("hotfix inject finish!(no symbols)");
+                Info(injectAssemblyPath + " inject finish!(no symbols)");
 #else
                 var writerParameters = new WriterParameters { WriteSymbols = true };
                 injectAssembly.Write(injectAssemblyPath, writerParameters);
-                Info("hotfix inject finish!");
+                Info(injectAssemblyPath + " inject finish!");
 #endif
             }
             catch(Exception e)
             {
-                Error("Exception! " + e);
+                Error(injectAssemblyPath + " inject Exception! " + e);
             }
             finally
             {
@@ -1348,16 +1402,21 @@ namespace XLua
                 }
             }
 
-            Process hotfix_injection = new Process();
-            hotfix_injection.StartInfo.FileName = mono_path;
-			hotfix_injection.StartInfo.Arguments = "\"" + String.Join("\" \"", args.Distinct().ToArray()) + "\"";
-            hotfix_injection.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
-            hotfix_injection.StartInfo.RedirectStandardOutput = true;
-            hotfix_injection.StartInfo.UseShellExecute = false;
-            hotfix_injection.StartInfo.CreateNoWindow = true;
-            hotfix_injection.Start();
-            UnityEngine.Debug.Log(hotfix_injection.StandardOutput.ReadToEnd());
-            hotfix_injection.WaitForExit();
+            foreach (var injectAssemblyPath in HotfixConfig.GetHotfixAssemblyPaths())
+            {
+                args[1] = injectAssemblyPath.Replace('\\', '/');
+                Process hotfix_injection = new Process();
+                hotfix_injection.StartInfo.FileName = mono_path;
+                hotfix_injection.StartInfo.Arguments = "\"" + String.Join("\" \"", args.Distinct().ToArray()) + "\"";
+                hotfix_injection.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+                hotfix_injection.StartInfo.RedirectStandardOutput = true;
+                hotfix_injection.StartInfo.UseShellExecute = false;
+                hotfix_injection.StartInfo.CreateNoWindow = true;
+                hotfix_injection.Start();
+                UnityEngine.Debug.Log(hotfix_injection.StandardOutput.ReadToEnd());
+                hotfix_injection.WaitForExit();
+            }
+
             File.Delete(hotfix_cfg_in_editor);
             AssetDatabase.Refresh();
         }
