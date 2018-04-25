@@ -315,6 +315,9 @@ end
 
 local paramsAttriType = typeof(CS.System.ParamArrayAttribute)
 function IsParams(pi)
+    if (not pi.IsDefined) then
+        return pi.IsParamArray
+    end
     return pi:IsDefined(paramsAttriType, false)
 end
 
@@ -380,7 +383,9 @@ function CallNeedTranslator(overload, isdelegate)
 	local ret_type_name = getSafeFullName(overload.ReturnType)
     if not notranslator[ret_type_name] then return true end 
     local parameters = overload:GetParameters()
-    return IfAny(overload:GetParameters(), function(parameter) return not notranslator[getSafeFullName(parameter.ParameterType)] end)
+    return IfAny(overload:GetParameters(), function(parameter) 
+        return IsParams(parameter) or (not notranslator[getSafeFullName(parameter.ParameterType)])
+    end)
 end
 
 function MethodCallNeedTranslator(method)
