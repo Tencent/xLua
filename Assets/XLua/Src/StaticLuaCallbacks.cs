@@ -575,7 +575,8 @@ namespace XLua
                     return LuaAPI.luaL_error(L, "#2 param need a System.Type!");
                 }
                 //UnityEngine.Debug.Log("============================load type by __index:" + type);
-                translator.TryDelayWrapLoader(L, type);
+                //translator.TryDelayWrapLoader(L, type);
+                translator.GetTypeId(L, type);
                 LuaAPI.lua_pushvalue(L, 2);
                 LuaAPI.lua_rawget(L, 1);
                 return 1;
@@ -841,7 +842,7 @@ namespace XLua
                 Type type = translator.FindType(className);
                 if (type != null)
                 {
-                    if (translator.TryDelayWrapLoader(L, type))
+                    if (translator.GetTypeId(L, type) >= 0)
                     {
                         LuaAPI.lua_pushboolean(L, true);
                     }
@@ -988,8 +989,12 @@ namespace XLua
                 {
                     return LuaAPI.luaL_error(L, "xlua.private_accessible, can not find c# type");
                 }
-                translator.GetTypeId(L, type);//解决从未访问过一个类型，调用xlua.private_accessible会报错的问题
-                Utils.MakePrivateAccessible(L, type);
+
+                while(type != null)
+                {
+                    translator.PrivateAccessible(L, type);
+                    type = type.BaseType;
+                }
                 return 0;
             }
             catch (Exception e)

@@ -400,10 +400,10 @@ namespace XLua
         }
 
         static void makeReflectionWrap(RealStatePtr L, Type type, int cls_field, int cls_getter, int cls_setter,
-            int obj_field, int obj_getter, int obj_setter, int obj_meta, out LuaCSFunction item_getter, out LuaCSFunction item_setter, bool private_access = false)
+            int obj_field, int obj_getter, int obj_setter, int obj_meta, out LuaCSFunction item_getter, out LuaCSFunction item_setter, BindingFlags access)
         {
             ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
-            BindingFlags flag = BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.Static | (private_access ? BindingFlags.NonPublic : BindingFlags.Public);
+            BindingFlags flag = BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.Static | access;
             FieldInfo[] fields = type.GetFields(flag);
             EventInfo[] all_events = type.GetEvents(flag | BindingFlags.Public | BindingFlags.NonPublic);
 
@@ -411,18 +411,16 @@ namespace XLua
             {
                 FieldInfo field = fields[i];
                 string fieldName = field.Name;
-                if (private_access)
+                // skip hotfix inject field
+                if (field.IsStatic && (field.Name.StartsWith("__Hotfix") || field.Name.StartsWith("_c__Hotfix")) && typeof(Delegate).IsAssignableFrom(field.FieldType))
                 {
-                    // skip hotfix inject field
-                    if (field.IsStatic && (field.Name.StartsWith("__Hotfix") || field.Name.StartsWith("_c__Hotfix")) && typeof(Delegate).IsAssignableFrom(field.FieldType))
-                    {
-                        continue;
-                    }
-                    if (all_events.Any(e => e.Name == fieldName))
-                    {
-                        fieldName = "&" + fieldName;
-                    }
+                    continue;
                 }
+                if (all_events.Any(e => e.Name == fieldName))
+                {
+                    fieldName = "&" + fieldName;
+                }
+
                 if (field.IsStatic && (field.IsInitOnly || field.IsLiteral))
                 {
                     LuaAPI.xlua_pushasciistring(L, fieldName);
@@ -642,7 +640,7 @@ namespace XLua
             LuaCSFunction item_getter;
             LuaCSFunction item_setter;
             makeReflectionWrap(L, type, cls_field, cls_getter, cls_setter, obj_field, obj_getter, obj_setter, obj_meta,
-                out item_getter, out item_setter, true);
+                out item_getter, out item_setter, BindingFlags.NonPublic);
             LuaAPI.lua_settop(L, oldTop);
 
             foreach (var nested_type in type.GetNestedTypes(BindingFlags.NonPublic))
@@ -810,7 +808,7 @@ namespace XLua
             }
         }
 
-        public static void ReflectionWrap(RealStatePtr L, Type type)
+        public static void ReflectionWrap(RealStatePtr L, Type type, bool privateAccessible)
         {
             int top_enter = LuaAPI.lua_gettop(L);
             ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
@@ -845,7 +843,7 @@ namespace XLua
             LuaCSFunction item_getter;
             LuaCSFunction item_setter;
             makeReflectionWrap(L, type, cls_field, cls_getter, cls_setter, obj_field, obj_getter, obj_setter, obj_meta,
-                out item_getter, out item_setter);
+                out item_getter, out item_setter, privateAccessible ? (BindingFlags.Public | BindingFlags.NonPublic) : BindingFlags.Public);
 
             // init obj metatable
             LuaAPI.xlua_pushasciistring(L, "__gc");
