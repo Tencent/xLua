@@ -543,6 +543,7 @@ namespace XLua
                         end
                     end)
                 end
+                xlua.private_accessible(cs)
             end
             xlua.getmetatable = function(cs)
                 return xlua.metatable_operation(cs)

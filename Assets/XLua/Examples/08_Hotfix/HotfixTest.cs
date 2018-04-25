@@ -6,7 +6,7 @@ public class HotfixTest : MonoBehaviour
 {
     LuaEnv luaenv = new LuaEnv();
 
-    public int tick = 0; //如果是private的，在lua设置xlua.private_accessible(CS.HotfixTest)后即可访问
+    private int tick = 0;
 
     // Use this for initialization
     void Start()
