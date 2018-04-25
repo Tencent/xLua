@@ -1414,7 +1414,7 @@ namespace CSObjectWrapEditor
 
             DoNotGen = new Dictionary<Type, HashSet<string>>();
 
-#if UNITY_EDITOR
+#if UNITY_EDITOR && HOTFIX_ENABLE
             assemblyList = HotfixConfig.GetHotfixAssembly().Select(a => a.GetName().Name).ToList();
 #else
             assemblyList = new List<string>();
