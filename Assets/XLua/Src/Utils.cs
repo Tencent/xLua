@@ -445,7 +445,7 @@ namespace XLua
                 EventInfo eventInfo = events[i];
                 LuaAPI.xlua_pushasciistring(L, eventInfo.Name);
                 translator.PushFixCSFunction(L, translator.methodWrapsCache.GetEventWrap(type, eventInfo.Name));
-                bool is_static = (eventInfo.GetAddMethod() != null) ? eventInfo.GetAddMethod().IsStatic : eventInfo.GetRemoveMethod().IsStatic;
+                bool is_static = (eventInfo.GetAddMethod(true) != null) ? eventInfo.GetAddMethod(true).IsStatic : eventInfo.GetRemoveMethod(true).IsStatic;
                 LuaAPI.lua_rawset(L, is_static ? cls_field : obj_field);
             }
 
