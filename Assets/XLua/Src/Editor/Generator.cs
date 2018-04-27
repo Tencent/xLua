@@ -778,29 +778,14 @@ namespace CSObjectWrapEditor
             List<ParameterInfoSimulation> paramsExpect = new List<ParameterInfoSimulation>();
             if (!hotfixMethod.IsStatic) // add self
             {
-                if (isStateful && !hotfixMethod.IsConstructor)
+                paramsExpect.Add(new ParameterInfoSimulation()
                 {
-                    paramsExpect.Add(new ParameterInfoSimulation()
-                    {
-                        Name = "self",
-                        IsOut = false,
-                        IsIn = true,
-                        ParameterType = typeof(LuaTable),
-                        IsParamArray = false
-                    });
-    
-                }
-                else
-                {
-                    paramsExpect.Add(new ParameterInfoSimulation()
-                    {
-                        Name = "self",
-                        IsOut = false,
-                        IsIn = true,
-                        ParameterType = (hotfixMethod.DeclaringType.IsValueType && !ignoreValueType) ? hotfixMethod.DeclaringType : typeof(object),
-                        IsParamArray = false
-                    });
-                }
+                    Name = "self",
+                    IsOut = false,
+                    IsIn = true,
+                    ParameterType = (hotfixMethod.DeclaringType.IsValueType && !ignoreValueType) ? hotfixMethod.DeclaringType : typeof(object),
+                    IsParamArray = false
+                });
                 hashCode += paramsExpect[0].ParameterType.GetHashCode();
             }
 
@@ -869,14 +854,13 @@ namespace CSObjectWrapEditor
 
         static bool injectByGeneric(MethodBase method, HotfixFlag hotfixType)
         {
-            bool isStateful = hotfixType.HasFlag(HotfixFlag.Stateful);
             bool ignoreValueType = hotfixType.HasFlag(HotfixFlag.ValueTypeBoxing);
             //isStateful = false;
             //ignoreValueType = true;
 
             if (!method.IsConstructor && (isNotPublic((method as MethodInfo).ReturnType) || hasGenericParameter((method as MethodInfo).ReturnType))) return true;
 
-            if (!method.IsStatic &&  (!isStateful || method.IsConstructor)
+            if (!method.IsStatic 
                 &&(((method.DeclaringType.IsValueType && !ignoreValueType) && isNotPublic(method.DeclaringType)) || hasGenericParameter(method.DeclaringType)))
             {
                 return true;

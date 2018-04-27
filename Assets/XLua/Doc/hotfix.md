@@ -39,11 +39,6 @@ xlua.hotfix(class, [method_name], fix)
 * method_name  ： 方法名，可选；
 * fix          ： 如果传了method_name，fix将会是一个function，否则通过table提供一组函数。table的组织按key是method_name，value是function的方式。
 
-xlua.private_accessible(class)
-
-* 描述          ： 让一个类的私有字段，属性，方法等可用
-* class         ： 同xlua.hotfix的class参数
-
 base(csobj)
 
 * 描述         ： 子类override函数通过base调用父类实现。
@@ -191,15 +186,13 @@ xlua.hotfix(CS.HotfixTest, 'Update', function(self)
 
 ## Stateless和Stateful
 
-打Hotfix标签时，默认是Stateless方式，你也可以选Stateful方式，我们先说区别，再说使用场景。
+打Hotfix标签时，默认、也建议是Stateless方式，而Stateful方式是对Stateless的补充。
 
-Stateless方式是指用Lua对成员函数修复时，C#对象直接透传给作为Lua函数的第一个参数。
+Stateful方式的区别是你可以在Lua的构造函数返回一个table，该table后续可以通过self.__HotfixTable访问这个table（self指的是该C#对象），这个table可以存一些和该对象相关的信息。
 
-Stateful方式下你可以在Lua的构造函数返回一个table，然后后续成员函数调用会把这个table给传递过去。
+Stateful方式还可以用xlua.util.hotfix_state(csobj, state)来避免显式访问self.__HotfixTable，使用该api后，self.xxx 将会优先访问state里头的字段。不仅美观，而且性能也会更好。（参见HotfixTest2.cs）
 
-Stateless比较适合无状态的类，有状态的话，你得通过反射去操作私有成员，也没法新增状态（field）。Stateless有个好处，可以运行的任意时刻执行替换。
-
-Stateful的代价是会在类增加一个LuaTable类型的字段（中间层面增加，不会改源代码）。但这种方式是适用性更广，比如你不想要lua状态，可以在构造函数拦截那返回空。而且操作状态性能比反射操作C#私有变量要好，也可以随意新增任意的状态信息。缺点是，执行成员函数之前就new好的对象，接收到的状态会是空，所以需要重启，在一开始就执行替换。
+Stateful的代价是会在类增加一个LuaTable类型的字段（中间层面增加，不会改源代码）。而且，执行xlua.hotfix之前就new好的对象，__HotfixTable会是空，所以需要重启，在一开始就执行替换。
 
 ## 打补丁
 
@@ -350,49 +343,52 @@ luaenv.DoString(@"
 ```lua
 
 xlua.hotfix(CS.StatefullTest, {
-    ['.ctor'] = function(csobj)
-        return {evt = {}, start = 0}
-    end;
-    set_AProp = function(self, v)
-        print('set_AProp', v)
-        self.AProp = v
-    end;
-    get_AProp = function(self)
-        return self.AProp
-    end;
-    get_Item = function(self, k)
-        print('get_Item', k)
-        return 1024
-    end;
-    set_Item = function(self, k, v)
-        print('set_Item', k, v)
-    end;
-    add_AEvent = function(self, cb)
-        print('add_AEvent', cb)
-        table.insert(self.evt, cb)
-    end;
-    remove_AEvent = function(self, cb)
-       print('remove_AEvent', cb)
-       for i, v in ipairs(self.evt) do
-           if v == cb then
-               table.remove(self.evt, i)
-               break
-           end
-       end
-    end;
-    Start = function(self)
-        print('Start')
-        for _, cb in ipairs(self.evt) do
-            cb(self.start, 2)
-        end
-        self.start = self.start + 1
-    end;
-    StaticFunc = function(a, b, c)
-       print(a, b, c)
-    end;
-    Finalize = function(self)
-       print('Finalize', self)
-    end
+	['.ctor'] = function(csobj)
+		return util.hotfix_state(csobj, {evt = {}, start = 0, prop = 0})
+	end;
+	set_AProp = function(self, v)
+		print('set_AProp', v)
+		self.prop = v
+	end;
+	get_AProp = function(self)
+		return self.prop
+	end;
+	get_Item = function(self, k)
+		print('get_Item', k)
+		return 1024
+	end;
+	set_Item = function(self, k, v)
+		print('set_Item', k, v)
+	end;
+	add_AEvent = function(self, cb)
+		print('add_AEvent', cb)
+		table.insert(self.evt, cb)
+	end;
+	remove_AEvent = function(self, cb)
+	   print('remove_AEvent', cb)
+	   for i, v in ipairs(self.evt) do
+		   if v == cb then
+			   table.remove(self.evt, i)
+			   break
+		   end
+	   end
+	end;
+	Start = function(self)
+		print('Start')
+		for _, cb in ipairs(self.evt) do
+			cb(self.start, 2)
+		end
+		self.start = self.start + 1
+	end;
+	StaticFunc = function(a, b, c)
+	   print(a, b, c)
+	end;
+	GenericTest = function(self, a)
+	   print(self, a)
+	end;
+	Finalize = function(self)
+	   print('Finalize', self)
+	end
 })
 
 ```

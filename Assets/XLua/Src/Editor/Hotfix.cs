@@ -350,8 +350,7 @@ namespace XLua
                     int compareOffset = 0;
                     if (!method.IsStatic)
                     {
-                        var typeOfSelf = (isStateful && !method.IsConstructor) ? luaTableType :
-                            ((!ignoreValueType && method.DeclaringType.IsValueType) ? method.DeclaringType : objType);
+                        var typeOfSelf = (!ignoreValueType && method.DeclaringType.IsValueType) ? method.DeclaringType : objType;
                         if ((parametersOfDelegate.Count == 0) || parametersOfDelegate[0].ParameterType.IsByReference || !isSameType(typeOfSelf, parametersOfDelegate[0].ParameterType))
                         {
                             continue;
@@ -482,7 +481,6 @@ namespace XLua
 
         static bool genericInOut(MethodDefinition method, HotfixFlagInTool hotfixType)
         {
-            bool isStateful = hotfixType.HasFlag(HotfixFlagInTool.Stateful);
             bool ignoreValueType = hotfixType.HasFlag(HotfixFlagInTool.ValueTypeBoxing);
 
             if (hasGenericParameter(method.ReturnType) || isNoPublic(method.ReturnType))
@@ -491,7 +489,7 @@ namespace XLua
             }
             var parameters = method.Parameters;
 
-            if (!method.IsStatic && (!isStateful || method.IsConstructor)
+            if (!method.IsStatic 
                 && (hasGenericParameter(method.DeclaringType) || ((!ignoreValueType && method.DeclaringType.IsValueType) && isNoPublic(method.DeclaringType))))
             {
                     return true;
@@ -552,7 +550,7 @@ namespace XLua
                 {
                     throw new InvalidOperationException(type.FullName + " is static, can not be mark as Stateful!");
                 }
-                var stateTableDefinition = new FieldDefinition("__Hotfix_xluaStateTable", Mono.Cecil.FieldAttributes.Private, luaTableType);
+                var stateTableDefinition = new FieldDefinition("__HotfixTable", Mono.Cecil.FieldAttributes.Private, luaTableType);
                 type.Fields.Add(stateTableDefinition);
                 stateTable = stateTableDefinition.GetGeneric();
             }
@@ -1031,11 +1029,7 @@ namespace XLua
                     {
                         processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldarg, (short)i));
                     }
-                    if (i == 0 && isStateful && !method.IsStatic && !method.IsConstructor)
-                    {
-                        processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldfld, stateTable));
-                    }
-                    else if (i == 0 && !method.IsStatic && type.IsValueType)
+                    if (i == 0 && !method.IsStatic && type.IsValueType)
                     {
                         processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldobj, type));
                         
@@ -1174,19 +1168,11 @@ namespace XLua
                     {
                         processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldloc, injection));
                         processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldarg_0));
-                        if (isStateful && !method.IsConstructor)
+                        if (type.IsValueType)
                         {
-                            processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldfld, stateTable));
-                            processor.InsertBefore(insertPoint, processor.Create(OpCodes.Callvirt, inParam.MakeGenericMethod(luaTableType)));
+                            processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldobj, method.DeclaringType.GetGeneric()));
                         }
-                        else
-                        {
-                            if (type.IsValueType)
-                            {
-                                processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldobj, method.DeclaringType.GetGeneric()));
-                            }
-                            processor.InsertBefore(insertPoint, processor.Create(OpCodes.Callvirt, inParam.MakeGenericMethod(method.DeclaringType.GetGeneric())));
-                        }
+                        processor.InsertBefore(insertPoint, processor.Create(OpCodes.Callvirt, inParam.MakeGenericMethod(method.DeclaringType.GetGeneric())));
                     }
                     else
                     {

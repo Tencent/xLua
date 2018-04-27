@@ -279,16 +279,17 @@ public class HotfixTest2 : MonoBehaviour {
         System.GC.Collect();
         System.GC.WaitForPendingFinalizers();
         luaenv.DoString(@"
+            local util = require 'xlua.util'
             xlua.hotfix(CS.StatefullTest, {
                 ['.ctor'] = function(csobj)
-                    return {evt = {}, start = 0}
+                    return util.hotfix_state(csobj, {evt = {}, start = 0, prop = 0})
                 end;
                 set_AProp = function(self, v)
                     print('set_AProp', v)
-                    self.AProp = v
+                    self.prop = v
                 end;
                 get_AProp = function(self)
-                    return self.AProp
+                    return self.prop
                 end;
                 get_Item = function(self, k)
                     print('get_Item', k)
