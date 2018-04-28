@@ -311,6 +311,16 @@ namespace XLua
                     resolver.AddSearchDirectory(directory);
                 }
             }
+
+            var nameToOpcodes = typeof(OpCodes).GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly)
+                .ToDictionary(f => f.Name, f => ((OpCode)f.GetValue(null)));
+            foreach(var kv in nameToOpcodes)
+            {
+                if (kv.Key.EndsWith("_S"))
+                {
+                    shortToLong[kv.Value] = nameToOpcodes[kv.Key.Substring(0, kv.Key.Length - 2)];
+                }
+            }
         }
 
         static bool isSameType(TypeReference left, TypeReference right)
@@ -633,6 +643,23 @@ namespace XLua
 #endif
         }
 
+        static void writeAssembly(AssemblyDefinition assembly, string assemblyPath)
+        {
+#if HOTFIX_SYMBOLS_DISABLE
+            assembly.Write(assemblyPath);
+#else
+            if (File.Exists(assemblyPath + ".mdb"))
+            {
+                var writerParameters = new WriterParameters { WriteSymbols = true };
+                assembly.Write(assemblyPath, writerParameters);
+            }
+            else
+            {
+                assembly.Write(assemblyPath);
+            }
+#endif
+        }
+
         public static void HotfixInject(string injectAssemblyPath, string xluaAssemblyPath, IEnumerable<string> searchDirectorys, string idMapFilePath, Dictionary<string, int> hotfixConfig)
         {
             AssemblyDefinition injectAssembly = null;
@@ -670,14 +697,8 @@ namespace XLua
                 hotfix.OutputIntKeyMapper(new FileStream(idMapFilePath, FileMode.Create, FileAccess.Write));
                 File.Copy(idMapFilePath, idMapFilePath + "." + DateTime.Now.ToString("yyyyMMddHHmmssfff"));
 
-#if HOTFIX_SYMBOLS_DISABLE
-                assembly.Write(injectAssemblyPath);
-                Info(injectAssemblyPath + " inject finish!(no symbols)");
-#else
-                var writerParameters = new WriterParameters { WriteSymbols = true };
-                injectAssembly.Write(injectAssemblyPath, writerParameters);
+                writeAssembly(injectAssembly, injectAssemblyPath);
                 Info(injectAssemblyPath + " inject finish!");
-#endif
             }
             catch(Exception e)
             {
@@ -765,7 +786,9 @@ namespace XLua
             return null;
         }
 
-        static void fixBranch(Mono.Collections.Generic.Collection<Instruction> instructions, Dictionary<Instruction, Instruction> originToNewTarget, HashSet<Instruction> noCheck)
+        Dictionary<OpCode, OpCode> shortToLong = new Dictionary<OpCode, OpCode>();
+
+        void fixBranch(ILProcessor processor, Mono.Collections.Generic.Collection<Instruction> instructions, Dictionary<Instruction, Instruction> originToNewTarget, HashSet<Instruction> noCheck)
         {
             foreach(var instruction in instructions)
             {
@@ -775,6 +798,20 @@ namespace XLua
                     if (originToNewTarget.ContainsKey(target))
                     {
                         instruction.Operand = originToNewTarget[target];
+                    }
+                }
+            }
+            for (int i = 0; i < instructions.Count; i++)
+            {
+                var instruction = instructions[i];
+                Instruction target = instruction.Operand as Instruction;
+                
+                if (target != null)
+                {
+                    int diff = target.Offset - instruction.Offset;
+                    if ((diff > sbyte.MaxValue || diff < sbyte.MinValue) && shortToLong.ContainsKey(instruction.OpCode))
+                    {
+                        instructions[i] = processor.Create(shortToLong[instruction.OpCode], target);
                     }
                 }
             }
@@ -1080,7 +1117,7 @@ namespace XLua
 
             if (method.IsConstructor)
             {
-                fixBranch(method.Body.Instructions, originToNewTarget, noCheck);
+                fixBranch(processor, method.Body.Instructions, originToNewTarget, noCheck);
             }
 
             if (isFinalize)
@@ -1299,7 +1336,7 @@ namespace XLua
 
             if (method.IsConstructor)
             {
-                fixBranch(method.Body.Instructions, originToNewTarget, noCheck);
+                fixBranch(processor, method.Body.Instructions, originToNewTarget, noCheck);
             }
 
             if (isFinalize)
