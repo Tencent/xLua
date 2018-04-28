@@ -162,7 +162,7 @@ namespace XLua
                     Utils.ReflectionWrap(L, type, privateAccessibleFlags.Contains(type));
                 }
 #else
-                Utils.ReflectionWrap(L, type);
+                Utils.ReflectionWrap(L, type, privateAccessibleFlags.Contains(type));
 #endif
 #if NOT_GEN_WARNING
 #if !XLUA_GENERAL
