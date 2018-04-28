@@ -95,13 +95,11 @@ public static class HotfixCfg
 
 Hotfix标签可以设置一些标志位对生成代码及插桩定制化
 
-* Stateless
+* Stateless、Stateful
 
-Stateless和Stateful的区别请看下下节。
+遗留设置，Stateful方式在新版本已经删除，因为这种方式可以用xlua.util.hotfix_state接口达到类似的效果，该接口的使用可以看下HotfixTest2.cs里的示例代码。
 
-* Stateful
-
-同上。
+由于没Stateful，默认就是Stateless，所以也没必要设置该标志位。
 
 * ValueTypeBoxing
 
@@ -183,16 +181,6 @@ xlua.hotfix(CS.HotfixTest, 'Update', function(self)
 * 建议用反射找出所有函数参数、字段、属性、事件涉及的delegate类型，标注CSharpCallLua；
 * 业务代码、引擎API、系统API，需要在Lua补丁里头高性能访问的类型，加上LuaCallCSharp；
 * 引擎API、系统API可能被代码剪裁调（C#无引用的地方都会被剪裁），如果觉得可能会新增C#代码之外的API调用，这些API所在的类型要么加LuaCallCSharp，要么加ReflectionUse；
-
-## Stateless和Stateful
-
-打Hotfix标签时，默认、也建议是Stateless方式，而Stateful方式是对Stateless的补充。
-
-Stateful方式的区别是你可以在Lua的构造函数返回一个table，该table后续可以通过self.__HotfixTable访问这个table（self指的是该C#对象），这个table可以存一些和该对象相关的信息。
-
-Stateful方式还可以用xlua.util.hotfix_state(csobj, state)来避免显式访问self.__HotfixTable，使用该api后，self.xxx 将会优先访问state里头的字段。不仅美观，而且性能也会更好。（参见HotfixTest2.cs）
-
-Stateful的代价是会在类增加一个LuaTable类型的字段（中间层面增加，不会改源代码）。而且，执行xlua.hotfix之前就new好的对象，__HotfixTable会是空，所以需要重启，在一开始就执行替换。
 
 ## 打补丁
 

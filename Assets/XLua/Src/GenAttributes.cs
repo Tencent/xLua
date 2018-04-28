@@ -93,6 +93,7 @@ namespace XLua
     public enum HotfixFlag
     {
         Stateless = 0,
+        [Obsolete("use xlua.util.hotfix_state instead!", true)]
         Stateful = 1,
         ValueTypeBoxing = 2,
         IgnoreProperty = 4,

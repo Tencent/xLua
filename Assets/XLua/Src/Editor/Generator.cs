@@ -767,13 +767,10 @@ namespace CSObjectWrapEditor
 
         static MethodInfoSimulation makeHotfixMethodInfoSimulation(MethodBase hotfixMethod, HotfixFlag hotfixType)
         {
-            bool isStateful = hotfixType.HasFlag(HotfixFlag.Stateful);
             bool ignoreValueType = hotfixType.HasFlag(HotfixFlag.ValueTypeBoxing);
-            //isStateful = false;
             //ignoreValueType = true;
 
-            Type retTypeExpect = (isStateful && hotfixMethod.IsConstructor && !hotfixMethod.IsStatic)
-                    ? typeof(LuaTable) : (hotfixMethod.IsConstructor ? typeof(void) : (hotfixMethod as MethodInfo).ReturnType);
+            Type retTypeExpect = (hotfixMethod.IsConstructor ? typeof(void) : (hotfixMethod as MethodInfo).ReturnType);
             int hashCode = retTypeExpect.GetHashCode();
             List<ParameterInfoSimulation> paramsExpect = new List<ParameterInfoSimulation>();
             if (!hotfixMethod.IsStatic) // add self
@@ -855,7 +852,6 @@ namespace CSObjectWrapEditor
         static bool injectByGeneric(MethodBase method, HotfixFlag hotfixType)
         {
             bool ignoreValueType = hotfixType.HasFlag(HotfixFlag.ValueTypeBoxing);
-            //isStateful = false;
             //ignoreValueType = true;
 
             if (!method.IsConstructor && (isNotPublic((method as MethodInfo).ReturnType) || hasGenericParameter((method as MethodInfo).ReturnType))) return true;

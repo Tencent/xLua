@@ -164,7 +164,7 @@ public struct StructTest
     }
 }
 
-[Hotfix(HotfixFlag.Stateful)]
+[Hotfix]
 public struct GenericStruct<T>
 {
     T a;
@@ -282,7 +282,7 @@ public class HotfixTest2 : MonoBehaviour {
             local util = require 'xlua.util'
             xlua.hotfix(CS.StatefullTest, {
                 ['.ctor'] = function(csobj)
-                    return util.hotfix_state(csobj, {evt = {}, start = 0, prop = 0})
+                    util.hotfix_state(csobj, {evt = {}, start = 0, prop = 0})
                 end;
                 set_AProp = function(self, v)
                     print('set_AProp', v)
