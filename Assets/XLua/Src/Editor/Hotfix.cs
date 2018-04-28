@@ -239,7 +239,6 @@ namespace XLua
     public class Hotfix
     {
         private TypeReference objType = null;
-        private TypeReference luaTableType = null;
         private TypeReference delegateBridgeType = null;
         private AssemblyDefinition injectAssembly = null;
 
@@ -265,7 +264,6 @@ namespace XLua
             var injectModule = injectAssembly.MainModule;
             objType = injectModule.TypeSystem.Object;
 
-            luaTableType = injectModule.TryImport(xluaAssembly.MainModule.Types.Single(t => t.FullName == "XLua.LuaTable"));
             var delegateBridgeTypeDef = xluaAssembly.MainModule.Types.Single(t => t.FullName == "XLua.DelegateBridge");
             delegateBridgeType = injectModule.TryImport(delegateBridgeTypeDef);
             delegateBridgeGetter = injectModule.TryImport(xluaAssembly.MainModule.Types.Single(t => t.FullName == "XLua.HotfixDelegateBridge")
@@ -760,6 +758,21 @@ namespace XLua
             return null;
         }
 
+        static void fixBranch(Mono.Collections.Generic.Collection<Instruction> instructions, Dictionary<Instruction, Instruction> originToNewTarget, HashSet<Instruction> noCheck)
+        {
+            foreach(var instruction in instructions)
+            {
+                Instruction target = instruction.Operand as Instruction;
+                if (target != null && !noCheck.Contains(instruction))
+                {
+                    if (originToNewTarget.ContainsKey(target))
+                    {
+                        instruction.Operand = originToNewTarget[target];
+                    }
+                }
+            }
+        }
+
         static MethodDefinition findOverride(TypeDefinition type, MethodReference vmethod)
         {
             foreach (var method in type.Methods)
@@ -874,7 +887,6 @@ namespace XLua
             var mbase = findBase(type, method);
             if (mbase != null)
             {
-                var module = type.Module;
                 var proxyMethod = new MethodDefinition(BASE_RPOXY_PERFIX + method.Name, Mono.Cecil.MethodAttributes.Private, tryImport(type, method.ReturnType));
                 for (int i = 0; i < method.Parameters.Count; i++)
                 {
@@ -970,20 +982,28 @@ namespace XLua
                 insertPoint = findNextRet(method.Body.Instructions, insertPoint);
             }
 
+            Dictionary<Instruction, Instruction> originToNewTarget = new Dictionary<Instruction, Instruction>();
+            HashSet<Instruction> noCheck = new HashSet<Instruction>();
+
             while (insertPoint != null)
             {
+                Instruction firstInstruction;
                 if (isIntKey)
                 {
-                    processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldc_I4, bridgeIndexByKey.Count));
+                    firstInstruction = processor.Create(OpCodes.Ldc_I4, bridgeIndexByKey.Count);
+                    processor.InsertBefore(insertPoint, firstInstruction);
                     processor.InsertBefore(insertPoint, processor.Create(OpCodes.Call, hotfixFlagGetter));
                 }
                 else
                 {
-                    processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldsfld, fieldReference));
+                    firstInstruction = processor.Create(OpCodes.Ldsfld, fieldReference);
+                    processor.InsertBefore(insertPoint, firstInstruction);
                     processor.InsertBefore(insertPoint, processor.Create(OpCodes.Stloc, injection));
                     processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldloc, injection));
                 }
-                processor.InsertBefore(insertPoint, processor.Create(OpCodes.Brfalse, insertPoint));
+
+                var jmpInstruction = processor.Create(OpCodes.Brfalse, insertPoint);
+                processor.InsertBefore(insertPoint, jmpInstruction);
 
                 if (isIntKey)
                 {
@@ -1043,7 +1063,17 @@ namespace XLua
                 {
                     break;
                 }
+                else
+                {
+                    originToNewTarget[insertPoint] = firstInstruction;
+                    noCheck.Add(jmpInstruction);
+                }
                 insertPoint = findNextRet(method.Body.Instructions, insertPoint);
+            }
+
+            if (method.IsConstructor)
+            {
+                fixBranch(method.Body.Instructions, originToNewTarget, noCheck);
             }
 
             if (isFinalize)
@@ -1100,23 +1130,32 @@ namespace XLua
                 insertPoint = findNextRet(method.Body.Instructions, insertPoint);
             }
 
+            Dictionary<Instruction, Instruction> originToNewTarget = new Dictionary<Instruction, Instruction>();
+            HashSet<Instruction> noCheck = new HashSet<Instruction>();
+
             while (insertPoint != null)
             {
+                Instruction firstInstruction;
+                Instruction jmpInstruction;
                 if (isIntKey)
                 {
-                    processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldc_I4, bridgeIndexByKey.Count));
+                    firstInstruction = processor.Create(OpCodes.Ldc_I4, bridgeIndexByKey.Count);
+                    processor.InsertBefore(insertPoint, firstInstruction);
                     processor.InsertBefore(insertPoint, processor.Create(OpCodes.Call, hotfixFlagGetter));
-                    processor.InsertBefore(insertPoint, processor.Create(OpCodes.Brfalse, insertPoint));
+                    jmpInstruction = processor.Create(OpCodes.Brfalse, insertPoint);
+                    processor.InsertBefore(insertPoint, jmpInstruction);
                     processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldc_I4, bridgeIndexByKey.Count));
                     processor.InsertBefore(insertPoint, processor.Create(OpCodes.Call, delegateBridgeGetter));
                     processor.InsertBefore(insertPoint, processor.Create(OpCodes.Stloc, injection));
                 }
                 else
                 {
-                    processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldsfld, fieldReference));
+                    firstInstruction = processor.Create(OpCodes.Ldsfld, fieldReference);
+                    processor.InsertBefore(insertPoint, firstInstruction);
                     processor.InsertBefore(insertPoint, processor.Create(OpCodes.Stloc, injection));
                     processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldloc, injection));
-                    processor.InsertBefore(insertPoint, processor.Create(OpCodes.Brfalse, insertPoint));
+                    jmpInstruction = processor.Create(OpCodes.Brfalse, insertPoint);
+                    processor.InsertBefore(insertPoint, jmpInstruction);
                 }
 
                 processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldloc, injection));
@@ -1242,12 +1281,28 @@ namespace XLua
                 {
                     break;
                 }
+                else
+                {
+                    originToNewTarget[insertPoint] = firstInstruction;
+                    noCheck.Add(jmpInstruction);
+                }
+
                 insertPoint = findNextRet(method.Body.Instructions, insertPoint);
+            }
+
+            if (method.IsConstructor)
+            {
+                fixBranch(method.Body.Instructions, originToNewTarget, noCheck);
             }
 
             if (isFinalize)
             {
                 method.Body.ExceptionHandlers[0].TryStart = method.Body.Instructions[0];
+            }
+
+            if (isIntKey)
+            {
+                bridgeIndexByKey.Add(method);
             }
 
             return true;
