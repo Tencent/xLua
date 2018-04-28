@@ -258,10 +258,6 @@ namespace CSObjectWrapEditor
         {
             parameters.Set("type", type);
 
-            var cas = type.GetCustomAttributes(typeof(HotfixAttribute), false);
-            bool isMarkAsHotfix = HotfixCfg.ContainsKey(type)
-                || (cas != null && cas.Length != 0);
-
             var constructors = new List<MethodBase>();
             var constructor_def_vals = new List<int>();
             if (!type.IsAbstract)
@@ -361,18 +357,7 @@ namespace CSObjectWrapEditor
                             }
                         }
                     }
-#if HOTFIX_ENABLE
-                    if (isOverride && isMarkAsHotfix)
-                    {
-                        lazyMemberInfos.Add(new LazyMemberInfo
-                        {
-                            Index = "METHOD_IDX",
-                            Name = "<>xLuaBaseProxy_" + k,
-                            MemberType = "LazyMemberTypes.Method",
-                            IsStatic = "false"
-                        });
-                    }
-#endif
+
                     return new {
                         Name = k,
                         IsStatic = overloads[0].IsStatic && (!overloads[0].IsDefined(typeof(ExtensionAttribute), false) || overloads[0].GetParameters()[0].ParameterType.IsInterface),
