@@ -599,11 +599,18 @@ namespace XLua
             var hotfixCfg = new Dictionary<string, int>();
             HotfixConfig.GetConfig(hotfixCfg, Utils.GetAllTypes());
             var xluaAssemblyPath = typeof(LuaEnv).Module.FullyQualifiedName;
-            
-            foreach (var injectAssemblyPath in HotfixConfig.GetHotfixAssemblyPaths())
+            var idMapFileName = CSObjectWrapEditor.GeneratorConfig.common_path + "Resources/hotfix_id_map.lua.txt";
+            var injectAssemblyPaths = HotfixConfig.GetHotfixAssemblyPaths();
+
+            foreach (var injectAssemblyPath in injectAssemblyPaths)
             {
                 Info("injecting " + injectAssemblyPath);
-                HotfixInject(injectAssemblyPath, xluaAssemblyPath, null, CSObjectWrapEditor.GeneratorConfig.common_path + "Resources/hotfix_id_map.lua.txt", hotfixCfg);
+                if (injectAssemblyPaths.Count > 1)
+                {
+                    var injectAssemblyFileName = Path.GetFileName(injectAssemblyPath);
+                    idMapFileName = CSObjectWrapEditor.GeneratorConfig.common_path + "Resources/hotfix_id_map_" + injectAssemblyFileName.Substring(0, injectAssemblyFileName.Length - 4) + ".lua.txt";
+                }
+                HotfixInject(injectAssemblyPath, xluaAssemblyPath, null, idMapFileName, hotfixCfg);
             }
             AssetDatabase.Refresh();
         }
@@ -1412,10 +1419,17 @@ namespace XLua
 
                 }
             }
-
-            foreach (var injectAssemblyPath in HotfixConfig.GetHotfixAssemblyPaths())
+            var injectAssemblyPaths = HotfixConfig.GetHotfixAssemblyPaths();
+            var idMapFileNames = new List<string>();
+            foreach (var injectAssemblyPath in injectAssemblyPaths)
             {
                 args[1] = injectAssemblyPath.Replace('\\', '/');
+                if (injectAssemblyPaths.Count > 1)
+                {
+                    var injectAssemblyFileName = Path.GetFileName(injectAssemblyPath);
+                    args[3] = CSObjectWrapEditor.GeneratorConfig.common_path + "Resources/hotfix_id_map_" + injectAssemblyFileName.Substring(0, injectAssemblyFileName.Length - 4) + ".lua.txt";
+                    idMapFileNames.Add(args[3]);
+                }
                 Process hotfix_injection = new Process();
                 hotfix_injection.StartInfo.FileName = mono_path;
                 hotfix_injection.StartInfo.Arguments = "\"" + String.Join("\" \"", args.Distinct().ToArray()) + "\"";
