@@ -14,12 +14,12 @@ using System.Linq;
 using System.IO;
 using System.Text.RegularExpressions;
 
-#if INJECT_WITHOUT_TOOL || XLUA_GENERAL
+#if XLUA_GENERAL
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 #endif
 
-#if INJECT_WITHOUT_TOOL || !XLUA_GENERAL
+#if !XLUA_GENERAL
 using UnityEngine;
 using UnityEditor;
 using UnityEditor.Callbacks;
@@ -136,7 +136,7 @@ namespace XLua
         }
     }
 }
-#if XLUA_GENERAL || INJECT_WITHOUT_TOOL
+#if XLUA_GENERAL
 
 namespace XLua
 {
