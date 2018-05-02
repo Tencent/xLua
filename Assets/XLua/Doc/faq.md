@@ -160,7 +160,7 @@ end)
 
 因为：1、这个特性会导致基类定义的方法、属性、字段等无法访问（比如Animation无法访问到GetComponent方法）；2、key为当前类某方法、属性、字段的名字的数据无法检索，比如Dictionary类型，dic['TryGetValue']返回的是一个函数，指向Dictionary的TryGetValue方法。
 
-如果你的版本大于2.1.11，可以用get_Item来获取值，用set_Item来设置值。要主要只有this[string field]或者this[object field]才有这两个替代api，其它类型的key是没有的。
+如果你的版本大于2.1.11，可以用get_Item来获取值，用set_Item来设置值。要注意只有this[string field]或者this[object field]才有这两个替代api，其它类型的key是没有的。
 
 ~~~lua
 dic:set_Item('a', 1)
