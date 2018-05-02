@@ -1152,7 +1152,12 @@ namespace XLua
             var instanceMethods = toBeWrap.GetMethods(instanceFlag)
                 .Concat(extensionMethods == null ? Enumerable.Empty<MethodInfo>() : Utils.GetExtensionMethodsOf(toBeWrap))
                 .Where(m => Utils.IsSupportedMethod(m))
-                .Where(m => !m.IsSpecialName).GroupBy(m => m.Name).ToList();
+                .Where(m => !m.IsSpecialName
+                    || (
+                         ((m.Name == "get_Item" && m.GetParameters().Length == 1) || (m.Name == "set_Item" && m.GetParameters().Length == 2))
+                         && m.GetParameters()[0].ParameterType.IsAssignableFrom(typeof(string))
+                       )
+                ).GroupBy(m => m.Name).ToList();
             var supportOperators = toBeWrap.GetMethods(staticFlag)
                 .Where(m => m.IsSpecialName && InternalGlobals.supportOp.ContainsKey(m.Name))
                 .GroupBy(m => m.Name);

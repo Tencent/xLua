@@ -449,7 +449,6 @@ namespace XLua
                 LuaAPI.lua_rawset(L, is_static ? cls_field : obj_field);
             }
 
-            Dictionary<string, PropertyInfo> prop_map = new Dictionary<string, PropertyInfo>();
             List<PropertyInfo> items = new List<PropertyInfo>();
             PropertyInfo[] props = type.GetProperties(flag);
             for (int i = 0; i < props.Length; ++i)
@@ -458,10 +457,6 @@ namespace XLua
                 if (prop.Name == "Item" && prop.GetIndexParameters().Length > 0)
                 {
                     items.Add(prop);
-                }
-                else
-                {
-                    prop_map.Add(prop.Name, prop);
                 }
             }
 
@@ -483,14 +478,21 @@ namespace XLua
                     continue;
                 }
 
-                PropertyInfo prop = null;
-                if (method_name.StartsWith("add_") || method_name.StartsWith("remove_")
-                    || method_name == "get_Item" || method_name == "set_Item")
+                //indexer
+                if (method.IsSpecialName && ((method.Name == "get_Item" && method.GetParameters().Length == 1) || (method.Name == "set_Item" && method.GetParameters().Length == 2)))
+                {
+                    if (!method.GetParameters()[0].ParameterType.IsAssignableFrom(typeof(string)))
+                    {
+                        continue;
+                    }
+                }
+
+                if ((method_name.StartsWith("add_") || method_name.StartsWith("remove_")) && method.IsSpecialName)
                 {
                     continue;
                 }
 
-                if (method_name.StartsWith("op_")) // 操作符
+                if (method_name.StartsWith("op_") && method.IsSpecialName) // 操作符
                 {
                     if (InternalGlobals.supportOp.ContainsKey(method_name))
                     {
@@ -503,26 +505,18 @@ namespace XLua
                     }
                     continue;
                 }
-                else if (method_name.StartsWith("get_") && method.IsSpecialName) // getter of property
+                else if (method_name.StartsWith("get_") && method.IsSpecialName && method.GetParameters().Length != 1) // getter of property
                 {
                     string prop_name = method.Name.Substring(4);
-                    if (!prop_map.TryGetValue(prop_name, out prop))
-                    {
-                        prop = type.GetProperty(prop_name);
-                    }
-                    LuaAPI.xlua_pushasciistring(L, prop.Name);
-                    translator.PushFixCSFunction(L, translator.methodWrapsCache._GenMethodWrap(method.DeclaringType, prop.Name, new MethodBase[] { method }).Call);
+                    LuaAPI.xlua_pushasciistring(L, prop_name);
+                    translator.PushFixCSFunction(L, translator.methodWrapsCache._GenMethodWrap(method.DeclaringType, prop_name, new MethodBase[] { method }).Call);
                     LuaAPI.lua_rawset(L, method.IsStatic ? cls_getter : obj_getter);
                 }
-                else if (method_name.StartsWith("set_") && method.IsSpecialName) // setter of property
+                else if (method_name.StartsWith("set_") && method.IsSpecialName && method.GetParameters().Length != 2) // setter of property
                 {
                     string prop_name = method.Name.Substring(4);
-                    if (!prop_map.TryGetValue(prop_name, out prop))
-                    {
-                        prop = type.GetProperty(prop_name);
-                    }
-                    LuaAPI.xlua_pushasciistring(L, prop.Name);
-                    translator.PushFixCSFunction(L, translator.methodWrapsCache._GenMethodWrap(method.DeclaringType, prop.Name, new MethodBase[] { method }).Call);
+                    LuaAPI.xlua_pushasciistring(L, prop_name);
+                    translator.PushFixCSFunction(L, translator.methodWrapsCache._GenMethodWrap(method.DeclaringType, prop_name, new MethodBase[] { method }).Call);
                     LuaAPI.lua_rawset(L, method.IsStatic ? cls_setter : obj_setter);
                 }
                 else if (method_name == ".ctor" && method.IsConstructor)
