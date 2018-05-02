@@ -165,11 +165,14 @@ namespace XLua
                 Utils.ReflectionWrap(L, type, privateAccessibleFlags.Contains(type));
 #endif
 #if NOT_GEN_WARNING
+                if (!typeof(Delegate).IsAssignableFrom(type))
+                {
 #if !XLUA_GENERAL
-                UnityEngine.Debug.LogWarning(string.Format("{0} not gen, using reflection instead", type));
+                    UnityEngine.Debug.LogWarning(string.Format("{0} not gen, using reflection instead", type));
 #else
-                System.Console.WriteLine(string.Format("Warning: {0} not gen, using reflection instead", type));
+                    System.Console.WriteLine(string.Format("Warning: {0} not gen, using reflection instead", type));
 #endif
+                }
 #endif
             }
             if (top != LuaAPI.lua_gettop(L))
