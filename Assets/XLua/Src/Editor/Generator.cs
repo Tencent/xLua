@@ -289,20 +289,6 @@ namespace CSObjectWrapEditor
             parameters.Set("constructors", constructors);
             parameters.Set("constructor_def_vals", constructor_def_vals);
 
-            var getters = type.GetProperties().Where(prop => prop.CanRead);
-            var setters = type.GetProperties().Where(prop => prop.CanWrite);
-
-            var methodNames = type.GetMethods(BindingFlags.Public | BindingFlags.Instance
-                | BindingFlags.Static | BindingFlags.IgnoreCase | BindingFlags.DeclaredOnly).Select(t=>t.Name).Distinct().ToDictionary(t=>t);
-            foreach (var getter in getters)
-            {
-                methodNames.Remove("get_" + getter.Name);
-            }
-
-            foreach (var setter in setters)
-            {
-                methodNames.Remove("set_" + setter.Name);
-            }
             List<string> extension_methods_namespace = new List<string>();
             var extension_methods = type.IsInterface ? new MethodInfo[0]:GetExtensionMethods(type).ToArray();
             foreach(var extension_method in extension_methods)
@@ -321,10 +307,10 @@ namespace CSObjectWrapEditor
             //warnning: filter all method start with "op_"  "add_" "remove_" may  filter some ordinary method
             parameters.Set("methods", type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.IgnoreCase | BindingFlags.DeclaredOnly)
                 .Where(method => !method.IsDefined(typeof (ExtensionAttribute), false) || method.GetParameters()[0].ParameterType.IsInterface || method.DeclaringType != type)
-                .Where(method => methodNames.ContainsKey(method.Name)) //GenericMethod can not be invoke becuase not static info available!
+                .Where(method => !method.IsSpecialName) 
                 .Concat(extension_methods)
                 .Where(method => !IsDoNotGen(type, method.Name))
-                .Where(method => !isMethodInBlackList(method) && (!method.IsGenericMethod || extension_methods.Contains(method) || isSupportedGenericMethod(method)) && !isObsolete(method) && !method.Name.StartsWith("op_") && !method.Name.StartsWith("add_") && !method.Name.StartsWith("remove_"))
+                .Where(method => !isMethodInBlackList(method) && (!method.IsGenericMethod || extension_methods.Contains(method) || isSupportedGenericMethod(method)) && !isObsolete(method))
                 .GroupBy(method => (method.Name + ((method.IsStatic && (!method.IsDefined(typeof (ExtensionAttribute), false) || method.GetParameters()[0].ParameterType.IsInterface)) ? "_xlua_st_" : "")), (k, v) =>
                 {
                     var overloads = new List<MethodBase>();
