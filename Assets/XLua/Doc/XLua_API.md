@@ -214,6 +214,11 @@
 描述：
     
     克隆一个c#结构体
+	
+#### xlua.private_accessible(class)		
+描述：
+    
+    让一个类的私有字段，属性，方法等可用
 
 #### cast函数
 
