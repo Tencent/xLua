@@ -32,8 +32,8 @@ base(csobj)
 
 ```lua
 xlua.hotfix(CS.BaseTest, 'Foo', function(self, p)
-	print('BaseTest', p)
-	base(self):Foo(p)
+    print('BaseTest', p)
+    base(self):Foo(p)
 end)
 ```
 
@@ -148,11 +148,11 @@ CS.XLua.HotfixDelegateBridge.Set(7, func)
 ~~~lua
 (require 'xlua.util').auto_id_map()
 xlua.hotfix(CS.HotfixTest, 'Update', function(self)
-		self.tick = self.tick + 1
-		if (self.tick % 50) == 0 then
-			print('<<<<<<<<Update in lua, tick = ' .. self.tick)
-		end
-	end)
+        self.tick = self.tick + 1
+        if (self.tick % 50) == 0 then
+            print('<<<<<<<<Update in lua, tick = ' .. self.tick)
+        end
+    end)
 ~~~
 
 前提是hotfix_id_map.lua.txt放到可以通过require 'hotfix_id_map'引用到的地方。
@@ -294,16 +294,16 @@ public class HotFixSubClass : MonoBehaviour {
 ~~~csharp
 luaenv.DoString(@"
     local util = require 'xlua.util'
-	xlua.hotfix(CS.HotFixSubClass,{
-		Start = function(self)
-			return util.cs_generator(function()
-			    while true do
-				    coroutine.yield(CS.UnityEngine.WaitForSeconds(3))
+    xlua.hotfix(CS.HotFixSubClass,{
+        Start = function(self)
+            return util.cs_generator(function()
+                while true do
+                    coroutine.yield(CS.UnityEngine.WaitForSeconds(3))
                     print('Wait for 3 seconds')
-                end				
-			end
-		end;
-	})
+                end)
+            end)
+        end;
+    })
 ");
 ~~~
 
@@ -314,52 +314,52 @@ luaenv.DoString(@"
 ```lua
 
 xlua.hotfix(CS.StatefullTest, {
-	['.ctor'] = function(csobj)
-		return util.hotfix_state(csobj, {evt = {}, start = 0, prop = 0})
-	end;
-	set_AProp = function(self, v)
-		print('set_AProp', v)
-		self.prop = v
-	end;
-	get_AProp = function(self)
-		return self.prop
-	end;
-	get_Item = function(self, k)
-		print('get_Item', k)
-		return 1024
-	end;
-	set_Item = function(self, k, v)
-		print('set_Item', k, v)
-	end;
-	add_AEvent = function(self, cb)
-		print('add_AEvent', cb)
-		table.insert(self.evt, cb)
-	end;
-	remove_AEvent = function(self, cb)
-	   print('remove_AEvent', cb)
-	   for i, v in ipairs(self.evt) do
-		   if v == cb then
-			   table.remove(self.evt, i)
-			   break
-		   end
-	   end
-	end;
-	Start = function(self)
-		print('Start')
-		for _, cb in ipairs(self.evt) do
-			cb(self.start, 2)
-		end
-		self.start = self.start + 1
-	end;
-	StaticFunc = function(a, b, c)
-	   print(a, b, c)
-	end;
-	GenericTest = function(self, a)
-	   print(self, a)
-	end;
-	Finalize = function(self)
-	   print('Finalize', self)
-	end
+    ['.ctor'] = function(csobj)
+        return util.hotfix_state(csobj, {evt = {}, start = 0, prop = 0})
+    end;
+    set_AProp = function(self, v)
+        print('set_AProp', v)
+        self.prop = v
+    end;
+    get_AProp = function(self)
+        return self.prop
+    end;
+    get_Item = function(self, k)
+        print('get_Item', k)
+        return 1024
+    end;
+    set_Item = function(self, k, v)
+        print('set_Item', k, v)
+    end;
+    add_AEvent = function(self, cb)
+        print('add_AEvent', cb)
+        table.insert(self.evt, cb)
+    end;
+    remove_AEvent = function(self, cb)
+       print('remove_AEvent', cb)
+       for i, v in ipairs(self.evt) do
+           if v == cb then
+               table.remove(self.evt, i)
+               break
+           end
+       end
+    end;
+    Start = function(self)
+        print('Start')
+        for _, cb in ipairs(self.evt) do
+            cb(self.start, 2)
+        end
+        self.start = self.start + 1
+    end;
+    StaticFunc = function(a, b, c)
+       print(a, b, c)
+    end;
+    GenericTest = function(self, a)
+       print(self, a)
+    end;
+    Finalize = function(self)
+       print('Finalize', self)
+    end
 })
 
 ```
