@@ -300,7 +300,7 @@ luaenv.DoString(@"
                 while true do
                     coroutine.yield(CS.UnityEngine.WaitForSeconds(3))
                     print('Wait for 3 seconds')
-                end)
+                end
             end)
         end;
     })
