@@ -27,7 +27,7 @@ xLua在功能、性能、易用性都有不少突破，这几方面分别最具�
 
 ## 文档
 
-* [常见问题解答](Assets/XLua/Doc/faq.md)
+* [常见问题解答](Assets/XLua/Doc/faq.md)：常见问题都总结在这里，初使用大多数问题都可以在这里找到答案。
 * (必看)[XLua教程](Assets/XLua/Doc/XLua教程.md)：教程，其配套代码[这里](Assets/XLua/Tutorial/)。
 * (必看)[XLua的配置](Assets/XLua/Doc/configure.md)：介绍如何配置xLua。
 * [热补丁操作指南](Assets/XLua/Doc/hotfix.md)：介绍如何使用热补丁特性。
