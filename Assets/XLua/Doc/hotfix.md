@@ -202,7 +202,7 @@ end)
 
 ```
 
-静态函数和成员函数的区别是，成员函数会加一个self参数，这个self在Stateless方式下是C#对象本身（对应C#的this），Stateful方式下传lua构造函数实现的返回值（一个table或者nil）
+静态函数和成员函数的区别是，成员函数会加一个self参数，这个self在Stateless方式下是C#对象本身（对应C#的this）
 
 普通参数对于lua的参数，ref参数对应lua的一个参数和一个返回值，out参数对于lua的一个返回值。
 
@@ -211,8 +211,6 @@ end)
 * 构造函数
 
 构造函数对应的method_name是".ctor"。
-
-如果是Stateful方式，你可以返回一个table作为这个对象的状态。
 
 和普通函数不一样的是，构造函数的热补丁并不是替换，而是执行原有逻辑后调用lua。
 
