@@ -935,6 +935,7 @@ namespace XLua
                 if (typeof(MulticastDelegate).IsAssignableFrom(type))
                 {
                     if (common_delegate_meta == -1) throw new Exception("Fatal Exception! Delegate Metatable not inited!");
+                    TryDelayWrapLoader(L, type);
                     return common_delegate_meta;
                 }
 
