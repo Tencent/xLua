@@ -230,7 +230,7 @@ C#的操作符都有一套内部表示，比如+号的操作符函数名是op_Ad
 
 比如对于事件“AEvent”，+=操作符是add_AEvent，-=对应的是remove_AEvent。这两个函数均是第一个参数是self，第二个参数是操作符后面跟的delegate。
 
-通过xlua.private_accessible来直接访问事件对应的私有delegate的直接访问后，可以通过对象的"&事件名"字段直接触发事件，例如self\['&MyEvent'\]()，其中MyEvent是事件名。
+通过xlua.private_accessible（版本号大于2.1.11不需要调用xlua.private_accessible）来直接访问事件对应的私有delegate的直接访问后，可以通过对象的"&事件名"字段直接触发事件，例如self\['&MyEvent'\]()，其中MyEvent是事件名。
 
 * 析构函数
 
