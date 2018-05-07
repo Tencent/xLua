@@ -313,7 +313,7 @@ luaenv.DoString(@"
 
 xlua.hotfix(CS.StatefullTest, {
     ['.ctor'] = function(csobj)
-        return util.hotfix_state(csobj, {evt = {}, start = 0, prop = 0})
+        return util.state(csobj, {evt = {}, start = 0, prop = 0})
     end;
     set_AProp = function(self, v)
         print('set_AProp', v)
