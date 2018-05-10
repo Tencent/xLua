@@ -18,7 +18,6 @@ using System.Reflection;
 using System.Text;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using Utils = XLua.Utils;
 
 namespace CSObjectWrapEditor
 {
@@ -32,7 +31,7 @@ namespace CSObjectWrapEditor
 
         static GeneratorConfig()
         {
-            foreach(var type in (from type in Utils.GetAllTypes()
+            foreach(var type in (from type in XLua.Utils.GetAllTypes()
             where type.IsAbstract && type.IsSealed
             select type))
             {
@@ -1012,7 +1011,7 @@ namespace CSObjectWrapEditor
         {
             public bool Equals(Type x, Type y)
             {
-                return Utils.IsParamsMatch(x.GetMethod("Invoke"), y.GetMethod("Invoke"));
+                return XLua.Utils.IsParamsMatch(x.GetMethod("Invoke"), y.GetMethod("Invoke"));
             }
             public int GetHashCode(Type obj)
             {
@@ -1504,7 +1503,7 @@ namespace CSObjectWrapEditor
             var gen_push_types_setter = luaenv.Global.Get<LuaFunction>("SetGenPushAndUpdateTypes");
             gen_push_types_setter.Call(GCOptimizeList.Where(t => !t.IsPrimitive && SizeOf(t) != -1).Concat(LuaCallCSharp.Where(t => t.IsEnum)).Distinct().ToList());
             var xlua_classes_setter = luaenv.Global.Get<LuaFunction>("SetXLuaClasses");
-            xlua_classes_setter.Call(Utils.GetAllTypes().Where(t => t.Namespace == "XLua").ToList());
+            xlua_classes_setter.Call(XLua.Utils.GetAllTypes().Where(t => t.Namespace == "XLua").ToList());
             GenDelegateBridges(all_types);
             GenEnumWraps();
             GenCodeForClass();
@@ -1517,7 +1516,7 @@ namespace CSObjectWrapEditor
 #if !XLUA_GENERAL
         static void callCustomGen()
         {
-            foreach (var method in (from type in Utils.GetAllTypes()
+            foreach (var method in (from type in XLua.Utils.GetAllTypes()
                                from method in type.GetMethods(BindingFlags.Static | BindingFlags.Public)
                                where method.IsDefined(typeof(GenCodeMenuAttribute), false) select method))
             {
@@ -1530,13 +1529,13 @@ namespace CSObjectWrapEditor
         {
             var start = DateTime.Now;
             Directory.CreateDirectory(GeneratorConfig.common_path);
-            GetGenConfig(Utils.GetAllTypes());
+            GetGenConfig(XLua.Utils.GetAllTypes());
             luaenv.DoString("require 'TemplateCommon'");
             var gen_push_types_setter = luaenv.Global.Get<LuaFunction>("SetGenPushAndUpdateTypes");
             gen_push_types_setter.Call(GCOptimizeList.Where(t => !t.IsPrimitive && SizeOf(t) != -1).Concat(LuaCallCSharp.Where(t => t.IsEnum)).Distinct().ToList());
             var xlua_classes_setter = luaenv.Global.Get<LuaFunction>("SetXLuaClasses");
-            xlua_classes_setter.Call(Utils.GetAllTypes().Where(t => t.Namespace == "XLua").ToList());
-            GenDelegateBridges(Utils.GetAllTypes(false));
+            xlua_classes_setter.Call(XLua.Utils.GetAllTypes().Where(t => t.Namespace == "XLua").ToList());
+            GenDelegateBridges(XLua.Utils.GetAllTypes(false));
             GenEnumWraps();
             GenCodeForClass();
             GenLuaRegister();
@@ -1555,7 +1554,7 @@ namespace CSObjectWrapEditor
 
         public static void CustomGen(string template_src, GetTasks get_tasks)
         {
-            GetGenConfig(Utils.GetAllTypes());
+            GetGenConfig(XLua.Utils.GetAllTypes());
 
             LuaFunction template = XLua.TemplateEngine.LuaTemplate.Compile(luaenv,
                 template_src);
