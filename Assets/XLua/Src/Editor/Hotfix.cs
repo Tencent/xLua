@@ -928,6 +928,7 @@ namespace XLua
 
         static MethodDefinition tryAddBaseProxy(TypeDefinition type, MethodDefinition method)
         {
+            if (method.HasGenericParameters) return null;
             var mbase = findBase(type, method);
             if (mbase != null)
             {
