@@ -168,8 +168,8 @@ namespace XLua
             if (type == LuaTypes.LUA_TUSERDATA )
             {
 			    val = (<%=full_type_name%>)FastGetCSObj(L, index);
-            }<%if not is_enum then%>
-			else if (type ==LuaTypes.LUA_TTABLE)
+            }
+			else if (type == LuaTypes.LUA_TTABLE)
 			{
 			    val = new <%=full_type_name%>();
 				int top = LuaAPI.lua_gettop(L);
@@ -180,10 +180,14 @@ namespace XLua
 				}
 				LuaAPI.lua_pop(L, 1);
 				<%end)%>
-			}<%end%>
+			}<%if not type_info.Type.IsValueType then%>
+            else if (type == LuaTypes.LUA_TNIL || type == LuaTypes.LUA_TNONE)
+            {
+                val = null;
+            }<%end%>
             else
             {
-                val = (<%=full_type_name%>)objectCasters.GetCaster(typeof(<%=full_type_name%>))(L, index, null);
+                throw new Exception("can not cast " + LuaAPI.lua_type(L, index) + " to " + typeof(<%=full_type_name%>));
             }
         }
 		<%end)%>

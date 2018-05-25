@@ -7,13 +7,13 @@
 
 参数：
 
-    chunk: Lua代码；
+    chunk: Lua代码的字符串；
     chunkName： 发生error时的debug显示信息中使用，指明某某代码块的某行错误；
-    env ：为这个代码块；
+    env ：这个代码块的环境变量；
 返回值：
 
     代码块里return语句的返回值;
-    比如：return 1, “hello”，DoString返回将包含两个object， 一个是double类型的1， 一个是string类型的“hello”
+    比如：return 1, “hello”，DoString返回将包含两个object的数组， 一个是double类型的1， 一个是string类型的“hello”
     
 例如：
 
@@ -30,9 +30,9 @@
 
 参数：
 
-    chunk: Lua代码；
+    chunk: Lua代码的字符串；
     chunkName： 发生error时的debug显示信息中使用，指明某某代码块的某行错误；
-    env ：为这个代码块；
+    env ：这个代码块的环境变量；
 
 返回值：
 
@@ -48,7 +48,7 @@
 
 描述：
 
-    清除Lua的未手动释放的LuaBase（比如，LuaTable， LuaFunction），以及其它一些事情。
+    清除Lua的未手动释放的LuaBase对象（比如：LuaTable， LuaFunction），以及其它一些事情。
     需要定期调用，比如在MonoBehaviour的Update中调用。
 
 ### void AddLoader(CustomLoader loader)
@@ -59,7 +59,7 @@
 
 参数：
 
-    loader：就一个回调，其类型为delegate byte[] CustomLoader(ref string filepath)，当一个文件被require时，这个loader会被回调，其参数是require的参数，如果该loader找到文件，可以将其读进内存，返回一个byte数组。如果需要支持调试的话，而filepath要设置成IDE能找到的路径（相对或者绝对都可以）
+    loader：一个包括了加载函数的委托，其类型为delegate byte[] CustomLoader(ref string filepath)，当一个文件被require时，这个loader会被回调，其参数是调用require所使用的参数，如果该loader找到文件，可以将其读进内存，返回一个byte数组。如果需要支持调试的话，而filepath要设置成IDE能找到的路径（相对或者绝对都可以）
 
 #### void Dispose()
 
@@ -82,7 +82,7 @@
 
 描述：
 
-    和Get的区别是，这个会识别path里头的“.”，比如var i = tbl.GetInPath<int>(“a.b.c”)相当于在lua里头执行i = tbl.a.b.c
+    和Get的区别是，这个函数会识别path里头的“.”，比如var i = tbl.GetInPath<int>(“a.b.c”)相当于在lua里头执行i = tbl.a.b.c，避免仅为了获取中间变量而多次调用Get，执行效率更高。
 
 #### void SetInPath<T>(string path, T val)
 
@@ -144,7 +144,7 @@
 
 描述：
 
-    新建一个C#对象实例
+    调用一个C#类型的构造函数,并返回类型实例
 
 例如：
 

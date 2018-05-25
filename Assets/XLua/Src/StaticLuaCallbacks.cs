@@ -902,6 +902,10 @@ namespace XLua
                 string className = LuaAPI.lua_tostring(L, idx);
                 return translator.FindType(className);
             }
+            else if (translator.GetObject(L, idx) is Type)
+            {
+                return translator.GetObject(L, idx) as Type;
+            }
             else
             {
                 return null;
@@ -984,7 +988,7 @@ namespace XLua
                 {
                     return LuaAPI.luaL_error(L, "xlua.private_accessible, can not find c# type");
                 }
-
+                translator.GetTypeId(L, type);//解决从未访问过一个类型，调用xlua.private_accessible会报错的问题
                 Utils.MakePrivateAccessible(L, type);
                 return 0;
             }

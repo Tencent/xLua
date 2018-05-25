@@ -25,22 +25,24 @@ public class MessageBox : MonoBehaviour{
             alertPanel.SetParent(GameObject.Find("Canvas").transform);
             alertPanel.localPosition = new Vector3(-6f, -6f, 0f);
         }
+
         alertPanel.Find("title").GetComponent<Text>().text = title;
         alertPanel.Find("message").GetComponent<Text>().text = message;
-        alertPanel.gameObject.SetActive(true);
-        if (onFinished != null)
+        
+        var button = alertPanel.Find("alertBtn").GetComponent<Button>();
+        UnityAction onclick = () =>
         {
-            var button = alertPanel.Find("alertBtn").GetComponent<Button>();
-            UnityAction onclick = null;
-            onclick = () =>
+            if (onFinished != null)
             {
                 onFinished();
-                alertPanel.gameObject.SetActive(false);
-                button.onClick.RemoveListener(onclick);
-            };
+            }
             button.onClick.RemoveAllListeners();
-            button.onClick.AddListener(onclick);
-        }
+            alertPanel.gameObject.SetActive(false);
+        };
+        //防止消息框未关闭时多次被调用
+        button.onClick.RemoveAllListeners();
+        button.onClick.AddListener(onclick);
+        alertPanel.gameObject.SetActive(true);
     }
 
     public  static void ShowConfirmBox(string message, string title, Action<bool> onFinished = null)
@@ -53,39 +55,43 @@ public class MessageBox : MonoBehaviour{
             confirmPanel.SetParent(GameObject.Find("Canvas").transform);
             confirmPanel.localPosition = new Vector3(-8f, -18f, 0f);
         }
+
         confirmPanel.Find("confirmTitle").GetComponent<Text>().text = title;
         confirmPanel.Find("conmessage").GetComponent<Text>().text = message;
-        confirmPanel.gameObject.SetActive(true);
-        if (onFinished != null)
+        
+        var confirmBtn = confirmPanel.Find("confirmBtn").GetComponent<Button>();
+        var cancelBtn = confirmPanel.Find("cancelBtn").GetComponent<Button>();
+        Action cleanup = () =>
         {
-            var confirmBtn = confirmPanel.Find("confirmBtn").GetComponent<Button>();
-            var cancelBtn = confirmPanel.Find("cancelBtn").GetComponent<Button>();
-            UnityAction onconfirm = null;
-            UnityAction oncancel = null;
-
-            Action cleanup = () =>
-            {
-                confirmBtn.onClick.RemoveListener(onconfirm);
-                cancelBtn.onClick.RemoveListener(oncancel);
-                confirmPanel.gameObject.SetActive(false);
-            };
-
-            onconfirm = () =>
-            {
-                onFinished(true);
-                cleanup();
-            };
-
-            oncancel = () =>
-            {
-                onFinished(false);
-                cleanup();
-            };
             confirmBtn.onClick.RemoveAllListeners();
             cancelBtn.onClick.RemoveAllListeners();
-            confirmBtn.onClick.AddListener(onconfirm);
-            cancelBtn.onClick.AddListener(oncancel);
-        }
+            confirmPanel.gameObject.SetActive(false);
+        };
+
+        UnityAction onconfirm = () =>
+        {
+            if (onFinished !=  null)
+            {
+                onFinished(true);
+            }
+            cleanup();
+        };
+
+        UnityAction oncancel = () =>
+        {
+            if (onFinished != null)
+            {
+                onFinished(false);
+            }
+            cleanup();
+        };
+
+        //防止消息框未关闭时多次被调用
+        confirmBtn.onClick.RemoveAllListeners();
+        confirmBtn.onClick.AddListener(onconfirm);
+        cancelBtn.onClick.RemoveAllListeners();
+        cancelBtn.onClick.AddListener(oncancel);
+        confirmPanel.gameObject.SetActive(true);
     }
 }
 

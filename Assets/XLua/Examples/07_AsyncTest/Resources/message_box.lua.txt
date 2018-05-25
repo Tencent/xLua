@@ -11,15 +11,12 @@ local sync_confirm = util.async_to_sync(CS.MessageBox.ShowConfirmBox)
 
 --构造alert和confirm函数
 return {
-    alert = function(title, message)
-		if not message then
-			title, message = message, title
-		end
-		 sync_alert(message,title)
+    alert = function(message, title)
+		 sync_alert(message, title)
     end;
 	
-	confirm = function(title, message)
-		local ret = sync_confirm(title,message)
+	confirm = function(message, title)
+		local ret = sync_confirm(message, title)
 		return ret == true
     end;
  }

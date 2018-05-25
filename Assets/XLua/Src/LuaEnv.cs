@@ -46,7 +46,7 @@ namespace XLua
         internal int errorFuncRef = -1;
 
 #if THREAD_SAFE || HOTFIX_ENABLE
-        internal static object luaLock = new object();
+        internal /*static*/ object luaLock = new object();
 
         internal object luaEnvLock
         {
@@ -57,11 +57,11 @@ namespace XLua
         }
 #endif
 
-        const int LIB_VERSION_EXPECT = 103;
+        const int LIB_VERSION_EXPECT = 104;
 
         public LuaEnv()
         {
-            if (LuaAPI.xlua_get_lib_version() != LIB_VERSION_EXPECT && LuaAPI.xlua_get_lib_version() != (LIB_VERSION_EXPECT -1))
+            if (LuaAPI.xlua_get_lib_version() != LIB_VERSION_EXPECT)
             {
                 throw new InvalidProgramException("wrong lib version expect:"
                     + LIB_VERSION_EXPECT + " but got:" + LuaAPI.xlua_get_lib_version());
@@ -170,6 +170,7 @@ namespace XLua
 
                 translator.CreateArrayMetatable(rawL);
                 translator.CreateDelegateMetatable(rawL);
+                translator.CreateEnumerablePairs(rawL);
 #if THREAD_SAFE || HOTFIX_ENABLE
             }
 #endif
@@ -397,10 +398,10 @@ namespace XLua
                 {
                     throw new InvalidOperationException("try to dispose a LuaEnv with C# callback!");
                 }
+                
+                ObjectTranslatorPool.Instance.Remove(L);
 
                 LuaAPI.lua_close(L);
-
-                ObjectTranslatorPool.Instance.Remove(L);
                 translator = null;
 
                 rawL = IntPtr.Zero;
@@ -552,6 +553,19 @@ namespace XLua
             xlua.setclass = function(parent, name, impl)
                 impl.UnderlyingSystemType = parent[name].UnderlyingSystemType
                 rawset(parent, name, impl)
+            end
+            
+            local base_mt = {
+                __index = function(t, k)
+                    local csobj = t['__csobj']
+                    local func = csobj['<>xLuaBaseProxy_'..k]
+                    return function(_, ...)
+                         return func(csobj, ...)
+                    end
+                end
+            }
+            base = function(csobj)
+                return setmetatable({__csobj = csobj}, base_mt)
             end
             ";
 

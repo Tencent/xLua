@@ -241,6 +241,11 @@ namespace XLua
 
                 ret = toInvoke.IsConstructor ? ((ConstructorInfo)method).Invoke(args) : method.Invoke(targetNeeded ? target : null, args);
 
+                if (targetNeeded && targetType.IsValueType)
+                {
+                    translator.Update(L, 1, target);
+                }
+
                 int nRet = 0;
 
                 if (!isVoid)

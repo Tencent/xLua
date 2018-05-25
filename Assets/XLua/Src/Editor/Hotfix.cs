@@ -431,6 +431,29 @@ namespace XLua
                 }
             }
 
+            List<MethodDefinition> toAdd = new List<MethodDefinition>();
+            foreach (var method in type.Methods)
+            {
+                if (ignoreNotPublic && !method.IsPublic)
+                {
+                    continue;
+                }
+                if (ignoreProperty && method.IsSpecialName && (method.Name.StartsWith("get_") || method.Name.StartsWith("set_")))
+                {
+                    continue;
+                }
+                if (method.Name != ".cctor" && !method.IsAbstract && !method.IsPInvokeImpl && method.Body != null && !method.Name.Contains("<"))
+                {
+                    var proxyMethod = tryAddBaseProxy(type, method);
+                    if (proxyMethod != null) toAdd.Add(proxyMethod);
+                }
+            }
+
+            foreach(var md in toAdd)
+            {
+                type.Methods.Add(md);
+            }
+
             return true;
         }
 
@@ -587,6 +610,148 @@ namespace XLua
                 {
                     posFound = true;
                 }
+            }
+            return null;
+        }
+
+        static MethodDefinition findOverride(TypeDefinition type, MethodReference vmethod)
+        {
+            foreach (var method in type.Methods)
+            {
+                if (method.Name == vmethod.Name && method.IsVirtual && !method.IsAbstract && (method.ReturnType.FullName == vmethod.ReturnType.FullName) && method.Parameters.Count == vmethod.Parameters.Count)
+                {
+                    bool isParamsMatch = true;
+                    for (int i = 0; i < method.Parameters.Count; i++)
+                    {
+                        if (method.Parameters[i].Attributes != vmethod.Parameters[i].Attributes
+                            || (method.Parameters[i].ParameterType.FullName != vmethod.Parameters[i].ParameterType.FullName))
+                        {
+                            isParamsMatch = false;
+                            break;
+                        }
+                    }
+                    if (isParamsMatch) return method;
+                }
+            }
+            return null;
+        }
+
+        static MethodReference _findBase(TypeReference type, MethodDefinition method)
+        {
+            TypeDefinition td = type.Resolve();
+            if (td == null)
+            {
+                return null;
+            }
+            //if (type.IsGenericInstance && 
+            //    (method.Module.Assembly.FullName != type.Module.Assembly.FullName || method.Module.Assembly.FullName != td.Module.Assembly.FullName
+            //    || method.Module.FullyQualifiedName != type.Module.FullyQualifiedName || method.Module.FullyQualifiedName != td.Module.FullyQualifiedName))
+            //{
+            //    return _findBase(td.BaseType, method);
+            //}
+            var m = findOverride(td, method);
+            if (m != null)
+            {
+                if (type.IsGenericInstance)
+                {
+                    var reference = new MethodReference(m.Name, tryImport(method.DeclaringType, m.ReturnType), tryImport(method.DeclaringType, type))
+                    {
+                        HasThis = m.HasThis,
+                        ExplicitThis = m.ExplicitThis,
+                        CallingConvention = m.CallingConvention
+                    };
+                    foreach (var parameter in m.Parameters)
+                        reference.Parameters.Add(new ParameterDefinition(tryImport(method.DeclaringType, parameter.ParameterType)));
+                    foreach (var generic_parameter in m.GenericParameters)
+                        reference.GenericParameters.Add(new GenericParameter(generic_parameter.Name, reference));
+                    return reference;
+                }
+                else
+                {
+                    return m;
+                }
+            }
+            return _findBase(td.BaseType, method);
+        }
+
+        static MethodReference findBase(TypeDefinition type, MethodDefinition method)
+        {
+            if (method.IsVirtual && !method.IsNewSlot) //表明override
+            {
+                try
+                {
+                    return _findBase(type.BaseType, method);
+                }
+                catch { }
+            }
+            return null;
+        }
+
+        const string BASE_RPOXY_PERFIX = "<>xLuaBaseProxy_";
+
+        static TypeReference tryImport(TypeReference type, TypeReference toImport)
+        {
+            if (type.Module.Assembly.FullName == toImport.Module.Assembly.FullName
+                && type.Module.FullyQualifiedName == toImport.Module.FullyQualifiedName)
+            {
+                return toImport;
+            }
+            else
+            {
+                return type.Module.ImportReference(toImport);
+            }
+        }
+
+        static MethodReference tryImport(TypeReference type, MethodReference toImport)
+        {
+            if (type.Module.Assembly.FullName == toImport.Module.Assembly.FullName
+                && type.Module.FullyQualifiedName == toImport.Module.FullyQualifiedName)
+            {
+                return toImport;
+            }
+            else
+            {
+                return type.Module.ImportReference(toImport);
+            }
+        }
+
+        static MethodDefinition tryAddBaseProxy(TypeDefinition type, MethodDefinition method)
+        {
+            var mbase = findBase(type, method);
+            if (mbase != null)
+            {
+                var module = type.Module;
+                var proxyMethod = new MethodDefinition(BASE_RPOXY_PERFIX + method.Name, Mono.Cecil.MethodAttributes.Public, tryImport(type, method.ReturnType));
+                for (int i = 0; i < method.Parameters.Count; i++)
+                {
+                    proxyMethod.Parameters.Add(new ParameterDefinition("P" + i, method.Parameters[i].IsOut ? Mono.Cecil.ParameterAttributes.Out : Mono.Cecil.ParameterAttributes.None, tryImport(type, method.Parameters[i].ParameterType)));
+                }
+                var instructions = proxyMethod.Body.Instructions;
+                var processor = proxyMethod.Body.GetILProcessor();
+                int paramCount = method.Parameters.Count + 1;
+                for (int i = 0; i < paramCount; i++)
+                {
+                    if (i < ldargs.Length)
+                    {
+                        instructions.Add(processor.Create(ldargs[i]));
+                    }
+                    else if (i < 256)
+                    {
+                        instructions.Add(processor.Create(OpCodes.Ldarg_S, (byte)i));
+                    }
+                    else
+                    {
+                        instructions.Add(processor.Create(OpCodes.Ldarg, (short)i));
+                    }
+                    if (i == 0 && type.IsValueType)
+                    {
+                        instructions.Add(Instruction.Create(OpCodes.Ldobj, type));
+                        instructions.Add(Instruction.Create(OpCodes.Box, type));
+                    }
+                }
+                instructions.Add(Instruction.Create(OpCodes.Call, tryImport(type, mbase)));
+                instructions.Add(Instruction.Create(OpCodes.Ret));
+                return proxyMethod;
             }
             return null;
         }
@@ -1059,6 +1224,15 @@ namespace XLua
 #if UNITY_EDITOR_OSX
 			var mono_path = Path.Combine(Path.GetDirectoryName(typeof(UnityEngine.Debug).Module.FullyQualifiedName),
 				"../MonoBleedingEdge/bin/mono");
+			if(!File.Exists(mono_path))
+			{
+				mono_path = Path.Combine(Path.GetDirectoryName(typeof(UnityEngine.Debug).Module.FullyQualifiedName),
+					"../../MonoBleedingEdge/bin/mono");
+			}
+			if(!File.Exists(mono_path))
+			{
+				UnityEngine.Debug.LogError("can not find mono!");
+			}
 #elif UNITY_EDITOR_WIN
             var mono_path = Path.Combine(Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName),
                 "Data/MonoBleedingEdge/bin/mono.exe");
@@ -1078,6 +1252,11 @@ namespace XLua
             Assembly editor_assembly = typeof(Hotfix).Assembly;
             HotfixConfig.GetConfig(editor_cfg, Utils.GetAllTypes().Where(t => t.Assembly == editor_assembly));
 
+            if (!Directory.Exists(CSObjectWrapEditor.GeneratorConfig.common_path))
+            {
+                Directory.CreateDirectory(CSObjectWrapEditor.GeneratorConfig.common_path);
+            }
+			
             using (BinaryWriter writer = new BinaryWriter(new FileStream(hotfix_cfg_in_editor, FileMode.Create, FileAccess.Write)))
             {
                 writer.Write(editor_cfg.Count);

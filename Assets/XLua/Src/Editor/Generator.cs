@@ -155,6 +155,12 @@ namespace CSObjectWrapEditor
             });
         }
 
+        static bool IsOverride(MethodBase method)
+        {
+            var m = method as MethodInfo;
+            return m != null && !m.IsConstructor && m.IsVirtual && (m.GetBaseDefinition().DeclaringType != m.DeclaringType);
+        }
+
         static int OverloadCosting(MethodBase mi)
         {
             int costing = 0;
@@ -298,7 +304,7 @@ namespace CSObjectWrapEditor
                 methodNames.Remove("set_" + setter.Name);
             }
             List<string> extension_methods_namespace = new List<string>();
-            var extension_methods = GetExtensionMethods(type).ToArray();
+            var extension_methods = type.IsInterface ? new MethodInfo[0]:GetExtensionMethods(type).ToArray();
             foreach(var extension_method in extension_methods)
             {
                 if (extension_method.DeclaringType.Namespace != null
@@ -310,22 +316,30 @@ namespace CSObjectWrapEditor
             }
             parameters.Set("namespaces", extension_methods_namespace.Distinct().ToList());
 
+            List<LazyMemberInfo> lazyMemberInfos = new List<LazyMemberInfo>();
+
             //warnning: filter all method start with "op_"  "add_" "remove_" may  filter some ordinary method
             parameters.Set("methods", type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.IgnoreCase | BindingFlags.DeclaredOnly)
-                .Where(method => !method.IsDefined(typeof (ExtensionAttribute), false) || method.DeclaringType != type)
+                .Where(method => !method.IsDefined(typeof (ExtensionAttribute), false) || method.GetParameters()[0].ParameterType.IsInterface || method.DeclaringType != type)
                 .Where(method => methodNames.ContainsKey(method.Name)) //GenericMethod can not be invoke becuase not static info available!
                 .Concat(extension_methods)
                 .Where(method => !IsDoNotGen(type, method.Name))
                 .Where(method => !isMethodInBlackList(method) && (!method.IsGenericMethod || extension_methods.Contains(method) || isSupportedGenericMethod(method)) && !isObsolete(method) && !method.Name.StartsWith("op_") && !method.Name.StartsWith("add_") && !method.Name.StartsWith("remove_"))
-                .GroupBy(method => (method.Name + ((method.IsStatic && !method.IsDefined(typeof (ExtensionAttribute), false)) ? "_xlua_st_" : "")), (k, v) =>
+                .GroupBy(method => (method.Name + ((method.IsStatic && (!method.IsDefined(typeof (ExtensionAttribute), false) || method.GetParameters()[0].ParameterType.IsInterface)) ? "_xlua_st_" : "")), (k, v) =>
                 {
                     var overloads = new List<MethodBase>();
                     List<int> def_vals = new List<int>();
+                    bool isOverride = false;
                     foreach (var overload in v.Cast<MethodBase>().OrderBy(mb => OverloadCosting(mb)))
                     {
                         int def_count = 0;
                         overloads.Add(overload);
                         def_vals.Add(def_count);
+
+                        if (!isOverride)
+                        {
+                            isOverride = IsOverride(overload);
+                        }
 
                         var ps = overload.GetParameters();
                         for (int i = ps.Length - 1; i >=0; i--)
@@ -343,9 +357,21 @@ namespace CSObjectWrapEditor
                             }
                         }
                     }
+#if HOTFIX_ENABLE
+                    if (isOverride)
+                    {
+                        lazyMemberInfos.Add(new LazyMemberInfo
+                        {
+                            Index = "METHOD_IDX",
+                            Name = "<>xLuaBaseProxy_" + k,
+                            MemberType = "LazyMemberTypes.Method",
+                            IsStatic = "false"
+                        });
+                    }
+#endif
                     return new {
                         Name = k,
-                        IsStatic = overloads[0].IsStatic && !overloads[0].IsDefined(typeof(ExtensionAttribute), false),
+                        IsStatic = overloads[0].IsStatic && (!overloads[0].IsDefined(typeof(ExtensionAttribute), false) || overloads[0].GetParameters()[0].ParameterType.IsInterface),
                         Overloads = overloads,
                         DefaultValues = def_vals
                     };
@@ -353,7 +379,7 @@ namespace CSObjectWrapEditor
 
             parameters.Set("getters", type.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.IgnoreCase | BindingFlags.DeclaredOnly)
                 
-                .Where(prop => prop.CanRead && (prop.GetGetMethod() != null)  && prop.Name != "Item" && !isObsolete(prop) && !isMemberInBlackList(prop)).Select(prop => new { prop.Name, IsStatic = prop.GetGetMethod().IsStatic, ReadOnly = false, Type = prop.PropertyType })
+                .Where(prop => prop.CanRead && (prop.GetGetMethod() != null)  && prop.Name != "Item" && !isObsolete(prop) && !isObsolete(prop.GetGetMethod()) && !isMemberInBlackList(prop) && !isMemberInBlackList(prop.GetGetMethod())).Select(prop => new { prop.Name, IsStatic = prop.GetGetMethod().IsStatic, ReadOnly = false, Type = prop.PropertyType })
                 .Concat(
                     type.GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.IgnoreCase | BindingFlags.DeclaredOnly)
                     .Where(field => !isObsolete(field) && !isMemberInBlackList(field))
@@ -361,7 +387,7 @@ namespace CSObjectWrapEditor
                 ).Where(info => !IsDoNotGen(type, info.Name))/*.Where(getter => !typeof(Delegate).IsAssignableFrom(getter.Type))*/.ToList());
 
             parameters.Set("setters", type.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.IgnoreCase | BindingFlags.DeclaredOnly)
-                .Where(prop => prop.CanWrite && (prop.GetSetMethod() != null) && prop.Name != "Item" && !isObsolete(prop) && !isMemberInBlackList(prop)).Select(prop => new { prop.Name, IsStatic = prop.GetSetMethod().IsStatic, Type = prop.PropertyType, IsProperty = true })
+                .Where(prop => prop.CanWrite && (prop.GetSetMethod() != null) && prop.Name != "Item" && !isObsolete(prop) && !isObsolete(prop.GetSetMethod()) && !isMemberInBlackList(prop) && !isMemberInBlackList(prop.GetSetMethod())).Select(prop => new { prop.Name, IsStatic = prop.GetSetMethod().IsStatic, Type = prop.PropertyType, IsProperty = true })
                 .Concat(
                     type.GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.IgnoreCase | BindingFlags.DeclaredOnly)
                     .Where(field => !isObsolete(field) && !isMemberInBlackList(field) && !field.IsInitOnly && !field.IsLiteral)
@@ -386,7 +412,7 @@ namespace CSObjectWrapEditor
                 .Select(ev => new { IsStatic = ev.GetAddMethod() != null? ev.GetAddMethod().IsStatic: ev.GetRemoveMethod().IsStatic, ev.Name,
                     CanSet = false, CanAdd = ev.GetRemoveMethod() != null, CanRemove = ev.GetRemoveMethod() != null, Type = ev.EventHandlerType})
                 .ToList());
-            List<LazyMemberInfo> lazyMemberInfos = new List<LazyMemberInfo>();
+            
             parameters.Set("lazymembers", lazyMemberInfos);
             foreach (var member in type.GetMembers(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.IgnoreCase | BindingFlags.DeclaredOnly)
                 .Where(m => IsDoNotGen(type, m.Name))
@@ -1598,28 +1624,45 @@ namespace CSObjectWrapEditor
 
         private static bool isSupportedGenericMethod(MethodInfo method)
         {
+
             if (!method.ContainsGenericParameters)
                 return true;
             var methodParameters = method.GetParameters();
-            var hasGenericParameter = false;
+            var _hasGenericParameter = false;
             for (var i = 0; i < methodParameters.Length; i++)
             {
                 var parameterType = methodParameters[i].ParameterType;
-                if (parameterType.IsGenericParameter)
+                if (!isSupportGenericParameter(parameterType, true, ref _hasGenericParameter))
+                    return false;
+            }
+            return _hasGenericParameter;
+        }
+        private static bool isSupportGenericParameter(Type parameterType,bool checkConstraint, ref bool _hasGenericParameter)
+        {
+
+            if (parameterType.IsGenericParameter)
+            {
+                if (!checkConstraint)
+                    return false;
+                var parameterConstraints = parameterType.GetGenericParameterConstraints();
+                if (parameterConstraints.Length == 0) return false;
+                foreach (var parameterConstraint in parameterConstraints)
                 {
-                    var parameterConstraints = parameterType.GetGenericParameterConstraints();
-                    if (parameterConstraints.Length == 0) return false;
-                    foreach (var parameterConstraint in parameterConstraints)
-                    {
-                        if (!parameterConstraint.IsClass || (parameterConstraint == typeof(ValueType)) || Generator.hasGenericParameter(parameterConstraint))
-                            return false;
-                    }
-                    hasGenericParameter = true;
+                    if (!parameterConstraint.IsClass || (parameterConstraint == typeof(ValueType)) || Generator.hasGenericParameter(parameterConstraint))
+                        return false;
+                }
+                _hasGenericParameter = true;
+            }
+            else if(parameterType.IsGenericType())
+            {
+                foreach (var argument in parameterType.GetGenericArguments())
+                {
+                    if (!isSupportGenericParameter(argument,false, ref _hasGenericParameter))
+                        return false;
                 }
             }
-            return hasGenericParameter;
+            return true;
         }
-
 #if !XLUA_GENERAL
         [UnityEditor.Callbacks.PostProcessScene]
         public static void CheckGenrate()

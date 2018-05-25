@@ -18,7 +18,7 @@ public class ReImplementInLua : MonoBehaviour {
         //例子1：改造Vector3
         //沿用Vector3原来的映射方案Vector3 -> userdata，但是把Vector3的方法实现改为lua实现，通过xlua.genaccessor实现不经过C#直接操作内存
         //改为不经过C#的好处是性能更高，而且你可以省掉相应的生成代码以达成省text段的效果
-        //映射仍然沿用的好处是userdata比table更省内存，但操作字段比table性能稍低，当然，你也可以结合例子2的思路，把Vector3也改为映射到table
+        //仍然沿用映射方案的好处是userdata比table更省内存，但操作字段比table性能稍低，当然，你也可以结合例子2的思路，把Vector3也改为映射到table
         luaenv.DoString(@"
             function test_vector3(title, v1, v2)
                print(title)

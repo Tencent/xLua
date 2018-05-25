@@ -99,15 +99,19 @@ Debug.Log("max:" + max(32, 12));
  
 ## 文档
 
-* [XLua教程.doc](Assets/XLua/Doc/XLua教程.doc)：教程，其配套代码[这里](Assets/XLua/Tutorial/)。
+* [XLua教程](Assets/XLua/Doc/XLua教程.md)：教程，其配套代码[这里](Assets/XLua/Tutorial/)。
 * [XLua的配置](Assets/XLua/Doc/configure.md)：介绍如何配置xLua。
-* [XLua增加删除第三方lua库.doc](Assets/XLua/Doc/XLua增加删除第三方lua库.doc)：如何增删第三方lua扩展库。
-* [XLua API.doc](Assets/XLua/Doc/XLua_API.doc)：API文档。
+* [XLua增加删除第三方lua库](Assets/XLua/Doc/XLua增加删除第三方lua库.md)：如何增删第三方lua扩展库。
+* [XLua API](Assets/XLua/Doc/XLua_API.md)：API文档。
 * [生成引擎二次开发指南](Assets/XLua/Doc/custom_generate.md)：介绍如何做生成引擎的二次开发。
 * [热补丁操作指南](Assets/XLua/Doc/hotfix.md)：介绍如何使用热补丁特性。
 
 ## 技术支持
 
-QQ群：612705778 验证答案：有问题先找FAQ
+一群：612705778(可能已满)
+
+二群：703073338 
+
+验证答案：有问题先找FAQ
 
 

@@ -46,59 +46,68 @@ namespace XLua
 		
 		public void Add (RealStatePtr L, ObjectTranslator translator)
 		{
-			translators.Add(L , new WeakReference(translator));			
-		}
+#if THREAD_SAFE || HOTFIX_ENABLE
+            lock (this)
+#endif
+            {
+                var ptr = LuaAPI.xlua_gl(L);
+                lastPtr = ptr;
+                lastTranslator = translator;
+            
+#if !SINGLE_ENV
+                translators.Add(ptr , new WeakReference(translator));
+#endif   
+            }
+        }
 
-        RealStatePtr lastState = default(RealStatePtr);
+        RealStatePtr lastPtr = default(RealStatePtr);
         ObjectTranslator lastTranslator = default(ObjectTranslator);
 
 		public ObjectTranslator Find (RealStatePtr L)
 		{
-            if (lastState == L) return lastTranslator;
-            if (translators.ContainsKey(L))
+#if THREAD_SAFE || HOTFIX_ENABLE
+            lock (this)
+#endif
             {
-                lastState = L;
-                lastTranslator = translators[L].Target as ObjectTranslator;
+#if SINGLE_ENV
                 return lastTranslator;
+#else
+                var ptr = LuaAPI.xlua_gl(L);
+                if (lastPtr == ptr) return lastTranslator;
+                if (translators.ContainsKey(ptr))
+                {
+                    lastPtr = ptr;
+                    lastTranslator = translators[ptr].Target as ObjectTranslator;
+                    return lastTranslator;
+                }
+                
+                return null;
+#endif
             }
-
-			RealStatePtr main = Utils.GetMainState (L);
-
-            if (translators.ContainsKey(main))
-            {
-                lastState = L;
-                lastTranslator = translators[main].Target as ObjectTranslator;
-                translators[L] = new WeakReference(lastTranslator);
-                return lastTranslator;
-            }
-			
-			return null;
-		}
+        }
 		
 		public void Remove (RealStatePtr L)
 		{
-			if (!translators.ContainsKey (L))
-				return;
-			
-            if (lastState == L)
+#if THREAD_SAFE || HOTFIX_ENABLE
+            lock (this)
+#endif
             {
-                lastState = default(RealStatePtr);
+#if SINGLE_ENV
+                lastPtr = default(RealStatePtr);
                 lastTranslator = default(ObjectTranslator);
-            }
-            ObjectTranslator translator = translators[L].Target as ObjectTranslator;
-            List<RealStatePtr> toberemove = new List<RealStatePtr>();
-
-            foreach(var kv in translators)
-            {
-                if ((kv.Value.Target as ObjectTranslator) == translator)
+#else
+                var ptr = LuaAPI.xlua_gl(L);
+                if (!translators.ContainsKey (ptr))
+                    return;
+                
+                if (lastPtr == ptr)
                 {
-                    toberemove.Add(kv.Key);
+                    lastPtr = default(RealStatePtr);
+                    lastTranslator = default(ObjectTranslator);
                 }
-            }
 
-            foreach (var ls in toberemove)
-            {
-                translators.Remove(ls);
+                translators.Remove(ptr);
+#endif
             }
         }
     }
