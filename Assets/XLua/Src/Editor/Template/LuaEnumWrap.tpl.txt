@@ -49,6 +49,7 @@ namespace XLua.CSObjectWrap
             {
                 translator.Push<%=CSVariableName(type)%>(L, (<%=CsFullTypeName(type)%>)LuaAPI.xlua_tointeger(L, 1));
             }
+			<%if fields.Length > 0 then%>
             else if(lua_type == LuaTypes.LUA_TSTRING)
             {
 			    <%
@@ -67,6 +68,7 @@ namespace XLua.CSObjectWrap
                     return LuaAPI.luaL_error(L, "invalid string for <%=CsFullTypeName(type)%>!");
                 }
             }
+			<%end%>
             else
             {
                 return LuaAPI.luaL_error(L, "invalid lua type for <%=CsFullTypeName(type)%>! Expect number or string, got + " + lua_type);
