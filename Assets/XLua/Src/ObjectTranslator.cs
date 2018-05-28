@@ -227,7 +227,7 @@ namespace XLua
 #endif
             assemblies = new List<Assembly>();
 
-#if UNITY_WSA && !UNITY_EDITOR
+#if (UNITY_WSA && !ENABLE_IL2CPP) && !UNITY_EDITOR
             var assemblies_usorted = Utils.GetAssemblies();
 #else
             assemblies.Add(Assembly.GetExecutingAssembly());
