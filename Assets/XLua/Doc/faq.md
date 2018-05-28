@@ -20,6 +20,12 @@ xLua目前以zip包形式发布，在工程目录下解压即可。
 
 那为啥xLua本身带的lua源码（包括示例）为什么都是txt结尾呢？因为xLua本身就一个库，不含下载功能，也不方便运行时去某个地方下载代码，通过TextAsset是较简单的方式。
 
+## 编辑器(或非il2cpp的android)下运行正常，ios下运行调用某函数报“attempt to call a nil value”
+
+il2cpp默认会对诸如引擎、c#系统api，第三方dll等等进行代码剪裁。简单来说就是这些地方的函数如果你C#代码没访问到的就不编译到你最终发布包。
+
+解决办法：增加引用（比如配置到LuaCallCSharp，或者你自己C#代码增加那函数的访问），或者通过link.xml配置（当配置了ReflectionUse后，xlua会自动帮你配置到link.xml）告诉il2cpp别剪裁某类型。
+
 ## Plugins源码在哪里可以找到，怎么使用？
 
 Plugins源码位于xLua_Project_Root/build下。
