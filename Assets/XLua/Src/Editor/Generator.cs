@@ -839,7 +839,10 @@ namespace CSObjectWrapEditor
 
             foreach (var param in method.GetParameters())
             {
-                if ((((param.ParameterType.IsValueType && !ignoreValueType) || param.ParameterType.IsByRef) && isNotPublic(param.ParameterType)) || hasGenericParameter(param.ParameterType)) return true;
+                if ((((param.ParameterType.IsValueType && !ignoreValueType) 
+                    || param.ParameterType.IsByRef || param.IsDefined(typeof(System.ParamArrayAttribute), false)) && isNotPublic(param.ParameterType)) 
+                    || hasGenericParameter(param.ParameterType))
+                    return true;
             }
             return false;
         }
