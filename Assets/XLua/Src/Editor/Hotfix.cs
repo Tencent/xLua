@@ -433,6 +433,18 @@ namespace XLua
             return type.IsGenericParameter;
         }
 
+        static bool hasGenericParameter(MethodDefinition method)
+        {
+            if (method.HasGenericParameters) return true;
+            if (!method.IsStatic && hasGenericParameter(method.DeclaringType)) return true;
+            if (hasGenericParameter(method.ReturnType)) return true;
+            foreach(var paramInfo in method.Parameters)
+            {
+                if (hasGenericParameter(paramInfo.ParameterType)) return true;
+            }
+            return false;
+        }
+
         static bool isNoPublic(TypeReference type)
         {
             if (type.IsByReference)
@@ -883,7 +895,13 @@ namespace XLua
             {
                 try
                 {
-                    return _findBase(type.BaseType, method);
+                    if (hasGenericParameter(method)) return null;
+                    var b = _findBase(type.BaseType, method);
+                    try
+                    {
+                        if (hasGenericParameter(b.Resolve())) return null;
+                    }catch { }
+                    return b;
                 }
                 catch { }
             }
@@ -928,7 +946,6 @@ namespace XLua
 
         static MethodDefinition tryAddBaseProxy(TypeDefinition type, MethodDefinition method)
         {
-            if (method.HasGenericParameters) return null;
             var mbase = findBase(type, method);
             if (mbase != null)
             {
