@@ -288,15 +288,28 @@ namespace XLua
 
             bridgeIndexByKey = new List<MethodDefinition>();
 
-            var resolver = injectAssembly.MainModule.AssemblyResolver as BaseAssemblyResolver;
-            resolver.AddSearchDirectory("./Library/ScriptAssemblies");
+            var resolverOfInjectAssembly = injectAssembly.MainModule.AssemblyResolver as BaseAssemblyResolver;
+            var resolverOfXluaAssembly = xluaAssembly.MainModule.AssemblyResolver as BaseAssemblyResolver;
+            if (injectAssembly != xluaAssembly)
+            {
+                resolverOfXluaAssembly.AddSearchDirectory(Path.GetDirectoryName(injectAssembly.MainModule.FullyQualifiedName));
+            }
+            Action<string> addSearchDirectory = (string dir) =>
+            {
+                resolverOfInjectAssembly.AddSearchDirectory(dir);
+                if (injectAssembly != xluaAssembly)
+                {
+                    resolverOfXluaAssembly.AddSearchDirectory(dir);
+                }
+            };
+            addSearchDirectory("./Library/ScriptAssemblies/");
             foreach (var path in
                 (from asm in AppDomain.CurrentDomain.GetAssemblies() select asm.ManifestModule.FullyQualifiedName)
                  .Distinct())
             {
                 try
                 {
-                    resolver.AddSearchDirectory(Path.GetDirectoryName(path));
+                    addSearchDirectory(Path.GetDirectoryName(path));
                 }
                 catch(Exception)
                 {
@@ -306,9 +319,9 @@ namespace XLua
 
             if (searchDirectorys != null)
             {
-                foreach(var directory in searchDirectorys)
+                foreach(var directory in searchDirectorys.Distinct())
                 {
-                    resolver.AddSearchDirectory(directory);
+                    addSearchDirectory(directory);
                 }
             }
 
@@ -321,6 +334,25 @@ namespace XLua
                     shortToLong[kv.Value] = nameToOpcodes[kv.Key.Substring(0, kv.Key.Length - 2)];
                 }
             }
+        }
+
+        static string getAssemblyFullName(IMetadataScope scope)
+        {
+            if (scope == null) return null;
+            switch(scope.MetadataScopeType)
+            {
+                case MetadataScopeType.ModuleDefinition:
+                    {
+                        ModuleDefinition md = scope as ModuleDefinition;
+                        return md.Assembly.FullName;
+                    }
+                case MetadataScopeType.AssemblyNameReference:
+                    {
+                        AssemblyNameReference anr = scope as AssemblyNameReference;
+                        return anr.FullName;
+                    }
+            }
+            return null;
         }
 
         static bool isSameType(TypeReference left, TypeReference right)
@@ -337,8 +369,15 @@ namespace XLua
             }
             else
             {
+                var lafn = getAssemblyFullName(left.Scope);
+                var rafn = getAssemblyFullName(right.Scope);
+                if (lafn != null && lafn == rafn)
+                {
+                    return true;
+                }
                 var lr = left.Resolve();
                 var rr = right.Resolve();
+                if (lr == null || rr == null) return false;
                 return lr.Module.Assembly.FullName == rr.Module.Assembly.FullName;
             }
         }
