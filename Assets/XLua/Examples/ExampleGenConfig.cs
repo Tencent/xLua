@@ -63,6 +63,7 @@ public static class ExampleGenConfig
     //黑名单
     [BlackList]
     public static List<List<string>> BlackList = new List<List<string>>()  {
+                new List<string>(){"System.Xml.XmlNodeList", "ItemOf"},
                 new List<string>(){"UnityEngine.WWW", "movie"},
     #if UNITY_WEBGL
                 new List<string>(){"UnityEngine.WWW", "threadPriority"},
