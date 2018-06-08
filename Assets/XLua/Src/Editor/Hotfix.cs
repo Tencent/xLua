@@ -254,11 +254,17 @@ namespace XLua
 
         private Dictionary<string, int> hotfixCfg = null;
         private List<MethodDefinition> hotfixBridgesDef = null;
+        private Dictionary<MethodDefinition, MethodDefinition> hotfixBridgeToDelegate = null;
 
         private List<MethodDefinition> bridgeIndexByKey = null;
 
+        private bool isTheSameAssembly = false;
+
+        private int delegateId = 0;
+
         public void Init(AssemblyDefinition injectAssembly, AssemblyDefinition xluaAssembly, IEnumerable<string> searchDirectorys, Dictionary<string, int> hotfixCfg)
         {
+            isTheSameAssembly = injectAssembly == xluaAssembly;
             this.injectAssembly = injectAssembly;
             this.hotfixCfg = hotfixCfg;
             var injectModule = injectAssembly.MainModule;
@@ -283,6 +289,8 @@ namespace XLua
             hotfixBridgesDef = (from method in delegateBridgeTypeDef.Methods
                               where method.Name.StartsWith("__Gen_Delegate_Imp")
                               select method).ToList();
+            hotfixBridgeToDelegate = new Dictionary<MethodDefinition, MethodDefinition>();
+            delegateId = 0;
 
             //hotfixBridges = hotfixBridgesDef.Select(m => injectModule.TryImport(m)).ToList();
 
@@ -290,14 +298,14 @@ namespace XLua
 
             var resolverOfInjectAssembly = injectAssembly.MainModule.AssemblyResolver as BaseAssemblyResolver;
             var resolverOfXluaAssembly = xluaAssembly.MainModule.AssemblyResolver as BaseAssemblyResolver;
-            if (injectAssembly != xluaAssembly)
+            if (!isTheSameAssembly)
             {
                 resolverOfXluaAssembly.AddSearchDirectory(Path.GetDirectoryName(injectAssembly.MainModule.FullyQualifiedName));
             }
             Action<string> addSearchDirectory = (string dir) =>
             {
                 resolverOfInjectAssembly.AddSearchDirectory(dir);
-                if (injectAssembly != xluaAssembly)
+                if (!isTheSameAssembly)
                 {
                     resolverOfXluaAssembly.AddSearchDirectory(dir);
                 }
@@ -382,6 +390,91 @@ namespace XLua
             }
         }
 
+        MethodDefinition createDelegateFor(MethodDefinition method, AssemblyDefinition assembly, string delegateName, bool ignoreValueType)
+        {
+            var voidType = assembly.MainModule.TypeSystem.Void;
+            var objectType = assembly.MainModule.TypeSystem.Object;
+            var nativeIntType = assembly.MainModule.TypeSystem.IntPtr;
+            var asyncResultType = assembly.MainModule.Import(typeof(IAsyncResult));
+            var asyncCallbackType = assembly.MainModule.Import(typeof(AsyncCallback));
+
+            Mono.Cecil.MethodAttributes delegateMethodAttributes = Mono.Cecil.MethodAttributes.Public | Mono.Cecil.MethodAttributes.HideBySig | Mono.Cecil.MethodAttributes.Virtual | Mono.Cecil.MethodAttributes.VtableLayoutMask;
+
+            var delegateDef = new TypeDefinition("XLua", delegateName, Mono.Cecil.TypeAttributes.Sealed | Mono.Cecil.TypeAttributes.Public,
+                    assembly.MainModule.Import(typeof(MulticastDelegate)));
+            List<TypeReference> argTypes = new List<TypeReference>();
+            TypeReference self = null;
+            if (!method.IsStatic)
+            {
+                self = (!ignoreValueType && method.DeclaringType.IsValueType) ? method.DeclaringType : objType;
+            }
+            foreach(var parameter in method.Parameters)
+            {
+                bool isparam = parameter.CustomAttributes.FirstOrDefault(ca => ca.AttributeType.Name == "ParamArrayAttribute") != null;
+                argTypes.Add((isparam || parameter.ParameterType.IsByReference || (!ignoreValueType && parameter.ParameterType.IsValueType)) ? parameter.ParameterType : objType);
+            }
+
+            var constructor = new MethodDefinition(".ctor", Mono.Cecil.MethodAttributes.Public | Mono.Cecil.MethodAttributes.HideBySig | Mono.Cecil.MethodAttributes.SpecialName | Mono.Cecil.MethodAttributes.RTSpecialName, voidType);
+            constructor.Parameters.Add(new ParameterDefinition("objectInstance", Mono.Cecil.ParameterAttributes.None, objectType));
+            constructor.Parameters.Add(new ParameterDefinition("functionPtr", Mono.Cecil.ParameterAttributes.None, nativeIntType));
+            constructor.ImplAttributes = Mono.Cecil.MethodImplAttributes.Runtime;
+            delegateDef.Methods.Add(constructor);
+
+            var beginInvoke = new MethodDefinition("BeginInvoke", delegateMethodAttributes, asyncResultType);
+            if (self != null)
+            {
+                beginInvoke.Parameters.Add(new ParameterDefinition(self));
+            }
+            for (int i = 0; i < argTypes.Count; i++)
+            {
+                beginInvoke.Parameters.Add(new ParameterDefinition(method.Parameters[i].Name, (method.Parameters[i].IsOut ? Mono.Cecil.ParameterAttributes.Out : Mono.Cecil.ParameterAttributes.None), argTypes[i]));
+            }
+            beginInvoke.Parameters.Add(new ParameterDefinition("callback", Mono.Cecil.ParameterAttributes.None, asyncCallbackType));
+            beginInvoke.Parameters.Add(new ParameterDefinition("object", Mono.Cecil.ParameterAttributes.None, objectType));
+            beginInvoke.ImplAttributes = Mono.Cecil.MethodImplAttributes.Runtime;
+            delegateDef.Methods.Add(beginInvoke);
+
+            var endInvoke = new MethodDefinition("EndInvoke", delegateMethodAttributes, method.ReturnType);
+            for (int i = 0; i < argTypes.Count; i++)
+            {
+                if (argTypes[i].IsByReference)
+                {
+                    endInvoke.Parameters.Add(new ParameterDefinition(method.Parameters[i].Name, (method.Parameters[i].IsOut ? Mono.Cecil.ParameterAttributes.Out : Mono.Cecil.ParameterAttributes.None), argTypes[i]));
+                }
+            }
+            endInvoke.Parameters.Add(new ParameterDefinition("result", Mono.Cecil.ParameterAttributes.None, asyncResultType));
+            endInvoke.ImplAttributes = Mono.Cecil.MethodImplAttributes.Runtime;
+            delegateDef.Methods.Add(endInvoke);
+
+            var invoke = new MethodDefinition("Invoke", delegateMethodAttributes, method.ReturnType);
+            if (self != null)
+            {
+                invoke.Parameters.Add(new ParameterDefinition(self));
+            }
+            foreach (var argType in argTypes)
+            {
+                invoke.Parameters.Add(new ParameterDefinition(argType));
+            }
+            invoke.ImplAttributes = Mono.Cecil.MethodImplAttributes.Runtime;
+            delegateDef.Methods.Add(invoke);
+
+            assembly.MainModule.Types.Add(delegateDef);
+
+            return invoke;
+        }
+
+        MethodDefinition getDelegateInvokeFor(MethodDefinition method, MethodDefinition bridgeDef, bool ignoreValueType)
+        {
+            MethodDefinition ret;
+            if (!hotfixBridgeToDelegate.TryGetValue(bridgeDef, out ret))
+            {
+                ret = createDelegateFor(method, injectAssembly, ("__XLua_Gen_Delegate" + (delegateId++)), ignoreValueType);
+                hotfixBridgeToDelegate.Add(bridgeDef, ret);
+            }
+
+            return ret;
+        }
+
         bool findHotfixDelegate(MethodDefinition method, out MethodReference invoke, HotfixFlagInTool hotfixType)
         {
             bool ignoreValueType = hotfixType.HasFlag(HotfixFlagInTool.ValueTypeBoxing);
@@ -436,7 +529,7 @@ namespace XLua
                     {
                         continue;
                     }
-                    invoke = hotfixBridgeDef;
+                    invoke = isTheSameAssembly ? hotfixBridgeDef : getDelegateInvokeFor(method, hotfixBridgeDef, ignoreValueType);
                     return true;
                 }
             }
@@ -736,14 +829,14 @@ namespace XLua
 
                 //var hotfixDelegateAttributeType = assembly.MainModule.Types.Single(t => t.FullName == "XLua.HotfixDelegateAttribute");
                 var hotfixAttributeType = xluaAssembly.MainModule.Types.Single(t => t.FullName == "XLua.HotfixAttribute");
-                foreach (var type in (from module in injectAssembly.Modules from type in module.Types select type))
+                var toInject = (from module in injectAssembly.Modules from type in module.Types select type).ToList();
+                foreach (var type in toInject)
                 {
                     if (!hotfix.InjectType(hotfixAttributeType, type))
                     {
                         return;
                     }
                 }
-
                 Directory.CreateDirectory(Path.GetDirectoryName(idMapFilePath));
                 hotfix.OutputIntKeyMapper(new FileStream(idMapFilePath, FileMode.Create, FileAccess.Write));
                 File.Copy(idMapFilePath, idMapFilePath + "." + DateTime.Now.ToString("yyyyMMddHHmmssfff"));
@@ -1052,12 +1145,12 @@ namespace XLua
 
             FieldReference fieldReference = null;
             VariableDefinition injection = null;
-            bool isIntKey = hotfixType.HasFlag(HotfixFlagInTool.IntKey) && !type.HasGenericParameters;
+            bool isIntKey = hotfixType.HasFlag(HotfixFlagInTool.IntKey) && !type.HasGenericParameters && isTheSameAssembly;
             //isIntKey = !type.HasGenericParameters;
 
             if (!isIntKey)
             {
-                injection = new VariableDefinition(delegateBridgeType);
+                injection = new VariableDefinition(invoke.DeclaringType);
                 method.Body.Variables.Add(injection);
 
                 var luaDelegateName = getDelegateName(method);
@@ -1068,7 +1161,7 @@ namespace XLua
                 }
 
                 FieldDefinition fieldDefinition = new FieldDefinition(luaDelegateName, Mono.Cecil.FieldAttributes.Static | Mono.Cecil.FieldAttributes.Private,
-                    delegateBridgeType);
+                    invoke.DeclaringType);
                 type.Fields.Add(fieldDefinition);
                 fieldReference = fieldDefinition.GetGeneric();
             }
