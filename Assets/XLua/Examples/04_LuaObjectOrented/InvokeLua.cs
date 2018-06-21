@@ -10,10 +10,6 @@ using System;
 using UnityEngine;
 using XLua;
 
-[CSharpCallLua]
-public delegate void EventHandler<TEvent>(object sender, TEvent e) where TEvent : EventArgs;
-
-[CSharpCallLua]
 public class PropertyChangedEventArgs : EventArgs
 {
     public string name;
@@ -49,17 +45,33 @@ public class InvokeLua : MonoBehaviour
 
                         set_Item = function(self, index, value)
                             self.list[index + 1] = value
-                            if self.notify ~= nil then
-                                self.notify(self, {name = index, value = value})
-                            end
+                            self:notify({name = index, value = value})
                         end,
                         
                         add_PropertyChanged = function(self, delegate)
-                            self.notify = delegate
+	                        if self.notifylist == nil then
+		                        self.notifylist = {}
+	                        end
+	                        table.insert(self.notifylist, delegate)
+                            print('add',delegate)
                         end,
                                                 
                         remove_PropertyChanged = function(self, delegate)
-                            self.notify = nil
+                            for i=1, #self.notifylist do
+		                        if CS.System.Object.Equals(self.notifylist[i], delegate) then
+			                        table.remove(self.notifylist, i)
+			                        break
+		                        end
+	                        end
+                            print('remove', delegate)
+                        end,
+
+                        notify = function(self, evt)
+	                        if self.notifylist ~= nil then
+		                        for i=1, #self.notifylist do
+			                        self.notifylist[i](self, evt)
+		                        end
+	                        end	
                         end,
                     }
                 }
@@ -67,7 +79,7 @@ public class InvokeLua : MonoBehaviour
                 Calc = {
 	                New = function (mult, ...)
                         print(...)
-                        return setmetatable({Mult = mult, list = {'a','b','c'}}, calc_mt)
+                        return setmetatable({Mult = mult, list = {'aaaa','bbbb','cccc'}}, calc_mt)
                     end
                 }
 	        ";
@@ -92,13 +104,12 @@ public class InvokeLua : MonoBehaviour
         Debug.Log("list[1]=" + calc[1]);
         
         calc.PropertyChanged += Notify;
-
-        calc[1] = "d";
+        calc[1] = "dddd";
         Debug.Log("list[1]=" + calc[1]);
 
         calc.PropertyChanged -= Notify;
 
-        calc[1] = "e";
+        calc[1] = "eeee";
         Debug.Log("list[1]=" + calc[1]);
     }
 
