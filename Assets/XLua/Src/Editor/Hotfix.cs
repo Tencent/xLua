@@ -1540,8 +1540,14 @@ namespace XLua
         [MenuItem("XLua/Hotfix Inject In Editor", false, 3)]
         public static void HotfixInject()
         {
-            if (EditorApplication.isCompiling || Application.isPlaying)
+            if (Application.isPlaying)
             {
+                return;
+            }
+
+            if (EditorApplication.isCompiling)
+            {
+                UnityEngine.Debug.LogError("You can't inject before the compilation is done");
                 return;
             }
 
