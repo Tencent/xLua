@@ -17,8 +17,6 @@ xLua has many breakthroughs in functionality, performance, and ease of use. The 
 * Excellent GC optimization, customized structs, enumerations transferred between Lua and C# without C# gc alloc;
 * No need to generate code in the editor, lower development workload;
 
-For more details about features and platform support, please see [Here](Assets/XLua/Doc/features.md).
-
 ## Installation
 
 Open the zip package and you will see an Assets directory, which corresponds to the Unity project's Assets directory. Keep this directory structure in your Unity project.
