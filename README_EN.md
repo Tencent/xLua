@@ -1,4 +1,4 @@
-(Assets/XLua/Doc/xLua.png)
+![](Assets/XLua/Doc/xLua.png)
 
 [![license](http://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/Tencent/xLua/blob/master/LICENSE.TXT)
 [![release](https://img.shields.io/badge/release-v2.1.11-blue.svg)](https://github.com/Tencent/xLua/releases)
