@@ -5,33 +5,33 @@
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-blue.svg)](https://github.com/Tencent/xLua/pulls)
 [![Build status](https://travis-ci.org/Tencent/xLua.svg?branch=master)](https://travis-ci.org/Tencent/xLua)
 
-## C#’s support for Lua programming
+## Lua programming solution for C#
 
-xLua adds Lua scripting capabilities to Unity, .Net, Mono, and other C# environments. With xLua, Lua code and C# code can be easily call each other.
+xLua adds Lua scripting capability to Unity, .Net, Mono, and other C# environments. With xLua framework, Lua code and C# code can easily call each other.
 
-## xLua's breakthrough
+## xLua's superior features
 
-xLua has many breakthroughs in functionality, performance, and ease of use. The most significant of these are:
+xLua has many breakthroughs in function, performance, and ease of use. The most significant features are:
 
-* You can change C# implementations (methods, operators, properties, events, etc...) to Lua implementations during runtime.
-* Excellent GC optimization, customized structs, enumerations transferred between Lua and C# without C# gc alloc;
-* No need to generate code in the editor, lower development workload;
+* You can inplace C# implementations (methods, operators, properties, events, etc...) by Lua's during runtime.
+* Outstanding GC optimization, customized struct, no C# gc alloc when passing the enumerated objects between C# and lua;
+* Lightweight development with no needs to generate code in editor mode;
 
 ## Installation
 
-Open the zip package and you will see an Assets directory, which corresponds to the Unity project's Assets directory. Keep this directory structure in your Unity project.
+Unpack the zip package and you will see an Assets directory, which corresponds to the Unity project's Assets directory. Keep the directory structure in your Unity project.
 
-If you want to install it to another directory, see the [FAQs](Assets/XLua/Doc/Faq_EN.md).
+If you want to install it to another directory, please see the [FAQs](Assets/XLua/Doc/Faq_EN.md).
 
 ## Documents
 
 * [FAQs](Assets/XLua/Doc/Faq_EN.md): Frequently asked questions are summarized here. You can find answers to questions for beginners.
 * (Must-read) [XLua Tutorial](Assets/XLua/Doc/XLua_Tutorial_EN.md): This is a tutorial. The supporting code can be found [here](Assets/XLua/Tutorial/).
-* (Must-read) [XLua Configuration](Assets/XLua/Doc/Configure_EN.md): Describes how to configure xLua.
-* [Hotfix Operation Guide](Assets/XLua/Doc/Hotfix_EN.md): Describes how to use the hotfix feature.
-* [Add/remove third-party Lua Libraries on xLua](Assets/XLua/Doc/Add_Remove_Lua_Lib.md): Describes how to add or remove third-party Lua extension libraries.
+* (Must-read) [XLua Configuration](Assets/XLua/Doc/Configure_EN.md): Descriptions on how to configure xLua.
+* [Hotfix Operation Guide](Assets/XLua/Doc/Hotfix_EN.md): Description on how to use the hotfix feature.
+* [Add/remove third-party Lua Libraries on xLua](Assets/XLua/Doc/Add_Remove_Lua_Lib.md): Descriptions on how to add or remove third-party Lua extension libraries.
 * [xLua APIs](Assets/XLua/Doc/XLua_API_EN.md): API documentation
-* [Secondary Development of the Build Engine](Assets/XLua/Doc/Custom_Generate_EN.md): Describes how to do secondary development of the build engine.
+* [Secondary Development of the Build Engine](Assets/XLua/Doc/Custom_Generate_EN.md): Descriptions on how to do secondary development of the build engine.
 
 ## Quick Start
 
@@ -75,41 +75,41 @@ It is recommended that you bind once and reuse it. If code is generated, no gc a
 ## Hotfix
 
 * This has lower intrusiveness, and it can be used without any modification of the original code of the old project.
-* This has little impact on the runtime, which is almost the same as for the original program if hotfix is not used.
+* This has little impact on the runtime, which is almost the same as the original program which hotfix is not used.
 * If you have problems, you can also use Lua to patch. Then the Lua code logic is involved.
 
 [Here](Assets/XLua/Doc/Hotfix_EN.md) is the usage guide:
 
 ## Lua 5.3 vs LuaJIT
 
-There are two versions of xLua, which integrate Lua 5.3 and LuaJIT respectively. Choose only one of them for each project. The C# code in the two versions are the same, except for the Plugins.
+There are two versions of xLua, which integrate Lua 5.3 and LuaJIT respectively. Choose one of them for each project. The C# code in the two versions are the same, except for the Plugins.
 
 Lua 5.3 has richer features, such as support for native 64-bit integers, Apple Bitcode, UTF-8, and so on. Any problems that exist are caused by pure C code, and positioning is easy. Lua has less impact on the installation package than LuaJIT.
 
-Also, LuaJIT has higher performance. Its performance is an order of magnitude higher than Lua if its JIT is not faulty. At present, the LuaJIT developer does not plan to maintain LuaJIT. He is looking for someone to take over maintaining it. It's future is not clear.
+Also, LuaJIT has higher performance. Its performance is an order of magnitude higher than Lua if its JIT is not faulty. At present, the LuaJIT developer does not plan to maintain LuaJIT. He is looking for someone to take over the maintenance, the outlook remaining uncertain.
 
-The project can determine which is more suitable accordingly. Because Lua 5.3 is currently used more often, the default package in the Plugins directory of the xLua project is Lua 5.3.
+The project manager can determine which solutiuon is more suitable accordingly. Because Lua 5.3 is currently used more often, and the default package in the Plugins directory of the xLua project is Lua 5.3.
 
 ## More Examples
 
 * [01_Helloworld](Assets/XLua/Examples/01_Helloworld/): Quick Start Examples
-* [02_U3DScripting](Assets/XLua/Examples/02_U3DScripting/): This shows how to use Mono to write MonoBehaviour.
-* [03_UIEvent](Assets/XLua/Examples/03_UIEvent/): This shows how to use Lua to write UI logic.
-* [04_LuaObjectOrented](Assets/XLua/Examples/04_LuaObjectOrented/): This shows the cooperation between Lua's object-oriented programming and C#.
-* [05_NoGc](Assets/XLua/Examples/05_NoGc/): This shows how to avoid the value type GC.
-* [06_Coroutine](Assets/XLua/Examples/06_Coroutine/): This shows how Lua coroutines work with Unity coroutines.
-* [07_AsyncTest](Assets/XLua/Examples/07_AsyncTest/): This shows how to use Lua coroutines to synchronize asynchronous logic.
-* [08_Hotfix](Assets/XLua/Examples/08_Hotfix/): These are Hotfix examples (These need the hotfix feature to be enabled. See the [Guide](Assets/XLua/Doc/Hotfix_EN.md) for details).
+* [02_U3DScripting](Assets/XLua/Examples/02_U3DScripting/): This example shows how to use Mono to write MonoBehaviour.
+* [03_UIEvent](Assets/XLua/Examples/03_UIEvent/): This example shows how to use Lua to write UI logic.
+* [04_LuaObjectOrented](Assets/XLua/Examples/04_LuaObjectOrented/): This example shows the cooperation between Lua's object-oriented programming and C#.
+* [05_NoGc](Assets/XLua/Examples/05_NoGc/): This example shows how to avoid the value type GC.
+* [06_Coroutine](Assets/XLua/Examples/06_Coroutine/): This example shows how Lua coroutines work with Unity coroutines.
+* [07_AsyncTest](Assets/XLua/Examples/07_AsyncTest/): This example shows how to use Lua coroutines to synchronize asynchronous logic.
+* [08_Hotfix](Assets/XLua/Examples/08_Hotfix/): These are Hotfix examples (Please enable hotfix feature. See the [Guide](Assets/XLua/Doc/Hotfix_EN.md) for details).
 * [09_GenericMethod](Assets/XLua/Examples/09_GenericMethod/): This is a generic function support demo.
-* [10_SignatureLoader](Assets/XLua/Examples/10_SignatureLoader/): This shows how to read the Lua script with a digital signature. See the [Digital Signature](Assets/XLua/Doc/signature.md) document for details.
-* [11_RawObject](Assets/XLua/Examples/11_RawObject/): This shows how to specify transferring a Lua number in the int after boxing when the C# parameter is an object.
+* [10_SignatureLoader](Assets/XLua/Examples/10_SignatureLoader/): This example shows how to read the Lua script with a digital signature. See the [Digital Signature](Assets/XLua/Doc/signature.md) document for details.
+* [11_RawObject](Assets/XLua/Examples/11_RawObject/): This example shows how to specify transferring a Lua number in the int after boxing when the C# parameter is an object.
 * [12_ReImplementInLua](Assets/XLua/Examples/12_ReImplementInLua/): This shows how to change complex value types to Lua implementations.
 
 ## Technical support
 
-Group 1: 612705778 (may be full)
+QQ Group 1: 612705778 (may be full)
 
-Group 2: 703073338
+QQ Group 2: 703073338
 
 Check answers: If you encounter a problem, please read the FAQs first.
 
