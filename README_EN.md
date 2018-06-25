@@ -7,7 +7,7 @@
 
 ## Lua programming solution for C#
 
-xLua adds Lua scripting capability to Unity, .Net, Mono, and other C# environments. With xLua framework, Lua code and C# code can easily call each other.
+xLua adds Lua scripting capability to Unity, .Net, Mono, and other C# environments. With xLua, Lua code and C# code can easily call each other.
 
 ## xLua's superior features
 
