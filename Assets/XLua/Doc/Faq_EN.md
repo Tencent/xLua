@@ -1,6 +1,6 @@
 # FAQs
 
-## How do I use the xLua release package?
+## How to use xLua distribution package?
 
 xLua is currently released as a zip package and can be extracted to the project directory.
 
@@ -16,9 +16,9 @@ It can use any extension.
 
 If you want to add TextAsset to an installation package (for example, to the Resources directory), Unity does not identify the Lua extension. This is Unity's rule.
 
-If you do not add it to the installation package, there is no limit to the extension. For example, this is the case if you download it to a directory (this is also correct for hotfix), and then read this directory with CustomLoader or by setting package.path.
+If you do not add it to the installation package, there is no limit to the extension. For example, in case that you download it to a directory (this is also practicable in hotfix mode), and then read this directory with CustomLoader or by setting package.path.
 
-Why does the Lua source code (including examples) of xLua use the txt extension? Because xLua itself is a library, it doesn't provide download functionality, and it's not convenient to download code from somewhere else during runtime. TextAsset is a simpler solution.
+Why does the Lua source code (including examples) of xLua use the txt extension? Because xLua itself is a library, it doesn't provide download functionality, and it's inconvenience to download code from somewhere else during runtime. TextAsset is a simpler solution.
 
 ## The editor (or non-il2cpp for Android) runs normally, but when iOS calls a function, "attempt to call a nil value" is reported.
 
@@ -62,7 +62,7 @@ You may find that defining INJECT_WITHOUT_TOOL in nested mode will not produce t
 
 ## How do I trigger an event in hotfix?
 
-First enable private member access using xlua.private_accessible.
+Firstly, enable private member access using xlua.private_accessible.
 
 Then, call delegates using the "&event name" field of the object, for example self\['&MyEvent'\](), where MyEvent is the event name.
 
@@ -72,7 +72,7 @@ See the corresponding section of the [Hotfix Operation Guide](hotfix.md).
 
 ## Is NGUI (or UGUI/DOTween, etc...) supported?
 
-Yes. The most important feature of xLua is that what you originally write with C# can be replaced with Lua, and the plugins available on C# remain available.
+Yes. The most important feature of xLua is that what you write with C# can be originally replaced with Lua, and the plugins available on C# will remain available.
 
 ## If debugging is needed, how do I deal with the filepath parameter of CustomLoader?
 
@@ -82,7 +82,7 @@ When Lua calls require 'a.b', CustomLoader will be called and the string "a.b" w
 
 XLua supports one kind of Lua-C# interaction technique, which implements interaction by generating adaptation code between the two. It has better performance and is therefore recommended.
 
-Another interaction technique is reflection, which has less impact on the installation package and can be used in scenarios which have lower performance requirements and are sensitive to the installation package size.
+Another interaction technique is reflection, which has less impact on the installation package and can be used in scenarios which have lower performance requirements and has installation package size limit.
 
 ## How do I solve errors with the code generated before and after changing the interface?
 
@@ -98,13 +98,13 @@ Optimize performance. The generated code must be executed before the performance
 
 ## Do all C# APIs in CS namespaces occupy high memory?
 
-Due to the use of LazyLoad, their existence is just a virtual concept. For example, for UnityEngine.GameObject, its methods, and properties are loaded only when accessing the first CS.UnityEngine.GameObject or transferring the first instance to Lua.
+Due to the use of LazyLoad, their existences are just a virtual concepts. For example, for UnityEngine.GameObject, its methods, and properties are loaded only when accessing the first CS.UnityEngine.GameObject or transferring the first instance to Lua.
 
 ## In what scenarios are LuaCallSharp and CSharpCallLua used?
 
-It depends on the caller and the callee. For example, if you want to call C#'s GameObject, find a function in Lua, or call gameobject's instance methods or properties, the GameObject type needs to be added to LuaCallSharp. If you want to add a Lua function to the UI callback (in this case, C# is the caller and the Lua function is the callee), the delegate declared by the callback needs to be added to CSharpCallLua.
+It depends on the caller and the callee. For example, if you want to call C#'s GameObject, find a function in Lua, or call GameObject's instance methods or properties, the GameObject type needs to be added to LuaCallSharp. If you want to add a Lua function to the UI callback (in this case, C# is the caller and the Lua function is the callee), the delegate declared by the callback needs to be added to CSharpCallLua.
 
-Sometimes, this is confusing, like when calling List<int>, for example. Find(Predicate<int> match) and List<int> will of course be added to LuaCallSharp. However, Predicate<int> needs to be added to CSharpCallLua, because the caller of match is C#, and a Lua function is called.
+Sometimes, it is confusing, like when calling List<int>, for example. Find(Predicate<int> match) and List<int> will of course be added to LuaCallSharp. However, Predicate<int> needs to be added to CSharpCallLua, because the caller of match is C#, and a Lua function is called.
 
 A more unthinkable way: When you see, "This delegate/interface must add to CSharpCallLua: XXX", just add XXX to CSharpCallLua.
 
@@ -118,15 +118,15 @@ If you are using the delegate to call a Lua function, if the LuaTable and LuaFun
 
 3. The field contains only the struct of value type, and it can nest other struct. 
 
-For 2 and 3, types are added to GCOptimize.
+For 2 and 3, pleases add those types to GCOptimize.
 
 ## Is reflection available on iOS?
 
 There are two restrictions on iOS: 1. no JIT; 2. code stripping;
 
-When C# calls Lua via delegate or interface, using reflection emit instead of the generated code relies on JIT, so this is currently only available in the editor.
+When C# calls Lua via delegates or interfaces, using reflection emit instead of the generated code relies on JIT, so this is currently only available in the editor mode.
 
-If Lua calls C#, it will be mainly affected by code stripping. In this case, you can configure ReflectionUse (but not LuaCallSharp), and execute "Generate Code". No package code except link.xml will be generated for the type this time. Set this type to not to be stripped.
+If Lua calls C#, it will be mainly affected by code stripping. In this case, you can configure ReflectionUse (but not LuaCallSharp), and execute "Generate Code". No package code except link.xml will be generated for the type this time. Set this type to 'not to be stripped'.
 
 In short, only CSharpCallLua is necessary (a little code of this type is generated), and reflection can be used in LuaCallSharp generation.
 
@@ -177,7 +177,7 @@ print(dic:get_Item('b'))
 
 If your version is 2.1.11 or earlier, it is recommended that you directly use the equivalent method of the operator, such as the TryGetValue of the Dictionary. If this method is not available, you can package a method through the Extension method on C# and then use it.
 
-## Why are some Unity objects null in C# but not nil in Lua, like a GameObject that has been destroyed, for example?
+## Why are some Unity objects null in C# but not nil in Lua, for example, a GameObject that has been destroyed?
 
 In fact, the C# object is not null, but the UnityEngine.Object overloads the == operator. When an object is destroyed, or in the case of failed initialization, true is returned for obj == null, but this C# object is not null. You can check this using System.Object.ReferenceEquals(null, obj).
 
