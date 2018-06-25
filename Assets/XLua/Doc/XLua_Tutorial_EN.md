@@ -4,7 +4,7 @@
 
 1. Execute strings
 
-   The most basic way is to execute a string is directly with LuaEnv.DoString. The string must be compliant with Lua syntax.
+   The most basic way to execute a string is to use LuaEnv.DoString. The string must be compliant with Lua syntax.
 For example:
 
        luaenv.DoString("print('hello world')")
@@ -21,8 +21,8 @@ For example:
 
    See the full code in the XLua\Tutorial\LoadLuaScript\ByFile directory.
 
-   The require actually calls the loaders one by one to load the file. The loading process stops if one loader succeeds. If all loaders fail, no file found is reported. 
-In addition to native loaders, xLua also adds loaders loaded from the Resource. Note that because the Resource supports only a limited number of extensions, the Lua file under Resources must use the txt extension (see the attached example).
+   The require actually calls the loaders one by one to load the file. The loading process stops if one loader succeeds. If all loaders fail, no file found will be reported. 
+In addition to native loaders, xLua also adds loaders loaded from the Resource. Note that because the Resource supports only  limited numbers of extensions, the Lua file under Resources must be added the txt extension (see the attached example).
 
    The recommended way to load Lua scripts is as follows: Ensure the entire program is a DoString ("require 'main'"). Then, load other scripts in main.lua (like executing the Lua script's command line: lua main.lua).
 
@@ -35,7 +35,7 @@ In addition to native loaders, xLua also adds loaders loaded from the Resource. 
        public delegate byte[] CustomLoader(ref string filepath);
        public void LuaEnv.AddLoader(CustomLoader loader)
 
-   With the AddLoader, you can register a callback. Its parameter is a string. When calling require in the Lua code, the parameter will be transparently transferred to the callback, which can load the specified file based on this parameter. If debugging support is required, you need to modify the filepath to a real path and transfer it. The returned value of this callback is a byte array. Null means the loader is not found. Otherwise, the content of the Lua file is returned. 
+   With the AddLoader, you can register a callback. Its parameter is a string. When calling require in the Lua code, the parameter will be transparently transferred to the callback, which can load the specified files based on this parameter. If debugging support is required, you need to modify the filepath to a real path and transfer it. The returned value of this callback is a byte array. Null means the loader is not found. Otherwise, the content of the Lua file is returned. 
 Can IIPS IFS be loaded? Yes. Write a loader to call IIPS interface to read the content of the file. Can encrypted files be loaded? Yes, write the loader to read the file and return it after decrypting it. 
 See the complete example in the XLua\Tutorial\LoadLuaScript\Loader directory.
 
@@ -53,7 +53,7 @@ Access LuaEnv.Global, which provides a template Get method. You can specify the 
 
 2. Access a global table
 
-   What class should I specify if the above Get method also is used?
+   What class should I specify if the above Get method also been used?
 
    1. Map it to an ordinary class or struct.
 
@@ -63,7 +63,7 @@ In this way, xLua will help you to create a new instance and set the correspondi
       Table properties can be more or less than class properties. You can nest other complex classes. 
 It should be noted that this process is to copy values. Complex classes will have higher overhead. And, modified field values of the class will not be synchronized to table, and vice versa.
 
-      This feature can reduce the generation overhead by adding the class to GCOptimize. For details, see the configuration documentation. 
+      This feature can reduce the generation overhead by adding the class to GCOptimize. For details, please see the configuration documentation. 
 Is mapping in the reference mode available? Yes, this is one method:
 
    2. Map to an interface
@@ -72,9 +72,9 @@ Is mapping in the reference mode available? Yes, this is one method:
 
    3. Lightweight by value mode: map to Dictionary<>, List<>
 
-      If you do not want to define the type or interface, you can consider using this. The premise is that table key and value are of the same type.
+      If you do not want to define the type or interface, you can using this. The premise is that table key and value are of the same type.
 
-   4. Another method is the by ref mode: map to LuaTable class.
+   4. Another methods are woking on ref mode: map to LuaTable class.
 
       The advantage of this mode lies in that there is no need to generate code, but there are also some problems with this method. For example, it is an order of magnitude slower than mode 2, and there is no class checking.
 
@@ -101,7 +101,7 @@ Using this is also simple. LuaFunction has a Call function with variable paramet
 
 4. Usage suggestions
 
-   1. The overhead is high to access Lua global data, especially tables and functions. We recommended doing this this as little as possible. For example, during initialization, get the Lua function to be called later (map to the delegate) and save it. Then, you can directly call the delegate. Tables are similar
+   1. The overhead is high to access Lua global data, especially tables and functions. We recommended doing this as little as possible. For example, during initialization, get the Lua function to be called later (map to the delegate) and save it. Then, you can directly call the delegate. (Tables are similar)
 
    2. If all implementations of Lua are in the delegate and an interface mode, their use can be completely decoupled from xLua. A dedicated module can be responsible for the initialization of xLua and the mapping of delegates and interfaces. Then, you can set these delegates and interfaces to where they will be used.
 
@@ -286,7 +286,7 @@ For example, you can get the type information of the UnityEngine.ParticleSystem 
 
 ##### "Strong" conversion
 
-Lua is not typed, so it will has no "strong" conversion with strongly typed languages. However, it has something similar: tell xLua to call an object with the specified generated code. Under what circumstances will it be used? The answer is that sometimes third-party libraries expose an interface or an abstract type. The implementation type is hidden, so we cannot generate code for the implementation type. This implementation type will be identified by xLua as the ungenerated code and accessed via reflection. Frequently calling it will affect performance significantly. We can add this interface or abstract type to the generated code, and then specify using the generated code to access objects:
+Lua is not a typed language, so it has no "strong" conversion with strongly typed languages. However, there's something similar: tell xLua to call an object with the specified generated code. Under what circumstances will it be used? The answer is that, sometimes third-party libraries expose an interface or an abstract type. The implementation type is hidden, so we cannot generate code for the implementation type. This implementation type will be identified by xLua as the ungenerated code and accessed via reflection. Frequently calling it will affect performance significantly. We can add this interface or abstract type to the generated code, and then specify using the generated code to access objects:
 
     cast(calc, typeof(CS.Tutorial.Calc))
 
