@@ -81,7 +81,7 @@ The Hotfix flag can set some flags to customize the generated code and instrumen
 
 * Stateless and Stateful
 
-This is is a legacy setting. The Stateful method has been removed in the new version because similar effects can be achieved with the xlua.util.hotfix_state interface. For how to use this interface, see the sample code in HotfixTest2.cs.
+This is is a legacy setting. The Stateful method has been removed in the new version because similar effects can be achieved with the xlua.util.state interface. For how to use this interface, see the sample code in HotfixTest2.cs.
 
 Without Stateful, the default is Stateless, so there is no need to set this flag.
 

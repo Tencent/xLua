@@ -80,7 +80,7 @@ Hotfix标签可以设置一些标志位对生成代码及插桩定制化
 
 * Stateless、Stateful
 
-遗留设置，Stateful方式在新版本已经删除，因为这种方式可以用xlua.util.hotfix_state接口达到类似的效果，该接口的使用可以看下HotfixTest2.cs里的示例代码。
+遗留设置，Stateful方式在新版本已经删除，因为这种方式可以用xlua.util.state接口达到类似的效果，该接口的使用可以看下HotfixTest2.cs里的示例代码。
 
 由于没Stateful，默认就是Stateless，所以也没必要设置该标志位。
 
