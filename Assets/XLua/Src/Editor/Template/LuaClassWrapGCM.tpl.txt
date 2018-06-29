@@ -173,7 +173,7 @@ namespace XLua
 				end
 				local def_count = constructor_def_vals[ci]
 				local param_count = parameters.Length
-				local in_num = CalcCsList(parameters, function(p) return p.IsIn or not p.IsOut end)
+				local in_num = CalcCsList(parameters, function(p) return not (p.IsOut and p.ParameterType.IsByRef) end)
 				local out_num = CalcCsList(parameters, function(p) return p.IsOut or p.ParameterType.IsByRef end)
 				local real_param_count = param_count - def_count
 				local has_v_params = param_count > 0 and IsParams(parameters[param_count - 1])
@@ -182,7 +182,7 @@ namespace XLua
 			if pi >= real_param_count then return end 
 			local parameterType = parameter.ParameterType
 			if has_v_params and pi == param_count - 1 then  parameterType = parameterType:GetElementType() end
-			if parameter.IsIn or not parameter.IsOut then in_pos = in_pos + 1
+			if not (parameter.IsOut and parameter.ParameterType.IsByRef) then in_pos = in_pos + 1
 			%> && <%=GetCheckStatement(parameterType, in_pos+1, has_v_params and pi == param_count - 1)%><% 
 			end
 			end)%>)
@@ -196,7 +196,7 @@ namespace XLua
 				<%local in_pos = 0
 				ForEachCsList(parameters, function(parameter, pi)
 					if pi >= real_param_count then return end
-					if parameter.IsIn or not parameter.IsOut then 
+					if not (parameter.IsOut and parameter.ParameterType.IsByRef) then 
 						in_pos = in_pos + 1
 					end
 					if parameter.ParameterType.IsByRef then
@@ -339,7 +339,7 @@ namespace XLua
             <%end%>
 			<%ForEachCsList(method.Overloads, function(overload, oi)
 			local parameters = MethodParameters(overload)
-			local in_num = CalcCsList(parameters, function(p) return p.IsIn or not p.IsOut end)
+			local in_num = CalcCsList(parameters, function(p) return not (p.IsOut and p.ParameterType.IsByRef) end)
 			local param_offset = method.IsStatic and 0 or 1
 			local out_num = CalcCsList(parameters, function(p) return p.IsOut or p.ParameterType.IsByRef end)
 			local in_pos = 0
@@ -354,7 +354,7 @@ namespace XLua
 					if pi >= real_param_count then return end
 					local parameterType = parameter.ParameterType
 					if has_v_params and pi == param_count - 1 then  parameterType = parameterType:GetElementType() end
-					if parameter.IsIn or not parameter.IsOut then in_pos = in_pos + 1; 
+					if not (parameter.IsOut and parameter.ParameterType.IsByRef) then in_pos = in_pos + 1; 
 					%>&& <%=GetCheckStatement(parameterType , in_pos+param_offset, has_v_params and pi == param_count - 1)%><% 
 					end 
 				end)%>) <%end%>
@@ -363,7 +363,7 @@ namespace XLua
 				in_pos = 0;
 				ForEachCsList(parameters, function(parameter, pi) 
 					if pi >= real_param_count then return end
-					%><%if parameter.IsIn or not parameter.IsOut then 
+					%><%if not (parameter.IsOut and parameter.ParameterType.IsByRef) then 
 						in_pos = in_pos + 1
 					%><%=GetCasterStatement(parameter.ParameterType, in_pos+param_offset, LocalName(parameter.Name), true, has_v_params and pi == param_count - 1)%><%
 					else%><%=CsFullTypeName(parameter.ParameterType)%> <%=LocalName(parameter.Name)%><%end%>;
@@ -387,7 +387,7 @@ namespace XLua
 				local in_pos = 0
 				ForEachCsList(parameters, function(parameter, pi)
 					if pi >= real_param_count then return end
-					if parameter.IsIn or not parameter.IsOut then 
+					if not (parameter.IsOut and parameter.ParameterType.IsByRef) then 
 						in_pos = in_pos + 1
 					end
 					if parameter.ParameterType.IsByRef then

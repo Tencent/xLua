@@ -31,7 +31,7 @@ namespace XLua.CSObjectWrap
         <%
         ForEachCsList(methods, function(method)
             local parameters = method:GetParameters()
-            local in_num = CalcCsList(parameters, function(p) return p.IsIn or not p.IsOut end)
+            local in_num = CalcCsList(parameters, function(p) return not (p.IsOut and p.ParameterType.IsByRef) end)
             local out_num = CalcCsList(parameters, function(p) return p.IsOut or p.ParameterType.IsByRef end)
             local in_pos = 0
             local has_return = (method.ReturnType.FullName ~= "System.Void")
@@ -77,7 +77,7 @@ namespace XLua.CSObjectWrap
                 local has_v_params = param_count > 0 and IsParams(parameters[param_count - 1])
 
 				ForEachCsList(parameters, function(parameter, pi) 
-					if parameter.IsIn or not parameter.IsOut then 
+					if not (parameter.IsOut and parameter.ParameterType.IsByRef) then 
 						%><%=GetPushStatement(parameter.ParameterType, parameter.Name, has_v_params and pi == param_count - 1)%>;
 				<% 
 					end
@@ -197,7 +197,7 @@ namespace XLua.CSObjectWrap
 					local has_v_params = param_count > 0 and IsParams(parameters[param_count - 1])
 
 					ForEachCsList(parameters, function(parameter, pi) 
-						if parameter.IsIn or not parameter.IsOut then 
+						if not (parameter.IsOut and parameter.ParameterType.IsByRef) then 
 							%><%=GetPushStatement(parameter.ParameterType, parameter.Name, has_v_params and pi == param_count - 1)%>;
 					<% 
 						end
@@ -240,7 +240,7 @@ namespace XLua.CSObjectWrap
 					local has_v_params = param_count > 0 and IsParams(parameters[param_count - 1])
 
 					ForEachCsList(parameters, function(parameter, pi) 
-						if parameter.IsIn or not parameter.IsOut then 
+						if not (parameter.IsOut and parameter.ParameterType.IsByRef) then 
 							%><%=GetPushStatement(parameter.ParameterType, parameter.Name, has_v_params and pi == param_count - 1)%>;
 					<% 
 						end
@@ -265,7 +265,7 @@ namespace XLua.CSObjectWrap
 		{<%if indexer:GetGetMethod() then
 			local method = indexer:GetGetMethod()		
             local parameters = method:GetParameters()
-            local in_num = CalcCsList(parameters, function(p) return p.IsIn or not p.IsOut end)
+            local in_num = CalcCsList(parameters, function(p) return not (p.IsOut and p.ParameterType.IsByRef) end)
             local out_num = CalcCsList(parameters, function(p) return p.IsOut or p.ParameterType.IsByRef end)
             local in_pos = 0
             local has_return = (method.ReturnType.FullName ~= "System.Void")
@@ -301,7 +301,7 @@ namespace XLua.CSObjectWrap
 					local has_v_params = param_count > 0 and IsParams(parameters[param_count - 1])
 
 					ForEachCsList(parameters, function(parameter, pi) 
-						if parameter.IsIn or not parameter.IsOut then 
+						if not (parameter.IsOut and parameter.ParameterType.IsByRef) then 
 							%><%=GetPushStatement(parameter.ParameterType, parameter.Name, has_v_params and pi == param_count - 1)%>;
 					<% 
 						end
@@ -328,7 +328,7 @@ namespace XLua.CSObjectWrap
 		<%if indexer:GetSetMethod() then
 			local method = indexer:GetSetMethod()		
             local parameters = method:GetParameters()
-            local in_num = CalcCsList(parameters, function(p) return p.IsIn or not p.IsOut end)
+            local in_num = CalcCsList(parameters, function(p) return not (p.IsOut and p.ParameterType.IsByRef) end)
             local out_num = CalcCsList(parameters, function(p) return p.IsOut or p.ParameterType.IsByRef end)
             local in_pos = 0
             local has_return = (method.ReturnType.FullName ~= "System.Void")
@@ -364,7 +364,7 @@ namespace XLua.CSObjectWrap
 					local has_v_params = param_count > 0 and IsParams(parameters[param_count - 1])
 
 					ForEachCsList(parameters, function(parameter, pi) 
-						if parameter.IsIn or not parameter.IsOut then 
+						if not (parameter.IsOut and parameter.ParameterType.IsByRef) then 
 							%><%=GetPushStatement(parameter.ParameterType, parameter.Name, has_v_params and pi == param_count - 1)%>;
 					<% 
 						end
