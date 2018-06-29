@@ -82,7 +82,7 @@ namespace XLua.CSObjectWrap
 				<% 
 					end
 				end) %>
-				int __gen_error = LuaAPI.lua_pcall(L, <%=has_v_params and ((in_num) .. " + " .. parameters[param_count - 1].Name .. ".Length" ) or (in_num + 1)%>, <%=out_num%>, err_func);
+				int __gen_error = LuaAPI.lua_pcall(L, <%=has_v_params and ((in_num) .. " + (".. parameters[param_count - 1].Name .. " == null ? 0 : " .. parameters[param_count - 1].Name .. ".Length)" ) or (in_num + 1)%>, <%=out_num%>, err_func);
 				if (__gen_error != 0)
 					luaEnv.ThrowExceptionFromError(err_func - 1);
 				
