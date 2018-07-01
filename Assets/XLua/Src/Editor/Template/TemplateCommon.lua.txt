@@ -184,7 +184,13 @@ local valueType = typeof(CS.System.ValueType)
 
 local function _CsFullTypeName(t)
     if t.IsArray then
-        return _CsFullTypeName(t:GetElementType()) .. '[' .. string.rep(',', t:GetArrayRank() - 1) .. ']'
+	    local element_name, element_is_array = _CsFullTypeName(t:GetElementType())
+		if element_is_array then
+		    local bracket_pos = element_name:find('%[')
+			return element_name:sub(1, bracket_pos - 1) .. '[' .. string.rep(',', t:GetArrayRank() - 1) .. ']' .. element_name:sub(bracket_pos, -1), true
+		else
+            return element_name .. '[' .. string.rep(',', t:GetArrayRank() - 1) .. ']', true
+	    end
     elseif t.IsByRef then
         return _CsFullTypeName(t:GetElementType())
     elseif t.IsGenericParameter then
