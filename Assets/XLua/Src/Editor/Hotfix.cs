@@ -1631,7 +1631,7 @@ namespace XLua
                 hotfix_injection.StartInfo.UseShellExecute = false;
                 hotfix_injection.StartInfo.CreateNoWindow = true;
                 hotfix_injection.Start();
-                UnityEngine.Debug.Log(hotfix_injection.StandardOutput.ReadToEnd());
+                UnityEngine.Debug.Log(Regex.Replace(hotfix_injection.StandardOutput.ReadToEnd(), @"\s*WARNING: The runtime version supported by this application is unavailable(\s|.)*$", ""));
                 hotfix_injection.WaitForExit();
             }
 
