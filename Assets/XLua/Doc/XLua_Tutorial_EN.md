@@ -217,7 +217,8 @@ Enumerated values are just like static properties of the enumerated type.
     testobj:EnumTestFunc(CS.Tutorial.TestEnum.E1)
 
 The EnumTestFunc function parameter shown above is the Tutorial.TestEnum type.
-In addition, if the enumerated type is added to the generated code, the enumerated type will support the __CastFrom method. This implements conversion from an integer or string to an enumerated value. For example:
+
+Enum has a __CastFrom method. This implements conversion from an integer or string to an enumerated value. For example:
 
     CS.Tutorial.TestEnum.__CastFrom(1)
     CS.Tutorial.TestEnum.__CastFrom('E1')
