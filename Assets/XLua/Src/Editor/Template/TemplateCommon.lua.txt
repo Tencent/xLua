@@ -206,7 +206,7 @@ local function _CsFullTypeName(t)
         if ati ~= 0 then  genericParameter = genericParameter .. ', ' end
         genericParameter = genericParameter .. _CsFullTypeName(at)
     end)
-    return name:gsub("`%d+", '<' .. genericParameter .. '>'):gsub("%[[^,%]].*", "")
+    return name:gsub("`%d+", '<' .. genericParameter .. '>'):gsub("%[[^,%]].*", ""), false
 end
 
 function CsFullTypeName(t)
