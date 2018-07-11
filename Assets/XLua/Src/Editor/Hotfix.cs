@@ -149,7 +149,8 @@ namespace XLua
         IgnoreProperty = 4,
         IgnoreNotPublic = 8,
         Inline = 16,
-        IntKey = 32
+        IntKey = 32,
+        AdaptByDelegate = 64,
     }
 
     static class ExtentionMethods
@@ -479,6 +480,10 @@ namespace XLua
         {
             bool ignoreValueType = hotfixType.HasFlag(HotfixFlagInTool.ValueTypeBoxing);
 
+            bool isIntKey = hotfixType.HasFlag(HotfixFlagInTool.IntKey) && !method.DeclaringType.HasGenericParameters && isTheSameAssembly;
+
+            bool isAdaptByDelegate = !isIntKey && hotfixType.HasFlag(HotfixFlagInTool.AdaptByDelegate);
+
             for (int i = 0; i < hotfixBridgesDef.Count; i++)
             {
                 MethodDefinition hotfixBridgeDef = hotfixBridgesDef[i];
@@ -529,7 +534,7 @@ namespace XLua
                     {
                         continue;
                     }
-                    invoke = isTheSameAssembly ? hotfixBridgeDef : getDelegateInvokeFor(method, hotfixBridgeDef, ignoreValueType);
+                    invoke = (isTheSameAssembly && !isAdaptByDelegate) ? hotfixBridgeDef : getDelegateInvokeFor(method, hotfixBridgeDef, ignoreValueType);
                     return true;
                 }
             }
