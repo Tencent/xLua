@@ -7,7 +7,7 @@ xLua所有的配置都支持三种方式：打标签；静态列表；动态列�
 * 列表方式均必须是static的字段/属性
 * 列表方式均必须放到一个static类
 * 建议不用标签方式
-* 建议列表方式配置放Editor目录
+* 建议列表方式配置放Editor目录（如果是Hotfix配置，而且类位于Assembly-CSharp.dll之外的其它dll，必须放Editor目录）
 
 **打标签**
 

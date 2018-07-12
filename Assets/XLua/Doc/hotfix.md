@@ -47,11 +47,12 @@ util.hotfix_ex(class, method_name, fix)
 
 和其它配置一样，有两种方式
 
-方式一：直接在类里头打Hotfix标签；
+方式一：直接在类里头打Hotfix标签（不建议，示例只是为了方便演示采取这种方式）；
 
 方式二：在一个static类的static字段或者属性里头配置一个列表。属性可以用于实现的比较复杂的配置，比如根据Namespace做白名单。
 
 ~~~csharp
+//如果涉及到Assembly-CSharp.dll之外的其它dll，如下代码需要放到Editor目录
 public static class HotfixCfg
 {
     [Hotfix]
