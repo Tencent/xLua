@@ -1272,10 +1272,10 @@ namespace CSObjectWrapEditor
 
         static void MergeCfg(MemberInfo test, Type cfg_type, Func<object> get_cfg)
         {
-            if (test.IsDefined(typeof(LuaCallCSharpAttribute), false))
+            if (test.IsDefined(typeof(LuaCallCSharpAttribute), false) || cfg_type.GetMembers().Any(m => m.IsDefined(typeof(LuaCallCSharpAttribute), false)))
             {
                 object[] ccla = test.GetCustomAttributes(typeof(LuaCallCSharpAttribute), false);
-                AddToList(LuaCallCSharp, get_cfg, ccla[0]);
+                AddToList(LuaCallCSharp, get_cfg, ccla.Length > 0 ? ccla[0] : null);
 #pragma warning disable 618
                 if (ccla.Length == 1 && (((ccla[0] as LuaCallCSharpAttribute).Flag & GenFlag.GCOptimize) != 0))
 #pragma warning restore 618
@@ -1379,7 +1379,7 @@ namespace CSObjectWrapEditor
 #endif
             foreach (var t in check_types)
             {
-                MergeCfg(t, null, () => t);
+                MergeCfg(t, t, () => t);
 
                 if (!t.IsAbstract || !t.IsSealed) continue;
 
