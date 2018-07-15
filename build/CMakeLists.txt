@@ -32,6 +32,7 @@ find_path(XLUA_PROJECT_DIR NAMES SConstruct
 MARK_AS_ADVANCED(XLUA_PROJECT_DIR)
 
 set(LUA_SRC_PATH lua-5.3.5/src)
+set(LUAJIT_SRC_PATH luajit-2.1.0b3/src)
 
 if (USING_LUAJIT)
 	
@@ -51,7 +52,7 @@ if (USING_LUAJIT)
 	else ()
 	    include_directories(
 		  ${CMAKE_SOURCE_DIR}
-		  luajit-2.1.0b2/src
+		  ${LUAJIT_SRC_PATH}
 		  ${CMAKE_CURRENT_BINARY_DIR}
 		  ${THIRDPART_INC}
 	    )
@@ -181,7 +182,7 @@ endif()
 if ( WIN32 AND NOT CYGWIN )
     if (USING_LUAJIT)
         target_link_libraries(xlua
-            ${CMAKE_SOURCE_DIR}/luajit-2.1.0b2/src/lua51.lib
+            ${CMAKE_SOURCE_DIR}/${LUAJIT_SRC_PATH}/lua51.lib
             ws2_32
             ${THIRDPART_LIB} 
         )
@@ -194,7 +195,7 @@ if ( WIN32 AND NOT CYGWIN )
 else ( )
     if (USING_LUAJIT AND NOT APPLE)
 		target_link_libraries(xlua
-			${CMAKE_SOURCE_DIR}/luajit-2.1.0b2/src/libluajit.a
+			${CMAKE_SOURCE_DIR}/${LUAJIT_SRC_PATH}/libluajit.a
 			m
             ${THIRDPART_LIB} 
 		)

@@ -1,4 +1,4 @@
-cd luajit-2.1.0b2
+cd luajit-2.1.0b3
 make clean
 make CC="gcc -m32"
 cd ..
