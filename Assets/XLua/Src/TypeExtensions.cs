@@ -4,7 +4,7 @@ using System.Reflection;
 namespace XLua
 {
 
-    public static class TypeExtensions
+    internal static class TypeExtensions
     {
         public static bool IsValueType(this Type type)
         {

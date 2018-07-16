@@ -1622,7 +1622,7 @@ namespace CSObjectWrapEditor
                 }
                 _hasGenericParameter = true;
             }
-            else if(parameterType.IsGenericType())
+            else if(parameterType.IsGenericType)
             {
                 foreach (var argument in parameterType.GetGenericArguments())
                 {
