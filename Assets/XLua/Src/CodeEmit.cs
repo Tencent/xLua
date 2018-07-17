@@ -1188,7 +1188,7 @@ namespace XLua
                 var getter = prop.GetGetMethod();
                 if (getter != null && getter.IsPublic)
                 {
-                    if (prop.Name == "Item" && prop.GetIndexParameters().Length > 0)
+                    if (prop.GetIndexParameters().Length > 0)
                     {
                         if (!prop.GetIndexParameters()[0].ParameterType.IsAssignableFrom(typeof(string)))
                         {
@@ -1204,7 +1204,7 @@ namespace XLua
                 var setter = prop.GetSetMethod();
                 if (setter != null && setter.IsPublic)
                 {
-                    if (prop.Name == "Item" && prop.GetIndexParameters().Length > 0)
+                    if (prop.GetIndexParameters().Length > 0)
                     {
                         if (!prop.GetIndexParameters()[0].ParameterType.IsAssignableFrom(typeof(string)))
                         {
