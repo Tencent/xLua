@@ -33,13 +33,12 @@ public static class BuildFromCLI
         DelegateBridge.Gen_Flag = true;
         Generator.ClearAll();
         Generator.GenAll();
-        var options = new BuildPlayerOptions
-        {
-            target = BuildTarget.StandaloneWindows64,
-            targetGroup = BuildTargetGroup.Standalone,
-            locationPathName = string.Format("{0}/{1}", outputDir, packageName)
-        };
-        BuildPipeline.BuildPlayer(options);
+
+        var levels = new string[0];
+        var locationPathName = string.Format("{0}/{1}", outputDir, packageName);
+        var target = BuildTarget.StandaloneWindows64;
+        var options = BuildOptions.None;
+        BuildPipeline.BuildPlayer(levels,locationPathName,target,options);
         Debug.Log("构建完成");
     }
 }
