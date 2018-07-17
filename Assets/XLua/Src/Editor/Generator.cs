@@ -1358,6 +1358,22 @@ namespace CSObjectWrapEditor
             }
         }
 
+        static bool IsPublic(Type type)
+        {
+            if (type.IsPublic || type.IsNestedPublic)
+            {
+                if (type.DeclaringType != null)
+                {
+                    return IsPublic(type.DeclaringType);
+                }
+                else
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         public static void GetGenConfig(IEnumerable<Type> check_types)
         {
             LuaCallCSharp = new List<Type>();
@@ -1406,19 +1422,19 @@ namespace CSObjectWrapEditor
                 }
             }
             LuaCallCSharp = LuaCallCSharp.Distinct()
-                .Where(type=>/*type.IsPublic && */!isObsolete(type) && !type.IsGenericTypeDefinition)
+                .Where(type=> IsPublic(type) && !isObsolete(type) && !type.IsGenericTypeDefinition)
                 .Where(type => !typeof(Delegate).IsAssignableFrom(type))
                 .Where(type => !type.Name.Contains("<"))
-                .ToList();//public的内嵌Enum（其它类型未测试），IsPublic为false，像是mono的bug
+                .ToList();
             CSharpCallLua = CSharpCallLua.Distinct()
-                .Where(type =>/*type.IsPublic && */!isObsolete(type) && !type.IsGenericTypeDefinition)
+                .Where(type => IsPublic(type) && !isObsolete(type) && !type.IsGenericTypeDefinition)
                 .Where(type => type != typeof(Delegate) && type != typeof(MulticastDelegate))
                 .ToList();
             GCOptimizeList = GCOptimizeList.Distinct()
-                .Where(type =>/*type.IsPublic && */!isObsolete(type) && !type.IsGenericTypeDefinition)
+                .Where(type => IsPublic(type) && !isObsolete(type) && !type.IsGenericTypeDefinition)
                 .ToList();
             ReflectionUse = ReflectionUse.Distinct()
-                .Where(type =>/*type.IsPublic && */!isObsolete(type) && !type.IsGenericTypeDefinition)
+                .Where(type => !isObsolete(type) && !type.IsGenericTypeDefinition)
                 .ToList();
         }
 
