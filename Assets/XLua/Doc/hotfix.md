@@ -8,28 +8,9 @@
 
 3、注入，构建手机包这个步骤会在构建时自动进行，编辑器下开发补丁需要手动执行"XLua/Hotfix Inject In Editor"菜单。注入成功会打印“hotfix inject finish!”或者“had injected!”。
 
-## 内嵌模式
-
-注意：该模式慎用，一般仅有经验人士调试使用，因为这模式依赖cecil，可能会和unity本身或者一些第三方库的的cecil版本冲突。有的人可能发现unity5.5以上的版本会提示“WARNING: The runtime version supported by this application is unavailable.”，这是由于注入工具是.net3.5编译导致，目前为止没发现会导致问题。切换到嵌入模式没这提示，但弊大于利。
-
-默认通过小工具执行代码注入，也可以采用内嵌到编辑器的方式，定义INJECT_WITHOUT_TOOL宏即可。
-
-定义INJECT_WITHOUT_TOOL宏后，热补丁特性依赖Cecil，添加HOTFIX_ENABLE宏之后，可能会报找不到Cecil。这时你需要到Unity安装目录下找到Mono.Cecil.dll，Mono.Cecil.Pdb.dll，Mono.Cecil.Mdb.dll，拷贝到项目里头。
-
-注意：如果你的Unity安装目录没有Mono.Cecil.Pdb.dll，Mono.Cecil.Mdb.dll（往往是一些老版本），那就只拷贝Mono.Cecil.dll（你从别的版本的Unity拷贝一套可能会导致编辑器不稳定），这时你需要定义HOTFIX_SYMBOLS_DISABLE，这会导致C#代码没法调试以及Log的栈源文件及行号错乱（所以赶紧升级Unity）。
-
-参考命令（可能Unity版本不同会略有不同）：
-
-```shell
-OSX命令行 cp /Applications/Unity/Unity.app/Contents/Managed/Mono.Cecil.* Project/Assets/XLua/Src/Editor/
-Win命令行 copy UnityPath\Editor\Data\Managed\Mono.Cecil.* Project\Assets\XLua\Src\Editor\
-```
-
 ## 约束
 
 不支持静态构造函数。
-
-不支持在子类override函数通过base调用父类实现。
 
 目前只支持Assets下代码的热补丁，不支持引擎，c#系统库的热补丁。
 
@@ -41,10 +22,20 @@ xlua.hotfix(class, [method_name], fix)
 * method_name  ： 方法名，可选；
 * fix          ： 如果传了method_name，fix将会是一个function，否则通过table提供一组函数。table的组织按key是method_name，value是function的方式。
 
-xlua.private_accessible(class)
+base(csobj)
 
-* 描述          ： 让一个类的私有字段，属性，方法等可用
-* class         ： 同xlua.hotfix的class参数
+* 描述         ： 子类override函数通过base调用父类实现。
+* csobj        ： 对象
+* 返回值       ： 新对象，可以通过该对象base上的方法
+
+例子（位于HotfixTest2.cs）：
+
+```lua
+xlua.hotfix(CS.BaseTest, 'Foo', function(self, p)
+    print('BaseTest', p)
+    base(self):Foo(p)
+end)
+```
 
 util.hotfix_ex(class, method_name, fix)
 
@@ -56,11 +47,12 @@ util.hotfix_ex(class, method_name, fix)
 
 和其它配置一样，有两种方式
 
-方式一：直接在类里头打Hotfix标签；
+方式一：直接在类里头打Hotfix标签（不建议，示例只是为了方便演示采取这种方式）；
 
 方式二：在一个static类的static字段或者属性里头配置一个列表。属性可以用于实现的比较复杂的配置，比如根据Namespace做白名单。
 
 ~~~csharp
+//如果涉及到Assembly-CSharp.dll之外的其它dll，如下代码需要放到Editor目录
 public static class HotfixCfg
 {
     [Hotfix]
@@ -87,13 +79,11 @@ public static class HotfixCfg
 
 Hotfix标签可以设置一些标志位对生成代码及插桩定制化
 
-* Stateless
+* Stateless、Stateful
 
-Stateless和Stateful的区别请看下下节。
+遗留设置，Stateful方式在新版本已经删除，因为这种方式可以用xlua.util.state接口达到类似的效果，该接口的使用可以看下HotfixTest2.cs里的示例代码。
 
-* Stateful
-
-同上。
+由于没Stateful，默认就是Stateless，所以也没必要设置该标志位。
 
 * ValueTypeBoxing
 
@@ -159,11 +149,11 @@ CS.XLua.HotfixDelegateBridge.Set(7, func)
 ~~~lua
 (require 'xlua.util').auto_id_map()
 xlua.hotfix(CS.HotfixTest, 'Update', function(self)
-		self.tick = self.tick + 1
-		if (self.tick % 50) == 0 then
-			print('<<<<<<<<Update in lua, tick = ' .. self.tick)
-		end
-	end)
+        self.tick = self.tick + 1
+        if (self.tick % 50) == 0 then
+            print('<<<<<<<<Update in lua, tick = ' .. self.tick)
+        end
+    end)
 ~~~
 
 前提是hotfix_id_map.lua.txt放到可以通过require 'hotfix_id_map'引用到的地方。
@@ -175,18 +165,6 @@ xlua.hotfix(CS.HotfixTest, 'Update', function(self)
 * 建议用反射找出所有函数参数、字段、属性、事件涉及的delegate类型，标注CSharpCallLua；
 * 业务代码、引擎API、系统API，需要在Lua补丁里头高性能访问的类型，加上LuaCallCSharp；
 * 引擎API、系统API可能被代码剪裁调（C#无引用的地方都会被剪裁），如果觉得可能会新增C#代码之外的API调用，这些API所在的类型要么加LuaCallCSharp，要么加ReflectionUse；
-
-## Stateless和Stateful
-
-打Hotfix标签时，默认是Stateless方式，你也可以选Stateful方式，我们先说区别，再说使用场景。
-
-Stateless方式是指用Lua对成员函数修复时，C#对象直接透传给作为Lua函数的第一个参数。
-
-Stateful方式下你可以在Lua的构造函数返回一个table，然后后续成员函数调用会把这个table给传递过去。
-
-Stateless比较适合无状态的类，有状态的话，你得通过反射去操作私有成员，也没法新增状态（field）。Stateless有个好处，可以运行的任意时刻执行替换。
-
-Stateful的代价是会在类增加一个LuaTable类型的字段（中间层面增加，不会改源代码）。但这种方式是适用性更广，比如你不想要lua状态，可以在构造函数拦截那返回空。而且操作状态性能比反射操作C#私有变量要好，也可以随意新增任意的状态信息。缺点是，执行成员函数之前就new好的对象，接收到的状态会是空，所以需要重启，在一开始就执行替换。
 
 ## 打补丁
 
@@ -225,7 +203,7 @@ end)
 
 ```
 
-静态函数和成员函数的区别是，成员函数会加一个self参数，这个self在Stateless方式下是C#对象本身（对应C#的this），Stateful方式下传lua构造函数实现的返回值（一个table或者nil）
+静态函数和成员函数的区别是，成员函数会加一个self参数，这个self在Stateless方式下是C#对象本身（对应C#的this）
 
 普通参数对于lua的参数，ref参数对应lua的一个参数和一个返回值，out参数对于lua的一个返回值。
 
@@ -234,8 +212,6 @@ end)
 * 构造函数
 
 构造函数对应的method_name是".ctor"。
-
-如果是Stateful方式，你可以返回一个table作为这个对象的状态。
 
 和普通函数不一样的是，构造函数的热补丁并不是替换，而是执行原有逻辑后调用lua。
 
@@ -255,7 +231,7 @@ C#的操作符都有一套内部表示，比如+号的操作符函数名是op_Ad
 
 比如对于事件“AEvent”，+=操作符是add_AEvent，-=对应的是remove_AEvent。这两个函数均是第一个参数是self，第二个参数是操作符后面跟的delegate。
 
-通过xlua.private_accessible来直接访问事件对应的私有delegate的直接访问后，可以通过对象的"&事件名"字段直接触发事件，例如self\['&MyEvent'\]()，其中MyEvent是事件名。
+通过xlua.private_accessible（版本号大于2.1.11不需要调用xlua.private_accessible）来直接访问事件对应的私有delegate的直接访问后，可以通过对象的"&事件名"字段直接触发事件，例如self\['&MyEvent'\]()，其中MyEvent是事件名。
 
 * 析构函数
 
@@ -317,16 +293,16 @@ public class HotFixSubClass : MonoBehaviour {
 ~~~csharp
 luaenv.DoString(@"
     local util = require 'xlua.util'
-	xlua.hotfix(CS.HotFixSubClass,{
-		Start = function(self)
-			return util.cs_generator(function()
-			    while true do
-				    coroutine.yield(CS.UnityEngine.WaitForSeconds(3))
+    xlua.hotfix(CS.HotFixSubClass,{
+        Start = function(self)
+            return util.cs_generator(function()
+                while true do
+                    coroutine.yield(CS.UnityEngine.WaitForSeconds(3))
                     print('Wait for 3 seconds')
-                end				
-			end
-		end;
-	})
+                end
+            end)
+        end;
+    })
 ");
 ~~~
 
@@ -338,14 +314,14 @@ luaenv.DoString(@"
 
 xlua.hotfix(CS.StatefullTest, {
     ['.ctor'] = function(csobj)
-        return {evt = {}, start = 0}
+        return util.state(csobj, {evt = {}, start = 0, prop = 0})
     end;
     set_AProp = function(self, v)
         print('set_AProp', v)
-        self.AProp = v
+        self.prop = v
     end;
     get_AProp = function(self)
-        return self.AProp
+        return self.prop
     end;
     get_Item = function(self, k)
         print('get_Item', k)
@@ -376,6 +352,9 @@ xlua.hotfix(CS.StatefullTest, {
     end;
     StaticFunc = function(a, b, c)
        print(a, b, c)
+    end;
+    GenericTest = function(self, a)
+       print(self, a)
     end;
     Finalize = function(self)
        print('Finalize', self)

@@ -14,7 +14,7 @@ using System.Collections.Generic;
 require "TemplateCommon"
 
 local parameters = delegate:GetParameters()
-local in_num = CalcCsList(parameters, function(p) return p.IsIn or not p.IsOut end)
+local in_num = CalcCsList(parameters, function(p) return not (p.IsOut and p.ParameterType.IsByRef) end)
 local out_num = CalcCsList(parameters, function(p) return p.IsOut or p.ParameterType.IsByRef end)
 local in_pos = 0
 local has_return = (delegate.ReturnType.Name ~= "Void")
@@ -48,7 +48,7 @@ namespace XLua.CSObjectWrap
 			try {
 				if(LuaAPI.lua_gettop(L) == <%=in_num+1%> && <%=GetCheckStatement(type, 1)%><%
 					ForEachCsList(parameters, function(parameter) 
-						if parameter.IsIn or not parameter.IsOut then in_pos = in_pos + 1; 
+						if not (parameter.IsOut and parameter.ParameterType.IsByRef) then in_pos = in_pos + 1; 
 						%>&& <%=GetCheckStatement(parameter.ParameterType, in_pos+1)%><% 
 						end 
 					end)%>)
@@ -57,7 +57,7 @@ namespace XLua.CSObjectWrap
                 in_pos = 0;
                 ForEachCsList(parameters, function(parameter) 
                     %><% 
-                    if parameter.IsIn or not parameter.IsOut then 
+                    if not (parameter.IsOut and parameter.ParameterType.IsByRef) then 
                         in_pos = in_pos + 1
                         %><%=GetCasterStatement(parameter.ParameterType, in_pos+1, parameter.Name, true)%><%
 					else%><%=CsFullTypeName(parameter.ParameterType)%> <%=parameter.Name%><%end%>;
@@ -76,7 +76,7 @@ namespace XLua.CSObjectWrap
                 end
                 local in_pos = 0
                 ForEachCsList(parameters, function(parameter)
-                    if parameter.IsIn or not parameter.IsOut then 
+                    if not (parameter.IsOut and parameter.ParameterType.IsByRef) then 
                         in_pos = in_pos + 1
                     end
                     if parameter.IsOut or parameter.ParameterType.IsByRef then

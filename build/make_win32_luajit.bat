@@ -12,7 +12,7 @@ if exist "%VS140COMNTOOLS%" (
 call "%ENV32%"
 
 echo Swtich to x86 build env
-cd %~dp0\luajit-2.1.0b2\src
+cd %~dp0\luajit-2.1.0b3\src
 call msvcbuild_mt.bat static
 cd ..\..
 

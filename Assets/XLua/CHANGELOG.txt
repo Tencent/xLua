@@ -1,4 +1,59 @@
-﻿v2.1.10 2017年9月18日
+﻿v2.1.12 2018年7月9日
+新增特性
+1、Nullable的支持
+2、支持Assembly-CSharp之外的dll注入（beta）
+3、执行xlua.hotfix，会自动让该类private能访问
+4、xlua.private_accessible优化：1、会把基类的也设置能私有访问；2、延迟到第一次访问类才私有化
+5、新增xlua.util.state，可为一个c#对象新增状态
+6、this[string field]或者this[object field]操作符重载新增get_Item和set_Item调用
+7、正在编译时注入打印error信息
+8、interface配置到CSharpCallLua时的事件跟索引映射的自动实现
+9、unity5.5以上去掉WARNING: The runtime version supported by this application is unavailable打印
+
+变更
+1、去除Stateful方式（因为xlua.util.state已经可以达成类似的效果）
+2、废弃掉内嵌模式模式
+
+bug修复
+1、生成代码局部变量加下划线，防止符号冲突
+2、如果类没放到Hotfix列表，不生成base调用代理
+3、代码重构，可读性优化
+4、解决带params byte[]可能会导致生成代码编译错误的问题
+5、解决类含有private event的时候，无法xlua.private_accessible的问题
+6、构造函数注入，如果branch外紧跟Ret指令，注入逻辑应该在branch以及Ret之间
+7、构造函数注入，如果注入指令后导致跳转范围大于一个字节，应修改为长跳转
+8、解决一个delegate如果不是某个类的内嵌类型时，CS.namespace.classname为空的问题
+9、防止Editor下的Util类名字冲突
+10、泛型override有异常，先过滤掉
+11、解决空enum导致生成代码编译错误
+12、解决uwp平台下il2cpp方式打包无法访问任何类的问题
+13、hotfix一个私有类型的params参数的函数，导致生成代码编译错误、注入失败的问题
+14、如果两个LuaBase指向的是同一个Lua对象，GetHashCode应该返回的是同一个值
+15、[Out]标记参数生成代码编译失败
+16、交错数组+多维数组的复合，生成代码报错的问题
+
+v2.1.11 2018年3月20日
+新增特性
+1、xlua.private_accessible支持私有内嵌类型
+2、添加xlua.release，用于主动解除lua对c#某对象的引用
+3、支持内嵌委托的显示构造
+4、需要传class的地方（比如xlua.private_accessible），支持传C#的Type对象
+5、支持用pairs遍历IEnumerable对象
+6、热补丁场景下，支持override函数调用被override函数（对应c# base关键字）
+
+变更
+1、简化property的反射访问，简化后有更好的兼容性；
+
+bug修复
+1、ios 11兼容（去除system调用）
+2、实现了interface的struct不走gc优化代码的问题
+3、emit特性的.net兼容性
+4、emit对于ulong的const值处理不当
+5、interface桥接代码，interface继承时，父interface和子interface有同名不同类型属性时的生成代码报错
+6、多虚拟机下，不断创建和销毁协程时，可能出现协程指针重复
+7、当参数为泛型类型时，如ICollectio时，不应该生成代码
+
+v2.1.10 2017年9月18日
 新增特性
 1、新增DoNotGen配置，支持一个类型部分函数用反射，部分用生成；
 2、新增wrapper的emit；

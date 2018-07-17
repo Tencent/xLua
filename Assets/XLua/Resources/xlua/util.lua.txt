@@ -134,6 +134,24 @@ local function createdelegate(delegate_cls, obj, impl_cls, method_name, paramete
     return CS.System.Delegate.CreateDelegate(typeof(delegate_cls), obj, m)
 end
 
+local function state(csobj, state)
+    local csobj_mt = getmetatable(csobj)
+    for k, v in pairs(csobj_mt) do rawset(state, k, v) end
+    local csobj_index, csobj_newindex = state.__index, state.__newindex
+    state.__index = function(obj, k)
+        return rawget(state, k) or csobj_index(obj, k)
+    end
+    state.__newindex = function(obj, k, v)
+        if rawget(state, k) ~= nil then
+            rawset(state, k, v)
+        else
+            csobj_newindex(obj, k, v)
+        end
+    end
+    debug.setmetatable(csobj, state)
+    return state
+end
+
 return {
     async_to_sync = async_to_sync,
     coroutine_call = coroutine_call,
@@ -143,4 +161,5 @@ return {
     hotfix_ex = hotfix_ex,
     bind = bind,
     createdelegate = createdelegate,
+    state = state,
 }

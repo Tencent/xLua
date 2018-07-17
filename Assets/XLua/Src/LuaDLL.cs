@@ -234,7 +234,10 @@ namespace XLua.LuaDLL
         [DllImport(LUADLL,CallingConvention=CallingConvention.Cdecl)]
 		public static extern bool lua_toboolean(IntPtr L, int index);
 
-		[DllImport(LUADLL,CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(LUADLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern IntPtr lua_topointer(IntPtr L, int index);
+
+        [DllImport(LUADLL,CallingConvention = CallingConvention.Cdecl)]
 		public static extern IntPtr lua_tolstring(IntPtr L, int index, out IntPtr strLen);//[-0, +0, m]
 
         public static string lua_tostring(IntPtr L, int index)

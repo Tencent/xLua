@@ -241,6 +241,11 @@ namespace XLua
 
                 ret = toInvoke.IsConstructor ? ((ConstructorInfo)method).Invoke(args) : method.Invoke(targetNeeded ? target : null, args);
 
+                if (targetNeeded && targetType.IsValueType)
+                {
+                    translator.Update(L, 1, target);
+                }
+
                 int nRet = 0;
 
                 if (!isVoid)
@@ -457,15 +462,15 @@ namespace XLua
             if (!methodsOfType.ContainsKey(eventName))
             {
                 {
-                    EventInfo eventInfo = type.GetEvent(eventName, BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly | BindingFlags.Static);
+                    EventInfo eventInfo = type.GetEvent(eventName, BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly | BindingFlags.Static | BindingFlags.NonPublic);
                     if (eventInfo == null)
                     {
                         throw new Exception(type.Name + " has no event named: " + eventName);
                     }
                     int start_idx = 0;
 
-                    MethodInfo add = eventInfo.GetAddMethod();
-                    MethodInfo remove = eventInfo.GetRemoveMethod();
+                    MethodInfo add = eventInfo.GetAddMethod(true);
+                    MethodInfo remove = eventInfo.GetRemoveMethod(true);
 
                     if (add == null && remove == null)
                     {

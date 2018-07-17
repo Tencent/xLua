@@ -23,18 +23,19 @@ namespace XLua
 
             try
             {
-                var assmbly_path = Path.GetFullPath(args[0]);
+                var injectAssmblyPath = Path.GetFullPath(args[0]);
+                var xluaAssmblyPath = Path.GetFullPath(args[1]);
                 string cfg_append = null;
-                if (args.Length > 2)
+                if (args.Length > 3)
                 {
-                    cfg_append = Path.GetFullPath(args[2]);
+                    cfg_append = Path.GetFullPath(args[3]);
                     if (!cfg_append.EndsWith(".data"))
                     {
                         cfg_append = null;
                     }
                 }
                 AppDomain currentDomain = AppDomain.CurrentDomain;
-                List<string> search_paths = args.Skip(cfg_append == null ? 2 : 3).ToList();
+                List<string> search_paths = args.Skip(cfg_append == null ? 3 : 4).ToList();
                 currentDomain.AssemblyResolve += new ResolveEventHandler((object sender, ResolveEventArgs rea) =>
                 {
                     foreach (var search_path in search_paths)
@@ -47,8 +48,9 @@ namespace XLua
                     }
                     return null;
                 });
-                var assembly = Assembly.Load(File.ReadAllBytes(assmbly_path));
-                Hotfix.Config(assembly.GetTypes());
+                var assembly = Assembly.Load(File.ReadAllBytes(injectAssmblyPath));
+                var hotfixCfg = new Dictionary<string, int>();
+                HotfixConfig.GetConfig(hotfixCfg, assembly.GetTypes());
                 if (cfg_append != null)
                 {
                     using (BinaryReader reader = new BinaryReader(File.Open(cfg_append, FileMode.Open)))
@@ -58,14 +60,14 @@ namespace XLua
                         {
                             string k = reader.ReadString();
                             int v = reader.ReadInt32();
-                            if (!Hotfix.hotfixCfg.ContainsKey(k))
+                            if (!hotfixCfg.ContainsKey(k))
                             {
-                                Hotfix.hotfixCfg.Add(k, v);
+                                hotfixCfg.Add(k, v);
                             }
                         }
                     }
                 }
-                Hotfix.HotfixInject(assmbly_path, args.Skip(cfg_append == null ? 2 : 3), args[1]);
+                Hotfix.HotfixInject(injectAssmblyPath, xluaAssmblyPath, args.Skip(cfg_append == null ? 3 : 3), args[2], hotfixCfg);
             }
             catch(Exception e)
             {

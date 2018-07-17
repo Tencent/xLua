@@ -104,7 +104,10 @@ namespace XLua
 
         public override int GetHashCode()
         {
-            return luaReference + ((luaEnv != null) ? luaEnv.L.ToInt32() : 0);
+            LuaAPI.lua_getref(luaEnv.L, luaReference);
+            var pointer = LuaAPI.lua_topointer(luaEnv.L, -1);
+            LuaAPI.lua_pop(luaEnv.L, 1);
+            return pointer.ToInt32();
         }
 
         internal virtual void push(RealStatePtr L)

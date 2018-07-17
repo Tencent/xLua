@@ -129,7 +129,7 @@ namespace Tutorial
             return (ulong)(n + 1);
         }
 
-        class InnerCalc : Calc
+        class InnerCalc : ICalc
         {
             public int add(int a, int b)
             {
@@ -139,7 +139,7 @@ namespace Tutorial
             public int id = 100;
         }
 
-        public Calc GetCalc()
+        public ICalc GetCalc()
         {
             return new InnerCalc();
         }
@@ -151,7 +151,7 @@ namespace Tutorial
     }
 
     [LuaCallCSharp]
-    public interface Calc
+    public interface ICalc
     {
         int add(int a, int b);
     }
@@ -273,10 +273,10 @@ public class LuaCallCs : MonoBehaviour {
 
            --cast
            local calc = testobj:GetCalc()
-           calc:add(1, 2)
+           print('assess instance of InnerCalc via reflection', calc:add(1, 2))
            assert(calc.id == 100)
-           cast(calc, typeof(CS.Tutorial.Calc))
-           calc:add(1, 2)
+           cast(calc, typeof(CS.Tutorial.ICalc))
+           print('cast to interface ICalc', calc:add(1, 2))
            assert(calc.id == nil)
        end
 

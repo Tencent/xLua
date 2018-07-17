@@ -1,7 +1,6 @@
 ﻿using UnityEngine;
-using System.Collections;
 
-[XLua.Hotfix(XLua.HotfixFlag.Stateful)]
+[XLua.Hotfix]
 public class StatefullTest {
     public StatefullTest()
     {

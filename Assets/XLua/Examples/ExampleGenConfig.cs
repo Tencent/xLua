@@ -10,6 +10,8 @@ using System.Collections.Generic;
 using System;
 using UnityEngine;
 using XLua;
+//using System.Reflection;
+//using System.Linq;
 
 //配置的详细介绍请看Doc下《XLua的配置.doc》
 public static class ExampleGenConfig
@@ -42,6 +44,8 @@ public static class ExampleGenConfig
                 typeof(SkinnedMeshRenderer),
                 typeof(Renderer),
                 typeof(WWW),
+                typeof(Light),
+                typeof(Mathf),
                 typeof(System.Collections.Generic.List<int>),
                 typeof(Action<string>),
                 typeof(UnityEngine.Debug)
@@ -61,6 +65,7 @@ public static class ExampleGenConfig
     //黑名单
     [BlackList]
     public static List<List<string>> BlackList = new List<List<string>>()  {
+                new List<string>(){"System.Xml.XmlNodeList", "ItemOf"},
                 new List<string>(){"UnityEngine.WWW", "movie"},
     #if UNITY_WEBGL
                 new List<string>(){"UnityEngine.WWW", "threadPriority"},
@@ -69,6 +74,9 @@ public static class ExampleGenConfig
                 new List<string>(){"UnityEngine.Security", "GetChainOfTrustValue"},
                 new List<string>(){"UnityEngine.CanvasRenderer", "onRequestRebuild"},
                 new List<string>(){"UnityEngine.Light", "areaSize"},
+                new List<string>(){"UnityEngine.Light", "lightmapBakeType"},
+                new List<string>(){"UnityEngine.WWW", "MovieTexture"},
+                new List<string>(){"UnityEngine.WWW", "GetMovieTexture"},
                 new List<string>(){"UnityEngine.AnimatorOverrideController", "PerformOverrideClipListCleanup"},
     #if !UNITY_WEBPLAYER
                 new List<string>(){"UnityEngine.Application", "ExternalEval"},
@@ -83,4 +91,60 @@ public static class ExampleGenConfig
                 new List<string>(){"System.IO.DirectoryInfo", "Create", "System.Security.AccessControl.DirectorySecurity"},
                 new List<string>(){"UnityEngine.MonoBehaviour", "runInEditMode"},
             };
+
+    //static bool hasGenericParameter(Type type)
+    //{
+    //    if (type.IsGenericTypeDefinition) return true;
+    //    if (type.IsGenericParameter) return true;
+    //    if (type.IsByRef || type.IsArray)
+    //    {
+    //        return hasGenericParameter(type.GetElementType());
+    //    }
+    //    if (type.IsGenericType)
+    //    {
+    //        foreach (var typeArg in type.GetGenericArguments())
+    //        {
+    //            if (hasGenericParameter(typeArg))
+    //            {
+    //                return true;
+    //            }
+    //        }
+    //    }
+    //    return false;
+    //}
+
+    //// 配置某Assembly下所有涉及到的delegate到CSharpCallLua下，Hotfix下拿不准那些delegate需要适配到lua function可以这么配置
+    //[CSharpCallLua]
+    //static IEnumerable<Type> AllDelegate
+    //{
+    //    get
+    //    {
+    //        BindingFlags flag = BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public;
+    //        List<Type> allTypes = new List<Type>();
+    //        var allAssemblys = new Assembly[]
+    //        {
+    //            Assembly.Load("Assembly-CSharp")
+    //        };
+    //        foreach (var t in (from assembly in allAssemblys from type in assembly.GetTypes() select type))
+    //        {
+    //            var p = t;
+    //            while (p != null)
+    //            {
+    //                allTypes.Add(p);
+    //                p = p.BaseType;
+    //            }
+    //        }
+    //        allTypes = allTypes.Distinct().ToList();
+    //        var allMethods = from type in allTypes
+    //                         from method in type.GetMethods(flag)
+    //                         select method;
+    //        var returnTypes = from method in allMethods
+    //                          select method.ReturnType;
+    //        var paramTypes = allMethods.SelectMany(m => m.GetParameters()).Select(pinfo => pinfo.ParameterType.IsByRef ? pinfo.ParameterType.GetElementType() : pinfo.ParameterType);
+    //        var fieldTypes = from type in allTypes
+    //                         from field in type.GetFields(flag)
+    //                         select field.FieldType;
+    //        return (returnTypes.Concat(paramTypes).Concat(fieldTypes)).Where(t => t.BaseType == typeof(MulticastDelegate) && !hasGenericParameter(t)).Distinct();
+    //    }
+    //}
 }

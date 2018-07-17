@@ -31,7 +31,7 @@ namespace XLua.CSObjectWrap
         <%
         ForEachCsList(methods, function(method)
             local parameters = method:GetParameters()
-            local in_num = CalcCsList(parameters, function(p) return p.IsIn or not p.IsOut end)
+            local in_num = CalcCsList(parameters, function(p) return not (p.IsOut and p.ParameterType.IsByRef) end)
             local out_num = CalcCsList(parameters, function(p) return p.IsOut or p.ParameterType.IsByRef end)
             local in_pos = 0
             local has_return = (method.ReturnType.FullName ~= "System.Void")
@@ -77,12 +77,12 @@ namespace XLua.CSObjectWrap
                 local has_v_params = param_count > 0 and IsParams(parameters[param_count - 1])
 
 				ForEachCsList(parameters, function(parameter, pi) 
-					if parameter.IsIn or not parameter.IsOut then 
+					if not (parameter.IsOut and parameter.ParameterType.IsByRef) then 
 						%><%=GetPushStatement(parameter.ParameterType, parameter.Name, has_v_params and pi == param_count - 1)%>;
 				<% 
 					end
 				end) %>
-				int __gen_error = LuaAPI.lua_pcall(L, <%=has_v_params and ((in_num) .. " + " .. parameters[param_count - 1].Name .. ".Length" ) or (in_num + 1)%>, <%=out_num%>, err_func);
+				int __gen_error = LuaAPI.lua_pcall(L, <%=has_v_params and ((in_num) .. " + (".. parameters[param_count - 1].Name .. " == null ? 0 : " .. parameters[param_count - 1].Name .. ".Length)" ) or (in_num + 1)%>, <%=out_num%>, err_func);
 				if (__gen_error != 0)
 					luaEnv.ThrowExceptionFromError(err_func - 1);
 				
@@ -167,18 +167,226 @@ namespace XLua.CSObjectWrap
         <%end)%>
         
         <%ForEachCsList(events, function(event) %>
-        public event <%=CsFullTypeName(event.EventHandlerType)%> <%=event.Name%>;
+		public event <%=CsFullTypeName(event.EventHandlerType)%> <%=event.Name%>
+		{<%local parameters = event:GetAddMethod():GetParameters()%>
+			add
+			{
+#if THREAD_SAFE || HOTFIX_ENABLE
+				lock (luaEnv.luaEnvLock)
+				{
+#endif
+					RealStatePtr L = luaEnv.L;
+					int err_func = LuaAPI.load_error_func(L, luaEnv.errorFuncRef);
+					<%if CallNeedTranslator(event:GetAddMethod(), "") then %>ObjectTranslator translator = luaEnv.translator;<%end%>
+				
+					LuaAPI.lua_getref(L, luaReference);
+					LuaAPI.xlua_pushasciistring(L, "add_<%=event.Name%>");
+					if (0 != LuaAPI.xlua_pgettable(L, -2))
+					{
+						luaEnv.ThrowExceptionFromError(err_func - 1);
+					}
+					if(!LuaAPI.lua_isfunction(L, -1))
+					{
+						LuaAPI.xlua_pushasciistring(L, "no such function add_<%=event.Name%>");
+						luaEnv.ThrowExceptionFromError(err_func - 1);
+					}
+					LuaAPI.lua_pushvalue(L, -2);
+					LuaAPI.lua_remove(L, -3);
+					<%
+					local param_count = parameters.Length
+					local has_v_params = param_count > 0 and IsParams(parameters[param_count - 1])
+
+					ForEachCsList(parameters, function(parameter, pi) 
+						if not (parameter.IsOut and parameter.ParameterType.IsByRef) then 
+							%><%=GetPushStatement(parameter.ParameterType, parameter.Name, has_v_params and pi == param_count - 1)%>;
+					<% 
+						end
+					end) %>
+					int __gen_error = LuaAPI.lua_pcall(L, 2, 0, err_func);
+					if (__gen_error != 0)
+						luaEnv.ThrowExceptionFromError(err_func - 1);
+				
+					LuaAPI.lua_settop(L, err_func - 1);
+#if THREAD_SAFE || HOTFIX_ENABLE
+				}
+#endif
+			}
+
+			remove
+			{
+#if THREAD_SAFE || HOTFIX_ENABLE
+				lock (luaEnv.luaEnvLock)
+				{
+#endif
+					RealStatePtr L = luaEnv.L;
+					int err_func = LuaAPI.load_error_func(L, luaEnv.errorFuncRef);
+					<%if CallNeedTranslator(event:GetRemoveMethod(), "") then %>ObjectTranslator translator = luaEnv.translator;<%end%>
+				
+					LuaAPI.lua_getref(L, luaReference);
+					LuaAPI.xlua_pushasciistring(L, "remove_<%=event.Name%>");
+					if (0 != LuaAPI.xlua_pgettable(L, -2))
+					{
+						luaEnv.ThrowExceptionFromError(err_func - 1);
+					}
+					if(!LuaAPI.lua_isfunction(L, -1))
+					{
+						LuaAPI.xlua_pushasciistring(L, "no such function remove_<%=event.Name%>");
+						luaEnv.ThrowExceptionFromError(err_func - 1);
+					}
+					LuaAPI.lua_pushvalue(L, -2);
+					LuaAPI.lua_remove(L, -3);
+					<%
+					local param_count = parameters.Length
+					local has_v_params = param_count > 0 and IsParams(parameters[param_count - 1])
+
+					ForEachCsList(parameters, function(parameter, pi) 
+						if not (parameter.IsOut and parameter.ParameterType.IsByRef) then 
+							%><%=GetPushStatement(parameter.ParameterType, parameter.Name, has_v_params and pi == param_count - 1)%>;
+					<% 
+						end
+					end) %>
+					int __gen_error = LuaAPI.lua_pcall(L, 2, 0, err_func);
+					if (__gen_error != 0)
+						luaEnv.ThrowExceptionFromError(err_func - 1);
+				
+					LuaAPI.lua_settop(L, err_func - 1);
+#if THREAD_SAFE || HOTFIX_ENABLE
+				}
+#endif
+			}
+		}
         <%end)%>
 		
 		<%ForEachCsList(indexers, function(indexer) 
 		local ptype = (indexer:GetGetMethod() or indexer:GetSetMethod()):GetParameters()[0].ParameterType
+		local pname = (indexer:GetGetMethod() or indexer:GetSetMethod()):GetParameters()[0].Name
 		%>
-        public <%=CsFullTypeName(indexer.PropertyType)%> this[<%=CsFullTypeName(ptype)%> field] { 
-		<%if indexer:GetGetMethod() then%>
-		    get { return default(<%=CsFullTypeName(indexer.PropertyType)%>); }
+        public <%=CsFullTypeName(indexer.PropertyType)%> this[<%=CsFullTypeName(ptype)%> <%=pname%>]
+		{<%if indexer:GetGetMethod() then
+			local method = indexer:GetGetMethod()		
+            local parameters = method:GetParameters()
+            local in_num = CalcCsList(parameters, function(p) return not (p.IsOut and p.ParameterType.IsByRef) end)
+            local out_num = CalcCsList(parameters, function(p) return p.IsOut or p.ParameterType.IsByRef end)
+            local in_pos = 0
+            local has_return = (method.ReturnType.FullName ~= "System.Void")
+            local return_type_name = has_return and CsFullTypeName(method.ReturnType) or "void"
+            local out_idx = has_return and 2 or 1
+			if has_return then out_num = out_num + 1 end
+		%>
+		    get
+			{
+#if THREAD_SAFE || HOTFIX_ENABLE
+				lock (luaEnv.luaEnvLock)
+				{
+#endif
+					RealStatePtr L = luaEnv.L;
+					int err_func = LuaAPI.load_error_func(L, luaEnv.errorFuncRef);
+					<%if CallNeedTranslator(method, "") then %>ObjectTranslator translator = luaEnv.translator;<%end%>
+				
+					LuaAPI.lua_getref(L, luaReference);
+					LuaAPI.xlua_pushasciistring(L, "<%=method.Name%>");
+					if (0 != LuaAPI.xlua_pgettable(L, -2))
+					{
+						luaEnv.ThrowExceptionFromError(err_func - 1);
+					}
+					if(!LuaAPI.lua_isfunction(L, -1))
+					{
+						LuaAPI.xlua_pushasciistring(L, "no such function <%=method.Name%>");
+						luaEnv.ThrowExceptionFromError(err_func - 1);
+					}
+					LuaAPI.lua_pushvalue(L, -2);
+					LuaAPI.lua_remove(L, -3);
+					<%
+					local param_count = parameters.Length
+					local has_v_params = param_count > 0 and IsParams(parameters[param_count - 1])
+
+					ForEachCsList(parameters, function(parameter, pi) 
+						if not (parameter.IsOut and parameter.ParameterType.IsByRef) then 
+							%><%=GetPushStatement(parameter.ParameterType, parameter.Name, has_v_params and pi == param_count - 1)%>;
+					<% 
+						end
+					end) %>
+					int __gen_error = LuaAPI.lua_pcall(L, <%=has_v_params and ((in_num) .. " + " .. parameters[param_count - 1].Name .. ".Length" ) or (in_num + 1)%>, <%=out_num%>, err_func);
+					if (__gen_error != 0)
+						luaEnv.ThrowExceptionFromError(err_func - 1);
+				
+					<%ForEachCsList(parameters, function(parameter) 
+						if parameter.IsOut or parameter.ParameterType.IsByRef then 
+							%><%=GetCasterStatement(parameter.ParameterType, "err_func" .. (" + "..out_idx), parameter.Name)%>;
+					<%
+						out_idx = out_idx + 1
+						end
+					end) %>
+					<%if has_return then %><%=GetCasterStatement(method.ReturnType, "err_func + 1", "__gen_ret", true)%>;<% end%>
+					LuaAPI.lua_settop(L, err_func - 1);
+					<%if has_return then %>return  __gen_ret;<% end%>
+#if THREAD_SAFE || HOTFIX_ENABLE
+				}
+#endif
+			}
 		<%end%>
-		<%if indexer:GetSetMethod() then%>
-			set { } 
+		<%if indexer:GetSetMethod() then
+			local method = indexer:GetSetMethod()		
+            local parameters = method:GetParameters()
+            local in_num = CalcCsList(parameters, function(p) return not (p.IsOut and p.ParameterType.IsByRef) end)
+            local out_num = CalcCsList(parameters, function(p) return p.IsOut or p.ParameterType.IsByRef end)
+            local in_pos = 0
+            local has_return = (method.ReturnType.FullName ~= "System.Void")
+            local return_type_name = has_return and CsFullTypeName(method.ReturnType) or "void"
+            local out_idx = has_return and 2 or 1
+			if has_return then out_num = out_num + 1 end
+		%>
+			set
+			{
+#if THREAD_SAFE || HOTFIX_ENABLE
+				lock (luaEnv.luaEnvLock)
+				{
+#endif
+					RealStatePtr L = luaEnv.L;
+					int err_func = LuaAPI.load_error_func(L, luaEnv.errorFuncRef);
+					<%if CallNeedTranslator(method, "") then %>ObjectTranslator translator = luaEnv.translator;<%end%>
+				
+					LuaAPI.lua_getref(L, luaReference);
+					LuaAPI.xlua_pushasciistring(L, "<%=method.Name%>");
+					if (0 != LuaAPI.xlua_pgettable(L, -2))
+					{
+						luaEnv.ThrowExceptionFromError(err_func - 1);
+					}
+					if(!LuaAPI.lua_isfunction(L, -1))
+					{
+						LuaAPI.xlua_pushasciistring(L, "no such function <%=method.Name%>");
+						luaEnv.ThrowExceptionFromError(err_func - 1);
+					}
+					LuaAPI.lua_pushvalue(L, -2);
+					LuaAPI.lua_remove(L, -3);
+					<%
+					local param_count = parameters.Length
+					local has_v_params = param_count > 0 and IsParams(parameters[param_count - 1])
+
+					ForEachCsList(parameters, function(parameter, pi) 
+						if not (parameter.IsOut and parameter.ParameterType.IsByRef) then 
+							%><%=GetPushStatement(parameter.ParameterType, parameter.Name, has_v_params and pi == param_count - 1)%>;
+					<% 
+						end
+					end) %>
+					int __gen_error = LuaAPI.lua_pcall(L, <%=has_v_params and ((in_num) .. " + " .. parameters[param_count - 1].Name .. ".Length" ) or (in_num + 1)%>, <%=out_num%>, err_func);
+					if (__gen_error != 0)
+						luaEnv.ThrowExceptionFromError(err_func - 1);
+				
+					<%ForEachCsList(parameters, function(parameter) 
+						if parameter.IsOut or parameter.ParameterType.IsByRef then 
+							%><%=GetCasterStatement(parameter.ParameterType, "err_func" .. (" + "..out_idx), parameter.Name)%>;
+					<%
+						out_idx = out_idx + 1
+						end
+					end) %>
+					<%if has_return then %><%=GetCasterStatement(method.ReturnType, "err_func + 1", "__gen_ret", true)%>;<% end%>
+					LuaAPI.lua_settop(L, err_func - 1);
+					<%if has_return then %>return  __gen_ret;<% end%>
+#if THREAD_SAFE || HOTFIX_ENABLE
+				}
+#endif
+			} 
 		<%end%>
 		}
         <%end)%>
