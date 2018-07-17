@@ -357,3 +357,6 @@ f2(obj, 1, 2) --调用int版本
 
 考虑到生成代码量，不支持通过obj:ExtentionMethod()的方式去调用，支持通过静态方法的方式去调用CS.ExtentionClass.ExtentionMethod(obj)
 
+## 如何把xLua的Wrap生成操作集成到我项目的自动打包流程中？
+
+可以参考[例子13](../Examples/13_BuildFromCLI/)，通过命令行调用Unity自定义类方法出包。
