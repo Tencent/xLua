@@ -22,7 +22,7 @@ public static class BuildFromCLI
     /// </summary>
     public static void Build()
     {
-        var outputDir = Environment.GetCommandLineArgs()[0];
+        var outputDir = Application.dataPath.Substring(0, Application.dataPath.Length - "/Assets".Length) + "/output";
         var packageName = "xLuaGame.exe";
         build(outputDir, packageName);
     }
