@@ -154,6 +154,47 @@ go:GetButton().onClick:AddListener(function()
 end)
 ```
 
+如果xlua版本大于2.1.12的话，新增反射调用泛型方法的支持，比如对于这么个C#类型：
+```csharp
+public class GetGenericMethodTest
+{
+    int a = 100;
+    public int Foo<T1, T2>(T1 p1, T2 p2)
+    {
+        Debug.Log(typeof(T1));
+        Debug.Log(typeof(T2));
+        Debug.Log(p1);
+        Debug.Log(p2);
+        return a;
+    }
+
+    public static void Bar<T1, T2>(T1 p1, T2 p2)
+    {
+        Debug.Log(typeof(T1));
+        Debug.Log(typeof(T2));
+        Debug.Log(p1);
+        Debug.Log(p2);
+    }
+}
+```
+在lua那这么调用：
+```lua
+local foo_generic = xlua.get_generic_method(CS.GetGenericMethodTest, 'Foo')
+local bar_generic = xlua.get_generic_method(CS.GetGenericMethodTest, 'Bar')
+
+local foo = foo_generic(CS.System.Int32, CS.System.Double)
+local bar = bar_generic(CS.System.Double, CS.UnityEngine.GameObject)
+
+-- call instance method
+local o = CS.GetGenericMethodTest()
+local ret = foo(o, 1, 2)
+print(ret)
+
+-- call static method
+bar(2, nil)
+```
+
+
 ## 支持lua调用C#重载函数吗？
 
 支持，但没有C#端支持的那么完善，比如重载方法void Foo(int a)和void Foo(short a)，由于int和short都对应lua的number，是没法根据参数判断调用的是哪个重载。这时你可以借助扩展方法来为其中一个起一个别名。

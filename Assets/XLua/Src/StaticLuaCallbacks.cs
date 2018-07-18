@@ -1090,6 +1090,85 @@ namespace XLua
         }
 
         [MonoPInvokeCallback(typeof(LuaCSFunction))]
+        public static int GenericMethodWraper(RealStatePtr L)
+        {
+            try
+            {
+                ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
+                var genericMethod = translator.GetByType<MethodInfo>(L, LuaAPI.xlua_upvalueindex(1));
+                int n = LuaAPI.lua_gettop(L);
+                Type[] typeArguments = new Type[n];
+                for(int i = 0; i < n; i++)
+                {
+                    Type type = getType(L, translator, i + 1);
+                    if (type == null)
+                    {
+                        return LuaAPI.luaL_error(L, "param #" + (i + 1) + " is not a type");
+                    }
+                    typeArguments[i] = type;
+                }
+                var method = genericMethod.MakeGenericMethod(typeArguments);
+                translator.PushFixCSFunction(L,
+                        new LuaCSFunction(translator.methodWrapsCache._GenMethodWrap(method.DeclaringType, method.Name, new MethodBase[] { method }).Call));
+                return 1;
+            }
+            catch (Exception e)
+            {
+                return LuaAPI.luaL_error(L, "c# exception in GenericMethodWraper: " + e);
+            }
+        }
+
+        [MonoPInvokeCallback(typeof(LuaCSFunction))]
+        public static int GetGenericMethod(RealStatePtr L)
+        {
+            try
+            {
+                ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
+                Type type = getType(L, translator, 1);
+                if (type == null)
+                {
+                    return LuaAPI.luaL_error(L, "xlua.get_generic_method, can not find c# type");
+                }
+                string methodName = LuaAPI.lua_tostring(L, 2);
+                if (string.IsNullOrEmpty(methodName))
+                {
+                    return LuaAPI.luaL_error(L, "xlua.get_generic_method, #2 param need a string");
+                }
+                System.Collections.Generic.List<MethodInfo> matchMethods = new System.Collections.Generic.List<MethodInfo>();
+                var allMethods = type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance);
+                for(int i = 0; i < allMethods.Length; i++)
+                {
+                    var method = allMethods[i];
+                    if (method.Name == methodName && method.IsGenericMethodDefinition)
+                    {
+                        matchMethods.Add(method);
+                    }
+                }
+
+                int methodIdx = 0;
+
+                if (matchMethods.Count == 0)
+                {
+                    LuaAPI.lua_pushnil(L);
+                }
+                else
+                {
+                    if (LuaAPI.lua_isinteger(L, 3))
+                    {
+                        methodIdx = LuaAPI.xlua_tointeger(L, 3);
+                    }
+                    translator.PushAny(L, matchMethods[methodIdx]);
+                    LuaAPI.lua_pushstdcallcfunction(L, GenericMethodWraper, 1);
+                }
+            }
+            catch (Exception e)
+            {
+                return LuaAPI.luaL_error(L, "c# exception in xlua.get_generic_method: " + e);
+            }
+            return 1;
+        }
+
+        [MonoPInvokeCallback(typeof(LuaCSFunction))]
         public static int ReleaseCsObject(RealStatePtr L)
         {
             try

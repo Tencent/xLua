@@ -605,6 +605,9 @@ namespace XLua
             LuaAPI.xlua_pushasciistring(L, "tofunction");
             LuaAPI.lua_pushstdcallcfunction(L, StaticLuaCallbacks.ToFunction);
             LuaAPI.lua_rawset(L, -3);
+            LuaAPI.xlua_pushasciistring(L, "get_generic_method");
+            LuaAPI.lua_pushstdcallcfunction(L, StaticLuaCallbacks.GetGenericMethod);
+            LuaAPI.lua_rawset(L, -3);
             LuaAPI.xlua_pushasciistring(L, "release");
             LuaAPI.lua_pushstdcallcfunction(L, StaticLuaCallbacks.ReleaseCsObject);
             LuaAPI.lua_rawset(L, -3);
