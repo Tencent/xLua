@@ -686,7 +686,7 @@ namespace XLua
                 }
                 else
                 {
-#if LUA_DEBUG
+#if LUA_DEBUG && UNITY_EDITOR
                     //get asset's absolute path
                     string assetPath = UnityEditor.AssetDatabase.GetAssetPath(file);
                     if (assetPath != ""){
