@@ -6,6 +6,8 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
 */
 
+//#define LUA_DEBUG
+
 #if USE_UNI_LUA
 using LuaAPI = UniLua.Lua;
 using RealStatePtr = UniLua.ILuaState;
@@ -684,6 +686,17 @@ namespace XLua
                 }
                 else
                 {
+#if LUA_DEBUG
+                    //get asset's absolute path
+                    string assetPath = UnityEditor.AssetDatabase.GetAssetPath(file);
+					if (assetPath != ""){
+						//find out asset path, remove assetPath's first "Asset/"
+						int idx = assetPath.IndexOf("/");
+                        if(idx > 0){
+							filename = UnityEngine.Application.dataPath + assetPath.Substring(idx);
+                        }
+                    }
+#endif
                     if (LuaAPI.xluaL_loadbuffer(L, file.bytes, file.bytes.Length, "@" + filename) != 0)
                     {
                         return LuaAPI.luaL_error(L, String.Format("error loading module {0} from resource, {1}",
@@ -737,7 +750,11 @@ namespace XLua
                     var bytes = File.ReadAllBytes(filepath);
 
                     UnityEngine.Debug.LogWarning("load lua file from StreamingAssets is obsolete, filename:" + filename);
+#if LUA_DEBUG
+                    if (LuaAPI.xluaL_loadbuffer(L, bytes, bytes.Length, "@" + filepath) != 0)
+#else                    
                     if (LuaAPI.xluaL_loadbuffer(L, bytes, bytes.Length, "@" + filename) != 0)
+#endif                    
                     {
                         return LuaAPI.luaL_error(L, String.Format("error loading module {0} from streamingAssetsPath, {1}",
                             LuaAPI.lua_tostring(L, 1), LuaAPI.lua_tostring(L, -1)));
