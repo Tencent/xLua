@@ -689,11 +689,11 @@ namespace XLua
 #if LUA_DEBUG
                     //get asset's absolute path
                     string assetPath = UnityEditor.AssetDatabase.GetAssetPath(file);
-					if (assetPath != ""){
-						//find out asset path, remove assetPath's first "Asset/"
-						int idx = assetPath.IndexOf("/");
+                    if (assetPath != ""){
+                        //find out asset path, remove assetPath's first "Asset/"
+                        int idx = assetPath.IndexOf("/");
                         if(idx > 0){
-							filename = UnityEngine.Application.dataPath + assetPath.Substring(idx);
+                            filename = UnityEngine.Application.dataPath + assetPath.Substring(idx);
                         }
                     }
 #endif
