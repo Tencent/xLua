@@ -33,14 +33,18 @@ namespace XLua
         //返回-1表示没有标签
         static int getHotfixType(MemberInfo memberInfo)
         {
-            foreach (var ca in memberInfo.GetCustomAttributes(false))
+            try
             {
-                var ca_type = ca.GetType();
-                if (ca_type.ToString() == "XLua.HotfixAttribute")
+                foreach (var ca in memberInfo.GetCustomAttributes(false))
                 {
-                    return (int)(ca_type.GetProperty("Flag").GetValue(ca, null));
+                    var ca_type = ca.GetType();
+                    if (ca_type.ToString() == "XLua.HotfixAttribute")
+                    {
+                        return (int)(ca_type.GetProperty("Flag").GetValue(ca, null));
+                    }
                 }
             }
+            catch { }
             return -1;
         }
 

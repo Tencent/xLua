@@ -1095,7 +1095,8 @@ namespace XLua
             try
             {
                 ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
-                var genericMethod = translator.GetByType<MethodInfo>(L, LuaAPI.xlua_upvalueindex(1));
+                MethodInfo genericMethod;
+                translator.Get(L, LuaAPI.xlua_upvalueindex(1), out genericMethod);
                 int n = LuaAPI.lua_gettop(L);
                 Type[] typeArguments = new Type[n];
                 for(int i = 0; i < n; i++)
