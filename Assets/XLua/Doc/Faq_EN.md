@@ -224,6 +224,11 @@ If your xLua version is larger than v2.1.12, you can
 ~~~lua
 local List_String = CS.System.Collections.Generic.List(CS.System.String)
 local lst = List_String()
+
+local Dictionary_String_Vector3 = CS.System.Collections.Generic.Dictionary(CS.System.String, CS.UnityEngine.Vector3)
+local dic = Dictionary_String_Vector3()
+dic:Add('a', CS.UnityEngine.Vector3(1, 2, 3))
+print(dic:TryGetValue('a'))
 ~~~
 
 ## Why is the "try to dispose a LuaEnv with C# callback!" error reported when LuaEnv.Dispose is called?
