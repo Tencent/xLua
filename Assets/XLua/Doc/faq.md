@@ -260,6 +260,14 @@ dic:Add('a', CS.UnityEngine.Vector3(1, 2, 3))
 print(dic:TryGetValue('a'))
 ~~~
 
+如果你的xLua版本大于v2.1.12，将会有更漂亮的表达方式
+
+~~~lua
+local List_String = CS.System.Collections.Generic.List(CS.System.String)
+local lst = List_String()
+~~~
+
+
 ## 调用LuaEnv.Dispose时，报“try to dispose a LuaEnv with C# callback!”错是什么原因？
 
 这是由于C#还存在指向lua虚拟机里头某个函数的delegate，为了防止业务在虚拟机释放后调用这些无效（因为其引用的lua函数所在虚拟机都释放了）delegate导致的异常甚至崩溃，做了这个检查。

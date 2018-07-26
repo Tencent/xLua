@@ -219,6 +219,13 @@ dic:Add('a', CS.UnityEngine.Vector3(1, 2, 3))
 print(dic:TryGetValue('a'))
 ~~~
 
+If your xLua version is larger than v2.1.12, you can
+
+~~~lua
+local List_String = CS.System.Collections.Generic.List(CS.System.String)
+local lst = List_String()
+~~~
+
 ## Why is the "try to dispose a LuaEnv with C# callback!" error reported when LuaEnv.Dispose is called?
 
 This is because C# still has a delegate pointing to a function in the Lua virtual machine. Check this to prevent calling these invalid delegates after the virtual machine is released (They are invalid because the virtual machine on which the Lua function is referenced has been released.) from causing exceptions or even crashes.
