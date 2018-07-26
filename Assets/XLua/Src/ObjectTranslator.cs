@@ -587,6 +587,9 @@ namespace XLua
             LuaAPI.xlua_pushasciistring(L, "import_type");
 			LuaAPI.lua_pushstdcallcfunction(L,importTypeFunction);
 			LuaAPI.lua_rawset(L, -3);
+            LuaAPI.xlua_pushasciistring(L, "import_generic_type");
+            LuaAPI.lua_pushstdcallcfunction(L, StaticLuaCallbacks.ImportGenericType);
+            LuaAPI.lua_rawset(L, -3);
             LuaAPI.xlua_pushasciistring(L, "cast");
             LuaAPI.lua_pushstdcallcfunction(L, castFunction);
             LuaAPI.lua_rawset(L, -3);

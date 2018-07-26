@@ -864,6 +864,45 @@ namespace XLua
         }
 
         [MonoPInvokeCallback(typeof(LuaCSFunction))]
+        public static int ImportGenericType(RealStatePtr L)
+        {
+            try
+            {
+                int top = LuaAPI.lua_gettop(L);
+                if (top < 2) return LuaAPI.luaL_error(L, "import generic type need at lease 2 arguments");
+                ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
+                string className = LuaAPI.lua_tostring(L, 1);
+                Type genericDef = translator.FindType(className + "`" + (top - 1));
+                if (genericDef == null || !genericDef.IsGenericTypeDefinition)
+                {
+                    LuaAPI.lua_pushnil(L);
+                }
+                else
+                {
+                    Type[] typeArguments = new Type[top - 1];
+                    for(int i = 2; i <= top; i++)
+                    {
+
+                        typeArguments[i - 2] = getType(L, translator, i);
+                        if (typeArguments[i - 2] == null)
+                        {
+                            return LuaAPI.luaL_error(L, "param need a type");
+                        }
+                    }
+                    Type genericInc = genericDef.MakeGenericType(typeArguments);
+                    translator.GetTypeId(L, genericInc);
+                    translator.PushAny(L, genericInc);
+                }
+
+                return 1;
+            }
+            catch (System.Exception e)
+            {
+                return LuaAPI.luaL_error(L, "c# exception in xlua.import_type:" + e);
+            }
+        }
+
+        [MonoPInvokeCallback(typeof(LuaCSFunction))]
         public static int Cast(RealStatePtr L)
         {
             try
