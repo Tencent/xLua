@@ -872,6 +872,7 @@ namespace XLua
                 if (top < 2) return LuaAPI.luaL_error(L, "import generic type need at lease 2 arguments");
                 ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
                 string className = LuaAPI.lua_tostring(L, 1);
+                if (className.EndsWith("<>")) className = className.Substring(0, className.Length - 2);
                 Type genericDef = translator.FindType(className + "`" + (top - 1));
                 if (genericDef == null || !genericDef.IsGenericTypeDefinition)
                 {

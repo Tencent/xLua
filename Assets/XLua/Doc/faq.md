@@ -263,6 +263,7 @@ print(dic:TryGetValue('a'))
 如果你的xLua版本大于v2.1.12，将会有更漂亮的表达方式
 
 ~~~lua
+-- local List_String = CS.System.Collections.Generic['List<>'](CS.System.String) -- another way
 local List_String = CS.System.Collections.Generic.List(CS.System.String)
 local lst = List_String()
 
