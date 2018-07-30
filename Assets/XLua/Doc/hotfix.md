@@ -251,13 +251,12 @@ public class GenericClass<T>
 
 你只能对GenericClass\<double\>，GenericClass\<int\>这些类，而不是对GenericClass打补丁。
 
-另外值得一提的是，要注意泛化类型的命名方式，比如GenericClass\<double\>的命名是GenericClass`1[System.Double]，具体可以看[MSDN](https://msdn.microsoft.com/en-us/library/w3f99sx1.aspx)。
 
 对GenericClass<double>打补丁的实例如下：
 
 ```csharp
 luaenv.DoString(@"
-    xlua.hotfix(CS['GenericClass`1[System.Double]'], {
+    xlua.hotfix(CS.GenericClass(CS.System.Double), {
         ['.ctor'] = function(obj, a)
             print('GenericClass<double>', obj, a)
         end;

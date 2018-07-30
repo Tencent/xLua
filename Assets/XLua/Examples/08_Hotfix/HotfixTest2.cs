@@ -339,7 +339,7 @@ public class HotfixTest2 : MonoBehaviour {
         genericObj.Func1();
         Debug.Log(genericObj.Func2());
         luaenv.DoString(@"
-            xlua.hotfix(CS['GenericClass`1[System.Double]'], {
+            xlua.hotfix(CS.GenericClass(CS.System.Double), {
                 ['.ctor'] = function(obj, a)
                     print('GenericClass<double>', obj, a)
                 end;
@@ -379,7 +379,7 @@ public class HotfixTest2 : MonoBehaviour {
         GenericStruct<int> gs = new GenericStruct<int>(1);
         Debug.Log("gs.GetA()=" + gs.GetA(123));
         luaenv.DoString(@"
-            xlua.hotfix(CS['GenericStruct`1[System.Int32]'], 'GetA', function(self, a)
+            xlua.hotfix(CS.GenericStruct(CS.System.Int32), 'GetA', function(self, a)
                     print('GetA',self, a)
                     return 789
                 end)
@@ -403,7 +403,6 @@ public class HotfixTest2 : MonoBehaviour {
         luaenv.DoString(@"
             xlua.hotfix(CS.BaseTest, 'Foo', function(self, p)
                     print('BaseTest', p)
-                    base(self):Foo(p)
                 end)
             xlua.hotfix(CS.BaseTest, 'ToString', function(self)
                     return '>>>' .. base(self):ToString()
