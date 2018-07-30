@@ -390,7 +390,7 @@ namespace XLua
 
             if (!gen_interfaces.Contains(to_be_impl))
             {
-                throw new InvalidCastException("This type must add to CSharpCallLua: " + to_be_impl);
+                throw new InvalidCastException("This type must add to CSharpCallLua: " + to_be_impl.GetFriendlyName());
             }
 
             TypeBuilder impl_type_builder = CodeEmitModule.DefineType("XLuaGenInterfaceImpl" + (genID++), TypeAttributes.Public | TypeAttributes.Class, typeof(LuaBase), new Type[] { to_be_impl});

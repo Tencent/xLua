@@ -53,7 +53,7 @@ namespace XLua
                 Type type_of_value = typeof(TValue);
                 if (lua_type == LuaTypes.LUA_TNIL && type_of_value.IsValueType())
                 {
-                    throw new InvalidCastException("can not assign nil to " + type_of_value);
+                    throw new InvalidCastException("can not assign nil to " + type_of_value.GetFriendlyName());
                 }
 
                 try
@@ -147,7 +147,7 @@ namespace XLua
                 LuaTypes lua_type = LuaAPI.lua_type(L, -1);
                 if (lua_type == LuaTypes.LUA_TNIL && typeof(T).IsValueType())
                 {
-                    throw new InvalidCastException("can not assign nil to " + typeof(T));
+                    throw new InvalidCastException("can not assign nil to " + typeof(T).GetFriendlyName());
                 }
 
                 T value;

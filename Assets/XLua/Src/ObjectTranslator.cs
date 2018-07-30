@@ -373,7 +373,7 @@ namespace XLua
                 }
             }
 
-            throw new InvalidCastException("This type must add to CSharpCallLua: " + delegateType);
+            throw new InvalidCastException("This type must add to CSharpCallLua: " + delegateType.GetFriendlyName());
         }
         Dictionary<int, WeakReference> delegate_bridges = new Dictionary<int, WeakReference>();
         public object CreateDelegateBridge(RealStatePtr L, Type delegateType, int idx)
