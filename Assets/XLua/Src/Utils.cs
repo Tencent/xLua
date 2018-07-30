@@ -1378,7 +1378,7 @@ namespace XLua
             LuaAPI.lua_pop(L, 1);
 
             LuaAPI.xlua_getglobal(L, "CS");
-            ObjectTranslatorPool.FindTranslator(L).PushAny(L, type);
+            ObjectTranslatorPool.Instance.Find(L).PushAny(L, type);
             LuaAPI.lua_pushvalue(L, cls_table);
             LuaAPI.lua_rawset(L, -3);
             LuaAPI.lua_pop(L, 1);
