@@ -155,6 +155,8 @@ namespace XLua
         Inline = 16,
         IntKey = 32,
         AdaptByDelegate = 64,
+        IgnoreCompilerGenerated = 128,
+        NoBaseProxy = 256,
     }
 
     static class ExtentionMethods
@@ -693,9 +695,15 @@ namespace XLua
             }
 
             bool ignoreProperty = hotfixType.HasFlag(HotfixFlagInTool.IgnoreProperty);
+            bool ignoreCompilerGenerated = hotfixType.HasFlag(HotfixFlagInTool.IgnoreCompilerGenerated);
             bool ignoreNotPublic = hotfixType.HasFlag(HotfixFlagInTool.IgnoreNotPublic);
             bool isInline = hotfixType.HasFlag(HotfixFlagInTool.Inline);
             bool isIntKey = hotfixType.HasFlag(HotfixFlagInTool.IntKey);
+            bool noBaseProxy = hotfixType.HasFlag(HotfixFlagInTool.NoBaseProxy);
+            if (ignoreCompilerGenerated && type.CustomAttributes.Any(ca => ca.AttributeType.FullName == "System.Runtime.CompilerServices.CompilerGeneratedAttribute"))
+            {
+                return true;
+            }
             if (isIntKey && type.HasGenericParameters)
             {
                 throw new InvalidOperationException(type.FullName + " is generic definition, can not be mark as IntKey!");
@@ -712,6 +720,10 @@ namespace XLua
                 {
                     continue;
                 }
+                if (ignoreCompilerGenerated && method.CustomAttributes.Any(ca => ca.AttributeType.FullName == "System.Runtime.CompilerServices.CompilerGeneratedAttribute"))
+                {
+                    continue;
+                }
                 if (method.Name != ".cctor" && !method.IsAbstract && !method.IsPInvokeImpl && method.Body != null && !method.Name.Contains("<"))
                 {
                     //Debug.Log(method);
@@ -724,27 +736,34 @@ namespace XLua
                 }
             }
 
-            List<MethodDefinition> toAdd = new List<MethodDefinition>();
-            foreach (var method in type.Methods)
+            if (!noBaseProxy)
             {
-                if (ignoreNotPublic && !method.IsPublic)
+                List<MethodDefinition> toAdd = new List<MethodDefinition>();
+                foreach (var method in type.Methods)
                 {
-                    continue;
+                    if (ignoreNotPublic && !method.IsPublic)
+                    {
+                        continue;
+                    }
+                    if (ignoreProperty && method.IsSpecialName && (method.Name.StartsWith("get_") || method.Name.StartsWith("set_")))
+                    {
+                        continue;
+                    }
+                    if (ignoreCompilerGenerated && method.CustomAttributes.Any(ca => ca.AttributeType.FullName == "System.Runtime.CompilerServices.CompilerGeneratedAttribute"))
+                    {
+                        continue;
+                    }
+                    if (method.Name != ".cctor" && !method.IsAbstract && !method.IsPInvokeImpl && method.Body != null && !method.Name.Contains("<"))
+                    {
+                        var proxyMethod = tryAddBaseProxy(type, method);
+                        if (proxyMethod != null) toAdd.Add(proxyMethod);
+                    }
                 }
-                if (ignoreProperty && method.IsSpecialName && (method.Name.StartsWith("get_") || method.Name.StartsWith("set_")))
-                {
-                    continue;
-                }
-                if (method.Name != ".cctor" && !method.IsAbstract && !method.IsPInvokeImpl && method.Body != null && !method.Name.Contains("<"))
-                {
-                    var proxyMethod = tryAddBaseProxy(type, method);
-                    if (proxyMethod != null) toAdd.Add(proxyMethod);
-                }
-            }
 
-            foreach(var md in toAdd)
-            {
-                type.Methods.Add(md);
+                foreach (var md in toAdd)
+                {
+                    type.Methods.Add(md);
+                }
             }
 
             return true;
