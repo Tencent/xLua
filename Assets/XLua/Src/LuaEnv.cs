@@ -57,7 +57,7 @@ namespace XLua
         }
 #endif
 
-        const int LIB_VERSION_EXPECT = 104;
+        const int LIB_VERSION_EXPECT = 105;
 
         public LuaEnv()
         {
