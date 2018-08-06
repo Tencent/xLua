@@ -53,7 +53,9 @@
 
 
 #if defined(LUA_USE_WINDOWS)
+#if !defined(WINAPI_FAMILY_PARTITION)
 #define LUA_DL_DLL	/* enable support for DLL */
+#endif
 #define LUA_USE_C89	/* broadly, Windows is C89 */
 #endif
 

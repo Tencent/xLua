@@ -1,9 +1,5 @@
 ﻿using UnityEngine;
-using System.Collections.Generic;
 using XLua;
-
-[CSharpCallLua]
-public delegate int TestOutDelegate(HotfixCalc calc, int a, out double b, ref string c);
 
 [Hotfix]
 public class HotfixCalc

@@ -859,7 +859,7 @@ namespace CSObjectWrapEditor
         {
             return (toCheck != HotfixFlag.Stateless) && ((toCheck & flag) == flag);
         }
-        
+
         static void GenDelegateBridge(IEnumerable<Type> types, string save_path, IEnumerable<Type> hotfix_check_types)
         {
             string filePath = save_path + "DelegatesGensBridge.cs";
@@ -872,27 +872,7 @@ namespace CSObjectWrapEditor
             var bindingAttrOfConstructor = BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly | BindingFlags.NonPublic;
             foreach (var type in (from type in hotfix_check_types where type.IsDefined(typeof(HotfixAttribute), false) select type))
             {
-                if (type.Name.Contains("<"))
-                {
-                    continue;
-                }
-                var hotfixType = ((type.GetCustomAttributes(typeof(HotfixAttribute), false)[0]) as HotfixAttribute).Flag;
-                if (hotfixType.HasFlag(HotfixFlag.Inline))
-                {
-                    continue;
-                }
-                bool ignoreProperty = hotfixType.HasFlag(HotfixFlag.IgnoreProperty);
-                bool ignoreNotPublic = hotfixType.HasFlag(HotfixFlag.IgnoreNotPublic);
-                //ignoreProperty = true;
-                hotfxDelegates.AddRange(type.GetMethods(bindingAttrOfMethod)
-                    .Where(method => method.GetMethodBody() != null)
-                    .Where(method => !method.Name.Contains("<"))
-                    .Where(method => !ignoreNotPublic || method.IsPublic)
-                    .Where(method => !ignoreProperty || !method.IsSpecialName || (!method.Name.StartsWith("get_") && !method.Name.StartsWith("set_")))
-                    .Cast<MethodBase>()
-                    .Concat(type.GetConstructors(bindingAttrOfConstructor).Cast<MethodBase>())
-                    .Where(method => !injectByGeneric(method, hotfixType))
-                    .Select(method => makeHotfixMethodInfoSimulation(method, hotfixType)));
+                HotfixCfg[type] = ((type.GetCustomAttributes(typeof(HotfixAttribute), false)[0]) as HotfixAttribute).Flag;
             }
             foreach (var kv in HotfixCfg)
             {
@@ -902,10 +882,16 @@ namespace CSObjectWrapEditor
                 }
                 bool ignoreProperty = kv.Value.HasFlag(HotfixFlag.IgnoreProperty);
                 bool ignoreNotPublic = kv.Value.HasFlag(HotfixFlag.IgnoreNotPublic);
+                bool ignoreCompilerGenerated = kv.Value.HasFlag(HotfixFlag.IgnoreCompilerGenerated);
+                if (ignoreCompilerGenerated && kv.Key.IsDefined(typeof(CompilerGeneratedAttribute), false))
+                {
+                    continue;
+                }
                 //ignoreProperty = true;
                 hotfxDelegates.AddRange(kv.Key.GetMethods(bindingAttrOfMethod)
                     .Where(method => method.GetMethodBody() != null)
                     .Where(method => !method.Name.Contains("<"))
+                    .Where(method => !ignoreCompilerGenerated || !method.IsDefined(typeof(CompilerGeneratedAttribute), false))
                     .Where(method => !ignoreNotPublic || method.IsPublic)
                     .Where(method => !ignoreProperty || !method.IsSpecialName || (!method.Name.StartsWith("get_") && !method.Name.StartsWith("set_")))
                     .Cast<MethodBase>()
