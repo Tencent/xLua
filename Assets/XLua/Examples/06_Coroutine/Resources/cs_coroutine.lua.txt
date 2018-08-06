@@ -10,10 +10,13 @@ local gameobject = CS.UnityEngine.GameObject('Coroutine_Runner')
 CS.UnityEngine.Object.DontDestroyOnLoad(gameobject)
 local cs_coroutine_runner = gameobject:AddComponent(typeof(CS.Coroutine_Runner))
 
-local function async_yield_return(to_yield, cb)
-    cs_coroutine_runner:YieldAndCallback(to_yield, cb)
-end
-
 return {
-    yield_return = util.async_to_sync(async_yield_return)
+    start = function(func)
+	    local holder = CS.IEnumeratorHolder(util.cs_generator(func))
+	    cs_coroutine_runner:StartCoroutine(holder)
+		return holder
+	end;
+	stop = function(holder)
+	    cs_coroutine_runner:StopCoroutine(holder)
+	end
 }

@@ -4,21 +4,14 @@ using System.Collections.Generic;
 using System.Collections;
 using System;
 
-[LuaCallCSharp]
 public class Coroutine_Runner : MonoBehaviour
 {
-    public void YieldAndCallback(object to_yield, Action callback)
-    {
-        StartCoroutine(CoBody(to_yield, callback));
-    }
+}
 
-    private IEnumerator CoBody(object to_yield, Action callback)
+public class IEnumeratorHolder : XLua.Cast.Any<IEnumerator>
+{
+    public IEnumeratorHolder(IEnumerator i) : base(i)
     {
-        if (to_yield is IEnumerator)
-            yield return StartCoroutine((IEnumerator)to_yield);
-        else
-            yield return to_yield;
-        callback();
     }
 }
 
