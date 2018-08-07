@@ -11,8 +11,8 @@ CS.UnityEngine.Object.DontDestroyOnLoad(gameobject)
 local cs_coroutine_runner = gameobject:AddComponent(typeof(CS.Coroutine_Runner))
 
 return {
-    start = function(func)
-	    local holder = CS.IEnumeratorHolder(util.cs_generator(func))
+    start = function(...)
+	    local holder = CS.IEnumeratorHolder(util.cs_generator(...))
 	    cs_coroutine_runner:StartCoroutine(holder)
 		return holder
 	end;
