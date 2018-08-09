@@ -766,6 +766,10 @@ namespace XLua
                     {
                         obj = rawObject.Target;
                     }
+                    if (obj == null)
+                    {
+                        return !type.IsValueType;
+                    }
                     return type.IsAssignableFrom(obj.GetType());
                 }
 
@@ -1261,7 +1265,7 @@ namespace XLua
             }
             else if (objects.TryGetValue(udata, out obj))
             {
-#if !UNITY_5 && !XLUA_GENERAL && !UNITY_2017
+#if !UNITY_5 && !XLUA_GENERAL && !UNITY_2017 && !UNITY_2017_1_OR_NEWER && !UNITY_2018
                 if (obj != null && obj is UnityEngine.Object && ((obj as UnityEngine.Object) == null))
                 {
                     //throw new UnityEngine.MissingReferenceException("The object of type '"+ obj.GetType().Name +"' has been destroyed but you are still trying to access it.");
