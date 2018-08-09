@@ -1569,6 +1569,18 @@ namespace XLua
 {
     public static class Hotfix
     {
+        static bool ContainNotAsciiChar(string s)
+        {
+            for (int i = 0; i < s.Length; ++i)
+            {
+                if (s[i] > 127)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         [PostProcessScene]
         [MenuItem("XLua/Hotfix Inject In Editor", false, 3)]
         public static void HotfixInject()
@@ -1650,6 +1662,11 @@ namespace XLua
             foreach (var injectAssemblyPath in injectAssemblyPaths)
             {
                 args[1] = injectAssemblyPath.Replace('\\', '/');
+                if (ContainNotAsciiChar(args[1]))
+                {
+                    throw new Exception("project path must contain only ascii characters");
+                }
+
                 if (injectAssemblyPaths.Count > 1)
                 {
                     var injectAssemblyFileName = Path.GetFileName(injectAssemblyPath);
