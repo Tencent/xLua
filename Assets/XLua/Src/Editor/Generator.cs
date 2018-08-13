@@ -505,7 +505,7 @@ namespace CSObjectWrapEditor
             if (mb == null) return false;
             ObsoleteAttribute oa = Attribute.GetCustomAttribute(mb, typeof(ObsoleteAttribute)) as ObsoleteAttribute;
 #if XLUA_GENERAL || XLUA_JUST_EXCLUDE_ERROR
-            return oa.IsError
+            return oa.IsError;
 #else
             return oa != null;
 #endif
