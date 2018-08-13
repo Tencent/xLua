@@ -16,7 +16,7 @@ xLua目前以zip包形式发布，在工程目录下解压即可。
 
 如果你用的是热补丁，你需要把要注入的代码加到Hotfix列表；如果你需要通过delegate回调到lua的地方，也得把这些delegate配置到CSharpCallLua。
 
-xLua提供了强大的动态配置，让你可以结合反射实现任意的自动化配置，动态配置介绍看[这里](configure.md)。xLua希望你能根据自身项目的需求自行配置，同时为了方便部分对反射api了解不够的童鞋，xLua也针对上面两者方式分别写了参考配置：[ExampleConfig.cs](../Editor/ExampleConfig.cs)。
+xLua提供了强大的动态配置，让你可以结合反射实现任意的自动化配置，动态配置介绍看[这里](configure.md)。xLua希望你能根据自身项目的需求自行配置，同时为了方便部分对反射api了解不够的童鞋，xLua也针对上面两者方式分别写了参考配置：[ExampleConfig.cs](../Editor/ExampleConfig.cs)，直接打开相应部分的注释即可使用。
 
 ## lua源码只能以txt后缀？
 
