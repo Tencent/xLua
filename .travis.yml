@@ -5,7 +5,7 @@ script:
   - ./make_linux64_lua53.sh
   - ./make_linux64_luajit.sh
   - cd ../General
-  - xbuild /p:Configuration=Release vs2013/XLua.sln
+  - msbuild /property:Configuration=Release vs2013/XLua.sln
   - cp ../build/build_linux64/libxlua.so Bin/
   - cp ../build/build_linux64/libxlua.so Tools/
   - mono Bin/XLuaUnitTest.exe
@@ -13,7 +13,7 @@ script:
   - mv Gen Gen1
   - mono Tools/XLuaGenerate.exe Bin/XLuaUnitTest.exe
   - mv Gen Gen2
-  - xbuild /p:Configuration=Release vs2013/XLuaGenTest.sln
+  - msbuild /property:Configuration=Release vs2013/XLuaGenTest.sln
   - mono Bin/XLuaUnitTestGenCode.exe
   - cp ../build/build_linux64_lj/libxlua.so Bin/
   - mono Bin/XLuaUnitTest.exe

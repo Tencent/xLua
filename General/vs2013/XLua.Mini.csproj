@@ -38,9 +38,6 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="xlua">
-      <HintPath>..\..\Assets\Plugins\x86_64\xlua.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\..\Assets\XLua\Src\CodeEmit.cs">
