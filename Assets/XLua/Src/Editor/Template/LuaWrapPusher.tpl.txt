@@ -76,7 +76,6 @@ namespace XLua
 			end
 			if type_info.Flag == CS.XLua.OptimizeFlag.PackAsTable then
 			%>
-			var translator = this;
 			LuaAPI.xlua_pushcstable(L, <%=type_info.FieldInfos.Count%>, <%=type_id_var_name%>);
 			<%ForEachCsList(type_info.FieldInfos, function(fieldInfo)%>
 			LuaAPI.xlua_pushasciistring(L, "<%=fieldInfo.Name%>");

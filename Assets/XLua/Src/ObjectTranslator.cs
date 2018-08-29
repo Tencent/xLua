@@ -272,9 +272,9 @@ namespace XLua
             ERROR
         }
 
+#if UNITY_EDITOR || XLUA_GENERAL
         Type delegate_birdge_type;
 
-#if UNITY_EDITOR || XLUA_GENERAL
         class CompareByArgRet : IEqualityComparer<MethodInfo>
         {
             public bool Equals(MethodInfo x, MethodInfo y)
@@ -296,8 +296,8 @@ namespace XLua
 
         void initCSharpCallLua()
         {
-            delegate_birdge_type = typeof(DelegateBridge);
 #if UNITY_EDITOR || XLUA_GENERAL
+            delegate_birdge_type = typeof(DelegateBridge);
             if (!DelegateBridge.Gen_Flag)
             {
                 List<Type> cs_call_lua = new List<Type>();
