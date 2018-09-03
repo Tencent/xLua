@@ -160,7 +160,8 @@ namespace XLua
             if (error != 0)
             {
                 var lastOldTop = _oldTop;
-                InvokeSessionEnd();
+                _oldTop = _stack.Pop();
+                System.Threading.Monitor.Exit(luaEnv.luaEnvLock);
                 luaEnv.ThrowExceptionFromError(lastOldTop);
             }
         }
