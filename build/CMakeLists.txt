@@ -22,6 +22,7 @@ endif ()
 
 option ( UINT_ESPECIALLY "using custom ulong" OFF )
 option ( USING_LUAJIT "using luajit" OFF )
+option ( GC64 "using gc64" OFF )
 
 find_path(XLUA_PROJECT_DIR NAMES SConstruct
     PATHS 
@@ -167,6 +168,10 @@ endif ( )
 if ( WIN32 AND NOT CYGWIN )
     target_compile_definitions (xlua PRIVATE LUA_BUILD_AS_DLL)
 endif ( )
+
+if (GC64 AND USING_LUAJIT)
+    target_compile_definitions (xlua PRIVATE LUAJIT_ENABLE_GC64)
+endif ()
 
 set_property(
 	SOURCE ${LUA_SOCKET}
