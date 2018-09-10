@@ -23,9 +23,13 @@ namespace XLua
 {
 	public class ObjectTranslatorPool
 	{
-		private Dictionary<RealStatePtr, WeakReference> translators = new Dictionary<RealStatePtr, WeakReference>();
-		
-		public static ObjectTranslatorPool Instance
+#if !SINGLE_ENV
+        private Dictionary<RealStatePtr, WeakReference> translators = new Dictionary<RealStatePtr, WeakReference>();
+        RealStatePtr lastPtr = default(RealStatePtr);
+#endif
+        ObjectTranslator lastTranslator = default(ObjectTranslator);
+
+        public static ObjectTranslatorPool Instance
 		{
 			get
 			{
@@ -50,18 +54,14 @@ namespace XLua
             lock (this)
 #endif
             {
+                lastTranslator = translator;
+#if !SINGLE_ENV
                 var ptr = LuaAPI.xlua_gl(L);
                 lastPtr = ptr;
-                lastTranslator = translator;
-            
-#if !SINGLE_ENV
                 translators.Add(ptr , new WeakReference(translator));
-#endif   
+#endif
             }
         }
-
-        RealStatePtr lastPtr = default(RealStatePtr);
-        ObjectTranslator lastTranslator = default(ObjectTranslator);
 
 		public ObjectTranslator Find (RealStatePtr L)
 		{
@@ -93,7 +93,6 @@ namespace XLua
 #endif
             {
 #if SINGLE_ENV
-                lastPtr = default(RealStatePtr);
                 lastTranslator = default(ObjectTranslator);
 #else
                 var ptr = LuaAPI.xlua_gl(L);
