@@ -110,6 +110,10 @@ set ( XLUA_CORE
     xlua.c
 )
 
+if (NOT USING_LUAJIT)
+    list (APPEND XLUA_CORE memory_leak_checker.c)
+endif ( )
+
 macro(source_group_by_dir proj_dir source_files)
     if(MSVC OR APPLE)
         get_filename_component(sgbd_cur_dir ${proj_dir} ABSOLUTE)
