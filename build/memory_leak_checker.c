@@ -77,7 +77,7 @@ static void report_table(Table *h, ObjectRelationshipReport cb)
 		const TValue *item = &h->array[i];
 		if (ttistable(item))
 		{
-		    cb(h, gcvalue(item), 2, NULL, i, NULL);
+		    cb(h, gcvalue(item), 2, NULL, i + 1, NULL);
 		}
 	}
 
