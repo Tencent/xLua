@@ -104,7 +104,7 @@ static void report_table(Table *h, ObjectRelationshipReport cb)
 				else
 				{
 					// ???
-					cb(h, gcvalue(value), 1, NULL, 0, NULL);
+					cb(h, gcvalue(value), 1, NULL, ttnov(key), NULL);
 				}
 			}
 		}
