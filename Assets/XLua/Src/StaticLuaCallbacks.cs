@@ -1098,7 +1098,7 @@ namespace XLua
                 {
                     return LuaAPI.luaL_error(L, "delegate constructor: #1 argument must be a Delegate's type");
                 }
-                translator.PushAny(L, translator.GetObject(L, 2, type));
+                translator.PushAny(L, translator.CreateDelegateBridge(L, type, 2, true));
                 return 1;
             }
             catch (Exception e)
