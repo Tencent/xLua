@@ -401,7 +401,7 @@ namespace XLua
             return genericDelegateCreator(bridge);
         }
 
-        Delegate getDelegate(DelegateBridgeBase bridge, Type delegateType, bool tryGeneric)
+        Delegate getDelegate(DelegateBridgeBase bridge, Type delegateType)
         {
             Delegate ret = bridge.GetDelegateByType(delegateType);
 
@@ -430,19 +430,16 @@ namespace XLua
                 }
             }
 
-            if (tryGeneric)
+            ret = getDelegateUsingGeneric(bridge, delegateType, delegateMethod);
+            if (ret != null)
             {
-                ret = getDelegateUsingGeneric(bridge, delegateType, delegateMethod);
-                if (ret != null)
-                {
-                    return ret;
-                }
+                return ret;
             }
 
             throw new InvalidCastException("This type must add to CSharpCallLua: " + delegateType.GetFriendlyName());
         }
         Dictionary<int, WeakReference> delegate_bridges = new Dictionary<int, WeakReference>();
-        public object CreateDelegateBridge(RealStatePtr L, Type delegateType, int idx, bool tryGeneric = false)
+        public object CreateDelegateBridge(RealStatePtr L, Type delegateType, int idx)
         {
             LuaAPI.lua_pushvalue(L, idx);
             LuaAPI.lua_rawget(L, LuaIndexes.LUA_REGISTRYINDEX);
@@ -465,7 +462,7 @@ namespace XLua
                     }
                     else
                     {
-                        exist_delegate = getDelegate(exist_bridge, delegateType, tryGeneric);
+                        exist_delegate = getDelegate(exist_bridge, delegateType);
                         exist_bridge.AddDelegate(delegateType, exist_delegate);
                         return exist_delegate;
                     }
@@ -510,7 +507,7 @@ namespace XLua
                 return bridge;
             }
             try {
-                var ret = getDelegate(bridge, delegateType, tryGeneric);
+                var ret = getDelegate(bridge, delegateType);
                 bridge.AddDelegate(delegateType, ret);
                 delegate_bridges[reference] = new WeakReference(bridge);
                 return ret;

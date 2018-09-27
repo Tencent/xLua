@@ -62,30 +62,6 @@ ios和osx需要在mac下编译。
 
 如果编辑器下没问题，发布到手机报这错，表示你发布前没生成代码（执行“XLua/Generate Code”）。
 
-2018/9/26号加了个新功能：delegate桥接动态实例化
-
-如果delegate参数个数4个或4个以下，而且全部是引用类型，返回值是void或者引用类型的话，显式指明类型将会触发“delegate桥接动态实例化”
-
-例如C#里头有这样的全局的delegate：
-
-```csharp
-public delegate void ThreeMBAction(MonoBehaviour a, MonoBehaviour b, MonoBehaviour c);
-```
-
-ThreeMBAction虽然没加到CSharpCallLua，但可以通过这种方式触发动态实例化：
-
-```lua
---显式指定ThreeMBAction可以
-self.cb1 = CS.ThreeMBAction(function(x, y, z)
-    print(x, y, z)
-end)
-
---这种方式会报错
---self.cb1 = function(x, y, z)
---    print(x, y, z)
---end
-```
-
 ## unity5.5以上执行"XLua/Hotfix Inject In Editor"菜单会提示"WARNING: The runtime version supported by this application is unavailable."
 
 这是因为注入工具是用.net3.5编译，而unity5.5意思MonoBleedingEdge的mono环境并没3.5支持导致的，不过一般而言都向下兼容，目前为止也没发现该warning带来什么问题。
