@@ -216,4 +216,9 @@ print(dic:TryGetValue('a'))
 
 看[例子11](https://github.com/Tencent/xLua/blob/master/Assets/XLua/Examples/11_RawObject/RawObjectTest.cs)
 
+### 自定义Extension方法如何在Lua中调用？
 
+如果调用时提示没有找到Extension方法，可能有2个原因。
+
+1. 没有使用 `obj:ExtensionMethod` 的格式进行调用，而是使用了 `obj.ExtensionMethod` 的格式。（“:”是一个语法糖，详见导航教程）
+2. 被调用的Extension方法所在的类没有添加 `[LuaCallCSharp]` 标记，补充这个标记即可。
