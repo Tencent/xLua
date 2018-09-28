@@ -153,6 +153,16 @@ local function state(csobj, state)
     return state
 end
 
+local function print_func_ref_by_csharp()
+    local registry = debug.getregistry()
+    for k, v in pairs(registry) do
+        if type(k) == 'number' and type(v) == 'function' and registry[v] == k then
+            local info = debug.getinfo(v)
+            print(string.format('%s:%d', info.short_src, info.linedefined))
+        end
+    end
+end
+
 return {
     async_to_sync = async_to_sync,
     coroutine_call = coroutine_call,
@@ -163,4 +173,5 @@ return {
     bind = bind,
     createdelegate = createdelegate,
     state = state,
+    print_func_ref_by_csharp = print_func_ref_by_csharp,
 }

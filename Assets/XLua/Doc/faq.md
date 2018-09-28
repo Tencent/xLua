@@ -296,6 +296,20 @@ print(dic:TryGetValue('a'))
 
 要注意以上操作在Dispose之前完成。
 
+xlua提供了一个工具函数来帮助你找到被C#引用着的lua函数，util.print_func_ref_by_csharp，使用很简单，执行如下lua代码：
+
+~~~lua
+local util = require 'xlua.util'
+util.print_func_ref_by_csharp()
+~~~
+
+可以看到控制台有类似这样的输出，下面第一行表示有一个在main.lua的第2行定义的函数被C#引用着
+
+~~~bash
+LUA: main.lua:2
+LUA: main.lua:13
+~~~
+
 ## 调用LuaEnv.Dispose崩溃
 
 很可能是这个Dispose操作是由lua那驱动执行，相当于在lua执行的过程中把lua虚拟机给释放了，改为只由C#执行即可。
