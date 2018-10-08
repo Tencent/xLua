@@ -1,6 +1,6 @@
 ## Usage
 
-1. Add the HOTFIX_ENABLE macro to enable this feature (to File->Build Setting->Scripting Define Symbols on Unity3D). This macro should be set separately on the editor and each mobile platform! For automatic packaging, it should be noted that the macro set in the code in the API are not valid and it needs to be set in the editor.
+1. Add the HOTFIX_ENABLE macro to enable this feature (to File->Build Setting->Scripting Define Symbols on Unity3D). This macro should be set separately on the editor and each mobile platform! For automatic packaging, it should be noted that the macro set in the code in the API are not valid and it needs to be set in the editor. It would be best to ensure that the xlua code-generating is executed after modifying the scripting define symbols!
 
 (It is recommended that you use HOTFIX_ENABLE only for mobile phone build versions or for developing a patch in the editor, but not for usual development codes)
 
