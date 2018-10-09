@@ -148,7 +148,7 @@ if (APPLE)
         )
 		set_xcode_property (xlua IPHONEOS_DEPLOYMENT_TARGET "7.0")
     else ()
-        set(CMAKE_OSX_ARCHITECTURES "$(ARCHS_STANDARD_32_64_BIT)")
+        set(CMAKE_OSX_ARCHITECTURES "$(ARCHS_STANDARD_64_BIT)")
         add_library(xlua MODULE
             ${LUA_CORE}
             ${LUA_LIB}
