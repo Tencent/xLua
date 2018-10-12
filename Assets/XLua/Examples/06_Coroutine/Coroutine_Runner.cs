@@ -8,12 +8,6 @@ public class Coroutine_Runner : MonoBehaviour
 {
 }
 
-public class IEnumeratorHolder : XLua.Cast.Any<IEnumerator>
-{
-    public IEnumeratorHolder(IEnumerator i) : base(i)
-    {
-    }
-}
 
 public static class CoroutineConfig
 {
