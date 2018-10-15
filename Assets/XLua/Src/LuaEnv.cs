@@ -475,6 +475,10 @@ namespace XLua
                 return obj
             end
 
+            function metatable:__newindex()
+                error('No such type: ' .. rawget(self,'.fqn'), 2)
+            end
+
             -- A non-type has been called; e.g. foo = System.Foo()
             function metatable:__call(...)
                 local n = select('#', ...)
