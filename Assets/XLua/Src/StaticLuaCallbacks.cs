@@ -640,6 +640,14 @@ namespace XLua
         }
 
         [MonoPInvokeCallback(typeof(LuaCSFunction))]
+        internal static int LoadCS(RealStatePtr L)
+        {
+            LuaAPI.xlua_pushasciistring(L, LuaEnv.CSHARP_NAMESPACE);
+            LuaAPI.lua_rawget(L, LuaIndexes.LUA_REGISTRYINDEX);
+            return 1;
+        }
+
+        [MonoPInvokeCallback(typeof(LuaCSFunction))]
         internal static int LoadBuiltinLib(RealStatePtr L)
         {
             try
