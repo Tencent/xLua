@@ -214,7 +214,7 @@ namespace XLua
 
         public Type EmitDelegateImpl(IEnumerable<IGrouping<MethodInfo, Type>> groups)
         {
-            TypeBuilder impl_type_builder = CodeEmitModule.DefineType("XLuaGenDelegateImpl" + (genID++), TypeAttributes.Public, typeof(DelegateBridgeBase));
+            TypeBuilder impl_type_builder = CodeEmitModule.DefineType("XLuaGenDelegateImpl" + (genID++), TypeAttributes.Public, typeof(DelegateBridge));
 
             MethodBuilder get_deleate_by_type = impl_type_builder.DefineMethod("GetDelegateByType", MethodAttributes.Public
                     | MethodAttributes.HideBySig
@@ -251,7 +251,7 @@ namespace XLua
 
             // Constructor
             var ctor_param_types = new Type[] { typeof(int), typeof(LuaEnv) };
-            ConstructorInfo parent_ctor = typeof(DelegateBridgeBase).GetConstructor(ctor_param_types);
+            ConstructorInfo parent_ctor = typeof(DelegateBridge).GetConstructor(ctor_param_types);
             var ctor_builder = impl_type_builder.DefineConstructor(MethodAttributes.Public, CallingConventions.Standard, ctor_param_types);
             var ctor_il = ctor_builder.GetILGenerator();
             ctor_il.Emit(OpCodes.Ldarg_0);
