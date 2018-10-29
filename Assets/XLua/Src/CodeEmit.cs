@@ -1128,6 +1128,94 @@ namespace XLua
             return methodBuilder;
         }
 
+        static List<List<string>> blackList = null;
+        
+        static List<List<string>> getBlackList()
+        {
+            if (blackList == null)
+            {
+                blackList = new List<List<string>>();
+                foreach (var t in Utils.GetAllTypes(true))
+                {
+                    if (!t.IsAbstract || !t.IsSealed) continue;
+
+                    var fields = t.GetFields(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
+                    for (int i = 0; i < fields.Length; i++)
+                    {
+                        var field = fields[i];
+                        if (field.IsDefined(typeof(BlackListAttribute), false)
+                            && (typeof(List<List<string>>)).IsAssignableFrom(field.FieldType))
+                        {
+                            blackList.AddRange(field.GetValue(null) as List<List<string>>);
+                        }
+                    }
+
+                    var props = t.GetProperties(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
+                    for (int i = 0; i < props.Length; i++)
+                    {
+                        var prop = props[i];
+                        if (prop.IsDefined(typeof(BlackListAttribute), false)
+                            && (typeof(List<List<string>>)).IsAssignableFrom(prop.PropertyType))
+                        {
+                            blackList.AddRange(prop.GetValue(null, null) as List<List<string>>);
+                        }
+                    }
+                }
+            }
+            return blackList;
+        }
+
+        static bool isMemberInBlackList(MemberInfo mb)
+        {
+            if (mb is FieldInfo && (mb as FieldInfo).FieldType.IsPointer) return true;
+            if (mb is PropertyInfo && (mb as PropertyInfo).PropertyType.IsPointer) return true;
+
+            if (mb.IsDefined(typeof(BlackListAttribute), false)) return true;
+
+            foreach (var exclude in getBlackList())
+            {
+                if (mb.DeclaringType.FullName == exclude[0] && mb.Name == exclude[1])
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        static bool isMethodInBlackList(MethodBase mb)
+        {
+            //指针目前不支持，先过滤
+            if (mb.GetParameters().Any(pInfo => pInfo.ParameterType.IsPointer)) return true;
+            if (mb is MethodInfo && (mb as MethodInfo).ReturnType.IsPointer) return false;
+
+            if (mb.IsDefined(typeof(BlackListAttribute), false)) return true;
+
+            foreach (var exclude in getBlackList())
+            {
+                if (mb.DeclaringType.FullName == exclude[0] && mb.Name == exclude[1])
+                {
+                    var parameters = mb.GetParameters();
+                    if (parameters.Length != exclude.Count - 2)
+                    {
+                        continue;
+                    }
+                    bool paramsMatch = true;
+
+                    for (int i = 0; i < parameters.Length; i++)
+                    {
+                        if (parameters[i].ParameterType.FullName != exclude[i + 2])
+                        {
+                            paramsMatch = false;
+                            break;
+                        }
+                    }
+                    if (paramsMatch) return true;
+                }
+            }
+            return false;
+        }
+
         public Type EmitTypeWrap(Type toBeWrap)
         {
             TypeBuilder wrapTypeBuilder = CodeEmitModule.DefineType(toBeWrap.Name + "Wrap" + (genID++), TypeAttributes.Public | TypeAttributes.Class | TypeAttributes.Abstract | TypeAttributes.Sealed);
@@ -1146,11 +1234,13 @@ namespace XLua
             var instanceFlag = BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly;
             var staticFlag = BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly;
 
-            var instanceFields = toBeWrap.GetFields(instanceFlag);
-            var instanceProperties = toBeWrap.GetProperties(instanceFlag);
+            var instanceFields = toBeWrap.GetFields(instanceFlag).Where(m => !isMemberInBlackList(m));
+            var instanceProperties = toBeWrap.GetProperties(instanceFlag).Where(m => !isMemberInBlackList(m));
             var extensionMethods = Utils.GetExtensionMethodsOf(toBeWrap);
+            extensionMethods = (extensionMethods == null) ? Enumerable.Empty<MethodInfo>() : extensionMethods.Where(m => !isMemberInBlackList(m));
             var instanceMethods = toBeWrap.GetMethods(instanceFlag)
-                .Concat(extensionMethods == null ? Enumerable.Empty<MethodInfo>() : Utils.GetExtensionMethodsOf(toBeWrap))
+                .Where(m => !isMethodInBlackList(m))
+                .Concat(extensionMethods)
                 .Where(m => Utils.IsSupportedMethod(m))
                 .Where(m => !m.IsSpecialName
                     || (
@@ -1159,6 +1249,7 @@ namespace XLua
                        )
                 ).GroupBy(m => m.Name).ToList();
             var supportOperators = toBeWrap.GetMethods(staticFlag)
+                .Where(m => !isMethodInBlackList(m))
                 .Where(m => m.IsSpecialName && InternalGlobals.supportOp.ContainsKey(m.Name))
                 .GroupBy(m => m.Name);
 
