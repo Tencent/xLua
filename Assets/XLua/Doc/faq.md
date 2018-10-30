@@ -34,6 +34,16 @@ il2cpp默认会对诸如引擎、c#系统api，第三方dll等等进行代码剪
 
 解决办法：增加引用（比如配置到LuaCallCSharp，或者你自己C#代码增加那函数的访问），或者通过link.xml配置（当配置了ReflectionUse后，xlua会自动帮你配置到link.xml）告诉il2cpp别剪裁某类型。
 
+## Unity 2018.2设置.NET 4.X Equivalent时生成代码报错怎么解决？
+
+据研究表明，Unity 2018.2设置.NET 4.X Equivalent的话，其运行和编译用的库不一致，前者比后者多一些API。
+
+运行用的是：unity安装目录\Editor\Data\MonoBleedingEdge\lib\mono\unityjit\mscorlib.dll
+
+编译链接的是：unity安装目录\Editor\Data\MonoBleedingEdge\lib\mono\4.7.1-api\mscorlib.dll
+
+解决办法：xLua平时开发是不用生成代码的，所以不用管。发包前生成代码也好办，先切换到.NET 3.5生成，再切回来就可以了。
+
 ## Plugins源码在哪里可以找到，怎么使用？
 
 Plugins源码位于xLua_Project_Root/build下。
