@@ -19,14 +19,14 @@ namespace Tutorial
 	{
 		public static void BSFunc()
 		{
-			Debug.Log("Driven Static Func, BSF = " + BSF);
+			Debug.Log("Derived Static Func, BSF = " + BSF);
 		}
 
 		public static int BSF = 1;
 
 		public void BMFunc()
 		{
-			Debug.Log("Driven Member Func, BMF = " + BMF);
+			Debug.Log("Derived Member Func, BMF = " + BMF);
 		}
 
 		public int BMF { get; set; }
@@ -81,7 +81,7 @@ namespace Tutorial
 	}
 
 	[LuaCallCSharp]
-	public class DrivenClass : BaseClass
+	public class DerivedClass : BaseClass
 	{
 		[LuaCallCSharp]
 		public enum TestEnumInner
@@ -92,7 +92,7 @@ namespace Tutorial
 
 		public void DMFunc()
 		{
-			Debug.Log("Driven Member Func, DMF = " + DMF);
+			Debug.Log("Derived Member Func, DMF = " + DMF);
 		}
 
 		public int DMF { get; set; }
@@ -120,9 +120,9 @@ namespace Tutorial
 			Debug.Log("TestFunc(string i)");
 		}
 
-		public static DrivenClass operator +(DrivenClass a, DrivenClass b)
+		public static DerivedClass operator +(DerivedClass a, DerivedClass b)
 		{
-			DrivenClass ret = new DrivenClass();
+            DerivedClass ret = new DerivedClass();
 			ret.DMF = a.DMF + b.DMF;
 			return ret;
 		}
@@ -192,9 +192,9 @@ namespace Tutorial
 	}
 
 	[LuaCallCSharp]
-	public static class DrivenClassExtensions
-	{
-		public static int GetSomeData(this DrivenClass obj)
+	public static class DerivedClassExtensions
+    {
+		public static int GetSomeData(this DerivedClass obj)
 		{
 			Debug.Log("GetSomeData ret = " + obj.DMF);
 			return obj.DMF;
@@ -206,7 +206,7 @@ namespace Tutorial
 			return obj.BMF;
 		}
 
-		public static void GenericMethodOfString(this DrivenClass obj)
+		public static void GenericMethodOfString(this DerivedClass obj)
 		{
 			obj.GenericMethod<string>();
 		}
@@ -230,16 +230,16 @@ public class LuaCallCs : MonoBehaviour
             print('helloworld', GameObject.Find('helloworld')) --静态方法调用
 
             --访问成员属性，方法
-            local DrivenClass = CS.Tutorial.DrivenClass
-            local testobj = DrivenClass()
+            local DerivedClass = CS.Tutorial.DerivedClass
+            local testobj = DerivedClass()
             testobj.DMF = 1024--设置成员属性
             print(testobj.DMF)--读取成员属性
             testobj:DMFunc()--成员方法
 
             --基类属性，方法
-            print(DrivenClass.BSF)--读基类静态属性
-            DrivenClass.BSF = 2048--写基类静态属性
-            DrivenClass.BSFunc();--基类静态方法
+            print(DerivedClass.BSF)--读基类静态属性
+            DerivedClass.BSF = 2048--写基类静态属性
+            DerivedClass.BSFunc();--基类静态方法
             print(testobj.BMF)--读基类成员属性
             testobj.BMF = 4096--写基类成员属性
             testobj:BMFunc()--基类方法调用
@@ -265,7 +265,7 @@ public class LuaCallCs : MonoBehaviour
 		   priObj:TestFunc('hello')
 
            --操作符
-           local testobj2 = DrivenClass()
+           local testobj2 = DerivedClass()
            testobj2.DMF = 2048
            print('(testobj + testobj2).DMF = ', (testobj + testobj2).DMF)
 
@@ -285,7 +285,7 @@ public class LuaCallCs : MonoBehaviour
            local e = testobj:EnumTestFunc(CS.Tutorial.TestEnum.E1)
            print(e, e == CS.Tutorial.TestEnum.E2)
            print(CS.Tutorial.TestEnum.__CastFrom(1), CS.Tutorial.TestEnum.__CastFrom('E1'))
-           print(CS.Tutorial.DrivenClass.TestEnumInner.E3)
+           print(CS.Tutorial.DerivedClass.TestEnumInner.E3)
            assert(CS.Tutorial.BaseClass.TestEnumInner == nil)
 
            --Delegate

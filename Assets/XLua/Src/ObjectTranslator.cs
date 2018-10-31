@@ -344,6 +344,63 @@ namespace XLua
 #if UNITY_EDITOR || XLUA_GENERAL
         CodeEmit ce = new CodeEmit();
 #endif
+        MethodInfo[] genericAction = null;
+        MethodInfo[] genericFunc = null;
+        Dictionary<Type, Func<DelegateBridgeBase, Delegate>> genericDelegateCreatorCache
+            = new Dictionary<Type, Func<DelegateBridgeBase, Delegate>>();
+
+        Delegate getDelegateUsingGeneric(DelegateBridgeBase bridge, Type delegateType, MethodInfo delegateMethod)
+        {
+            Func<DelegateBridgeBase, Delegate> genericDelegateCreator;
+            if (!genericDelegateCreatorCache.TryGetValue(delegateType, out genericDelegateCreator))
+            {
+                if (genericAction == null)
+                {
+                    var methods = typeof(DelegateBridge).GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly);
+                    genericAction = methods.Where(m => m.Name == "Action").OrderBy(m => m.GetParameters().Length).ToArray();
+                    genericFunc = methods.Where(m => m.Name == "Func").OrderBy(m => m.GetParameters().Length).ToArray();
+                }
+                if (genericAction.Length != 5 || genericFunc.Length != 5)
+                {
+                    return null;
+                }
+                var parameters = delegateMethod.GetParameters();
+                if ((delegateMethod.ReturnType.IsValueType && delegateMethod.ReturnType != typeof(void)) || parameters.Length > 4)
+                {
+                    genericDelegateCreator = (x) => null;
+                }
+                else
+                {
+                    foreach (var pinfo in parameters)
+                    {
+                        if (pinfo.ParameterType.IsValueType || pinfo.IsOut || pinfo.ParameterType.IsByRef)
+                        {
+                            genericDelegateCreator = (x) => null;
+                            break;
+                        }
+                    }
+                    if (genericDelegateCreator == null)
+                    {
+                        var typeArgs = parameters.Select(pinfo => pinfo.ParameterType);
+                        MethodInfo genericMethodInfo = null;
+                        if (delegateMethod.ReturnType == typeof(void))
+                        {
+                            genericMethodInfo = genericAction[parameters.Length];
+                        }
+                        else
+                        {
+                            genericMethodInfo = genericFunc[parameters.Length];
+                            typeArgs = typeArgs.Concat(new Type[] { delegateMethod.ReturnType });
+                        }
+                        var methodInfo = genericMethodInfo.MakeGenericMethod(typeArgs.ToArray());
+                        genericDelegateCreator = (o) => Delegate.CreateDelegate(delegateType, o, methodInfo);
+                    }
+                }
+                genericDelegateCreatorCache.Add(delegateType, genericDelegateCreator);
+            }
+            return genericDelegateCreator(bridge);
+        }
+
         Delegate getDelegate(DelegateBridgeBase bridge, Type delegateType)
         {
             Delegate ret = bridge.GetDelegateByType(delegateType);
@@ -360,7 +417,7 @@ namespace XLua
 
             // get by parameters
             MethodInfo delegateMethod = delegateType.GetMethod("Invoke");
-            var methods = bridge.GetType().GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+            var methods = bridge.GetType().GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly).Where(m => !m.IsGenericMethodDefinition && (m.Name.StartsWith("__Gen_Delegate_Imp") || m.Name == "Action")).ToArray();
             for (int i = 0; i < methods.Length; i++)
             {
                 if (!methods[i].IsConstructor && Utils.IsParamsMatch(delegateMethod, methods[i]))
@@ -371,6 +428,12 @@ namespace XLua
                     return methods[i].CreateDelegate(delegateType, bridge); 
 #endif
                 }
+            }
+
+            ret = getDelegateUsingGeneric(bridge, delegateType, delegateMethod);
+            if (ret != null)
+            {
+                return ret;
             }
 
             throw new InvalidCastException("This type must add to CSharpCallLua: " + delegateType.GetFriendlyName());

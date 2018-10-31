@@ -47,7 +47,7 @@ namespace XLua
 		public static RealStatePtr GetMainState(RealStatePtr L)
 		{
 			RealStatePtr ret = default(RealStatePtr);
-			LuaAPI.xlua_pushasciistring(L, "xlua_main_thread");
+			LuaAPI.xlua_pushasciistring(L, LuaEnv.MAIN_SHREAD);
 			LuaAPI.lua_rawget(L, LuaIndexes.LUA_REGISTRYINDEX);
 			if (LuaAPI.lua_isthread(L, -1))
 			{
@@ -1315,12 +1315,10 @@ namespace XLua
 		public static void LoadCSTable(RealStatePtr L, Type type)
 		{
 			int oldTop = LuaAPI.lua_gettop(L);
-			if (0 != LuaAPI.xlua_getglobal(L, "CS"))
-			{
-				throw new Exception("call xlua_getglobal fail!");
-			}
+            LuaAPI.xlua_pushasciistring(L, LuaEnv.CSHARP_NAMESPACE);
+            LuaAPI.lua_rawget(L, LuaIndexes.LUA_REGISTRYINDEX);
 
-			List<string> path = getPathOfType(type);
+            List<string> path = getPathOfType(type);
 
 			for (int i = 0; i < path.Count; ++i)
 			{
@@ -1345,12 +1343,10 @@ namespace XLua
 		{
 			int oldTop = LuaAPI.lua_gettop(L);
 			cls_table = abs_idx(oldTop, cls_table);
-			if (0 != LuaAPI.xlua_getglobal(L, "CS"))
-			{
-				throw new Exception("call xlua_getglobal fail!");
-			}
+            LuaAPI.xlua_pushasciistring(L, LuaEnv.CSHARP_NAMESPACE);
+            LuaAPI.lua_rawget(L, LuaIndexes.LUA_REGISTRYINDEX);
 
-			List<string> path = getPathOfType(type);
+            List<string> path = getPathOfType(type);
 
 			for (int i = 0; i < path.Count - 1; ++i)
 			{
@@ -1381,8 +1377,9 @@ namespace XLua
 			LuaAPI.lua_rawset(L, -3);
 			LuaAPI.lua_pop(L, 1);
 
-			LuaAPI.xlua_getglobal(L, "CS");
-			ObjectTranslatorPool.Instance.Find(L).PushAny(L, type);
+            LuaAPI.xlua_pushasciistring(L, LuaEnv.CSHARP_NAMESPACE);
+            LuaAPI.lua_rawget(L, LuaIndexes.LUA_REGISTRYINDEX);
+            ObjectTranslatorPool.Instance.Find(L).PushAny(L, type);
 			LuaAPI.lua_pushvalue(L, cls_table);
 			LuaAPI.lua_rawset(L, -3);
 			LuaAPI.lua_pop(L, 1);

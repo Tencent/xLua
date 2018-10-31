@@ -33,7 +33,7 @@ namespace XLua
 			if pi ~= 0 then 
 				%>, <% 
 			end
-			if parameter.IsOut then 
+			if parameter.IsOut and parameter.ParameterType.IsByRef then 
 				%>out <%
 			elseif parameter.ParameterType.IsByRef then
 				%>ref <%

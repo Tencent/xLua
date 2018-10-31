@@ -34,6 +34,16 @@ il2cpp默认会对诸如引擎、c#系统api，第三方dll等等进行代码剪
 
 解决办法：增加引用（比如配置到LuaCallCSharp，或者你自己C#代码增加那函数的访问），或者通过link.xml配置（当配置了ReflectionUse后，xlua会自动帮你配置到link.xml）告诉il2cpp别剪裁某类型。
 
+## Unity 2018.2设置.NET 4.X Equivalent时生成代码报错怎么解决？
+
+据研究表明，Unity 2018.2设置.NET 4.X Equivalent的话，其运行和编译用的库不一致，前者比后者多一些API。
+
+运行用的是：unity安装目录\Editor\Data\MonoBleedingEdge\lib\mono\unityjit\mscorlib.dll
+
+编译链接的是：unity安装目录\Editor\Data\MonoBleedingEdge\lib\mono\4.7.1-api\mscorlib.dll
+
+解决办法：xLua平时开发是不用生成代码的，所以不用管。发包前生成代码也好办，先切换到.NET 3.5生成，再切回来就可以了。
+
 ## Plugins源码在哪里可以找到，怎么使用？
 
 Plugins源码位于xLua_Project_Root/build下。
@@ -296,6 +306,20 @@ print(dic:TryGetValue('a'))
 
 要注意以上操作在Dispose之前完成。
 
+xlua提供了一个工具函数来帮助你找到被C#引用着的lua函数，util.print_func_ref_by_csharp，使用很简单，执行如下lua代码：
+
+~~~lua
+local util = require 'xlua.util'
+util.print_func_ref_by_csharp()
+~~~
+
+可以看到控制台有类似这样的输出，下面第一行表示有一个在main.lua的第2行定义的函数被C#引用着
+
+~~~bash
+LUA: main.lua:2
+LUA: main.lua:13
+~~~
+
 ## 调用LuaEnv.Dispose崩溃
 
 很可能是这个Dispose操作是由lua那驱动执行，相当于在lua执行的过程中把lua虚拟机给释放了，改为只由C#执行即可。
@@ -429,3 +453,30 @@ f2(obj, 1, 2) --调用int版本
 这是因为Hotfix列表里头配置的类型（假设是类型A），对这些不存在的类型（假设是类型B）引用。找到这种类型，从Hotfix配置列表中排除（注意，排除的类型A，而不是类型B）。
 
 如何找？VS中选中报不存在的类型，然后“Find All References”找到引用了这个类型的所有方法、属性。。这些方法、属性等等所在的类型就是你要排除的类型。
+
+## 如何加载字节码
+
+用luac编译后直接加载即可。
+
+要注意默认lua字节码是区分32位和64位的，32位luac生成的字节码只能在32位虚拟机里头跑，可以按《[通用字节码](compatible_bytecode.md)》一文处理下。
+
+## lua持有的c#对象怎么释放
+
+达成下面两点即可释放：
+
+* 1、lua所有对该C#对象释放
+* 2、lua完成一次gc周期
+
+貌似所有gc都是上述条件，但对于lua要特别说明下第二点，lua不像C#那样会后台启动一个gc线程在做垃圾回收，而是把gc拆分成小步骤插入到有内存分配。
+
+所以注意一点：你没在运行lua代码，或者lua代码运行并未分配内存，你怎么等也不会有内存回收。
+
+默认gc配置，lua要到达上次内存回收完成时内存占用的两倍才开启一轮新的gc周期，举例上次回收完毕20M内存，那么下次要等到40M才开始一轮gc周期。
+
+按xLua的设计，一个C#对象引用传递到lua，仅让lua增加4字节内存（然而这可能是在C#侧内存占用很大的对象，比如贴图），可以看到通过持有C#引用要达成默认配置开启gc周期条件是比较困难的。
+
+这时可以这么干：
+
+* 1、设置GcPause，让gc更快开启，默认200表示2倍上次回收内存时开启，coco2dx设置为100，表示完成一趟gc后马上开启下一趟，另外也可以设置GcStepmul来加快gc回收速度，默认是200表示回收比内存分配快两倍，GcStepmul在coco2dx设置为5000
+* 2、可以在场景切换之类对于性能要求不高的地方加入全量gc调用（通过LuaEnv.FullGc或者在lua里头调用collectgarbage('collect')都可以）。
+

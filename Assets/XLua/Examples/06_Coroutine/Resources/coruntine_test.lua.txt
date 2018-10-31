@@ -8,6 +8,14 @@ local cs_coroutine = (require 'cs_coroutine')
 
 local a = cs_coroutine.start(function()
     print('coroutine a started')
+
+	coroutine.yield(cs_coroutine.start(function() 
+		print('coroutine b stated inside cotoutine a')
+		coroutine.yield(CS.UnityEngine.WaitForSeconds(1))
+		print('i am coroutine b')
+	end))
+	print('coroutine b finish')
+
 	while true do
 		coroutine.yield(CS.UnityEngine.WaitForSeconds(1))
 		print('i am coroutine a')
