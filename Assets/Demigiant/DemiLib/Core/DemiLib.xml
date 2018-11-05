@@ -1,0 +1,156 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>DemiLib</name>
+    </assembly>
+    <members>
+        <member name="F:DG.DemiLib.Core.GUIUtils.isProSkin">
+            <summary>
+            Set when calling <code>DeGUI.BeginGUI</code>
+            </summary>
+        </member>
+        <member name="T:DG.DemiLib.DeColorPalette">
+            <summary>
+            Stores a color palette, which can be passed to default DeGUI layouts when calling <code>DeGUI.BeginGUI</code>,
+            and changed at any time by calling <code>DeGUI.ChangePalette</code>.
+            You can inherit from this class to create custom color palettes with more hColor options.
+            </summary>
+        </member>
+        <member name="M:DG.DemiLib.DeColorPalette.HexToColor(System.String)">
+            <summary>
+            Converts a HEX color to a Unity Color and returns it
+            </summary>
+            <param name="hex">The HEX color, either with or without the initial # (accepts both regular and short format)</param>
+        </member>
+        <member name="T:DG.DemiLib.DeColorGlobal">
+            <summary>
+            Global colors
+            </summary>
+        </member>
+        <member name="T:DG.DemiLib.DeColorBG">
+            <summary>
+            Background colors
+            </summary>
+        </member>
+        <member name="F:DG.DemiLib.DeColorBG.editor">
+            <summary>Editor background color</summary>
+        </member>
+        <member name="T:DG.DemiLib.DeColorContent">
+            <summary>
+            Content colors
+            </summary>
+        </member>
+        <member name="T:DG.DemiLib.DeScope">
+             <summary>
+             Extend this to replicate Unity's Scope system with any Unity version.
+             Thanks to Dmitriy Yukhanov for pointing this out and creating an initial version.
+             Expand this class to create scopes.<para/>
+             Example:
+             <code>public class VBoxScope : DeScope
+             {
+                 public VBoxScope(GUIStyle style)
+                 {
+                     BeginVBox(style);
+                 }
+            
+                 protected override void CloseScope()
+                 { 
+                     EndVBox();
+                 }
+             }</code>
+             Usage:
+             <code>using (new VBoxScope(myStyle) {
+                 // Do something
+             }</code>
+             </summary>
+        </member>
+        <member name="T:DG.DemiLib.DeSkinColor">
+            <summary>
+            Contains both free and pro skins color variations,
+            and automatically returns the correct one when converted to Color
+            </summary>
+        </member>
+        <member name="T:DG.DemiLib.External.DeHierarchyComponent">
+            <summary>
+            Used by DeHierarchy
+            </summary>
+        </member>
+        <member name="M:DG.DemiLib.External.DeHierarchyComponent.MissingItemsIndexes">
+            <summary>
+            Returns a list of all items whose gameObject is NULL, or NULL if there's no missing gameObjects.
+            </summary>
+        </member>
+        <member name="M:DG.DemiLib.External.DeHierarchyComponent.StoreItemColor(UnityEngine.GameObject,DG.DemiLib.External.DeHierarchyComponent.HColor)">
+            <summary>
+            If the item exists sets it, otherwise first creates it and then sets it
+            </summary>
+        </member>
+        <member name="M:DG.DemiLib.External.DeHierarchyComponent.StoreItemIcon(UnityEngine.GameObject,DG.DemiLib.External.DeHierarchyComponent.IcoType)">
+            <summary>
+            If the item exists sets it, otherwise first creates it and then sets it
+            </summary>
+        </member>
+        <member name="M:DG.DemiLib.External.DeHierarchyComponent.RemoveItemData(UnityEngine.GameObject)">
+            <summary>
+            Returns TRUE if the item existed and was removed.
+            </summary>
+        </member>
+        <member name="M:DG.DemiLib.External.DeHierarchyComponent.GetItem(UnityEngine.GameObject)">
+            <summary>
+            Returns the customizedItem for the given gameObject, or NULL if none was found
+            </summary>
+        </member>
+        <member name="P:DG.DemiLib.IEditorGUINode.id">
+            <summary>Must be univocal</summary>
+        </member>
+        <member name="P:DG.DemiLib.IEditorGUINode.guiPosition">
+            <summary>Node position in editor GUI</summary>
+        </member>
+        <member name="P:DG.DemiLib.IEditorGUINode.connectedNodesIds">
+            <summary>Ids of all forward connected nodes. Length indicates how many forward connections are allowed.
+            Min length represents available connections from node.</summary>
+        </member>
+        <member name="T:DG.DemiLib.IntRange">
+            <summary>
+            A serializable struct including a min and a max int value
+            </summary>
+        </member>
+        <member name="F:DG.DemiLib.IntRange.min">
+            <summary>Min value</summary>
+        </member>
+        <member name="F:DG.DemiLib.IntRange.max">
+            <summary>Max value</summary>
+        </member>
+        <member name="M:DG.DemiLib.IntRange.#ctor(System.Int32,System.Int32)">
+            <summary>
+            Creates a new Range
+            </summary>
+        </member>
+        <member name="M:DG.DemiLib.IntRange.RandomWithin">
+            <summary>
+            Returns a random value within this range (min/max included)
+            </summary>
+        </member>
+        <member name="T:DG.DemiLib.Range">
+            <summary>
+            A serializable struct including a min and a max float value
+            </summary>
+        </member>
+        <member name="F:DG.DemiLib.Range.min">
+            <summary>Min value</summary>
+        </member>
+        <member name="F:DG.DemiLib.Range.max">
+            <summary>Max value</summary>
+        </member>
+        <member name="M:DG.DemiLib.Range.#ctor(System.Single,System.Single)">
+            <summary>
+            Creates a new Range
+            </summary>
+        </member>
+        <member name="M:DG.DemiLib.Range.RandomWithin">
+            <summary>
+            Returns a random value within this range (min/max included)
+            </summary>
+        </member>
+    </members>
+</doc>

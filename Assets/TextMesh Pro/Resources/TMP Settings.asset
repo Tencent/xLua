@@ -1,0 +1,103 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2705215ac5b84b70bacc50632be6e391, type: 3}
+  m_Name: TMP Settings
+  m_EditorClassIdentifier: 
+  m_enableWordWrapping: 1
+  m_enableKerning: 1
+  m_enableExtraPadding: 0
+  m_enableTintAllSprites: 0
+  m_enableParseEscapeCharacters: 1
+  m_missingGlyphCharacter: 0
+  m_warningsDisabled: 0
+  m_defaultFontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_defaultFontAssetPath: Fonts & Materials/
+  m_defaultFontSize: 36
+  m_defaultAutoSizeMinRatio: 0.5
+  m_defaultAutoSizeMaxRatio: 2
+  m_defaultTextMeshProTextContainerSize: {x: 20, y: 5}
+  m_defaultTextMeshProUITextContainerSize: {x: 200, y: 50}
+  m_autoSizeTextContainer: 0
+  m_fallbackFontAssets: []
+  m_matchMaterialPreset: 1
+  m_defaultSpriteAsset: {fileID: 11400000, guid: c41005c129ba4d66911b75229fd70b45,
+    type: 2}
+  m_defaultSpriteAssetPath: Sprite Assets/
+  m_defaultColorGradientPresetsPath: Color Gradient Presets/
+  m_enableEmojiSupport: 1
+  m_defaultStyleSheet: {fileID: 11400000, guid: f952c082cb03451daed3ee968ac6c63e,
+    type: 2}
+  m_leadingCharacters: {fileID: 4900000, guid: d82c1b31c7e74239bff1220585707d2b, type: 3}
+  m_followingCharacters: {fileID: 4900000, guid: fade42e8bc714b018fac513c043d323b,
+    type: 3}
+  m_FontCreatorRecentSettings:
+  - sourceFontFileName: 
+    sourceFontFileGUID: edcaa01543603ae4cb6b2edf25967e21
+    pointSizeSamplingMode: 1
+    pointSize: 109
+    padding: 12
+    packingMode: 0
+    atlasWidth: 128
+    atlasHeight: 128
+    characterSetSelectionMode: 5
+    characterSequence: 64
+    fontStyle: 0
+    fontStyleModifier: 2
+    renderMode: 281
+    includeFontFeatures: 0
+    referenceFontAssetGUID: 903613a9fe4b65946aa20dfcce07abec
+  - sourceFontFileName: 
+    sourceFontFileGUID: edcaa01543603ae4cb6b2edf25967e21
+    pointSizeSamplingMode: 0
+    pointSize: 108
+    padding: 12
+    packingMode: 0
+    atlasWidth: 128
+    atlasHeight: 128
+    characterSetSelectionMode: 5
+    characterSequence: 64
+    fontStyle: 0
+    fontStyleModifier: 2
+    renderMode: 2090
+    includeFontFeatures: 0
+    referenceFontAssetGUID: 70cf10c1d306ada42aa6cd7268db990d
+  - sourceFontFileName: 
+    sourceFontFileGUID: edcaa01543603ae4cb6b2edf25967e21
+    pointSizeSamplingMode: 1
+    pointSize: 109
+    padding: 12
+    packingMode: 0
+    atlasWidth: 128
+    atlasHeight: 128
+    characterSetSelectionMode: 5
+    characterSequence: 64
+    fontStyle: 0
+    fontStyleModifier: 2
+    renderMode: 329
+    includeFontFeatures: 0
+    referenceFontAssetGUID: 396d465a5821ead47b589b228da7e980
+  - sourceFontFileName: 
+    sourceFontFileGUID: edcaa01543603ae4cb6b2edf25967e21
+    pointSizeSamplingMode: 1
+    pointSize: 338
+    padding: 36
+    packingMode: 0
+    atlasWidth: 4096
+    atlasHeight: 4096
+    characterSetSelectionMode: 1
+    characterSequence: 32 - 126, 160 - 255, 8192 - 8303, 8364, 8482, 9633
+    fontStyle: 0
+    fontStyleModifier: 2
+    renderMode: 329
+    includeFontFeatures: 0
+    referenceFontAssetGUID: 3a4171c252e1112499af739474d9f48e
+  m_CreationSettingsSelectionIndex: 0
+  m_CreationSettingsIndex: 0

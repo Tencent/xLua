@@ -1,0 +1,49 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>DOTweenPro</name>
+    </assembly>
+    <members>
+        <member name="M:DG.Tweening.Core.ABSAnimationComponent.DORestart(System.Boolean)">
+            <summary>
+            Restarts the tween
+            </summary>
+            <param name="fromHere">If TRUE, re-evaluates the tween's start and end values from its current position.
+            Set it to TRUE when spawning the same DOTweenPath in different positions (like when using a pooling system)</param>
+        </member>
+        <member name="T:DG.Tweening.DOTweenPath">
+            <summary>
+            Attach this to a GameObject to create and assign a path to it
+            </summary>
+        </member>
+        <member name="M:DG.Tweening.DOTweenPath.DORestart(System.Boolean)">
+            <summary>
+            Restarts the tween
+            </summary>
+            <param name="fromHere">If TRUE, re-evaluates the tween's start and end values from its current position.
+            Set it to TRUE when spawning the same DOTweenPath in different positions (like when using a pooling system)</param>
+        </member>
+        <member name="M:DG.Tweening.DOTweenPath.GetDrawPoints">
+            <summary>
+            Returns a list of points that are used to draw the path inside the editor.
+            </summary>
+        </member>
+        <member name="T:DG.Tweening.Plugins.SpiralPlugin">
+            <summary>
+            Tweens a Vector3 along a spiral.
+            EndValue represents the direction of the spiral
+            </summary>
+        </member>
+        <member name="T:DG.Tweening.SpiralMode">
+            <summary>
+            Spiral tween mode
+            </summary>
+        </member>
+        <member name="F:DG.Tweening.SpiralMode.Expand">
+            <summary>The spiral motion will expand outwards for the whole the tween</summary>
+        </member>
+        <member name="F:DG.Tweening.SpiralMode.ExpandThenContract">
+            <summary>The spiral motion will expand outwards for half the tween and then will spiral back to the starting position</summary>
+        </member>
+    </members>
+</doc>

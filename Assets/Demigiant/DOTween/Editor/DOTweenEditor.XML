@@ -1,0 +1,77 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>DOTweenEditor</name>
+    </assembly>
+    <members>
+        <member name="M:DG.DOTweenEditor.EditorUtils.SetEditorTexture(UnityEngine.Texture2D,UnityEngine.FilterMode,System.Int32)">
+            <summary>
+            Checks that the given editor texture use the correct import settings,
+            and applies them if they're incorrect.
+            </summary>
+        </member>
+        <member name="M:DG.DOTweenEditor.EditorUtils.DOTweenSetupRequired">
+            <summary>
+            Returns TRUE if setup is required
+            </summary>
+        </member>
+        <member name="M:DG.DOTweenEditor.EditorUtils.AssetExists(System.String)">
+            <summary>
+            Returns TRUE if the file/directory at the given path exists.
+            </summary>
+            <param name="adbPath">Path, relative to Unity's project folder</param>
+            <returns></returns>
+        </member>
+        <member name="M:DG.DOTweenEditor.EditorUtils.ADBPathToFullPath(System.String)">
+            <summary>
+            Converts the given project-relative path to a full path,
+            with backward (\) slashes).
+            </summary>
+        </member>
+        <member name="M:DG.DOTweenEditor.EditorUtils.FullPathToADBPath(System.String)">
+            <summary>
+            Converts the given full path to a path usable with AssetDatabase methods
+            (relative to Unity's project folder, and with the correct Unity forward (/) slashes).
+            </summary>
+        </member>
+        <member name="M:DG.DOTweenEditor.EditorUtils.ConnectToSourceAsset``1(System.String,System.Boolean)">
+            <summary>
+            Connects to a <see cref="T:UnityEngine.ScriptableObject"/> asset.
+            If the asset already exists at the given path, loads it and returns it.
+            Otherwise, either returns NULL or automatically creates it before loading and returning it
+            (depending on the given parameters).
+            </summary>
+            <typeparam name="T">Asset type</typeparam>
+            <param name="adbFilePath">File path (relative to Unity's project folder)</param>
+            <param name="createIfMissing">If TRUE and the requested asset doesn't exist, forces its creation</param>
+        </member>
+        <member name="M:DG.DOTweenEditor.EditorUtils.GetAssemblyFilePath(System.Reflection.Assembly)">
+            <summary>
+            Full path for the given loaded assembly, assembly file included
+            </summary>
+        </member>
+        <member name="M:DG.DOTweenEditor.EditorUtils.AddGlobalDefine(System.String)">
+            <summary>
+            Adds the given global define if it's not already present
+            </summary>
+        </member>
+        <member name="M:DG.DOTweenEditor.EditorUtils.RemoveGlobalDefine(System.String)">
+            <summary>
+            Removes the given global define if it's present
+            </summary>
+        </member>
+        <member name="M:DG.DOTweenEditor.EditorUtils.HasGlobalDefine(System.String,System.Nullable{UnityEditor.BuildTargetGroup})">
+            <summary>
+            Returns TRUE if the given global define is present in all the <see cref="T:UnityEditor.BuildTargetGroup"/>
+            or only in the given <see cref="T:UnityEditor.BuildTargetGroup"/>, depending on passed parameters.<para/>
+            </summary>
+            <param name="id"></param>
+            <param name="buildTargetGroup"><see cref="T:UnityEditor.BuildTargetGroup"/>to use. Leave NULL to check in all of them.</param>
+        </member>
+        <member name="T:DG.DOTweenEditor.DOTweenDefines">
+            <summary>
+            Not used as menu item anymore, but as a utiity function
+            </summary>
+        </member>
+    </members>
+</doc>

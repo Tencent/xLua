@@ -1,0 +1,489 @@
+syntax = "proto3";
+package nkclient;
+//心跳0x1001
+//CLIENT_SEND_USER_LOGIN_HALL             = 0x1002,
+message LoginHallReq
+{
+    int32  uid       = 1;
+    string uuid      = 2;
+    int32  gameid    = 3;
+    int32  did       = 4;
+    int32  clientVer = 5;
+    int32  userLevel = 6;
+    int64  userMoney = 7;
+};
+
+message LoginHallResp
+{
+    int32 ret = 1;  // 0:登录成功，其他：错误码
+    int32 tid = 2;
+};
+
+//CLIENT_SEND_USER_REQUEST_ALLOCATE_ROOM	= 0x1003,
+//CLI_CHANGE_ROOM               = 0x1004  --用户请求换桌
+message AllocTableReq
+{
+    int32 roomLevel = 1;
+    int32 userLevel = 2;
+    int64 userMoney = 3;
+    int32 tid       = 4;
+ };
+
+message AllocTableResp
+{
+    int32 ret = 1;
+    int32 tid = 2;
+};
+
+//SERVER_SEND_KICK_OUT_USER		        = 0x1101,
+message KickOutUser
+{
+    int32 reason = 1;
+};
+
+//TRACE_FRIEND                  =0x1005
+message TraceFriendReq
+{
+    int32 uid = 1;
+};
+
+message TraceFriendResp
+{
+    int32 uid       = 1;
+    int32 status    = 2;
+    int32 tid       = 3;
+    int32 roomLevel = 4;
+};
+
+message BroadcastMsg
+{
+	int32  uid   = 1;
+	int32  mtype = 2;
+	string info  = 3;
+};
+
+message LevelCount
+{
+    int32 level = 1;
+    int32 count = 2;
+};
+//CLI_REQUEST_COUNT_OF_TABLE             =0x1006   --请求各场次人数
+message GetUserCountResp
+{
+    repeated LevelCount levelList = 1;
+};
+
+
+//CLIENT_MSG_LOGIN			= 0x0101,	// 登录
+message LoginGameReq
+{
+    int32  uid       = 1;
+    int32  tid       = 2;
+    int32  did       = 3;
+    int32  clientVer = 4;
+    string mtkey     = 5;
+    string username  = 6;
+    string baseInfo  = 7;
+};
+
+message PlayerInfo
+{
+    int32    uid            = 1;
+    int32    seatId         = 2;
+    int32    userStatus     = 3;
+    int32    online         = 4;
+    string   userInfo       = 5;
+    int64    curCarry       = 6;   //携带
+    int64    curAnte        = 7;   //当前下注
+    int32    wintimes       = 8;
+    int32    losetimes      = 9;
+    int32    specialCard    = 10;
+    int64    userMoney      = 11;
+    int32    addExp         = 12;  //结算时加的经验
+    int32    addMoney       = 13;  //结算
+    repeated Card cards     = 14;  //手牌
+    int32    isShow         = 15;
+    repeated Card bestCards = 16;  //最大牌组合
+    int32    multiple       = 17;  //牌型倍数
+    int32    roomFee        = 18;  //台费
+    int32    cardsCnt       = 19;  //牌数量
+    int32    index          = 20;  //位置编号
+    repeated BetInfo betInfo = 21; //下注信息
+    int32    settleState    = 22;  //结算状态 0正常结算 1封顶 2包赔
+    repeated Card outCards  = 23;  //当前回合出牌
+    int32    vipLevel       = 24;  //vip等级
+};
+
+message TableInfo
+{
+    int32    tid            = 2;
+    int32    level          = 3;
+    int32    tableStatus    = 4;
+    int32    bankSeatid     = 5;   //庄家座位id
+    int64    defaultAnte    = 6;   //底注
+    int64    totalAnte      = 7;   //桌上总筹码
+    int32    curSeatid      = 8;
+    int32    leftTime       = 9;   //操作剩余时间
+    int64    quickCall      = 10;  //快速跟注
+    int64    minCall        = 11;  //最小加注
+    int64    maxCall        = 12;  //最大加注
+    int32    roundTime      = 13;  //操作时间
+    int32    maxSeatCnt     = 14;
+    int64    minCarry       = 15;  //最小携带
+    int64    maxCarry       = 16;  //最大携带
+    int64    defaultCarry   = 17;  //默认携带
+    int32    roomTab        = 18;  //初中高
+    repeated Card boardCard = 19;  //桌面公共牌
+    int32    sysBanker      = 20;  //系统做庄 
+    int32 boardCardTimes    = 21;   //公共牌倍数
+    int32 bankUserId        = 22;   //庄家ID
+    repeated Card leftCards = 23;   //剩余牌
+};
+//登录成功，发送桌面信息
+message SendTableInfo
+{
+    int32     ret                   = 1;
+    TableInfo table                 = 2;
+    repeated  PlayerInfo playerList = 3;
+};
+
+//CLI_SIT_DOWN                  = 0x0102    --用户请求坐下
+message UserSitDownReq
+{
+    int32 seatId    = 1;
+    int64 ante      = 2;  //携带
+    int32 autoBuyin = 3;
+};
+
+message UserSitDownResp
+{
+    int32 ret = 1;  // 0:成功，
+};
+
+//SVR_SIT_DOWN            = 0x0201    --服务器广播用户坐下
+message SrvBroadcastSitDown
+{
+    int32  uid       = 1;
+    int32  seatId    = 2;
+    int64  curCarry  = 3;  //携带
+    int64  userMoney = 4;  //总钱数
+    string userInfo  = 5;
+};
+
+message UserAnte
+{
+    int32 seatId   = 1;
+    int64 curCarry = 2;  //当前携带
+    int64 bonus    = 3;  //结算得奖
+};
+
+message Card
+{
+    int32 card = 1;
+};
+
+//SVR_GAME_START                 = 0x0202    --服务器广播游戏开始,前端收到这个包后，跑下注动画
+message SrvSendGameStart
+{
+    int32    bankSeatid        = 1;  //庄家ID
+    int64    defaultAnte       = 2;
+    int64    totalAnte         = 3;  //当前总下注
+    repeated UserAnte anteList = 4;
+    repeated Card cards        = 5;  //用户手牌
+    int32    specialCard       = 6;
+    int32    cardsCnt          = 7;
+    int32    roundTime         = 8; // 操作时间
+};
+
+//CLI_STAND_UP                   = 0x0103    --用户请求站立
+message UserStandUpResp
+{
+    int64 userMoney = 1;  //用户金钱
+    int32 ret       = 2;  // 0:成功，
+};
+
+//SVR_OTHER_STAND_UP             = 0x0203    --服务器广播用户站起
+message SrvBroadcastStandUp
+{
+    int32 uid    = 1;
+    int32 seatId = 2;
+};
+
+//CLI_SEND_TIP_TO_GIRL   = 0x0104    --玩家打赏小费   -- 不做
+message UserSendTipsReq
+{
+    int64 money = 1;
+};
+
+message UserSendTipsResp
+{
+    int32 ret       = 1;
+    int64 count     = 2;  //打赏金额
+    int64 curCarry  = 3;
+    int64 userMoney = 4;
+};
+
+//CLI_SEND_ROOM_COST_PROP                   = 0x0105   --玩家发送付费表情、道具
+message UserSendPropReq
+{
+    int64 money  = 1;
+    int32 type   = 2;
+    int32 id     = 3;
+    int32 seatId = 4;  //目标座位id
+    int32 count  = 5;
+};
+
+message UserSendPropResp
+{
+    int32 ret       = 1;
+    int64 price     = 2;
+    int64 curCarry  = 3;
+    int64 userMoney = 4;
+    int32 type      = 5;
+    int32 id        = 6;
+    int32 seatId    = 7;
+    int32 count     = 8;
+};
+
+//SVN_AUTO_ADD_MIN_CHIPS                    =0x0204         --自动买入筹码服务器通知
+message AutoBuyinResp
+{
+    int64 curCarry = 1;
+};
+
+//CLI_USER_IN_BACKGROUND                    =0x0106         --用户home状态
+//--回复桌子信息 sendtableinfo
+
+//SVR_NEXT_BET       = 0x0205    
+//--服务器广播下一个操作的玩家。若轮到自己时，玩家加注拉到自已的携带值时，前端要显示ALLIN字样
+message SrvSendNextOperate
+{
+    int32 seatId    = 1;
+    int32 leftTime  = 2;
+    int64 minCall   = 3;  //最小加注
+    int64 maxCall   = 4;  //最大加注
+    int64 quickCall = 5;  //跟注    
+    int32 operate   = 6;  //跟注    --0 叫地主 抢地主 出牌 接牌 过牌
+};
+
+//CLI_SET_BET                    = 0x0107    --玩家发送操作
+message UserOperateReq
+{
+    int32    operate    = 1;  //1: 看牌，2: 弃牌，3: 跟注, 4: 加注  --斗地主： 1叫地主 2抢地主 3出牌 4过 5托管
+    int64    ante       = 2;  //下注金额        0取消 1确认
+    repeated Card cards = 3;  //操作的牌
+};
+
+//SVR_SET_BET  --服务器回复玩家操作结果,若跟注或加注成功，前端要自已去更新携带金币数
+message UserOperateResp
+{
+    int32 ret      = 1;  //0成功
+    int32 operate  = 2;  //1: 看牌，2: 弃牌，3: 跟注, 4: 加注
+    int64 curCarry = 3;  //剩余携带
+};
+
+//SVR_BET                   = 0x0206    --服务器广播玩家操作.若是加注或跟注，前端要自已去判断是否属于AllIn操作
+message SrvBroadcastOperate
+{
+    int32    seatId     = 1;
+    int32    userStatus = 2;
+    int64    curAnte    = 3;  //当前下注
+    int64    curCarry   = 4;  //剩余携带
+    int64    totalAnte  = 5;  //奖池总数
+    int32    operate    = 6;  //当前操作
+    repeated Card cards = 7;  //操作的牌
+    int32    cardType   = 8;  //牌型
+    int32    times      = 9;  //当前操作产生的倍数
+};
+
+//SVR_RECEIVE_FOURTH_CARD        = 0x0207--服务器发第三张牌,
+
+message Seat
+{
+    int32 seatId = 1;
+};
+
+message SrvBroadcastThirdCard
+{
+    repeated Seat seatList = 1;  //发牌的座位
+    repeated Card cards    = 2;  //自己的手牌
+    int32    specialCard   = 3;
+    int32    cardsCnt      = 4;
+}; 
+
+message BonusInfo
+{
+    int64    moneyPool      = 1;
+    repeated UserAnte antes = 2;
+    int32    index          = 3; //牛牛是第几个池子
+};
+//SVR_GAME_OVER                  = 0x0208    --服务器广播牌局结束，结算结果,前端自已跑一系列动画
+message SrvBroadcastGameOver
+{
+    repeated PlayerInfo playerList = 1;  //玩家列表
+    repeated BonusInfo bonusList   = 2;  //奖池列表
+    repeated Card cards            = 3;  //公共牌
+    int32    result                = 4;  //1地主赢 2农民赢
+    int32    isSpring              = 5;  //是否是春天
+};
+
+//CLI_LOGOUT_ROOM                = 0x0108    --用户请求离开房间
+message UserLogoutResp
+{
+    int32 ret       = 1;
+    int64 userMoney = 2;
+};
+
+message UserDropCards
+{
+    repeated Card cards = 1;
+};
+
+message SrvBroadcastDropCards
+{
+    int32    seatId     = 1;
+    int32    cardsCnt   = 2;
+    repeated Card cards = 3;
+
+};
+
+message ShowCards
+{
+    int32    seatId      = 1;
+    repeated Card cards  = 2;
+    int32    specialCard = 3;
+    int32    multiple    = 4;
+    int32  isWin         = 5;  //比牌结果
+    int32  roundTime     = 6;  //操作时间
+};
+
+//0x20D  --广播发牌
+message SrvBroadcastUserCard
+{
+    repeated ShowCards userCards = 1;
+    int32 tableStatus = 2;
+};
+
+//0x20E --广播开始确认牌型
+message SrvBroadcastCheckCard
+{
+    int32 showTime      = 1;
+};
+//0x010E  -- slot下注
+
+message UserSlotBetReq
+{
+    int32 lines      = 1;
+    int64 chips      = 2;
+    int32 isUseProps = 3; //0是没有使用 1是使用了
+};
+
+message UserSlotBetResp
+{
+    int32 ret       = 1;
+    int64 userMoney = 2;
+    int32 lines     = 3;
+    int64 chips     = 4;
+};
+
+//slot中奖结果
+message SlotWinRet
+{
+    int32 line      = 1;
+    int32 count     = 2;
+};
+
+//广播结算数据
+message SrvBroadcastSlotResult
+{
+    int32 seatId                = 1;
+    int64 addMoney              = 2;
+    int64 userMoney             = 3;
+    int64 totalBonus            = 4;
+    repeated Card cards         = 5;
+    repeated SlotWinRet pots    = 6;
+    int32 bonusCnt              = 7;
+    int32 specialCard           = 8;
+};
+
+//广播牛牛结算
+message SrvBroadcastNiuniuResult
+{
+    int64  totalBonus         = 1;  //奖池
+    repeated ShowCards cards     = 2;
+    repeated PlayerInfo userList = 3;  //结算用户 
+};
+
+//广播玩家下注
+message SrvBroadcastBetOn
+{
+    int32 seatId        = 1; //玩家座位
+    int32 slot          = 2; //下注池
+    int64 ante          = 3; //金额
+    int64 curCarry      = 4; //剩余金币
+    repeated BonusInfo anteList = 5; // 注池信息
+};
+
+//发底牌
+message SrvBroadcastBoardCards
+{
+    int32 seatId            = 1; //地主座位
+    repeated Card cards     = 2; //底牌
+    int32 boardCardTimes    = 3; //底牌倍数
+    int32 totalTimes        = 4; //当前总倍数
+};
+
+//下注信息
+message BetInfo
+{
+    int64 ante      = 1;   //下注总金额
+    int32 count     = 2;   //下注次数
+    int64 bonus     = 3;   //赢钱
+    int32 times     = 4;   //结算倍数
+};
+
+//CLIENT_SEND_REQ_HINT 	 	= 0x0113,    //请求提示
+message UserCardList
+{
+    repeated Card cards  = 1;
+};
+
+//客户端准备
+message SrvBroadcastUserReady
+{
+    int32 seatId    = 1;
+    int64 userMoney = 2;
+};
+
+message BankerInfo
+{
+    int32 seatId       = 1;  //庄家座位
+    int32 uid          = 2;
+};
+
+//fish
+message FishInfo
+{
+    int32 fishId   = 1;
+    int32 fishType = 2;
+    int32 pathId   = 3;
+    int32 life     = 4;  //生存时间
+    int32 delay    = 5;  //延时
+};
+
+//创建鱼群
+message CreateFish
+{
+    repeated FishInfo fishList   = 1;
+};
+
+//捕获鱼
+message ShotFishMsg
+{
+    int32    seatId             = 1;
+    int32    cannonLevel        = 2;  //炮等级
+    repeated FishInfo  fishList = 3;  //捕获的鱼
+    float    targetPos          = 4;
+    repeated FishInfo  killList = 5;
+    int64    userMoney          = 6;
+};

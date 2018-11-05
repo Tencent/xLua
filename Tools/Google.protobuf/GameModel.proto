@@ -1,0 +1,29 @@
+syntax = "proto3"; 
+package GameModel;
+
+// 装备类型
+enum EquipType {
+    SHIELD   = 0;   //盾牌
+    SWORD    = 1;   //剑
+}
+
+// 装备卡牌
+message EquipCard {
+    string    name    = 1;  //装备名称
+    EquipType type    = 2;  //装备类型
+    int32     attack  = 3;  //装备的攻击力
+    int32     defence = 4;  //装备的防御力
+}
+
+// 英雄职业
+enum HeroType {
+    KNIGHT = 0; //骑士
+    PASTOR = 1; //牧师
+}
+
+// 英雄
+message Hero {
+    string   name  = 1; //英雄名称
+    HeroType type  = 2; //英雄职业
+    int32    heart = 3; //英雄血量
+}

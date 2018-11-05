@@ -35,7 +35,7 @@ public class StatefullTest {
         set;
     }
 
-    public event System.Action<int, double> AEvent;
+    public event System.Action<int, double> AEvent = null;
 
     public int this[string field]
     {
@@ -49,7 +49,7 @@ public class StatefullTest {
     }
 
     public void Start () {
-	
+        Debug.Log("AEvent"+AEvent.ToString());
 	}
 	
 	void Update () {

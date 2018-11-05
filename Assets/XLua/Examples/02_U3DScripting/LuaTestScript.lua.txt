@@ -8,6 +8,7 @@ local speed = 10
 local lightCpnt = nil
 
 function start()
+	local breakSocketHandle,debugXpCall = require("luadebug.LuaDebug")("localhost",7003)
 	print("lua start...")
 	print("injected object", lightObject)
 	lightCpnt= lightObject:GetComponent(typeof(CS.UnityEngine.Light))

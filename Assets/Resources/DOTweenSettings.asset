@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 16995157, guid: a811bde74b26b53498b4f6d872b09b6d, type: 3}
+  m_Name: DOTweenSettings
+  m_EditorClassIdentifier: 
+  useSafeMode: 1
+  timeScale: 1
+  useSmoothDeltaTime: 0
+  maxSmoothUnscaledTime: 0.15
+  rewindCallbackMode: 0
+  showUnityEditorReport: 0
+  logBehaviour: 0
+  drawGizmos: 1
+  defaultRecyclable: 0
+  defaultAutoPlay: 3
+  defaultUpdateType: 0
+  defaultTimeScaleIndependent: 0
+  defaultEaseType: 6
+  defaultEaseOvershootOrAmplitude: 1.70158
+  defaultEasePeriod: 0
+  defaultAutoKill: 1
+  defaultLoopType: 0
+  storeSettingsLocation: 0
+  modules:
+    showPanel: 0
+    audioEnabled: 1
+    physicsEnabled: 1
+    physics2DEnabled: 1
+    spriteEnabled: 1
+    uiEnabled: 1
+    textMeshProEnabled: 0
+    tk2DEnabled: 0
+  showPlayingTweens: 0
+  showPausedTweens: 0
