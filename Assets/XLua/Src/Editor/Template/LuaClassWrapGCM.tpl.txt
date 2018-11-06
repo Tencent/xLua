@@ -359,7 +359,16 @@ namespace XLua
 					end 
 				end)%>) <%end%>
 			{
-				<% 
+				<%if overload.Name == "get_Item" and overload.IsSpecialName then
+					local keyType = overload:GetParameters()[0].ParameterType%>
+					<%=GetCasterStatement(keyType, 2, "key", true)%>;
+					<%=GetPushStatement(overload.ReturnType, "gen_to_be_invoked[key]")%>;
+				<%elseif overload.Name == "set_Item" and overload.IsSpecialName then
+					local keyType = overload:GetParameters()[0].ParameterType
+					local valueType = overload:GetParameters()[1].ParameterType%>
+					<%=GetCasterStatement(keyType, 2, "key", true)%>;
+					<%=GetCasterStatement(valueType, 3, "gen_to_be_invoked[key]")%>;
+				<% else
 				in_pos = 0;
 				ForEachCsList(parameters, function(parameter, pi) 
 					if pi >= real_param_count then return end
@@ -398,6 +407,7 @@ namespace XLua
 				<%
 					end
 				end)
+				end
 				%>
 				<%if NeedUpdate(type) and not method.IsStatic then%>
 				<%=GetUpdateStatement(type, 1, "gen_to_be_invoked")%>;
