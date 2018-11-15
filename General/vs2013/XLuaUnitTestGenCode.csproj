@@ -52,6 +52,9 @@
     <Compile Include="..\..\Assets\XLua\Src\GenAttributes.cs">
       <Link>Assets\XLua\Src\GenAttributes.cs</Link>
     </Compile>
+    <Compile Include="..\..\Assets\XLua\Src\GenericDelegateBridge.cs">
+      <Link>Assets\XLua\Src\GenericDelegateBridge.cs</Link>
+    </Compile>
     <Compile Include="..\..\Assets\XLua\Src\InternalGlobals.cs">
       <Link>Assets\XLua\Src\InternalGlobals.cs</Link>
     </Compile>

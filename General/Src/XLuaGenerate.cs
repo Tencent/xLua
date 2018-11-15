@@ -3,6 +3,7 @@ using System.Linq;
 using System.Reflection;
 using CSObjectWrapEditor;
 using System.IO;
+using System.Collections.Generic;
 
 namespace XLua
 {
@@ -21,7 +22,29 @@ namespace XLua
                 return;
             }
 
-            var assembly = Assembly.LoadFile(Path.GetFullPath(args[0]));
+            if (args.Length > 1)
+            {
+                GeneratorConfig.common_path = args[1];
+            }
+
+            if (args.Length > 2)
+            {
+                List<string> search_paths = args.Skip(2).ToList();
+                AppDomain.CurrentDomain.AssemblyResolve += new ResolveEventHandler((object sender, ResolveEventArgs rea) =>
+                {
+                    foreach (var search_path in search_paths)
+                    {
+                        string assemblyPath = Path.Combine(search_path, new AssemblyName(rea.Name).Name + ".dll");
+                        if (File.Exists(assemblyPath))
+                        {
+                            return Assembly.Load(File.ReadAllBytes(assemblyPath));
+                        }
+                    }
+                    return null;
+                });
+            }
+
+            var assembly = Assembly.Load(File.ReadAllBytes(Path.GetFullPath(args[0])));
             Generator.GenAll(new XLuaTemplates()
             {
                 LuaClassWrap = new XLuaTemplate()

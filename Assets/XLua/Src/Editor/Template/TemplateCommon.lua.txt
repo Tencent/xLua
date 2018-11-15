@@ -257,8 +257,17 @@ end
 
 local delegateType = typeof(CS.System.Delegate)
 local ExtensionAttribute = typeof(CS.System.Runtime.CompilerServices.ExtensionAttribute)
+
+function IsExtensionMethod(method)
+    return method:IsDefined(ExtensionAttribute, false)
+end
+
+function IsDelegate(t)
+    return delegateType:IsAssignableFrom(t)
+end
+
 function MethodParameters(method)
-    if not method:IsDefined(ExtensionAttribute, false) then
+    if not IsExtensionMethod(method) then
         return method:GetParameters()
     else
         local parameters = method:GetParameters()
@@ -304,7 +313,7 @@ function GetCasterStatement(t, idx, var_name, need_declare, is_v_params)
         return statement .. "translator.GetParams<" .. CsFullTypeName(t:GetElementType()).. ">" .. "(L, ".. idx ..")" 
     elseif typedCaster[testname] then
         return statement .. "(" .. CsFullTypeName(t) .. ")" ..typedCaster[testname] .. "(L, ".. idx ..")" 
-	elseif delegateType:IsAssignableFrom(t) then
+	elseif IsDelegate(t) then
 	    return statement .. "translator.GetDelegate<" .. CsFullTypeName(t).. ">" .. "(L, ".. idx ..")" 
     elseif fixCaster[testname] then
         return statement .. fixCaster[testname] .. "(L, ".. idx ..")" 

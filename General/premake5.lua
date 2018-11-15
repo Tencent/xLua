@@ -59,6 +59,7 @@ files
 defines
 {
     "XLUA_GENERAL",
+    "XLUA_ALL_OBSOLETE",
 }
 
 links
