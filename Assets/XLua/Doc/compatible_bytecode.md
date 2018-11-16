@@ -34,8 +34,7 @@ pause
 
 ## 3、加载字节码
 
-通过CustomLoader加载即可，CustomLoader的详细情况请看教程。
-
+通过CustomLoader加载即可，CustomLoader的详细情况请看教程。这个步骤常犯的错误是用某种Encoding去加载二进制文件，这会破坏lua字节码文件格式。谨记得以二进制方式加载。
 
 ## PS: OpCode修改
 
