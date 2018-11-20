@@ -2,26 +2,9 @@
 
 1、打开该特性
 
-方案一：
 添加HOTFIX_ENABLE宏，（在Unity3D的File->Build Setting->Scripting Define Symbols下添加）。编辑器、各手机平台这个宏要分别设置！如果是自动化打包，要注意在代码里头用API设置的宏是不生效的，需要在编辑器设置。
 
 （建议平时开发业务代码不打开HOTFIX_ENABLE，只在build手机版本或者要在编译器下开发补丁时打开HOTFIX_ENABLE）
-
-方案二：
-
-不需要设置宏，直接修改源码为永远开启
-
-打开Hotfix.cs，找到
-
-~~~csharp
-#if HOTFIX_ENABLE
-~~~
-
-改为
-
-~~~csharp
-#if true
-~~~
 
 2、执行XLua/Generate Code菜单。
 
