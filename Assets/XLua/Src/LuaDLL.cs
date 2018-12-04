@@ -132,13 +132,13 @@ namespace XLua.LuaDLL
 		public static extern void lua_remove(IntPtr L, int index);
 
         [DllImport(LUADLL,CallingConvention=CallingConvention.Cdecl)]
-		public static extern void lua_rawget(IntPtr L, int index);
+		public static extern int lua_rawget(IntPtr L, int index);
 
         [DllImport(LUADLL,CallingConvention=CallingConvention.Cdecl)]
 		public static extern void lua_rawset(IntPtr L, int index);//[-2, +0, m]
 
         [DllImport(LUADLL,CallingConvention=CallingConvention.Cdecl)]
-		public static extern void lua_setmetatable(IntPtr L, int objIndex);
+		public static extern int lua_setmetatable(IntPtr L, int objIndex);
 
         [DllImport(LUADLL, CallingConvention = CallingConvention.Cdecl)]
         public static extern int lua_rawequal(IntPtr L, int index1, int index2);
@@ -274,7 +274,7 @@ namespace XLua.LuaDLL
 		}
 
         [DllImport(LUADLL, CallingConvention = CallingConvention.Cdecl)]
-		public static extern void lua_atpanic(IntPtr L, lua_CSFunction panicf);
+		public static extern IntPtr lua_atpanic(IntPtr L, lua_CSFunction panicf);
 
 		[DllImport(LUADLL,CallingConvention=CallingConvention.Cdecl)]
 		public static extern void lua_pushnumber(IntPtr L, double number);
