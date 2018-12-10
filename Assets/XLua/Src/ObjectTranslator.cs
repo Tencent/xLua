@@ -392,8 +392,15 @@ namespace XLua
                             genericMethodInfo = genericFunc[parameters.Length];
                             typeArgs = typeArgs.Concat(new Type[] { delegateMethod.ReturnType });
                         }
-                        var methodInfo = genericMethodInfo.MakeGenericMethod(typeArgs.ToArray());
-                        genericDelegateCreator = (o) => Delegate.CreateDelegate(delegateType, o, methodInfo);
+                        if (genericMethodInfo.IsGenericMethodDefinition)
+                        {
+                            var methodInfo = genericMethodInfo.MakeGenericMethod(typeArgs.ToArray());
+                            genericDelegateCreator = (o) => Delegate.CreateDelegate(delegateType, o, methodInfo);
+                        }
+                        else
+                        {
+                            genericDelegateCreator = (o) => Delegate.CreateDelegate(delegateType, o, genericMethodInfo);
+                        }
                     }
                 }
                 genericDelegateCreatorCache.Add(delegateType, genericDelegateCreator);
