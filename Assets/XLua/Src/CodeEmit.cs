@@ -1213,7 +1213,7 @@ namespace XLua
             if (mb is FieldInfo && (mb as FieldInfo).FieldType.IsPointer) return true;
             if (mb is PropertyInfo && (mb as PropertyInfo).PropertyType.IsPointer) return true;
 
-            if (mb.IsDefined(typeof(BlackListAttribute), false)) return true;
+            if (mb.IsDefined(typeof(BlackListAttribute), false) || mb.IsDefined(typeof(ObsoleteAttribute), false)) return true;
 
             return BlackList.Contains(mb);
         }
@@ -1223,7 +1223,7 @@ namespace XLua
             if (mb.GetParameters().Any(pInfo => pInfo.ParameterType.IsPointer)) return true;
             if (mb is MethodInfo && (mb as MethodInfo).ReturnType.IsPointer) return false;
 
-            if (mb.IsDefined(typeof(BlackListAttribute), false)) return true;
+            if (mb.IsDefined(typeof(BlackListAttribute), false) || mb.IsDefined(typeof(ObsoleteAttribute), false)) return true;
 
             return BlackList.Contains(mb);
         }
