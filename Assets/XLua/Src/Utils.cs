@@ -833,7 +833,10 @@ namespace XLua
 			int obj_setter = LuaAPI.lua_gettop(L);
 			LuaAPI.lua_newtable(L);
 			int cls_field = LuaAPI.lua_gettop(L);
-			LuaAPI.lua_newtable(L);
+            //set cls_field to namespace
+            SetCSTable(L, type, cls_field);
+            //finish set cls_field to namespace
+            LuaAPI.lua_newtable(L);
 			int cls_getter = LuaAPI.lua_gettop(L);
 			LuaAPI.lua_newtable(L);
 			int cls_setter = LuaAPI.lua_gettop(L);
@@ -898,10 +901,6 @@ namespace XLua
 				translator.PushFixCSFunction(L, genEnumCastFrom(type));
 				LuaAPI.lua_rawset(L, cls_field);
 			}
-
-			//set cls_field to namespace
-			SetCSTable(L, type, cls_field);
-			//finish set cls_field to namespace
 
 			//init class meta
 			LuaAPI.xlua_pushasciistring(L, "__index");
