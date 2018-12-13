@@ -111,8 +111,11 @@ namespace XLua
                 DoString(init_xlua, "Init");
                 init_xlua = null;
 
+#if !UNITY_SWITCH || UNITY_EDITOR
                 AddBuildin("socket.core", StaticLuaCallbacks.LoadSocketCore);
                 AddBuildin("socket", StaticLuaCallbacks.LoadSocketCore);
+#endif
+
                 AddBuildin("CS", StaticLuaCallbacks.LoadCS);
 
                 LuaAPI.lua_newtable(rawL); //metatable of indexs and newindexs functions
