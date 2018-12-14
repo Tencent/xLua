@@ -4,11 +4,11 @@ cd %CUR_DIR%
 pushd luajit-2.1.0b3
 rem use mingw to compile because msvc treat zero-length array as error
 rem define LJ_TARGET_PS4 to work around tmpnam & tmpfile
-rem deinfe LUAJIT_USE_SYSMALLOC as no mmap for switch
+rem define LUAJIT_USE_SYSMALLOC as no mmap for switch
 for /F "tokens=* USEBACKQ" %%F IN (`cygpath %NINTENDO_SDK_ROOT%`) DO set NINTENDO_SDK_ROOT_CYG=%%F
 set COMPILER="%NINTENDO_SDK_ROOT_CYG%/Compilers/NX/bin/nx-clang.exe"
 set "SWITCH_CFLAGS=-m64 -mcpu=cortex-a57+fp+simd+crypto+crc -fno-common -fno-short-enums -ffunction-sections -fdata-sections -fPIC -fms-extensions"
-set "LUAJIT_CFLAGS=\"-DLJ_TARGET_CONSOLE -DLUAJIT_USE_SYSMALLOC -DLJ_TARGET_PS4 -DLUAJIT_DISABLE_JIT -DLUAJIT_ENABLE_GC64 -DLUAJIT_DISABLE_FFI\""
+set "LUAJIT_CFLAGS=\"-DLJ_TARGET_CONSOLE -DLUAJIT_USE_SYSMALLOC -DLJ_TARGET_PS4 -DLUAJIT_DISABLE_JIT -DLUAJIT_ENABLE_GC64 -DLUAJIT_DISABLE_FFI -DLUAJIT_NO_UNWIND\""
 bash -c "make clean"
 bash -c "make -C src TARGET_CC=\"%COMPILER% %SWITCH_CFLAGS%\" TARGET_LD=%COMPILER% BUILDMODE=static TARGET_SYS=switch CFLAGS=%LUAJIT_CFLAGS% libluajit.a"
 popd
