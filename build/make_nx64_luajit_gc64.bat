@@ -11,7 +11,7 @@ echo #endif >> switch_fix.h
 popd
 
 pushd luajit-2.1.0b3
-rem use mingw to compile because msvc treat zero-length array as error
+rem use cygwin64 to compile because msvc treat zero-length array as error
 rem define LUAJIT_USE_SYSMALLOC as no mmap for switch
 for /F "tokens=* USEBACKQ" %%F IN (`cygpath %NINTENDO_SDK_ROOT%`) DO set NINTENDO_SDK_ROOT_CYG=%%F
 set COMPILER="%NINTENDO_SDK_ROOT_CYG%/Compilers/NX/bin/nx-clang.exe"
