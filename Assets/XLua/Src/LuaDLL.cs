@@ -33,7 +33,7 @@ namespace XLua.LuaDLL
 
     public partial class Lua
 	{
-#if (UNITY_IPHONE || UNITY_WEBGL) && !UNITY_EDITOR
+#if (UNITY_IPHONE || UNITY_WEBGL || UNITY_SWITCH) && !UNITY_EDITOR
         const string LUADLL = "__Internal";
 #else
         const string LUADLL = "xlua";
@@ -447,8 +447,10 @@ namespace XLua.LuaDLL
         [DllImport(LUADLL, CallingConvention = CallingConvention.Cdecl)]
         public static extern int luaopen_i64lib(IntPtr L);//[,,m]
 
+#if !UNITY_SWITCH || UNITY_EDITOR
         [DllImport(LUADLL, CallingConvention = CallingConvention.Cdecl)]
         public static extern int luaopen_socket_core(IntPtr L);//[,,m]
+#endif
 
         [DllImport(LUADLL, CallingConvention = CallingConvention.Cdecl)]
         public static extern void lua_pushint64(IntPtr L, long n);//[,,m]

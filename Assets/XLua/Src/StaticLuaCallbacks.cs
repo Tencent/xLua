@@ -633,11 +633,13 @@ namespace XLua
         }
 #endif
 
+#if !UNITY_SWITCH || UNITY_EDITOR
         [MonoPInvokeCallback(typeof(LuaCSFunction))]
         internal static int LoadSocketCore(RealStatePtr L)
         {
             return LuaAPI.luaopen_socket_core(L);
         }
+#endif
 
         [MonoPInvokeCallback(typeof(LuaCSFunction))]
         internal static int LoadCS(RealStatePtr L)
