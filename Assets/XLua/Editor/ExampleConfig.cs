@@ -164,6 +164,45 @@ public static class ExampleConfig
     //    return false;
     //}
 
+    //static bool typeHasEditorRef(Type type)
+    //{
+    //    if (type.Namespace != null && (type.Namespace == "UnityEditor" || type.Namespace.StartsWith("UnityEditor.")))
+    //    {
+    //        return true;
+    //    }
+    //    if (type.IsNested)
+    //    {
+    //        return typeHasEditorRef(type.DeclaringType);
+    //    }
+    //    if (type.IsByRef || type.IsArray)
+    //    {
+    //        return typeHasEditorRef(type.GetElementType());
+    //    }
+    //    if (type.IsGenericType)
+    //    {
+    //        foreach (var typeArg in type.GetGenericArguments())
+    //        {
+    //            if (typeHasEditorRef(typeArg))
+    //            {
+    //                return true;
+    //            }
+    //        }
+    //    }
+    //    return false;
+    //}
+
+    //static bool delegateHasEditorRef(Type delegateType)
+    //{
+    //    if (typeHasEditorRef(delegateType)) return true;
+    //    var method = delegateType.GetMethod("Invoke");
+    //    if (method == null)
+    //    {
+    //        return false;
+    //    }
+    //    if (typeHasEditorRef(method.ReturnType)) return true;
+    //    return method.GetParameters().Any(pinfo => typeHasEditorRef(pinfo.ParameterType));
+    //}
+
     // 配置某Assembly下所有涉及到的delegate到CSharpCallLua下，Hotfix下拿不准那些delegate需要适配到lua function可以这么配置
     //[CSharpCallLua]
     //static IEnumerable<Type> AllDelegate
@@ -195,7 +234,7 @@ public static class ExampleConfig
     //        var fieldTypes = from type in allTypes
     //                         from field in type.GetFields(flag)
     //                         select field.FieldType;
-    //        return (returnTypes.Concat(paramTypes).Concat(fieldTypes)).Where(t => t.BaseType == typeof(MulticastDelegate) && !hasGenericParameter(t)).Distinct();
+    //        return (returnTypes.Concat(paramTypes).Concat(fieldTypes)).Where(t => t.BaseType == typeof(MulticastDelegate) && !hasGenericParameter(t) && !delegateHasEditorRef(t)).Distinct();
     //    }
     //}
     //--------------end 热补丁自动化配置-------------------------
