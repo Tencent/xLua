@@ -884,7 +884,7 @@ namespace XLua
                 string className = LuaAPI.lua_tostring(L, 1);
                 if (className.EndsWith("<>")) className = className.Substring(0, className.Length - 2);
                 Type genericDef = translator.FindType(className + "`" + (top - 1));
-                if (genericDef == null || !genericDef.IsGenericTypeDefinition)
+                if (genericDef == null || !genericDef.IsGenericTypeDefinition())
                 {
                     LuaAPI.lua_pushnil(L);
                 }
@@ -1043,7 +1043,7 @@ namespace XLua
                 while(type != null)
                 {
                     translator.PrivateAccessible(L, type);
-                    type = type.BaseType;
+                    type = type.BaseType();
                 }
                 return 0;
             }
