@@ -152,7 +152,7 @@ namespace XLua
                 return "decimal";
             else if (type == typeof(string))
                 return "string";
-            else if (type.IsGenericType)
+            else if (type.IsGenericType())
                 return type.FullName.Split('`')[0] + "<" + string.Join(", ",
 #if !UNITY_WSA || UNITY_EDITOR
                     type.GetGenericArguments()
