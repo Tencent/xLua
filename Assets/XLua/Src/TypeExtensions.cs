@@ -153,12 +153,7 @@ namespace XLua
             else if (type == typeof(string))
                 return "string";
             else if (type.IsGenericType())
-                return type.FullName.Split('`')[0] + "<" + string.Join(", ",
-#if !UNITY_WSA || UNITY_EDITOR
-                    type.GetGenericArguments()
-#else
-                    type.GetTypeInfo().GetGenericArguments()
-#endif
+                return type.FullName.Split('`')[0] + "<" + string.Join(", ", type.GetGenericArguments()
                     .Select(x => GetFriendlyName(x)).ToArray()) + ">";
             else
                 return type.FullName;
