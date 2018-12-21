@@ -649,9 +649,9 @@ namespace XLua
             {
                 il.Emit(OpCodes.Ldnull);
             }
-            else if(type.IsPrimitive || type.IsEnum)
+            else if(type.IsPrimitive || type.IsEnum())
             {
-                if (type.IsEnum)
+                if (type.IsEnum())
                 {
                     type = Enum.GetUnderlyingType(type);
                 }
@@ -1567,7 +1567,7 @@ namespace XLua
 
         void emitUpdateIfNeeded(ILGenerator il, LocalBuilder L, LocalBuilder translator, Type type, int luaIndex, int localIndex)
         {
-            if (type.IsValueType && !type.IsPrimitive && !type.IsEnum && type != typeof(decimal))
+            if (type.IsValueType && !type.IsPrimitive && !type.IsEnum() && type != typeof(decimal))
             {
                 //UnityEngine.Debug.LogWarning("-----------------emit update:" + type);
                 il.Emit(OpCodes.Ldloc, translator);

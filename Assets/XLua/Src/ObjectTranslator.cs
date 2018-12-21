@@ -395,11 +395,21 @@ namespace XLua
                         if (genericMethodInfo.IsGenericMethodDefinition)
                         {
                             var methodInfo = genericMethodInfo.MakeGenericMethod(typeArgs.ToArray());
-                            genericDelegateCreator = (o) => Delegate.CreateDelegate(delegateType, o, methodInfo);
+                            genericDelegateCreator = (o) =>
+#if !UNITY_WSA || UNITY_EDITOR
+                                Delegate.CreateDelegate(delegateType, o, methodInfo);
+#else
+                                methodInfo.CreateDelegate(delegateType, bridge); 
+#endif
                         }
                         else
                         {
-                            genericDelegateCreator = (o) => Delegate.CreateDelegate(delegateType, o, genericMethodInfo);
+                            genericDelegateCreator = (o) =>
+#if !UNITY_WSA || UNITY_EDITOR
+                                Delegate.CreateDelegate(delegateType, o, genericMethodInfo);
+#else
+                                genericMethodInfo.CreateDelegate(delegateType, o);
+#endif
                         }
                     }
                 }
