@@ -365,7 +365,7 @@ namespace XLua
                     return null;
                 }
                 var parameters = delegateMethod.GetParameters();
-                if ((delegateMethod.ReturnType.IsValueType && delegateMethod.ReturnType != typeof(void)) || parameters.Length > 4)
+                if ((delegateMethod.ReturnType.IsValueType() && delegateMethod.ReturnType != typeof(void)) || parameters.Length > 4)
                 {
                     genericDelegateCreator = (x) => null;
                 }
@@ -373,7 +373,7 @@ namespace XLua
                 {
                     foreach (var pinfo in parameters)
                     {
-                        if (pinfo.ParameterType.IsValueType || pinfo.IsOut || pinfo.ParameterType.IsByRef)
+                        if (pinfo.ParameterType.IsValueType() || pinfo.IsOut || pinfo.ParameterType.IsByRef)
                         {
                             genericDelegateCreator = (x) => null;
                             break;
@@ -848,7 +848,7 @@ namespace XLua
                     }
                     if (obj == null)
                     {
-                        return !type.IsValueType;
+                        return !type.IsValueType();
                     }
                     return type.IsAssignableFrom(obj.GetType());
                 }

@@ -195,7 +195,7 @@ namespace XLua
 						return LuaAPI.luaL_error(L, type.Name + "." + field.Name + " Expected type " + field.FieldType);
 					}
 					field.SetValue(obj, val);
-					if (type.IsValueType)
+					if (type.IsValueType())
 					{
 						translator.Update(L, 1, obj);
 					}
