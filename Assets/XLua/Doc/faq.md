@@ -500,3 +500,5 @@ xlua对 非UTF-8格式 的 lua 文件解析时会出错，文件中写 print("�
 
 lua文件应该保存为 utf-8 格式，经过测试 utf-8 带 bom 的也可以，可以直接使用Notepad++转成utf-8。
 
+Windows平台上创建文件时常常不会是utf-8的，需注意。
+
