@@ -1090,7 +1090,7 @@ namespace CSObjectWrapEditor
 
             string filePath = GeneratorConfig.common_path + "XLuaGenAutoRegister.cs";
             StreamWriter textWriter = new StreamWriter(filePath, false, Encoding.UTF8);
-            var extension_methods = from t in ReflectionUse
+            var extension_methods = from t in ReflectionUse.Concat(LuaCallCSharp)
                                     where isDefined(t, typeof(ExtensionAttribute))
                                     from method in t.GetMethods(BindingFlags.Static | BindingFlags.Public)
                                     where isDefined(method, typeof(ExtensionAttribute))
