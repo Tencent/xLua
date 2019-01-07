@@ -494,3 +494,7 @@ f2(obj, 1, 2) --调用int版本
 * 1、设置GcPause，让gc更快开启，默认200表示2倍上次回收内存时开启，coco2dx设置为100，表示完成一趟gc后马上开启下一趟，另外也可以设置GcStepmul来加快gc回收速度，默认是200表示回收比内存分配快两倍，GcStepmul在coco2dx设置为5000
 * 2、可以在场景切换之类对于性能要求不高的地方加入全量gc调用（通过LuaEnv.FullGc或者在lua里头调用collectgarbage('collect')都可以）。
 
+## lua代码文件编码应该保存成什么编码格式
+
+lua文件应该保存为 utf-8 格式，经过测试 utf-8 带 bom 的也可以，可以直接使用Notepad++转成utf-8。
+
