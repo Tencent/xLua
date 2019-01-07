@@ -1090,12 +1090,23 @@ namespace CSObjectWrapEditor
 
             string filePath = GeneratorConfig.common_path + "XLuaGenAutoRegister.cs";
             StreamWriter textWriter = new StreamWriter(filePath, false, Encoding.UTF8);
-            var extension_methods = from t in ReflectionUse.Concat(LuaCallCSharp)
+
+            var lookup = LuaCallCSharp.Distinct().ToDictionary(t => t);
+
+            var extension_methods_from_lcs = (from t in LuaCallCSharp
                                     where isDefined(t, typeof(ExtensionAttribute))
                                     from method in t.GetMethods(BindingFlags.Static | BindingFlags.Public)
                                     where isDefined(method, typeof(ExtensionAttribute))
                                     where !method.ContainsGenericParameters || isSupportedGenericMethod(method)
-                                    select makeGenericMethodIfNeeded(method);
+                                    select makeGenericMethodIfNeeded(method))
+                                    .Where(method => !lookup.ContainsKey(method.GetParameters()[0].ParameterType));
+
+            var extension_methods = (from t in ReflectionUse
+                                     where isDefined(t, typeof(ExtensionAttribute))
+                                     from method in t.GetMethods(BindingFlags.Static | BindingFlags.Public)
+                                     where isDefined(method, typeof(ExtensionAttribute))
+                                     where !method.ContainsGenericParameters || isSupportedGenericMethod(method)
+                                     select makeGenericMethodIfNeeded(method)).Concat(extension_methods_from_lcs);
             GenOne(typeof(DelegateBridgeBase), (type, type_info) =>
             {
 #if GENERIC_SHARING
