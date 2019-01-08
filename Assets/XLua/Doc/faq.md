@@ -38,7 +38,9 @@ il2cpp默认会对诸如引擎、c#系统api，第三方dll等等进行代码剪
 
 1、ILGenerator报错
 
-这是因为Api Compatibility Level设置为.net standard 2.0，而.net standard 2.0不支持emit导致的，更新到2019年1月4号后面的版本，可以解决编译问题，但编辑器下就得生成代码才能跑了。生成代码，可能会参数下一个问题。
+这是因为Api Compatibility Level设置为.net standard 2.0，而.net standard 2.0不支持emit导致的，更新到2019年1月8号后面的版本，可以解决编译问题，但编辑器下就得最少要执行（XLua/Generate Minimize Code）才能跑。
+
+“XLua/Generate Minimize Code”：这个菜单只生成编辑器下必要的生成代码，比如delegate<->function，interface<->table适配代码，换言之，CSharpCallLua配置的delegate和interface。
 
 ps：有的人以为设置.net standard 2.0是为了保持和以前版本的.NET 2.0设置一致，实际上.net standard是个新标准，其1.0版本都需要.net framework 4.5以上才支持，如果真的需要和老版本unity一致，正确做法是把“Scripting Backend”设置为3.5。
 
