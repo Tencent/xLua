@@ -74,10 +74,15 @@ public static class ExampleConfig
     //{
     //    get
     //    {
+    //        List<string> namespaces = new List<string>() // 在这里添加名字空间
+    //        {
+    //            "UnityEngine",
+    //            "UnityEngine.UI"
+    //        };
     //        var unityTypes = (from assembly in AppDomain.CurrentDomain.GetAssemblies()
     //                          where !(assembly.ManifestModule is System.Reflection.Emit.ModuleBuilder)
     //                          from type in assembly.GetExportedTypes()
-    //                          where type.Namespace != null && type.Namespace.StartsWith("UnityEngine") && !isExcluded(type)
+    //                          where type.Namespace != null && namespaces.Contains(type.Namespace) && !isExcluded(type)
     //                                  && type.BaseType != typeof(MulticastDelegate) && !type.IsInterface && !type.IsEnum
     //                          select type);
 
