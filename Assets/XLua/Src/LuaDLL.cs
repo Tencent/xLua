@@ -288,6 +288,10 @@ namespace XLua.LuaDLL
         [DllImport(LUADLL, CallingConvention = CallingConvention.Cdecl)]
         public static extern void xlua_pushuint(IntPtr L, uint value);
 
+#if NATIVE_LUA_PUSHSTRING
+        [DllImport(LUADLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern void lua_pushstring(IntPtr L, string str);
+#else
         public static void lua_pushstring(IntPtr L, string str) //业务使用
         {
             if (str == null)
@@ -296,15 +300,27 @@ namespace XLua.LuaDLL
             }
             else
             {
-                xlua_pushstring(L, str);
+#if !THREAD_SAFE && !HOTFIX_ENABLE
+                if (Encoding.UTF8.GetByteCount(str) > InternalGlobals.strBuff.Length)
+                {
+                    byte[] bytes = Encoding.UTF8.GetBytes(str);
+                    xlua_pushlstring(L, bytes, bytes.Length);
+                }
+                else
+                {
+                    int bytes_len = Encoding.UTF8.GetBytes(str, 0, str.Length, InternalGlobals.strBuff, 0);
+                    xlua_pushlstring(L, InternalGlobals.strBuff, bytes_len);
+                }
+#else
+                var bytes = Encoding.UTF8.GetBytes(str);
+                xlua_pushlstring(L, bytes, bytes.Length);
+#endif
             }
         }
+#endif
 
         [DllImport(LUADLL, CallingConvention = CallingConvention.Cdecl)]
         public static extern void xlua_pushlstring(IntPtr L, byte[] str, int size);
-        
-        [DllImport(LUADLL, CallingConvention = CallingConvention.Cdecl)]
-        public static extern void xlua_pushstring(IntPtr L, string str);
 
         public static void xlua_pushasciistring(IntPtr L, string str) // for inner use only
         {
@@ -314,7 +330,23 @@ namespace XLua.LuaDLL
             }
             else
             {
-                xlua_pushstring(L, str);
+#if NATIVE_LUA_PUSHSTRING
+                lua_pushstring(L, str);
+#else
+#if !THREAD_SAFE && !HOTFIX_ENABLE
+                int str_len = str.Length;
+                if (InternalGlobals.strBuff.Length < str_len)
+                {
+                    InternalGlobals.strBuff = new byte[str_len];
+                }
+
+                int bytes_len = Encoding.UTF8.GetBytes(str, 0, str_len, InternalGlobals.strBuff, 0);
+                xlua_pushlstring(L, InternalGlobals.strBuff, bytes_len);
+#else
+                var bytes = Encoding.UTF8.GetBytes(str);
+                xlua_pushlstring(L, bytes, bytes.Length);
+#endif
+#endif
             }
         }
 

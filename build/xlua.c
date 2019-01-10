@@ -201,10 +201,6 @@ LUA_API void xlua_pushlstring (lua_State *L, const char *s, int len) {
 	lua_pushlstring(L, s, len);
 }
 
-LUA_API void xlua_pushstring (lua_State *L, const char *s) {
-	lua_pushstring(L, s);
-}
-
 LUALIB_API int xluaL_loadbuffer (lua_State *L, const char *buff, int size,
                                 const char *name) {
 	return luaL_loadbuffer(L, buff, size, name);
