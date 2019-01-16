@@ -701,7 +701,7 @@ namespace XLua
         {
             return (RealStatePtr L, int idx, object target) =>
             {
-                if (LuaAPI.lua_isnil(L, -1))
+                if (LuaAPI.lua_isnil(L, idx))
                 {
                     return null;
                 }
