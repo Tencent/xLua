@@ -912,6 +912,7 @@ namespace CSObjectWrapEditor
                 hotfxDelegates.AddRange(kv.Key.GetMethods(bindingAttrOfMethod)
                     .Where(method => method.GetMethodBody() != null)
                     .Where(method => !method.Name.Contains("<"))
+                    .Where(method => !isMemberInBlackList(method))
                     .Where(method => !ignoreCompilerGenerated || !isDefined(method, typeof(CompilerGeneratedAttribute)))
                     .Where(method => !ignoreNotPublic || method.IsPublic)
                     .Where(method => !ignoreProperty || !method.IsSpecialName || (!method.Name.StartsWith("get_") && !method.Name.StartsWith("set_")))
