@@ -529,7 +529,7 @@ namespace CSObjectWrapEditor
 
             foreach (var exclude in BlackList)
             {
-                if (mb.DeclaringType.FullName == exclude[0] && mb.Name == exclude[1])
+                if (mb.DeclaringType.ToString() == exclude[0] && mb.Name == exclude[1])
                 {
                     return true;
                 }
@@ -548,7 +548,7 @@ namespace CSObjectWrapEditor
 
             foreach (var exclude in BlackList)
             {
-                if (mb.DeclaringType.FullName == exclude[0] && mb.Name == exclude[1])
+                if (mb.DeclaringType.ToString() == exclude[0] && mb.Name == exclude[1])
                 {
                     var parameters = mb.GetParameters();
                     if (parameters.Length != exclude.Count - 2)
@@ -559,7 +559,7 @@ namespace CSObjectWrapEditor
 
                     for (int i = 0; i < parameters.Length; i++)
                     {
-                        if (parameters[i].ParameterType.FullName != exclude[i + 2])
+                        if (parameters[i].ParameterType.ToString() != exclude[i + 2])
                         {
                             paramsMatch = false;
                             break;
