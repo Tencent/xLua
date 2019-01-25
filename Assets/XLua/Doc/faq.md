@@ -502,3 +502,9 @@ f2(obj, 1, 2) --调用int版本
 * 1、设置GcPause，让gc更快开启，默认200表示2倍上次回收内存时开启，coco2dx设置为100，表示完成一趟gc后马上开启下一趟，另外也可以设置GcStepmul来加快gc回收速度，默认是200表示回收比内存分配快两倍，GcStepmul在coco2dx设置为5000
 * 2、可以在场景切换之类对于性能要求不高的地方加入全量gc调用（通过LuaEnv.FullGc或者在lua里头调用collectgarbage('collect')都可以）。
 
+## 多线程下莫名crash怎么解决
+
+多线程使用需要在（Player Setting/Scripting Define Symbols）下添加THREAD_SAFE宏。
+
+常见的不明显的多线程的场景，比如c#异步socket，对象析构函数等。
+
