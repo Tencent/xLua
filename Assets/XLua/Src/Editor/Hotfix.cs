@@ -109,25 +109,34 @@ namespace XLua
             {
                 types.Add(type);
             };
-            foreach (var type in (from assmbly in AppDomain.CurrentDomain.GetAssemblies()
-                                  from type in assmbly.GetTypes() where !type.IsGenericTypeDefinition select type))
+
+            foreach (var assmbly in AppDomain.CurrentDomain.GetAssemblies())
             {
-                if (getHotfixType(type) != -1)
+                try
                 {
-                    types.Add(type);
-                }
-                else
-                {
-                    var flags = BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly;
-                    foreach (var field in type.GetFields(flags))
+                    foreach (var type in (from type in assmbly.GetTypes()
+                                          where !type.IsGenericTypeDefinition
+                                          select type))
                     {
-                        mergeConfig(field, field.FieldType, () => field.GetValue(null) as IEnumerable<Type>, on_cfg);
-                    }
-                    foreach (var prop in type.GetProperties(flags))
-                    {
-                        mergeConfig(prop, prop.PropertyType, () => prop.GetValue(null, null) as IEnumerable<Type>, on_cfg);
+                        if (getHotfixType(type) != -1)
+                        {
+                            types.Add(type);
+                        }
+                        else
+                        {
+                            var flags = BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly;
+                            foreach (var field in type.GetFields(flags))
+                            {
+                                mergeConfig(field, field.FieldType, () => field.GetValue(null) as IEnumerable<Type>, on_cfg);
+                            }
+                            foreach (var prop in type.GetProperties(flags))
+                            {
+                                mergeConfig(prop, prop.PropertyType, () => prop.GetValue(null, null) as IEnumerable<Type>, on_cfg);
+                            }
+                        }
                     }
                 }
+                catch { } // 防止有的工程有非法的dll导致中断
             }
             return types.Select(t => t.Assembly).Distinct()
                 .Where(a => a.ManifestModule.FullyQualifiedName.IndexOf(projectPath) == 0)

@@ -1,4 +1,47 @@
-﻿v2.1.12 2018年7月9日
+﻿v2.1.13 2018年12月5日
+新增特性
+1、新增AdaptByDelegate注入模式；
+2、新增xlua.get_generic_method，用于调用泛型函数；
+3、支持类似CS.System.Collections.Generic.List(CS.System.Int32)的泛型写法；
+4、注入新选项：忽略编译器自动生成代码，以及不生成base代理；
+5、针对lua编程以及热补丁，均添加直接可用的自动化配置样例；
+6、新增luajit的gc64支持；
+7、加入兼容字节码（一份字节码支持32位和64位系统）的支持；
+8、内置新lua内存泄漏检测工具；
+9、delegate桥接动态实例化：delegate是4个参数以内，参数均引用类型，无返回值或者返回引用类型，不用配置CSharpCallLua也能调用lua函数；
+10、提供util.print_func_ref_by_csharp函数，用于查看当前被C#引用的lua函数；
+11、支持无CS全局变量的工作方式；
+
+
+变更
+1、虚拟机升级：lua5.3.4 -> lua5.3.5，luajit2.1b2 -> luajit2.1b3；
+2、delegate bridge代码段占用优化；
+3、改为PostProcessBuild事件检查是否生成代码；
+4、适配xcode 10：osx平台不再支持32bit版本构建；
+5、名字空间、类名拼写错误时，对静态成员的设置会报错；
+6、防止CS全局table被删除导致xlua工作异常；
+7、Windows下构建lib，若使用vs 2015参数执行cmake失败，则继续尝试使用vs 2017；
+8、编辑器下不生成代码时，也检查Blacklist，维持和运行时一致；
+
+bug修复
+1、泛型的数组生成代码报错；
+2、防止对TypeExtensions配置了LuaCallCSharp后，lua里头IsValueType之类的判断永真；
+3、生成代码过滤掉含指针的函数和字段；
+4、适应索引器属性名不是Item的情况；
+5、解决attribute初始化异常会导致生成代码，注入终止的问题；
+6、精简模式下空Enum生成代码错误；
+7、通过把初始化函数分割成小函数，规避unity在android下执行大函数crash的bug；
+8、Assignable处理obj为null情况；
+9、内嵌类不Obsolete，但外层类Obsolete的生成代码报错
+10、解决inline注入方式下，如果lua逻辑跑异常，看不到异常信息的问题；
+11、修复xlua.private_accessible访问后，同名public的方法无法访问的Bug；
+12、[Out]修饰的参数不应该生成out关键字；
+13、通过反射查找合适的适配器时，有可能访问到非适配器函数；
+14、精简模式导出代码无get_Item、set_Item；
+15、IntKey方式下不自动xlua.private_accessible的问题；
+
+
+v2.1.12 2018年7月9日
 新增特性
 1、Nullable的支持
 2、支持Assembly-CSharp之外的dll注入（beta）

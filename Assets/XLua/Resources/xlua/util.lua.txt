@@ -93,6 +93,7 @@ local function auto_id_map()
                 end
                 --CS.XLua.HotfixDelegateBridge.Set(
             end
+            xlua.private_accessible(cs)
         else
             return org_hotfix(cs, field, func)
         end

@@ -529,7 +529,7 @@ namespace CSObjectWrapEditor
 
             foreach (var exclude in BlackList)
             {
-                if (mb.DeclaringType.FullName == exclude[0] && mb.Name == exclude[1])
+                if (mb.DeclaringType.ToString() == exclude[0] && mb.Name == exclude[1])
                 {
                     return true;
                 }
@@ -548,7 +548,7 @@ namespace CSObjectWrapEditor
 
             foreach (var exclude in BlackList)
             {
-                if (mb.DeclaringType.FullName == exclude[0] && mb.Name == exclude[1])
+                if (mb.DeclaringType.ToString() == exclude[0] && mb.Name == exclude[1])
                 {
                     var parameters = mb.GetParameters();
                     if (parameters.Length != exclude.Count - 2)
@@ -559,7 +559,7 @@ namespace CSObjectWrapEditor
 
                     for (int i = 0; i < parameters.Length; i++)
                     {
-                        if (parameters[i].ParameterType.FullName != exclude[i + 2])
+                        if (parameters[i].ParameterType.ToString() != exclude[i + 2])
                         {
                             paramsMatch = false;
                             break;
@@ -1090,12 +1090,23 @@ namespace CSObjectWrapEditor
 
             string filePath = GeneratorConfig.common_path + "XLuaGenAutoRegister.cs";
             StreamWriter textWriter = new StreamWriter(filePath, false, Encoding.UTF8);
-            var extension_methods = from t in ReflectionUse
+
+            var lookup = LuaCallCSharp.Distinct().ToDictionary(t => t);
+
+            var extension_methods_from_lcs = (from t in LuaCallCSharp
                                     where isDefined(t, typeof(ExtensionAttribute))
                                     from method in t.GetMethods(BindingFlags.Static | BindingFlags.Public)
                                     where isDefined(method, typeof(ExtensionAttribute))
                                     where !method.ContainsGenericParameters || isSupportedGenericMethod(method)
-                                    select makeGenericMethodIfNeeded(method);
+                                    select makeGenericMethodIfNeeded(method))
+                                    .Where(method => !lookup.ContainsKey(method.GetParameters()[0].ParameterType));
+
+            var extension_methods = (from t in ReflectionUse
+                                     where isDefined(t, typeof(ExtensionAttribute))
+                                     from method in t.GetMethods(BindingFlags.Static | BindingFlags.Public)
+                                     where isDefined(method, typeof(ExtensionAttribute))
+                                     where !method.ContainsGenericParameters || isSupportedGenericMethod(method)
+                                     select makeGenericMethodIfNeeded(method)).Concat(extension_methods_from_lcs);
             GenOne(typeof(DelegateBridgeBase), (type, type_info) =>
             {
 #if GENERIC_SHARING
@@ -1626,6 +1637,27 @@ namespace CSObjectWrapEditor
         {
             clear(GeneratorConfig.common_path);
         }
+
+#if UNITY_2018
+        [MenuItem("XLua/Generate Minimize Code", false, 3)]
+        public static void GenMini()
+        {
+            var start = DateTime.Now;
+            Directory.CreateDirectory(GeneratorConfig.common_path);
+            GetGenConfig(XLua.Utils.GetAllTypes());
+            luaenv.DoString("require 'TemplateCommon'");
+            var gen_push_types_setter = luaenv.Global.Get<LuaFunction>("SetGenPushAndUpdateTypes");
+            gen_push_types_setter.Call(GCOptimizeList.Where(t => !t.IsPrimitive && SizeOf(t) != -1).Distinct().ToList());
+            var xlua_classes_setter = luaenv.Global.Get<LuaFunction>("SetXLuaClasses");
+            xlua_classes_setter.Call(XLua.Utils.GetAllTypes().Where(t => t.Namespace == "XLua").ToList());
+            GenDelegateBridges(XLua.Utils.GetAllTypes(false));
+            GenCodeForClass(true);
+            GenLuaRegister(true);
+            callCustomGen();
+            Debug.Log("finished! use " + (DateTime.Now - start).TotalMilliseconds + " ms");
+            AssetDatabase.Refresh();
+        }
+#endif
 
         public delegate IEnumerable<CustomGenTask> GetTasks(LuaEnv lua_env, UserConfig user_cfg);
 

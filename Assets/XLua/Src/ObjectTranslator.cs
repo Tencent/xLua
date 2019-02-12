@@ -150,7 +150,7 @@ namespace XLua
             }
             else
             {
-#if !GEN_CODE_MINIMIZE && !ENABLE_IL2CPP && (UNITY_EDITOR || XLUA_GENERAL) && !FORCE_REFLECTION
+#if !GEN_CODE_MINIMIZE && !ENABLE_IL2CPP && (UNITY_EDITOR || XLUA_GENERAL) && !FORCE_REFLECTION && !NET_STANDARD_2_0
                 if (!DelegateBridge.Gen_Flag && !type.IsEnum() && !typeof(Delegate).IsAssignableFrom(type) && Utils.IsPublic(type))
                 {
                     Type wrap = ce.EmitTypeWrap(type);
@@ -272,7 +272,7 @@ namespace XLua
             ERROR
         }
 
-#if UNITY_EDITOR || XLUA_GENERAL
+#if (UNITY_EDITOR || XLUA_GENERAL) && !NET_STANDARD_2_0
         Type delegate_birdge_type;
 
         class CompareByArgRet : IEqualityComparer<MethodInfo>
@@ -296,7 +296,7 @@ namespace XLua
 
         void initCSharpCallLua()
         {
-#if UNITY_EDITOR || XLUA_GENERAL
+#if (UNITY_EDITOR || XLUA_GENERAL) && !NET_STANDARD_2_0
             delegate_birdge_type = typeof(DelegateBridge);
             if (!DelegateBridge.Gen_Flag)
             {
@@ -341,7 +341,7 @@ namespace XLua
 #endif
         }
 
-#if UNITY_EDITOR || XLUA_GENERAL
+#if (UNITY_EDITOR || XLUA_GENERAL) && !NET_STANDARD_2_0
         CodeEmit ce = new CodeEmit();
 #endif
         MethodInfo[] genericAction = null;
@@ -365,7 +365,7 @@ namespace XLua
                     return null;
                 }
                 var parameters = delegateMethod.GetParameters();
-                if ((delegateMethod.ReturnType.IsValueType && delegateMethod.ReturnType != typeof(void)) || parameters.Length > 4)
+                if ((delegateMethod.ReturnType.IsValueType() && delegateMethod.ReturnType != typeof(void)) || parameters.Length > 4)
                 {
                     genericDelegateCreator = (x) => null;
                 }
@@ -373,7 +373,7 @@ namespace XLua
                 {
                     foreach (var pinfo in parameters)
                     {
-                        if (pinfo.ParameterType.IsValueType || pinfo.IsOut || pinfo.ParameterType.IsByRef)
+                        if (pinfo.ParameterType.IsValueType() || pinfo.IsOut || pinfo.ParameterType.IsByRef)
                         {
                             genericDelegateCreator = (x) => null;
                             break;
@@ -392,8 +392,25 @@ namespace XLua
                             genericMethodInfo = genericFunc[parameters.Length];
                             typeArgs = typeArgs.Concat(new Type[] { delegateMethod.ReturnType });
                         }
-                        var methodInfo = genericMethodInfo.MakeGenericMethod(typeArgs.ToArray());
-                        genericDelegateCreator = (o) => Delegate.CreateDelegate(delegateType, o, methodInfo);
+                        if (genericMethodInfo.IsGenericMethodDefinition)
+                        {
+                            var methodInfo = genericMethodInfo.MakeGenericMethod(typeArgs.ToArray());
+                            genericDelegateCreator = (o) =>
+#if !UNITY_WSA || UNITY_EDITOR
+                                Delegate.CreateDelegate(delegateType, o, methodInfo);
+#else
+                                methodInfo.CreateDelegate(delegateType, bridge); 
+#endif
+                        }
+                        else
+                        {
+                            genericDelegateCreator = (o) =>
+#if !UNITY_WSA || UNITY_EDITOR
+                                Delegate.CreateDelegate(delegateType, o, genericMethodInfo);
+#else
+                                genericMethodInfo.CreateDelegate(delegateType, o);
+#endif
+                        }
                     }
                 }
                 genericDelegateCreatorCache.Add(delegateType, genericDelegateCreator);
@@ -481,7 +498,7 @@ namespace XLua
             DelegateBridgeBase bridge;
             try
             {
-#if UNITY_EDITOR || XLUA_GENERAL
+#if (UNITY_EDITOR || XLUA_GENERAL) && !NET_STANDARD_2_0
                 if (!DelegateBridge.Gen_Flag)
                 {
                     bridge = Activator.CreateInstance(delegate_birdge_type, new object[] { reference, luaEnv }) as DelegateBridgeBase;
@@ -572,7 +589,7 @@ namespace XLua
 
             if (!interfaceBridgeCreators.TryGetValue(interfaceType, out creator))
             {
-#if UNITY_EDITOR || XLUA_GENERAL
+#if (UNITY_EDITOR || XLUA_GENERAL) && !NET_STANDARD_2_0
                 var bridgeType = ce.EmitInterfaceImpl(interfaceType);
                 creator = (int reference, LuaEnv luaenv) =>
                 {
@@ -831,7 +848,7 @@ namespace XLua
                     }
                     if (obj == null)
                     {
-                        return !type.IsValueType;
+                        return !type.IsValueType();
                     }
                     return type.IsAssignableFrom(obj.GetType());
                 }

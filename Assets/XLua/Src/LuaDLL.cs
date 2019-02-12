@@ -33,7 +33,7 @@ namespace XLua.LuaDLL
 
     public partial class Lua
 	{
-#if (UNITY_IPHONE || UNITY_WEBGL) && !UNITY_EDITOR
+#if (UNITY_IPHONE || UNITY_WEBGL || UNITY_SWITCH) && !UNITY_EDITOR
         const string LUADLL = "__Internal";
 #else
         const string LUADLL = "xlua";
@@ -132,13 +132,13 @@ namespace XLua.LuaDLL
 		public static extern void lua_remove(IntPtr L, int index);
 
         [DllImport(LUADLL,CallingConvention=CallingConvention.Cdecl)]
-		public static extern void lua_rawget(IntPtr L, int index);
+		public static extern int lua_rawget(IntPtr L, int index);
 
         [DllImport(LUADLL,CallingConvention=CallingConvention.Cdecl)]
 		public static extern void lua_rawset(IntPtr L, int index);//[-2, +0, m]
 
         [DllImport(LUADLL,CallingConvention=CallingConvention.Cdecl)]
-		public static extern void lua_setmetatable(IntPtr L, int objIndex);
+		public static extern int lua_setmetatable(IntPtr L, int objIndex);
 
         [DllImport(LUADLL, CallingConvention = CallingConvention.Cdecl)]
         public static extern int lua_rawequal(IntPtr L, int index1, int index2);
@@ -274,7 +274,7 @@ namespace XLua.LuaDLL
 		}
 
         [DllImport(LUADLL, CallingConvention = CallingConvention.Cdecl)]
-		public static extern void lua_atpanic(IntPtr L, lua_CSFunction panicf);
+		public static extern IntPtr lua_atpanic(IntPtr L, lua_CSFunction panicf);
 
 		[DllImport(LUADLL,CallingConvention=CallingConvention.Cdecl)]
 		public static extern void lua_pushnumber(IntPtr L, double number);
@@ -288,6 +288,10 @@ namespace XLua.LuaDLL
         [DllImport(LUADLL, CallingConvention = CallingConvention.Cdecl)]
         public static extern void xlua_pushuint(IntPtr L, uint value);
 
+#if NATIVE_LUA_PUSHSTRING
+        [DllImport(LUADLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern void lua_pushstring(IntPtr L, string str);
+#else
         public static void lua_pushstring(IntPtr L, string str) //业务使用
         {
             if (str == null)
@@ -313,6 +317,7 @@ namespace XLua.LuaDLL
 #endif
             }
         }
+#endif
 
         [DllImport(LUADLL, CallingConvention = CallingConvention.Cdecl)]
         public static extern void xlua_pushlstring(IntPtr L, byte[] str, int size);
@@ -325,6 +330,9 @@ namespace XLua.LuaDLL
             }
             else
             {
+#if NATIVE_LUA_PUSHSTRING
+                lua_pushstring(L, str);
+#else
 #if !THREAD_SAFE && !HOTFIX_ENABLE
                 int str_len = str.Length;
                 if (InternalGlobals.strBuff.Length < str_len)
@@ -337,6 +345,7 @@ namespace XLua.LuaDLL
 #else
                 var bytes = Encoding.UTF8.GetBytes(str);
                 xlua_pushlstring(L, bytes, bytes.Length);
+#endif
 #endif
             }
         }
@@ -447,8 +456,10 @@ namespace XLua.LuaDLL
         [DllImport(LUADLL, CallingConvention = CallingConvention.Cdecl)]
         public static extern int luaopen_i64lib(IntPtr L);//[,,m]
 
+#if !UNITY_SWITCH || UNITY_EDITOR
         [DllImport(LUADLL, CallingConvention = CallingConvention.Cdecl)]
         public static extern int luaopen_socket_core(IntPtr L);//[,,m]
+#endif
 
         [DllImport(LUADLL, CallingConvention = CallingConvention.Cdecl)]
         public static extern void lua_pushint64(IntPtr L, long n);//[,,m]

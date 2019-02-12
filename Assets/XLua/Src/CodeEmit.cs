@@ -6,7 +6,7 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
 */
 
-#if UNITY_EDITOR || XLUA_GENERAL
+#if (UNITY_EDITOR || XLUA_GENERAL) && !NET_STANDARD_2_0
 using System.Collections.Generic;
 using System.Reflection.Emit;
 using System.Reflection;
@@ -649,9 +649,9 @@ namespace XLua
             {
                 il.Emit(OpCodes.Ldnull);
             }
-            else if(type.IsPrimitive || type.IsEnum)
+            else if(type.IsPrimitive || type.IsEnum())
             {
-                if (type.IsEnum)
+                if (type.IsEnum())
                 {
                     type = Enum.GetUnderlyingType(type);
                 }
@@ -1213,7 +1213,7 @@ namespace XLua
             if (mb is FieldInfo && (mb as FieldInfo).FieldType.IsPointer) return true;
             if (mb is PropertyInfo && (mb as PropertyInfo).PropertyType.IsPointer) return true;
 
-            if (mb.IsDefined(typeof(BlackListAttribute), false)) return true;
+            if (mb.IsDefined(typeof(BlackListAttribute), false) || mb.IsDefined(typeof(ObsoleteAttribute), false)) return true;
 
             return BlackList.Contains(mb);
         }
@@ -1223,7 +1223,7 @@ namespace XLua
             if (mb.GetParameters().Any(pInfo => pInfo.ParameterType.IsPointer)) return true;
             if (mb is MethodInfo && (mb as MethodInfo).ReturnType.IsPointer) return false;
 
-            if (mb.IsDefined(typeof(BlackListAttribute), false)) return true;
+            if (mb.IsDefined(typeof(BlackListAttribute), false) || mb.IsDefined(typeof(ObsoleteAttribute), false)) return true;
 
             return BlackList.Contains(mb);
         }
@@ -1567,7 +1567,7 @@ namespace XLua
 
         void emitUpdateIfNeeded(ILGenerator il, LocalBuilder L, LocalBuilder translator, Type type, int luaIndex, int localIndex)
         {
-            if (type.IsValueType && !type.IsPrimitive && !type.IsEnum && type != typeof(decimal))
+            if (type.IsValueType && !type.IsPrimitive && !type.IsEnum() && type != typeof(decimal))
             {
                 //UnityEngine.Debug.LogWarning("-----------------emit update:" + type);
                 il.Emit(OpCodes.Ldloc, translator);

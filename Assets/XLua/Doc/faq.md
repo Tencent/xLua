@@ -34,15 +34,37 @@ il2cpp默认会对诸如引擎、c#系统api，第三方dll等等进行代码剪
 
 解决办法：增加引用（比如配置到LuaCallCSharp，或者你自己C#代码增加那函数的访问），或者通过link.xml配置（当配置了ReflectionUse后，xlua会自动帮你配置到link.xml）告诉il2cpp别剪裁某类型。
 
-## Unity 2018.2设置.NET 4.X Equivalent时生成代码报错怎么解决？
+## Unity 2018兼容性问题解决
 
-据研究表明，Unity 2018.2设置.NET 4.X Equivalent的话，其运行和编译用的库不一致，前者比后者多一些API。
+1、ILGenerator报错
+
+这是因为Api Compatibility Level设置为.net standard 2.0，而.net standard 2.0不支持emit导致的。
+
+解决办法（三选一）：
+
+* 把“Scripting Backend”设置为3.5
+
+* 把Api Compatibility Level设置为.Net 4.x
+
+* 更新到2019年1月8号后面的版本，可以解决编译问题，但由于没有emit的支持，编辑器下要生成代码才能跑了，建议执行“XLua/Generate Minimize Code”，这个少生成些代码，而且可以规避问题2。
+
+“XLua/Generate Minimize Code”：这个菜单只生成编辑器下必要的生成代码，比如delegate<->function，interface<->table适配代码。
+
+2、生成代码后，一些系统类型的生成代码会报一些方法不存在。
+
+据研究表明，Unity 2018.2（比这高的版本也可能会）设置.NET 4.X Equivalent的话，其运行和编译用的库不一致，前者比后者多一些API。
 
 运行用的是：unity安装目录\Editor\Data\MonoBleedingEdge\lib\mono\unityjit\mscorlib.dll
 
 编译链接的是：unity安装目录\Editor\Data\MonoBleedingEdge\lib\mono\4.7.1-api\mscorlib.dll
 
-解决办法：xLua平时开发是不用生成代码的，所以不用管。发包前生成代码也好办，先切换到.NET 3.5生成，再切回来就可以了。
+解决办法（二选一）：
+
+* 把“Scripting Backend”设置为3.5
+ 
+* xLua平时开发是不用生成代码的，所以不用管。发包前生成代码也好办，先切换到.NET 3.5生成，再切回来就可以了
+
+综上所述，要想愉快使用xLua，把“Scripting Backend”设置为3.5。
 
 ## Plugins源码在哪里可以找到，怎么使用？
 
@@ -479,4 +501,10 @@ f2(obj, 1, 2) --调用int版本
 
 * 1、设置GcPause，让gc更快开启，默认200表示2倍上次回收内存时开启，coco2dx设置为100，表示完成一趟gc后马上开启下一趟，另外也可以设置GcStepmul来加快gc回收速度，默认是200表示回收比内存分配快两倍，GcStepmul在coco2dx设置为5000
 * 2、可以在场景切换之类对于性能要求不高的地方加入全量gc调用（通过LuaEnv.FullGc或者在lua里头调用collectgarbage('collect')都可以）。
+
+## 多线程下莫名crash怎么解决
+
+多线程使用需要在（Player Setting/Scripting Define Symbols）下添加THREAD_SAFE宏。
+
+常见的不明显的多线程的场景，比如c#异步socket，对象析构函数等。
 

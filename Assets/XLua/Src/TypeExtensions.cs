@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Reflection;
 
 namespace XLua
 {
@@ -151,8 +152,9 @@ namespace XLua
                 return "decimal";
             else if (type == typeof(string))
                 return "string";
-            else if (type.IsGenericType)
-                return type.FullName.Split('`')[0] + "<" + string.Join(", ", type.GetGenericArguments().Select(x => GetFriendlyName(x)).ToArray()) + ">";
+            else if (type.IsGenericType())
+                return type.FullName.Split('`')[0] + "<" + string.Join(", ", type.GetGenericArguments()
+                    .Select(x => GetFriendlyName(x)).ToArray()) + ">";
             else
                 return type.FullName;
         }
