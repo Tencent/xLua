@@ -1615,7 +1615,7 @@ namespace CSObjectWrapEditor
         [MenuItem("XLua/Generate Code", false, 1)]
         public static void GenAll()
         {
-#if UNITY_2018 && UNITY_EDITOR_WIN
+#if UNITY_2018 && (UNITY_EDITOR_WIN || UNITY_EDITOR_OSX)
             if (File.Exists("./Tools/MonoBleedingEdge/bin/mono.exe"))
             {
                 GenUsingCLI();
