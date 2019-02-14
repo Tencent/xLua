@@ -22,7 +22,9 @@ namespace XLua
                 return;
             }
 
-            List<string> assemblyPathList = args.TakeWhile(path => path.EndsWith(".dll", StringComparison.OrdinalIgnoreCase)).ToList();
+            List<string> assemblyPathList = args.TakeWhile(path => 
+                path.EndsWith(".dll", StringComparison.OrdinalIgnoreCase) ||
+                path.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)).ToList();
 
             if (args.Length > assemblyPathList.Count)
             {
