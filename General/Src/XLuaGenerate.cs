@@ -22,14 +22,18 @@ namespace XLua
                 return;
             }
 
-            if (args.Length > 1)
+            List<string> assemblyPathList = args.TakeWhile(path => 
+                path.EndsWith(".dll", StringComparison.OrdinalIgnoreCase) ||
+                path.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)).ToList();
+
+            if (args.Length > assemblyPathList.Count)
             {
-                GeneratorConfig.common_path = args[1];
+                GeneratorConfig.common_path = args[assemblyPathList.Count];
             }
 
-            if (args.Length > 2)
+            if (args.Length > assemblyPathList.Count + 1)
             {
-                List<string> search_paths = args.Skip(2).ToList();
+                List<string> search_paths = args.Skip(assemblyPathList.Count + 1).ToList();
                 AppDomain.CurrentDomain.AssemblyResolve += new ResolveEventHandler((object sender, ResolveEventArgs rea) =>
                 {
                     foreach (var search_path in search_paths)
@@ -44,7 +48,8 @@ namespace XLua
                 });
             }
 
-            var assembly = Assembly.Load(File.ReadAllBytes(Path.GetFullPath(args[0])));
+            var allTypes = assemblyPathList.Select(path => Assembly.Load(File.ReadAllBytes(Path.GetFullPath(path))))
+                .SelectMany(assembly => assembly.GetTypes());
             Generator.GenAll(new XLuaTemplates()
             {
                 LuaClassWrap = new XLuaTemplate()
@@ -92,7 +97,7 @@ namespace XLua
                     name = "TemplateCommon",
                     text = global::XLuaGenerate.Src.XLuaTemplates.TemplateCommon_lua,
                 },
-            }, assembly.GetTypes());
+            }, allTypes);
         }
     }
 }

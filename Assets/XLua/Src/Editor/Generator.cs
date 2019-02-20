@@ -529,7 +529,7 @@ namespace CSObjectWrapEditor
 
             foreach (var exclude in BlackList)
             {
-                if (mb.DeclaringType.FullName == exclude[0] && mb.Name == exclude[1])
+                if (mb.DeclaringType.ToString() == exclude[0] && mb.Name == exclude[1])
                 {
                     return true;
                 }
@@ -548,7 +548,7 @@ namespace CSObjectWrapEditor
 
             foreach (var exclude in BlackList)
             {
-                if (mb.DeclaringType.FullName == exclude[0] && mb.Name == exclude[1])
+                if (mb.DeclaringType.ToString() == exclude[0] && mb.Name == exclude[1])
                 {
                     var parameters = mb.GetParameters();
                     if (parameters.Length != exclude.Count - 2)
@@ -559,7 +559,7 @@ namespace CSObjectWrapEditor
 
                     for (int i = 0; i < parameters.Length; i++)
                     {
-                        if (parameters[i].ParameterType.FullName != exclude[i + 2])
+                        if (parameters[i].ParameterType.ToString() != exclude[i + 2])
                         {
                             paramsMatch = false;
                             break;
@@ -1615,6 +1615,13 @@ namespace CSObjectWrapEditor
         [MenuItem("XLua/Generate Code", false, 1)]
         public static void GenAll()
         {
+#if UNITY_2018 && (UNITY_EDITOR_WIN || UNITY_EDITOR_OSX)
+            if (File.Exists("./Tools/MonoBleedingEdge/bin/mono.exe"))
+            {
+                GenUsingCLI();
+                return;
+            }
+#endif
             var start = DateTime.Now;
             Directory.CreateDirectory(GeneratorConfig.common_path);
             GetGenConfig(XLua.Utils.GetAllTypes());
@@ -1631,6 +1638,63 @@ namespace CSObjectWrapEditor
             Debug.Log("finished! use " + (DateTime.Now - start).TotalMilliseconds + " ms");
             AssetDatabase.Refresh();
         }
+
+#if UNITY_EDITOR_OSX || UNITY_EDITOR_WIN
+        public static void GenUsingCLI()
+        {
+#if UNITY_EDITOR_OSX
+            var monoPath = "./Tools/MonoBleedingEdge/bin/mono";
+#else
+            var monoPath = "./Tools/MonoBleedingEdge/bin/mono.exe";
+#endif
+
+            var args = new List<string>()
+            {
+                "./Tools/XLuaGenerate.exe",
+                "./Library/ScriptAssemblies/Assembly-CSharp.dll",
+                "./Library/ScriptAssemblies/Assembly-CSharp-Editor.dll",
+                GeneratorConfig.common_path
+            };
+
+            var searchPaths = new List<string>();
+            foreach (var path in
+                (from asm in AppDomain.CurrentDomain.GetAssemblies() select asm.ManifestModule.FullyQualifiedName)
+                 .Distinct())
+            {
+                try
+                {
+                    searchPaths.Add(Path.GetDirectoryName(path));
+                }
+                catch { }
+            }
+            args.AddRange(searchPaths.Distinct());
+
+            System.Diagnostics.Process process = new System.Diagnostics.Process();
+            process.StartInfo.FileName = monoPath;
+            process.StartInfo.Arguments = "\"" + string.Join("\" \"", args.ToArray()) + "\"";
+            process.StartInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
+            process.StartInfo.RedirectStandardOutput = true;
+            process.StartInfo.RedirectStandardError = true;
+            process.StartInfo.UseShellExecute = false;
+            process.StartInfo.CreateNoWindow = true;
+            process.Start();
+
+            while (!process.StandardError.EndOfStream)
+            {
+                Debug.LogError(process.StandardError.ReadLine());
+            }
+
+            while (!process.StandardOutput.EndOfStream)
+            {
+                Debug.Log(process.StandardOutput.ReadLine());
+            }
+
+            process.WaitForExit();
+            GetGenConfig(XLua.Utils.GetAllTypes());
+            callCustomGen();
+            AssetDatabase.Refresh();
+        }
+#endif
 
         [MenuItem("XLua/Clear Generated Code", false, 2)]
         public static void ClearAll()
