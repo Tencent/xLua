@@ -683,7 +683,7 @@ namespace XLua
                 {
                     il.Emit(OpCodes.Ldc_I8, (long)Convert.ToUInt64(obj));
                 }
-                else if (typeof(IntPtr) == type || typeof(IntPtr) == type)
+                else if (typeof(IntPtr) == type || typeof(UIntPtr) == type)
                 {
                     il.Emit(OpCodes.Ldloca, localIndex);
                     il.Emit(OpCodes.Initobj, type);
