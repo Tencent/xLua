@@ -82,6 +82,12 @@ ios和osx需要在mac下编译。
 
 按[Hotfix操作指南](hotfix.md)一步步操作。
 
+## visual studio 2017下编译原生库
+
+把build\vs2017目录下的脚本拷贝到build目录覆盖相应文件。
+
+如果需要编译UWP，vs需要安装：1、“工作负载”下的“通用Window平台开发”；2、“单个组件”下的“用于ARM的Visual C++编译器和库”、“用于ARM64的Visual C++编译器和库”、“是用于ARM64的C++通用Windows平台工具”
+
 ## 报“please install the Tools”
 
 没有把Tools安装到Assets平级目录，安装包，或者master下都能找到这个目录。
