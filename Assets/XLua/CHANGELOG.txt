@@ -1,4 +1,26 @@
-﻿v2.1.13 2018年12月5日
+﻿v2.1.14 2019年2月27日
+新增特性
+1、新增nintento switch的支持
+2、unity 2018兼容
+3、android arm64支持
+4、原生库的visual studio 2017编译支持
+5、增加“XLua/Generate Minimize Code”菜单
+6、防止有的工程有非法的dll导致生成代码中断
+7、更高效的lua_pushstring（需要通过NATIVE_LUA_PUSHSTRING开启）
+
+变更
+1、window库默认编译器改为visual studio 2017
+
+bug修复
+1、修正枚举类型如果只加GCOptimize不加LuaCallCSharp会crash的问题
+2、示例配置加入对Edtitor类的过滤
+3、UWP兼容修复
+4、接口继承引入的同签名方法实现
+5、未生成代码，extension方法行为不一致
+6、修复Nullable类型参数，如果最后一个参数是nil，会导致其他参数全是nil的问题
+
+
+v2.1.13 2018年12月5日
 新增特性
 1、新增AdaptByDelegate注入模式；
 2、新增xlua.get_generic_method，用于调用泛型函数；

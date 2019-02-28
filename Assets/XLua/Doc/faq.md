@@ -36,35 +36,23 @@ il2cpp默认会对诸如引擎、c#系统api，第三方dll等等进行代码剪
 
 ## Unity 2018兼容性问题解决
 
-1、ILGenerator报错
+2.1.14前的版本都建议先升级到2.1.14，升级后，还有如下两个使用注意事项：
 
-这是因为Api Compatibility Level设置为.net standard 2.0，而.net standard 2.0不支持emit导致的。
+1、默认配置不生成代码运行会报错
 
-解决办法（三选一）：
+这是因为Api Compatibility Level设置为.NET Standard 2.0，而.NET Standard 2.0不支持emit导致的。
 
-* 把“Scripting Backend”设置为3.5
-
-* 把Api Compatibility Level设置为.Net 4.x
-
-* 更新到2019年1月8号后面的版本，可以解决编译问题，但由于没有emit的支持，编辑器下要生成代码才能跑了，建议执行“XLua/Generate Minimize Code”，这个少生成些代码，而且可以规避问题2。
-
-“XLua/Generate Minimize Code”：这个菜单只生成编辑器下必要的生成代码，比如delegate<->function，interface<->table适配代码。
+解决方案：平时开发Api Compatibility Level设置为.NET 4.x，就能支持编辑器不生成代码开发。发布手机版本时，按Unity官方的建议，可配置为.NET Standard 2.0，包会更小些。
 
 2、生成代码后，一些系统类型的生成代码会报一些方法不存在。
 
-据研究表明，Unity 2018.2（比这高的版本也可能会）设置.NET 4.X Equivalent的话，其运行和编译用的库不一致，前者比后者多一些API。
+据研究表明，Unity 2018设置.NET 4.X Equivalent的话，其运行和编译用的库不一致，前者比后者多一些API。
 
 运行用的是：unity安装目录\Editor\Data\MonoBleedingEdge\lib\mono\unityjit\mscorlib.dll
 
 编译链接的是：unity安装目录\Editor\Data\MonoBleedingEdge\lib\mono\4.7.1-api\mscorlib.dll
 
-解决办法（二选一）：
-
-* 把“Scripting Backend”设置为3.5
- 
-* xLua平时开发是不用生成代码的，所以不用管。发包前生成代码也好办，先切换到.NET 3.5生成，再切回来就可以了
-
-综上所述，要想愉快使用xLua，把“Scripting Backend”设置为3.5。
+解决办法：2.1.14支持外部mono环境，安装个Unity2017，然后把Unity2017安装目录下的MonoBleedingEdge目录拷贝到工程目录下的Tools目录下即可。
 
 ## Plugins源码在哪里可以找到，怎么使用？
 
@@ -81,6 +69,14 @@ ios和osx需要在mac下编译。
 ## 报类似“xlua.access, no field __Hitfix0_Update”的错误怎么解决？
 
 按[Hotfix操作指南](hotfix.md)一步步操作。
+
+## visual studio 2017下编译UWP原生库
+
+visual studio 2017需要安装：1、“工作负载”下的“通用Window平台开发”；2、“单个组件”下的“用于ARM的Visual C++编译器和库”、“用于ARM64的Visual C++编译器和库”、“是用于ARM64的C++通用Windows平台工具”
+
+## visual studio 2015下编译原生库
+
+把build\vs2015下的bat文件拷贝到build目录，覆盖同名文件
 
 ## 报“please install the Tools”
 
