@@ -1417,7 +1417,8 @@ namespace XLua
 				}
 			}
 
-			return true;
+            var lastPos = delegateParams.Length - 1;
+            return lastPos < 0 || delegateParams[lastPos].IsDefined(typeof(ParamArrayAttribute), false) == bridgeParams[lastPos].IsDefined(typeof(ParamArrayAttribute), false);
 		}
 
 		public static bool IsSupportedMethod(MethodInfo method)

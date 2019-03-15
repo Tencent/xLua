@@ -839,7 +839,8 @@ namespace CSObjectWrapEditor
                     }
                 }
 
-                return true;
+                var lastPos = xParams.Length - 1;
+                return lastPos < 0 || xParams[lastPos].IsParamArray == yParams[lastPos].IsParamArray;
             }
             public int GetHashCode(MethodInfoSimulation obj)
             {
