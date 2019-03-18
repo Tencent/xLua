@@ -8,7 +8,7 @@ local util = require 'xlua.util'
 
 local gameobject = CS.UnityEngine.GameObject('Coroutine_Runner')
 CS.UnityEngine.Object.DontDestroyOnLoad(gameobject)
-local cs_coroutine_runner = gameobject:AddComponent(typeof(CS.Coroutine_Runner))
+local cs_coroutine_runner = gameobject:AddComponent(typeof(CS.XLuaTest.Coroutine_Runner))
 
 return {
     start = function(...)

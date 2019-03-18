@@ -22,7 +22,7 @@ for %%a in (%LOG_PATH%) do (
 )    
 if not exist %log_root% mkdir %log_root%
 
-%UNITY_PATH% -batchmode -quit -projectPath %PROJECT_PATH% -logFile %LOG_PATH% -executeMethod BuildFromCLI.Build
+%UNITY_PATH% -batchmode -quit -projectPath %PROJECT_PATH% -logFile %LOG_PATH% -executeMethod XLuaTest.BuildFromCLI.Build
 
 echo done.
 pause

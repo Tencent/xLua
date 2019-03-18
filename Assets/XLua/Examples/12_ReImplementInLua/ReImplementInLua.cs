@@ -2,24 +2,29 @@
 using System.Collections;
 using XLua;
 
-[GCOptimize(OptimizeFlag.PackAsTable)]
-public struct PushAsTableStruct
+namespace XLuaTest
 {
-    public int x;
-    public int y;
-}
 
-public class ReImplementInLua : MonoBehaviour {
+    [GCOptimize(OptimizeFlag.PackAsTable)]
+    public struct PushAsTableStruct
+    {
+        public int x;
+        public int y;
+    }
 
-	// Use this for initialization
-	void Start () {
-        LuaEnv luaenv = new LuaEnv();
-        //这两个例子都必须生成代码才能正常运行
-        //例子1：改造Vector3
-        //沿用Vector3原来的映射方案Vector3 -> userdata，但是把Vector3的方法实现改为lua实现，通过xlua.genaccessor实现不经过C#直接操作内存
-        //改为不经过C#的好处是性能更高，而且你可以省掉相应的生成代码以达成省text段的效果
-        //仍然沿用映射方案的好处是userdata比table更省内存，但操作字段比table性能稍低，当然，你也可以结合例子2的思路，把Vector3也改为映射到table
-        luaenv.DoString(@"
+    public class ReImplementInLua : MonoBehaviour
+    {
+
+        // Use this for initialization
+        void Start()
+        {
+            LuaEnv luaenv = new LuaEnv();
+            //这两个例子都必须生成代码才能正常运行
+            //例子1：改造Vector3
+            //沿用Vector3原来的映射方案Vector3 -> userdata，但是把Vector3的方法实现改为lua实现，通过xlua.genaccessor实现不经过C#直接操作内存
+            //改为不经过C#的好处是性能更高，而且你可以省掉相应的生成代码以达成省text段的效果
+            //仍然沿用映射方案的好处是userdata比table更省内存，但操作字段比table性能稍低，当然，你也可以结合例子2的思路，把Vector3也改为映射到table
+            luaenv.DoString(@"
             function test_vector3(title, v1, v2)
                print(title)
                print(v1.x, v1.y, v1.z)
@@ -74,11 +79,11 @@ public class ReImplementInLua : MonoBehaviour {
             test_vector3('----after change metatable----', CS.UnityEngine.Vector3(1, 2, 3), CS.UnityEngine.Vector3(7, 8, 9))
         ");
 
-        Debug.Log("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+            Debug.Log("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
 
-        //例子2：struct映射到table改造
-        //PushAsTableStruct传送到lua侧将会是table，例子里头还为这个table添加了一个成员方法SwapXY，静态方法Print，打印格式化，以及构造函数
-        luaenv.DoString(@"
+            //例子2：struct映射到table改造
+            //PushAsTableStruct传送到lua侧将会是table，例子里头还为这个table添加了一个成员方法SwapXY，静态方法Print，打印格式化，以及构造函数
+            luaenv.DoString(@"
             local mt = {
                 __index = {
                     SwapXY = function(o) --成员函数
@@ -91,7 +96,7 @@ public class ReImplementInLua : MonoBehaviour {
                 end,
             }
 
-            xlua.setmetatable(CS.PushAsTableStruct, mt)
+            xlua.setmetatable(CS.XLuaTest.PushAsTableStruct, mt)
             
             local PushAsTableStruct = {
                 Print = function(o) --静态函数
@@ -105,36 +110,38 @@ public class ReImplementInLua : MonoBehaviour {
                 end
             })
             
-            xlua.setclass(CS, 'PushAsTableStruct', PushAsTableStruct)
+            xlua.setclass(CS.XLuaTest, 'PushAsTableStruct', PushAsTableStruct)
         ");
 
-        PushAsTableStruct test;
-        test.x = 100;
-        test.y = 200;
-        luaenv.Global.Set("from_cs", test);
+            PushAsTableStruct test;
+            test.x = 100;
+            test.y = 200;
+            luaenv.Global.Set("from_cs", test);
 
-        luaenv.DoString(@"
+            luaenv.DoString(@"
             print('--------------from csharp---------------------')
             assert(type(from_cs) == 'table')
             print(from_cs)
-            CS.PushAsTableStruct.Print(from_cs)
+            CS.XLuaTest.PushAsTableStruct.Print(from_cs)
             from_cs:SwapXY()
             print(from_cs)
 
             print('--------------from lua---------------------')
-            local from_lua = CS.PushAsTableStruct(4, 5)
+            local from_lua = CS.XLuaTest.PushAsTableStruct(4, 5)
             assert(type(from_lua) == 'table')
             print(from_lua)
-            CS.PushAsTableStruct.Print(from_lua)
+            CS.XLuaTest.PushAsTableStruct.Print(from_lua)
             from_lua:SwapXY()
             print(from_lua)
         ");
 
-        luaenv.Dispose();
+            luaenv.Dispose();
+        }
+
+        // Update is called once per frame
+        void Update()
+        {
+
+        }
     }
-	
-	// Update is called once per frame
-	void Update () {
-	
-	}
 }
