@@ -10,29 +10,31 @@ using System;
 using UnityEngine;
 using XLua;
 
-public class PropertyChangedEventArgs : EventArgs
+namespace XLuaTest
 {
-    public string name;
-    public object value;
-}
-
-public class InvokeLua : MonoBehaviour
-{
-    [CSharpCallLua]
-    public interface ICalc
+    public class PropertyChangedEventArgs : EventArgs
     {
-        event EventHandler<PropertyChangedEventArgs> PropertyChanged;
-
-        int Add(int a, int b);
-        int Mult { get; set; }
-
-        object this[int index] { get; set; }
+        public string name;
+        public object value;
     }
 
-    [CSharpCallLua]
-    public delegate ICalc CalcNew(int mult, params string[] args);
+    public class InvokeLua : MonoBehaviour
+    {
+        [CSharpCallLua]
+        public interface ICalc
+        {
+            event EventHandler<PropertyChangedEventArgs> PropertyChanged;
 
-    private string script = @"
+            int Add(int a, int b);
+            int Mult { get; set; }
+
+            object this[int index] { get; set; }
+        }
+
+        [CSharpCallLua]
+        public delegate ICalc CalcNew(int mult, params string[] args);
+
+        private string script = @"
                 local calc_mt = {
                     __index = {
                         Add = function(self, a, b)
@@ -83,44 +85,45 @@ public class InvokeLua : MonoBehaviour
                     end
                 }
 	        ";
-    // Use this for initialization
-    void Start()
-    {
-        LuaEnv luaenv = new LuaEnv();
-        Test(luaenv);//调用了带可变参数的delegate，函数结束都不会释放delegate，即使置空并调用GC
-        luaenv.Dispose();
-    }
+        // Use this for initialization
+        void Start()
+        {
+            LuaEnv luaenv = new LuaEnv();
+            Test(luaenv);//调用了带可变参数的delegate，函数结束都不会释放delegate，即使置空并调用GC
+            luaenv.Dispose();
+        }
 
-    void Test(LuaEnv luaenv)
-    {
-        luaenv.DoString(script);
-        CalcNew calc_new = luaenv.Global.GetInPath<CalcNew>("Calc.New");
-        ICalc calc = calc_new(10, "hi", "john"); //constructor
-        Debug.Log("sum(*10) =" + calc.Add(1, 2));
-        calc.Mult = 100;
-        Debug.Log("sum(*100)=" + calc.Add(1, 2));
+        void Test(LuaEnv luaenv)
+        {
+            luaenv.DoString(script);
+            CalcNew calc_new = luaenv.Global.GetInPath<CalcNew>("Calc.New");
+            ICalc calc = calc_new(10, "hi", "john"); //constructor
+            Debug.Log("sum(*10) =" + calc.Add(1, 2));
+            calc.Mult = 100;
+            Debug.Log("sum(*100)=" + calc.Add(1, 2));
 
-        Debug.Log("list[0]=" + calc[0]);
-        Debug.Log("list[1]=" + calc[1]);
-        
-        calc.PropertyChanged += Notify;
-        calc[1] = "dddd";
-        Debug.Log("list[1]=" + calc[1]);
+            Debug.Log("list[0]=" + calc[0]);
+            Debug.Log("list[1]=" + calc[1]);
 
-        calc.PropertyChanged -= Notify;
+            calc.PropertyChanged += Notify;
+            calc[1] = "dddd";
+            Debug.Log("list[1]=" + calc[1]);
 
-        calc[1] = "eeee";
-        Debug.Log("list[1]=" + calc[1]);
-    }
+            calc.PropertyChanged -= Notify;
 
-    void Notify(object sender, PropertyChangedEventArgs e)
-    {
-        Debug.Log(string.Format("{0} has property changed {1}={2}", sender, e.name, e.value));
-    }
+            calc[1] = "eeee";
+            Debug.Log("list[1]=" + calc[1]);
+        }
 
-    // Update is called once per frame
-    void Update()
-    {
+        void Notify(object sender, PropertyChangedEventArgs e)
+        {
+            Debug.Log(string.Format("{0} has property changed {1}={2}", sender, e.name, e.value));
+        }
 
+        // Update is called once per frame
+        void Update()
+        {
+
+        }
     }
 }

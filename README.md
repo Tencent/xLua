@@ -84,16 +84,6 @@ Debug.Log("max:" + max(32, 12));
 
 [这里](Assets/XLua/Doc/hotfix.md)是使用指南。
 
-## lua5.3 vs luajit
-
-xLua有两个版本，分别集成了lua5.3和luajit，一个项目只能选择其一。这两个版本C#代码是一样的，不同的是Plugins部分。
-
-lua5.3的特性更丰富些，比如支持原生64位整数，支持苹果bitcode，支持utf8等。出现问题因为是纯c代码，也好定位。比起luajit，lua对安装包的影响也更小。
-
-而luajit胜在性能，如果其jit不出问题的话，可以比lua高一个数量级。目前luajit作者不打算维护luajit，在找人接替其维护，后续发展不太明朗。
-
-项目可以根据自己情况判断哪个更适合。因为目前lua53版本使用较多，所以xLua工程Plugins目录下默认配套是lua53版本。
-
 ## 更多示例
 
 * [01_Helloworld](Assets/XLua/Examples/01_Helloworld/): 快速入门的例子。

@@ -80,16 +80,6 @@ It is recommended that you bind once and reuse it. If code is generated, no gc a
 
 [Here](Assets/XLua/Doc/Hotfix_EN.md) is the usage guide:
 
-## Lua 5.3 vs LuaJIT
-
-There are two versions of xLua, which integrate Lua 5.3 and LuaJIT respectively. Choose one of them for each project. The C# code in the two versions are the same, except for the Plugins.
-
-Lua 5.3 has richer features, such as support for native 64-bit integers, Apple Bitcode, UTF-8, and so on. Any problems that exist are caused by pure C code, and positioning is easy. Lua has less impact on the installation package than LuaJIT.
-
-Also, LuaJIT has higher performance. Its performance is an order of magnitude higher than Lua if its JIT is not faulty. At present, the LuaJIT developer does not plan to maintain LuaJIT. He is looking for someone to take over the maintenance, the outlook remaining uncertain.
-
-The project manager can determine which solutiuon is more suitable accordingly. Because Lua 5.3 is currently used more often, and the default package in the Plugins directory of the xLua project is Lua 5.3.
-
 ## More Examples
 
 * [01_Helloworld](Assets/XLua/Examples/01_Helloworld/): Quick Start Examples

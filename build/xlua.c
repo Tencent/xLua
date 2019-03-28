@@ -547,6 +547,7 @@ LUA_API int cls_indexer(lua_State *L) {
 			lua_call(L, 0, 1);
 			return 1;
 		}
+		lua_pop(L, 1);
 	}
 	
 	if (!lua_isnil(L, lua_upvalueindex(2))) {

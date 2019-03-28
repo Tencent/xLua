@@ -411,6 +411,10 @@ function AccessorNeedTranslator(accessor)
     return not accessor.IsStatic or not JustLuaType(accessor.Type)
 end
 
+function PushObjectNeedTranslator(type_info)
+    return IfAny(type_info.FieldInfos, function(field_info) return not JustLuaType(field_info.Type) end)
+end
+
 local GenericParameterAttributes = CS.System.Reflection.GenericParameterAttributes
 local enum_and_op = debug.getmetatable(CS.System.Reflection.BindingFlags.Public).__band
 local has_generic_flag = function(f1, f2)
