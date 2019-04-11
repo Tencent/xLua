@@ -618,6 +618,10 @@ namespace CSObjectWrapEditor
             
             GenOne(null, (type, type_info) =>
             {
+                var type2fields = luaenv.NewTable();
+                foreach(var _type in types)
+                    type2fields.Set(_type, _type.GetFields(BindingFlags.Public | BindingFlags.Static).Where(x => !isMemberInBlackList(x)).ToArray());
+                type_info.Set("type2fields", type2fields);
                 type_info.Set("types", types.ToList());
             }, templateRef.LuaEnumWrap, textWriter);
 
