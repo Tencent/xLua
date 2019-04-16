@@ -30,7 +30,7 @@ pause
 
 ## 2、编译能生成兼容格式的luac（后续只能用这特定的luac和步骤1的Plugins配套使用）
 
-到[这里](build/luac/)，如果你想编译window版本的，执行make_win64.bat，如果你要编译mac或者linux的，用make_unix.sh
+到[这里](../../build/luac/)，如果你想编译window版本的，执行make_win64.bat，如果你要编译mac或者linux的，用make_unix.sh
 
 ## 3、加载字节码
 
