@@ -20,7 +20,7 @@ namespace XLua
 	public partial class ObjectTranslator
     {
     <%ForEachCsList(types, function(type)
-	local fields = type:GetFields(enum_or_op(CS.System.Reflection.BindingFlags.Public, CS.System.Reflection.BindingFlags.Static))
+	local fields = type2fields and type2fields[type] or type:GetFields(enum_or_op(CS.System.Reflection.BindingFlags.Public, CS.System.Reflection.BindingFlags.Static))
 	local v_type_name = CSVariableName(type)
 	%>
 		public void __Register<%=v_type_name%>(RealStatePtr L)
