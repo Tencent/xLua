@@ -407,7 +407,9 @@ namespace XLua
 			FieldInfo[] fields = type.GetFields(flag);
 			EventInfo[] all_events = type.GetEvents(flag | BindingFlags.Public | BindingFlags.NonPublic);
 
-			for (int i = 0; i < fields.Length; ++i)
+            LuaAPI.lua_checkstack(L, 2);
+
+            for (int i = 0; i < fields.Length; ++i)
 			{
 				FieldInfo field = fields[i];
 				string fieldName = field.Name;
@@ -604,7 +606,9 @@ namespace XLua
 
 		public static void MakePrivateAccessible(RealStatePtr L, Type type)
 		{
-			int oldTop = LuaAPI.lua_gettop(L);
+            LuaAPI.lua_checkstack(L, 20);
+
+            int oldTop = LuaAPI.lua_gettop(L);
 
 			LuaAPI.luaL_getmetatable(L, type.FullName);
 			if (LuaAPI.lua_isnil(L, -1))
@@ -808,7 +812,9 @@ namespace XLua
 
 		public static void ReflectionWrap(RealStatePtr L, Type type, bool privateAccessible)
 		{
-			int top_enter = LuaAPI.lua_gettop(L);
+            LuaAPI.lua_checkstack(L, 20);
+
+            int top_enter = LuaAPI.lua_gettop(L);
 			ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
 			//create obj meta table
 			LuaAPI.luaL_getmetatable(L, type.FullName);
@@ -841,7 +847,7 @@ namespace XLua
 			LuaAPI.lua_newtable(L);
 			int cls_setter = LuaAPI.lua_gettop(L);
 
-			LuaCSFunction item_getter;
+            LuaCSFunction item_getter;
 			LuaCSFunction item_setter;
 			makeReflectionWrap(L, type, cls_field, cls_getter, cls_setter, obj_field, obj_getter, obj_setter, obj_meta,
 				out item_getter, out item_setter, privateAccessible ? (BindingFlags.Public | BindingFlags.NonPublic) : BindingFlags.Public);
