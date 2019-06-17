@@ -636,7 +636,7 @@ namespace XLua
         }
 #endif
 
-#if !UNITY_SWITCH || UNITY_EDITOR
+#if (!UNITY_SWITCH && !UNITY_WEBGL) || UNITY_EDITOR
         [MonoPInvokeCallback(typeof(LuaCSFunction))]
         internal static int LoadSocketCore(RealStatePtr L)
         {

@@ -456,7 +456,7 @@ namespace XLua.LuaDLL
         [DllImport(LUADLL, CallingConvention = CallingConvention.Cdecl)]
         public static extern int luaopen_i64lib(IntPtr L);//[,,m]
 
-#if !UNITY_SWITCH || UNITY_EDITOR
+#if (!UNITY_SWITCH && !UNITY_WEBGL) || UNITY_EDITOR
         [DllImport(LUADLL, CallingConvention = CallingConvention.Cdecl)]
         public static extern int luaopen_socket_core(IntPtr L);//[,,m]
 #endif
