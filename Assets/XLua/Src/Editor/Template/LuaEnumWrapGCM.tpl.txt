@@ -44,7 +44,7 @@ namespace XLua
 <%else%>
             foreach(var e in System.Enum.GetValues(typeof(<%=CsFullTypeName(type)%>)))
 			{
-			    Utils.RegisterObject(L, translator, Utils.CLS_IDX, e.ToString(), e);
+			    Utils.RegisterObject(L, this, Utils.CLS_IDX, e.ToString(), e);
 			}
 <%end%>
 			Utils.RegisterFunc(L, Utils.CLS_IDX, "__CastFrom", __CastFrom<%=v_type_name%>);
