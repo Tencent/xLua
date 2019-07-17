@@ -81,7 +81,7 @@ namespace XLua
 <%else%>
                 try
 				{
-                    translator.TranslateToEnumToTop(L, typeof(<%=CsFullTypeName(type)%>), 1);
+                    TranslateToEnumToTop(L, typeof(<%=CsFullTypeName(type)%>), 1);
 				}
 				catch (System.Exception e)
 				{
