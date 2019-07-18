@@ -43,10 +43,7 @@ namespace XLua.CSObjectWrap
             Utils.RegisterObject(L, translator, Utils.CLS_IDX, "<%=field.Name%>", <%=CsFullTypeName(type)%>.<%=UnK(field.Name)%>);
             <%end)%>
 <%else%>
-            foreach(var e in System.Enum.GetValues(typeof(<%=CsFullTypeName(type)%>)))
-			{
-			    Utils.RegisterObject(L, translator, Utils.CLS_IDX, e.ToString(), e);
-			}
+            Utils.RegisterEnumType(L, typeof(<%=CsFullTypeName(type)%>));
 <%end%>
 			Utils.RegisterFunc(L, Utils.CLS_IDX, "__CastFrom", __CastFrom);
             

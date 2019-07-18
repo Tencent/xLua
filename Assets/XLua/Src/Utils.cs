@@ -604,7 +604,17 @@ namespace XLua
 			}
 		}
 
-		public static void MakePrivateAccessible(RealStatePtr L, Type type)
+        public static void RegisterEnumType(RealStatePtr L, Type type)
+        {
+            ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
+            foreach (var name in Enum.GetNames(type))
+            {
+                RegisterObject(L, translator, Utils.CLS_IDX, name, Enum.Parse(type, name));
+            }
+        }
+
+
+        public static void MakePrivateAccessible(RealStatePtr L, Type type)
 		{
             LuaAPI.lua_checkstack(L, 20);
 
