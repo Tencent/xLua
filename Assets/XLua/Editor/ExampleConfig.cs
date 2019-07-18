@@ -131,7 +131,7 @@ public static class ExampleConfig
     //                }
     //            }
     //        }
-    //        return delegate_types.Distinct().ToList();
+    //        return delegate_types.Where(t => t.BaseType == typeof(MulticastDelegate) && !hasGenericParameter(t) && !delegateHasEditorRef(t)).Distinct().ToList();
     //    }
     //}
     //--------------end 纯lua编程配置参考----------------------------
