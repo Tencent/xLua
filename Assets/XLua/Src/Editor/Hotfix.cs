@@ -406,6 +406,23 @@ namespace XLua
             }
         }
 
+        private static ParameterDefinition CloneParameterDef(ParameterDefinition defCopy, TypeReference refCopy)
+        {
+            ParameterDefinition tempParDef = null;
+            if (defCopy.IsOut)
+            {
+                tempParDef = new ParameterDefinition(defCopy.Name, Mono.Cecil.ParameterAttributes.Out, refCopy) { IsOut = true};
+            }
+            else if (defCopy.IsIn)
+            {
+                tempParDef = new ParameterDefinition(defCopy.Name, Mono.Cecil.ParameterAttributes.In, refCopy) { IsIn = true};
+            }
+            else
+            {
+                tempParDef = new ParameterDefinition(defCopy.Name, Mono.Cecil.ParameterAttributes.None, refCopy);
+            }
+            return tempParDef;
+        }
         MethodDefinition createDelegateFor(MethodDefinition method, AssemblyDefinition assembly, string delegateName, bool ignoreValueType)
         {
             var voidType = assembly.MainModule.TypeSystem.Void;
@@ -443,7 +460,7 @@ namespace XLua
             }
             for (int i = 0; i < argTypes.Count; i++)
             {
-                beginInvoke.Parameters.Add(new ParameterDefinition(method.Parameters[i].Name, (method.Parameters[i].IsOut ? Mono.Cecil.ParameterAttributes.Out : Mono.Cecil.ParameterAttributes.None), argTypes[i]));
+                beginInvoke.Parameters.Add(CloneParameterDef(method.Parameters[i], argTypes[i]));
             }
             beginInvoke.Parameters.Add(new ParameterDefinition("callback", Mono.Cecil.ParameterAttributes.None, asyncCallbackType));
             beginInvoke.Parameters.Add(new ParameterDefinition("object", Mono.Cecil.ParameterAttributes.None, objectType));
@@ -467,9 +484,9 @@ namespace XLua
             {
                 invoke.Parameters.Add(new ParameterDefinition(self));
             }
-            foreach (var argType in argTypes)
+            for (int i = 0; i < argTypes.Count; i++)
             {
-                invoke.Parameters.Add(new ParameterDefinition(argType));
+                invoke.Parameters.Add(CloneParameterDef(method.Parameters[i], argTypes[i]));
             }
             invoke.ImplAttributes = Mono.Cecil.MethodImplAttributes.Runtime;
             delegateDef.Methods.Add(invoke);
