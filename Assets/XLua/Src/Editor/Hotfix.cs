@@ -467,9 +467,9 @@ namespace XLua
             {
                 invoke.Parameters.Add(new ParameterDefinition(self));
             }
-            foreach (var argType in argTypes)
+            for(int i = 0; i < argTypes.Count; i++)
             {
-                invoke.Parameters.Add(new ParameterDefinition(argType));
+                invoke.Parameters.Add(new ParameterDefinition(method.Parameters[i].Name, (method.Parameters[i].IsOut ? Mono.Cecil.ParameterAttributes.Out : Mono.Cecil.ParameterAttributes.None), argTypes[i]));
             }
             invoke.ImplAttributes = Mono.Cecil.MethodImplAttributes.Runtime;
             delegateDef.Methods.Add(invoke);
