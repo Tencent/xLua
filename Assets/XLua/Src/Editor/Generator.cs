@@ -932,6 +932,7 @@ namespace CSObjectWrapEditor
             }
 
             var delegates_groups = types.Select(delegate_type => makeMethodInfoSimulation(delegate_type.GetMethod("Invoke")))
+                .Where(d => d.DeclaringType.FullName != null)
                 .Concat(hotfxDelegates)
                 .GroupBy(d => d, comparer).Select((group) => new { Key = group.Key, Value = group.ToList()});
             GenOne(typeof(DelegateBridge), (type, type_info) =>
