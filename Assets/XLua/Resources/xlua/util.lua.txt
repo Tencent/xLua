@@ -56,10 +56,11 @@ local generator_mt = {
     }
 }
 
-local function cs_generator(func)
+local function cs_generator(func, ...)
+    local params = {...}
     local generator = setmetatable({
         w_func = function()
-            func()
+            func(unpack(params))
             return move_end
         end
     }, generator_mt)
@@ -92,6 +93,7 @@ local function auto_id_map()
                 end
                 --CS.XLua.HotfixDelegateBridge.Set(
             end
+            xlua.private_accessible(cs)
         else
             return org_hotfix(cs, field, func)
         end
@@ -134,6 +136,34 @@ local function createdelegate(delegate_cls, obj, impl_cls, method_name, paramete
     return CS.System.Delegate.CreateDelegate(typeof(delegate_cls), obj, m)
 end
 
+local function state(csobj, state)
+    local csobj_mt = getmetatable(csobj)
+    for k, v in pairs(csobj_mt) do rawset(state, k, v) end
+    local csobj_index, csobj_newindex = state.__index, state.__newindex
+    state.__index = function(obj, k)
+        return rawget(state, k) or csobj_index(obj, k)
+    end
+    state.__newindex = function(obj, k, v)
+        if rawget(state, k) ~= nil then
+            rawset(state, k, v)
+        else
+            csobj_newindex(obj, k, v)
+        end
+    end
+    debug.setmetatable(csobj, state)
+    return state
+end
+
+local function print_func_ref_by_csharp()
+    local registry = debug.getregistry()
+    for k, v in pairs(registry) do
+        if type(k) == 'number' and type(v) == 'function' and registry[v] == k then
+            local info = debug.getinfo(v)
+            print(string.format('%s:%d', info.short_src, info.linedefined))
+        end
+    end
+end
+
 return {
     async_to_sync = async_to_sync,
     coroutine_call = coroutine_call,
@@ -143,4 +173,6 @@ return {
     hotfix_ex = hotfix_ex,
     bind = bind,
     createdelegate = createdelegate,
+    state = state,
+    print_func_ref_by_csharp = print_func_ref_by_csharp,
 }

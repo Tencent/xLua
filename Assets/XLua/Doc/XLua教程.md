@@ -212,8 +212,9 @@ Lua调用测的返回值处理规则：C#函数的返回值（如果有的话）
 
     testobj:EnumTestFunc(CS.Tutorial.TestEnum.E1)
 
-上面的EnumTestFunc函数参数是Tutorial.TestEnum类型的
-另外，如果枚举类加入到生成代码的话，枚举类将支持__CastFrom方法，可以实现从一个整数或者字符串到枚举值的转换，例如：
+上面的EnumTestFunc函数参数是Tutorial.TestEnum类型的。
+
+枚举类支持__CastFrom方法，可以实现从一个整数或者字符串到枚举值的转换，例如：
 
     CS.Tutorial.TestEnum.__CastFrom(1)
     CS.Tutorial.TestEnum.__CastFrom('E1')
@@ -242,7 +243,7 @@ C#的delegate调用：和调用普通lua函数一样
 
 ##### 64位整数支持
 
-    Lua53版本64位整数（long，ulong）映射到原生的64未整数，而luaji版本t，相当于lua5.1的标准，本身不支持64位，xlua做了个64位支持的扩展库，C#的long和ulong都将映射到userdata：
+    Lua53版本64位整数（long，ulong）映射到原生的64未整数，而luajit版本，相当于lua5.1的标准，本身不支持64位，xlua做了个64位支持的扩展库，C#的long和ulong都将映射到userdata：
     
     支持在lua里头进行64位的运算，比较，打印
     

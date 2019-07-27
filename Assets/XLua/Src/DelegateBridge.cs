@@ -133,6 +133,11 @@ namespace XLua
         {
         }
 
+        public void PCall(IntPtr L, int nArgs, int nResults, int errFunc)
+        {
+            if (LuaAPI.lua_pcall(L, nArgs, nResults, errFunc) != 0)
+                luaEnv.ThrowExceptionFromError(errFunc - 1);
+        }
 
 #if HOTFIX_ENABLE
 
@@ -155,7 +160,8 @@ namespace XLua
             if (error != 0)
             {
                 var lastOldTop = _oldTop;
-                InvokeSessionEnd();
+                _oldTop = _stack.Pop();
+                System.Threading.Monitor.Exit(luaEnv.luaEnvLock);
                 luaEnv.ThrowExceptionFromError(lastOldTop);
             }
         }

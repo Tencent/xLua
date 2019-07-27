@@ -19,15 +19,21 @@ if [ ! -e $ISDKP/strip ]; then
   sudo cp /usr/bin/strip $ISDKP
 fi
 
-cd luajit-2.1.0b2
-make clean
-ISDKF="-arch armv7 -isysroot $ISDK/SDKs/$ISDKVER -miphoneos-version-min=7.0"
-make HOST_CC="gcc -m32 -std=c99" TARGET_FLAGS="$ISDKF" TARGET=armv7 TARGET_SYS=iOS LUAJIT_A=libxluav7.a
+cd luajit-2.1.0b3
 
+XCODEVER=`xcodebuild -version|head -n 1|sed 's/Xcode \([0-9]*\)/\1/g'`
 
-make clean
-ISDKF="-arch armv7s -isysroot $ISDK/SDKs/$ISDKVER -miphoneos-version-min=7.0"
-make HOST_CC="gcc -m32 -std=c99" TARGET_FLAGS="$ISDKF" TARGET=armv7s TARGET_SYS=iOS LUAJIT_A=libxluav7s.a
+if [ $XCODEVER -lt 10]
+then
+    make clean
+    ISDKF="-arch armv7 -isysroot $ISDK/SDKs/$ISDKVER -miphoneos-version-min=7.0"
+    make HOST_CC="gcc -m32 -std=c99" TARGET_FLAGS="$ISDKF" TARGET=armv7 TARGET_SYS=iOS LUAJIT_A=libxluav7.a
+    
+    
+    make clean
+    ISDKF="-arch armv7s -isysroot $ISDK/SDKs/$ISDKVER -miphoneos-version-min=7.0"
+    make HOST_CC="gcc -m32 -std=c99" TARGET_FLAGS="$ISDKF" TARGET=armv7s TARGET_SYS=iOS LUAJIT_A=libxluav7s.a
+fi
 
 make clean
 ISDKF="-arch arm64 -isysroot $ISDK/SDKs/$ISDKVER -miphoneos-version-min=7.0"
@@ -38,9 +44,9 @@ lipo libxluav7.a -create libxluav7s.a libxlua64.a -output libluajit.a
 cd ../..
 
 mkdir -p build_lj_ios && cd build_lj_ios
-cmake -DUSING_LUAJIT=ON  -DCMAKE_TOOLCHAIN_FILE=../cmake/iOS.cmake  -GXcode ../
+cmake -DUSING_LUAJIT=ON  -DCMAKE_TOOLCHAIN_FILE=../cmake/ios.toolchain.cmake -DPLATFORM=OS64  -GXcode ../
 cd ..
 cmake --build build_lj_ios --config Release
 
 mkdir -p plugin_luajit/Plugins/iOS/
-libtool -static -o plugin_luajit/Plugins/iOS/libxlua.a build_lj_ios/Release-iphoneos/libxlua.a luajit-2.1.0b2/src/libluajit.a
+libtool -static -o plugin_luajit/Plugins/iOS/libxlua.a build_lj_ios/Release-iphoneos/libxlua.a luajit-2.1.0b3/src/libluajit.a

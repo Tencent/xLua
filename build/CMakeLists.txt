@@ -22,6 +22,8 @@ endif ()
 
 option ( UINT_ESPECIALLY "using custom ulong" OFF )
 option ( USING_LUAJIT "using luajit" OFF )
+option ( GC64 "using gc64" OFF )
+option ( LUAC_COMPATIBLE_FORMAT "compatible format" OFF )
 
 find_path(XLUA_PROJECT_DIR NAMES SConstruct
     PATHS 
@@ -31,9 +33,12 @@ find_path(XLUA_PROJECT_DIR NAMES SConstruct
 
 MARK_AS_ADVANCED(XLUA_PROJECT_DIR)
 
+set(LUA_SRC_PATH lua-5.3.5/src)
+set(LUAJIT_SRC_PATH luajit-2.1.0b3/src)
+
 if (USING_LUAJIT)
 	
-    if (APPLE AND NOT IOS)
+    if (APPLE AND NOT IOS AND NOT ANDROID)
 	    include_directories(
 		  ${CMAKE_SOURCE_DIR}
 		  lua-5.1.5/src
@@ -49,32 +54,33 @@ if (USING_LUAJIT)
 	else ()
 	    include_directories(
 		  ${CMAKE_SOURCE_DIR}
-		  luajit-2.1.0b2/src
+		  ${LUAJIT_SRC_PATH}
 		  ${CMAKE_CURRENT_BINARY_DIR}
 		  ${THIRDPART_INC}
 	    )
 
 	    set ( LUA_CORE )
+	    set_property( SOURCE xlua.c APPEND PROPERTY COMPILE_DEFINITIONS USING_LUAJIT )
     endif ()
 	set ( LUA_LIB )
 else ()
 	set ( LUA_IDSIZE 120 CACHE NUMBER "gives the maximum size for the description of the source." )
 
-	configure_file ( lua-5.3.4/src/luaconf.h.in ${CMAKE_CURRENT_BINARY_DIR}/luaconf.h )
+	configure_file ( ${LUA_SRC_PATH}/luaconf.h.in ${CMAKE_CURRENT_BINARY_DIR}/luaconf.h )
 
 	include_directories(
 	    ${CMAKE_SOURCE_DIR}
-		lua-5.3.4/src
+		${LUA_SRC_PATH}
 		${CMAKE_CURRENT_BINARY_DIR}
 		${THIRDPART_INC}
 	)
 
-	set ( LUA_CORE lua-5.3.4/src/lapi.c lua-5.3.4/src/lcode.c lua-5.3.4/src/lctype.c lua-5.3.4/src/ldebug.c lua-5.3.4/src/ldo.c lua-5.3.4/src/ldump.c
-	  lua-5.3.4/src/lfunc.c lua-5.3.4/src/lgc.c lua-5.3.4/src/llex.c lua-5.3.4/src/lmem.c lua-5.3.4/src/lobject.c lua-5.3.4/src/lopcodes.c lua-5.3.4/src/lparser.c
-	  lua-5.3.4/src/lstate.c lua-5.3.4/src/lstring.c lua-5.3.4/src/ltable.c lua-5.3.4/src/ltm.c lua-5.3.4/src/lundump.c lua-5.3.4/src/lvm.c lua-5.3.4/src/lzio.c )
-	set ( LUA_LIB lua-5.3.4/src/lauxlib.c lua-5.3.4/src/lbaselib.c lua-5.3.4/src/lbitlib.c lua-5.3.4/src/lcorolib.c lua-5.3.4/src/ldblib.c
-	  lua-5.3.4/src/liolib.c lua-5.3.4/src/lmathlib.c lua-5.3.4/src/loslib.c lua-5.3.4/src/lstrlib.c lua-5.3.4/src/ltablib.c lua-5.3.4/src/linit.c
-	  lua-5.3.4/src/lutf8lib.c lua-5.3.4/src/loadlib.c )
+	set ( LUA_CORE ${LUA_SRC_PATH}/lapi.c ${LUA_SRC_PATH}/lcode.c ${LUA_SRC_PATH}/lctype.c ${LUA_SRC_PATH}/ldebug.c ${LUA_SRC_PATH}/ldo.c ${LUA_SRC_PATH}/ldump.c
+	  ${LUA_SRC_PATH}/lfunc.c ${LUA_SRC_PATH}/lgc.c ${LUA_SRC_PATH}/llex.c ${LUA_SRC_PATH}/lmem.c ${LUA_SRC_PATH}/lobject.c ${LUA_SRC_PATH}/lopcodes.c ${LUA_SRC_PATH}/lparser.c
+	  ${LUA_SRC_PATH}/lstate.c ${LUA_SRC_PATH}/lstring.c ${LUA_SRC_PATH}/ltable.c ${LUA_SRC_PATH}/ltm.c ${LUA_SRC_PATH}/lundump.c ${LUA_SRC_PATH}/lvm.c ${LUA_SRC_PATH}/lzio.c )
+	set ( LUA_LIB ${LUA_SRC_PATH}/lauxlib.c ${LUA_SRC_PATH}/lbaselib.c ${LUA_SRC_PATH}/lbitlib.c ${LUA_SRC_PATH}/lcorolib.c ${LUA_SRC_PATH}/ldblib.c
+	  ${LUA_SRC_PATH}/liolib.c ${LUA_SRC_PATH}/lmathlib.c ${LUA_SRC_PATH}/loslib.c ${LUA_SRC_PATH}/lstrlib.c ${LUA_SRC_PATH}/ltablib.c ${LUA_SRC_PATH}/linit.c
+	  ${LUA_SRC_PATH}/lutf8lib.c ${LUA_SRC_PATH}/loadlib.c )
 endif ()
 
 set ( LUA_SOCKET
@@ -100,9 +106,12 @@ endif ( )
 
 set ( XLUA_CORE
     i64lib.c
-    perflib.c
     xlua.c
 )
+
+if (NOT USING_LUAJIT)
+    list (APPEND XLUA_CORE memory_leak_checker.c)
+endif ( )
 
 macro(source_group_by_dir proj_dir source_files)
     if(MSVC OR APPLE)
@@ -136,9 +145,9 @@ if (APPLE)
            ${XLUA_CORE}
            ${THIRDPART_SRC}
         )
-		set_xcode_property (xlua IPHONEOS_DEPLOYMENT_TARGET "7.0")
+		set_xcode_property (xlua IPHONEOS_DEPLOYMENT_TARGET "7.0" "all")
     else ()
-        set(CMAKE_OSX_ARCHITECTURES "$(ARCHS_STANDARD_32_64_BIT)")
+        set(CMAKE_OSX_ARCHITECTURES "$(ARCHS_STANDARD_64_BIT)")
         add_library(xlua MODULE
             ${LUA_CORE}
             ${LUA_LIB}
@@ -150,6 +159,14 @@ if (APPLE)
         #set_target_properties ( xlua PROPERTIES FRAMEWORK TRUE )
         #set_target_properties ( xlua PROPERTIES MACOSX_RPATH TRUE )
     endif ()
+elseif ("${CMAKE_SYSTEM_NAME}" STREQUAL "Switch")
+    add_library(xlua STATIC
+        ${LUA_CORE}
+        ${LUA_LIB}
+        ${XLUA_CORE}
+        ${THIRDPART_SRC}
+    )
+    target_compile_options(xlua PRIVATE -m64 -mcpu=cortex-a57+fp+simd+crypto+crc -fno-common -fno-short-enums -ffunction-sections -fdata-sections -fPIC -fms-extensions)
 else ( )
     add_library(xlua SHARED
         ${LUA_CORE}
@@ -163,6 +180,14 @@ endif ( )
 if ( WIN32 AND NOT CYGWIN )
     target_compile_definitions (xlua PRIVATE LUA_BUILD_AS_DLL)
 endif ( )
+
+if (GC64 AND USING_LUAJIT)
+    target_compile_definitions (xlua PRIVATE LUAJIT_ENABLE_GC64)
+endif ()
+
+if (LUAC_COMPATIBLE_FORMAT AND NOT USING_LUAJIT)
+    target_compile_definitions (xlua PRIVATE LUAC_COMPATIBLE_FORMAT)
+endif ()
 
 set_property(
 	SOURCE ${LUA_SOCKET}
@@ -178,7 +203,7 @@ endif()
 if ( WIN32 AND NOT CYGWIN )
     if (USING_LUAJIT)
         target_link_libraries(xlua
-            ${CMAKE_SOURCE_DIR}/luajit-2.1.0b2/src/lua51.lib
+            ${CMAKE_SOURCE_DIR}/${LUAJIT_SRC_PATH}/lua51.lib
             ws2_32
             ${THIRDPART_LIB} 
         )
@@ -191,7 +216,7 @@ if ( WIN32 AND NOT CYGWIN )
 else ( )
     if (USING_LUAJIT AND NOT APPLE)
 		target_link_libraries(xlua
-			${CMAKE_SOURCE_DIR}/luajit-2.1.0b2/src/libluajit.a
+			${CMAKE_SOURCE_DIR}/${LUAJIT_SRC_PATH}/libluajit.a
 			m
             ${THIRDPART_LIB} 
 		)

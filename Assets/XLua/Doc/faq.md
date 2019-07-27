@@ -8,6 +8,16 @@ xLua目前以zip包形式发布，在工程目录下解压即可。
 
 可以，但生成代码目录需要配置一下（默认放Assets\XLua\Gen目录），具体可以看《XLua的配置.doc》的GenPath配置介绍。
 
+更改目录要注意的是：生成代码和xLua核心代码必须在同一程序集。如果你要用热补丁特性，xLua核心代码必须在Assembly-CSharp程序集。
+
+## xLua的配置
+
+如果你用的是lua编程，你可能需要把一些频繁访问的类配置到LuaCallCSharp，这些类的成员如果有条件编译（大多数情况下是UNITY_EDITOR）的话，你需要通过BlackList配置排除；如果你需要通过delegate回调到lua的地方，得把这些delegate配置到CSharpCallLua。
+
+如果你用的是热补丁，你需要把要注入的代码加到Hotfix列表；如果你需要通过delegate回调到lua的地方，也得把这些delegate配置到CSharpCallLua。
+
+xLua提供了强大的动态配置，让你可以结合反射实现任意的自动化配置，动态配置介绍看[这里](configure.md)。xLua希望你能根据自身项目的需求自行配置，同时为了方便部分对反射api了解不够的童鞋，xLua也针对上面两者方式分别写了参考配置：[ExampleConfig.cs](../Editor/ExampleConfig.cs)，直接打开相应部分的注释即可使用。
+
 ## lua源码只能以txt后缀？
 
 什么后缀都可以。
@@ -17,6 +27,32 @@ xLua目前以zip包形式发布，在工程目录下解压即可。
 如果你不打包到安装包，就没有后缀的限制：比如自行下载到某个目录（这也是热更的正确姿势），然后通过CustomLoader或者设置package.path去读这个目录。
 
 那为啥xLua本身带的lua源码（包括示例）为什么都是txt结尾呢？因为xLua本身就一个库，不含下载功能，也不方便运行时去某个地方下载代码，通过TextAsset是较简单的方式。
+
+## 编辑器(或非il2cpp的android)下运行正常，ios下运行调用某函数报“attempt to call a nil value”
+
+il2cpp默认会对诸如引擎、c#系统api，第三方dll等等进行代码剪裁。简单来说就是这些地方的函数如果你C#代码没访问到的就不编译到你最终发布包。
+
+解决办法：增加引用（比如配置到LuaCallCSharp，或者你自己C#代码增加那函数的访问），或者通过link.xml配置（当配置了ReflectionUse后，xlua会自动帮你配置到link.xml）告诉il2cpp别剪裁某类型。
+
+## Unity 2018兼容性问题解决
+
+2.1.14前的版本都建议先升级到2.1.14，升级后，还有如下两个使用注意事项：
+
+1、默认配置不生成代码运行会报错
+
+这是因为Api Compatibility Level设置为.NET Standard 2.0，而.NET Standard 2.0不支持emit导致的。
+
+解决方案：平时开发Api Compatibility Level设置为.NET 4.x，就能支持编辑器不生成代码开发。发布手机版本时，按Unity官方的建议，可配置为.NET Standard 2.0，包会更小些。
+
+2、生成代码后，一些系统类型的生成代码会报一些方法不存在。
+
+据研究表明，Unity 2018设置.NET 4.X Equivalent的话，其运行和编译用的库不一致，前者比后者多一些API。
+
+运行用的是：unity安装目录\Editor\Data\MonoBleedingEdge\lib\mono\unityjit\mscorlib.dll
+
+编译链接的是：unity安装目录\Editor\Data\MonoBleedingEdge\lib\mono\4.7.1-api\mscorlib.dll
+
+解决办法：2.1.14支持外部mono环境，安装个Unity2017，然后把Unity2017安装目录下的MonoBleedingEdge目录拷贝到工程目录下的Tools目录下即可。
 
 ## Plugins源码在哪里可以找到，怎么使用？
 
@@ -34,6 +70,14 @@ ios和osx需要在mac下编译。
 
 按[Hotfix操作指南](hotfix.md)一步步操作。
 
+## visual studio 2017下编译UWP原生库
+
+visual studio 2017需要安装：1、“工作负载”下的“通用Window平台开发”；2、“单个组件”下的“用于ARM的Visual C++编译器和库”、“用于ARM64的Visual C++编译器和库”、“是用于ARM64的C++通用Windows平台工具”
+
+## visual studio 2015下编译原生库
+
+把build\vs2015下的bat文件拷贝到build目录，覆盖同名文件
+
 ## 报“please install the Tools”
 
 没有把Tools安装到Assets平级目录，安装包，或者master下都能找到这个目录。
@@ -45,6 +89,12 @@ ios和osx需要在mac下编译。
 解决办法，确认XXX（类型名）加上CSharpCallLua后，清除代码后运行。
 
 如果编辑器下没问题，发布到手机报这错，表示你发布前没生成代码（执行“XLua/Generate Code”）。
+
+## unity5.5以上执行"XLua/Hotfix Inject In Editor"菜单会提示"WARNING: The runtime version supported by this application is unavailable."
+
+这是因为注入工具是用.net3.5编译，而unity5.5意思MonoBleedingEdge的mono环境并没3.5支持导致的，不过一般而言都向下兼容，目前为止也没发现该warning带来什么问题。
+
+可能有人发现定义INJECT_WITHOUT_TOOL用内嵌模式会没有该warning，但问题是这模式是调试问题用的，不建议使用，因为可能会有一些库冲突问题。
 
 ## hotfix下怎么触发一个event
 
@@ -116,11 +166,14 @@ ios下的限制有两个：1、没有jit；2、代码剪裁（stripping）；
 
 简而言之，除了CSharpCallLua是必须的（这类生成代码往往不多），LuaCallSharp生成都可以改为用反射。
 
-## 支持泛化方法的调用么？
+## 支持泛型方法的调用么？
 
-不直接支持，但能调用到。如果是静态方法，可以自己写个封装来实例化泛化方法。
+1、泛型约束到某个基类的支持，看例子：(../Examples/09_GenericMethod/)
 
-如果是成员方法，xLua支持扩展方法，你可以添加一个扩展方法来实例化泛化方法。该扩展方法使用起来就和普通成员方法一样。
+2、没有泛型约束的建议封装为非泛型使用
+如果是静态方法，可以自己写个封装来实例化泛型方法。
+
+如果是成员方法，xLua支持扩展方法，你可以添加一个扩展方法来实例化泛型方法。该扩展方法使用起来就和普通成员方法一样。
 
 ```csharp
 // C#
@@ -138,6 +191,53 @@ go:GetButton().onClick:AddListener(function()
 end)
 ```
 
+3、如果xlua版本大于2.1.12的话，新增反射调用泛型方法的支持（有一定的限制，看后面的说明），比如对于这么个C#类型：
+```csharp
+public class GetGenericMethodTest
+{
+    int a = 100;
+    public int Foo<T1, T2>(T1 p1, T2 p2)
+    {
+        Debug.Log(typeof(T1));
+        Debug.Log(typeof(T2));
+        Debug.Log(p1);
+        Debug.Log(p2);
+        return a;
+    }
+
+    public static void Bar<T1, T2>(T1 p1, T2 p2)
+    {
+        Debug.Log(typeof(T1));
+        Debug.Log(typeof(T2));
+        Debug.Log(p1);
+        Debug.Log(p2);
+    }
+}
+```
+在lua那这么调用：
+```lua
+local foo_generic = xlua.get_generic_method(CS.GetGenericMethodTest, 'Foo')
+local bar_generic = xlua.get_generic_method(CS.GetGenericMethodTest, 'Bar')
+
+local foo = foo_generic(CS.System.Int32, CS.System.Double)
+local bar = bar_generic(CS.System.Double, CS.UnityEngine.GameObject)
+
+-- call instance method
+local o = CS.GetGenericMethodTest()
+local ret = foo(o, 1, 2)
+print(ret)
+
+-- call static method
+bar(2, nil)
+```
+
+使用限制，只有下面几种情况可以：
+
+* mono下可以
+* il2cpp下，如果泛型参数是引用类型可以
+* il2cpp下，如果泛型参数是值类型，C#那有用同样的泛型参数调用过（如果是hotfix场景下，一般在C#那会用同样的泛型参数调用过，所以在hotfix功能下一般都可用）
+
+
 ## 支持lua调用C#重载函数吗？
 
 支持，但没有C#端支持的那么完善，比如重载方法void Foo(int a)和void Foo(short a)，由于int和short都对应lua的number，是没法根据参数判断调用的是哪个重载。这时你可以借助扩展方法来为其中一个起一个别名。
@@ -148,9 +248,18 @@ end)
 
 ## this[string field]或者this[object field]操作符重载为什么在lua无法访问？（比如Dictionary\<string, xxx\>, Dictionary\<object, xxx\>在lua中无法通过dic['abc']或者dic.abc检索值）
 
-在2.1.5~2.1.6版本把这个特性去掉，因为：1、这个特性会导致基类定义的方法、属性、字段等无法访问（比如Animation无法访问到GetComponent方法）；2、key为当前类某方法、属性、字段的名字的数据无法检索，比如Dictionary类型，dic['TryGetValue']返回的是一个函数，指向Dictionary的TryGetValue方法。
+因为：1、这个特性会导致基类定义的方法、属性、字段等无法访问（比如Animation无法访问到GetComponent方法）；2、key为当前类某方法、属性、字段的名字的数据无法检索，比如Dictionary类型，dic['TryGetValue']返回的是一个函数，指向Dictionary的TryGetValue方法。
 
-建议直接方法该操作符的等效方法，比如Dictionary的TryGetValue，如果该方法没有提供，可以在C#那通过Extension method封装一个使用。
+如果你的版本大于2.1.11，可以用get_Item来获取值，用set_Item来设置值。要注意只有this[string field]或者this[object field]才有这两个替代api，其它类型的key是没有的。
+
+~~~lua
+dic:set_Item('a', 1)
+dic:set_Item('b', 2)
+print(dic:get_Item('a'))
+print(dic:get_Item('b'))
+~~~
+
+如果你的版本小于或等于2.1.11，建议直接方法该操作符的等效方法，比如Dictionary的TryGetValue，如果该方法没有提供，可以在C#那通过Extension method封装一个使用。
 
 ## 有的Unity对象，在C#为null，在lua为啥不为nil呢？比如一个已经Destroy的GameObject
 
@@ -194,6 +303,20 @@ dic:Add('a', CS.UnityEngine.Vector3(1, 2, 3))
 print(dic:TryGetValue('a'))
 ~~~
 
+如果你的xLua版本大于v2.1.12，将会有更漂亮的表达方式
+
+~~~lua
+-- local List_String = CS.System.Collections.Generic['List<>'](CS.System.String) -- another way
+local List_String = CS.System.Collections.Generic.List(CS.System.String)
+local lst = List_String()
+
+local Dictionary_String_Vector3 = CS.System.Collections.Generic.Dictionary(CS.System.String, CS.UnityEngine.Vector3)
+local dic = Dictionary_String_Vector3()
+dic:Add('a', CS.UnityEngine.Vector3(1, 2, 3))
+print(dic:TryGetValue('a'))
+~~~
+
+
 ## 调用LuaEnv.Dispose时，报“try to dispose a LuaEnv with C# callback!”错是什么原因？
 
 这是由于C#还存在指向lua虚拟机里头某个函数的delegate，为了防止业务在虚拟机释放后调用这些无效（因为其引用的lua函数所在虚拟机都释放了）delegate导致的异常甚至崩溃，做了这个检查。
@@ -207,6 +330,24 @@ print(dic:TryGetValue('a'))
 如果你是通过xlua.hotfix(class, method, func)注入到C#，则通过xlua.hotfix(class, method, nil)删除；
 
 要注意以上操作在Dispose之前完成。
+
+xlua提供了一个工具函数来帮助你找到被C#引用着的lua函数，util.print_func_ref_by_csharp，使用很简单，执行如下lua代码：
+
+~~~lua
+local util = require 'xlua.util'
+util.print_func_ref_by_csharp()
+~~~
+
+可以看到控制台有类似这样的输出，下面第一行表示有一个在main.lua的第2行定义的函数被C#引用着
+
+~~~bash
+LUA: main.lua:2
+LUA: main.lua:13
+~~~
+
+## 调用LuaEnv.Dispose崩溃
+
+很可能是这个Dispose操作是由lua那驱动执行，相当于在lua执行的过程中把lua虚拟机给释放了，改为只由C#执行即可。
 
 ## C#参数（或字段）类型是object时，传递整数默认是以long类型传递，如何指明其它类型？比如int
 
@@ -323,3 +464,50 @@ f2(obj, 1, 2) --调用int版本
 ~~~
 
 注意：xlua.tofunction由于使用不太方便，以及使用了反射，所以建议做作为临时方案，尽量用封装的方法来解决。
+
+## 支持interface扩展方法么？
+
+考虑到生成代码量，不支持通过obj:ExtentionMethod()的方式去调用，支持通过静态方法的方式去调用CS.ExtentionClass.ExtentionMethod(obj)
+
+## 如何把xLua的Wrap生成操作集成到我项目的自动打包流程中？
+
+可以参考[例子13](../Examples/13_BuildFromCLI/)，通过命令行调用Unity自定义类方法出包。
+
+## 使用热补丁特性，打手机版本时报DelegatesGensBridge.cs引用了不存在的类（比如仅编辑器使用的类型），应该如何处理？
+
+这是因为Hotfix列表里头配置的类型（假设是类型A），对这些不存在的类型（假设是类型B）引用。找到这种类型，从Hotfix配置列表中排除（注意，排除的类型A，而不是类型B）。
+
+如何找？VS中选中报不存在的类型，然后“Find All References”找到引用了这个类型的所有方法、属性。。这些方法、属性等等所在的类型就是你要排除的类型。
+
+## 如何加载字节码
+
+用luac编译后直接加载即可。
+
+要注意默认lua字节码是区分32位和64位的，32位luac生成的字节码只能在32位虚拟机里头跑，可以按《[通用字节码](compatible_bytecode.md)》一文处理下。
+
+## lua持有的c#对象怎么释放
+
+达成下面两点即可释放：
+
+* 1、lua所有对该C#对象释放
+* 2、lua完成一次gc周期
+
+貌似所有gc都是上述条件，但对于lua要特别说明下第二点，lua不像C#那样会后台启动一个gc线程在做垃圾回收，而是把gc拆分成小步骤插入到有内存分配。
+
+所以注意一点：你没在运行lua代码，或者lua代码运行并未分配内存，你怎么等也不会有内存回收。
+
+默认gc配置，lua要到达上次内存回收完成时内存占用的两倍才开启一轮新的gc周期，举例上次回收完毕20M内存，那么下次要等到40M才开始一轮gc周期。
+
+按xLua的设计，一个C#对象引用传递到lua，仅让lua增加4字节内存（然而这可能是在C#侧内存占用很大的对象，比如贴图），可以看到通过持有C#引用要达成默认配置开启gc周期条件是比较困难的。
+
+这时可以这么干：
+
+* 1、设置GcPause，让gc更快开启，默认200表示2倍上次回收内存时开启，coco2dx设置为100，表示完成一趟gc后马上开启下一趟，另外也可以设置GcStepmul来加快gc回收速度，默认是200表示回收比内存分配快两倍，GcStepmul在coco2dx设置为5000
+* 2、可以在场景切换之类对于性能要求不高的地方加入全量gc调用（通过LuaEnv.FullGc或者在lua里头调用collectgarbage('collect')都可以）。
+
+## 多线程下莫名crash怎么解决
+
+多线程使用需要在（Player Setting/Scripting Define Symbols）下添加THREAD_SAFE宏。
+
+常见的不明显的多线程的场景，比如c#异步socket，对象析构函数等。
+

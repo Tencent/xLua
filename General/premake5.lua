@@ -39,7 +39,6 @@ links
 {
     "System",
     "System.Core",
-    "../Assets/Plugins/x86_64/xlua.dll",
 }
 
 project "XLuaGenerate"
@@ -60,6 +59,7 @@ files
 defines
 {
     "XLUA_GENERAL",
+    "XLUA_ALL_OBSOLETE",
 }
 
 links

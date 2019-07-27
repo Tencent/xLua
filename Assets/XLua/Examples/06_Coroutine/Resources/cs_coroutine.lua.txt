@@ -8,12 +8,14 @@ local util = require 'xlua.util'
 
 local gameobject = CS.UnityEngine.GameObject('Coroutine_Runner')
 CS.UnityEngine.Object.DontDestroyOnLoad(gameobject)
-local cs_coroutine_runner = gameobject:AddComponent(typeof(CS.Coroutine_Runner))
-
-local function async_yield_return(to_yield, cb)
-    cs_coroutine_runner:YieldAndCallback(to_yield, cb)
-end
+local cs_coroutine_runner = gameobject:AddComponent(typeof(CS.XLuaTest.Coroutine_Runner))
 
 return {
-    yield_return = util.async_to_sync(async_yield_return)
+    start = function(...)
+	    return cs_coroutine_runner:StartCoroutine(util.cs_generator(...))
+	end;
+
+	stop = function(coroutine)
+	    cs_coroutine_runner:StopCoroutine(coroutine)
+	end
 }

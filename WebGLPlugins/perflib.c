@@ -169,7 +169,7 @@ static void mark_function(lua_State *L, lua_State *dL) {
 		
 		lua_pushvalue(L, -1);
 		lua_getinfo(L, ">S", &ar);
-		snprintf(used_in, sizeof(used_in) - 1, "%s:%d~%d", ar.short_src != NULL ? ar.short_src : "", ar.linedefined, ar.lastlinedefined);
+		snprintf(used_in, sizeof(used_in) - 1, "%s:%d~%d", ar.short_src, ar.linedefined, ar.lastlinedefined);
 		used_in[sizeof(used_in) - 1] = 0;
 		
 		for (i=1;;i++) {

@@ -19,32 +19,70 @@ namespace XLua.CSObjectWrap
 {
     public class XLua_Gen_Initer_Register__
 	{
+        <%
+        local split_method_perfix = 'wrapInit'
+        local split_method_count = 0
+        local wrap_in_split_method = 0
+        local max_wrap_in_split_method = 50
+        %>
+        <%ForEachCsList(wraps, function(wrap)%>
+        <%if wrap_in_split_method == 0 then%>static void <%=split_method_perfix%><%=split_method_count%>(LuaEnv luaenv, ObjectTranslator translator)
+        {
+        <%end%>
+            translator.DelayWrapLoader(typeof(<%=CsFullTypeName(wrap)%>), <%=CSVariableName(wrap)%>Wrap.__Register);
+        <%if wrap_in_split_method == max_wrap_in_split_method then
+        wrap_in_split_method = 0
+        split_method_count = split_method_count + 1
+        %>
+        }
+        <%else
+        wrap_in_split_method = wrap_in_split_method + 1
+        end
+        end)%>
+        <% if generic_wraps then 
+        for generic_def, instances in pairs(generic_wraps) do
+        for _, args in ipairs(instances) do
+        local generic_arg_list = "<"
+        ForEachCsList(args, function(generic_arg, gai)
+            if gai ~= 0 then generic_arg_list = generic_arg_list .. ", " end
+            generic_arg_list = generic_arg_list .. CsFullTypeName(generic_arg)
+        end)
+        generic_arg_list = generic_arg_list .. ">"
+        
+        %>
+        <%if wrap_in_split_method == 0 then%>static void <%=split_method_perfix%><%=split_method_count%>(LuaEnv luaenv, ObjectTranslator translator)
+        {
+        <%end%>
+            translator.DelayWrapLoader(typeof(<%=generic_def.Name:gsub("`%d+", "") .. generic_arg_list%>), <%=CSVariableName(generic_def)%>Wrap<%=generic_arg_list%>.__Register);
+        <%if wrap_in_split_method == max_wrap_in_split_method then
+        wrap_in_split_method = 0
+        split_method_count = split_method_count + 1
+        %>
+        }
+        <%else
+        wrap_in_split_method = wrap_in_split_method + 1
+        end
+        end
+        end
+        end%>
+        
+        <%if wrap_in_split_method ~= 0 then
+        split_method_count = split_method_count + 1
+        %>}<%end%>
+        
+        static void Init(LuaEnv luaenv, ObjectTranslator translator)
+        {
+            <%for i = 1, split_method_count do%>
+            <%=split_method_perfix%><%=(i - 1)%>(luaenv, translator);
+            <%end%>
+            <%ForEachCsList(itf_bridges, function(itf_bridge)%>
+            translator.AddInterfaceBridgeCreator(typeof(<%=CsFullTypeName(itf_bridge)%>), <%=CSVariableName(itf_bridge)%>Bridge.__Create);
+            <%end)%>
+        }
+        
 	    static XLua_Gen_Initer_Register__()
         {
-		    XLua.LuaEnv.AddIniter((luaenv, translator) => {
-			    <%ForEachCsList(wraps, function(wrap)%>
-				translator.DelayWrapLoader(typeof(<%=CsFullTypeName(wrap)%>), <%=CSVariableName(wrap)%>Wrap.__Register);
-				<%end)%>
-				<% if generic_wraps then 
-				for generic_def, instances in pairs(generic_wraps) do
-				for _, args in ipairs(instances) do
-				local generic_arg_list = "<"
-				ForEachCsList(args, function(generic_arg, gai)
-					if gai ~= 0 then generic_arg_list = generic_arg_list .. ", " end
-					generic_arg_list = generic_arg_list .. CsFullTypeName(generic_arg)
-				end)
-				generic_arg_list = generic_arg_list .. ">"
-				
-				%>
-				translator.DelayWrapLoader(typeof(<%=generic_def.Name:gsub("`%d+", "") .. generic_arg_list%>), <%=CSVariableName(generic_def)%>Wrap<%=generic_arg_list%>.__Register);
-				<%
-				end
-				end
-				end%>
-				<%ForEachCsList(itf_bridges, function(itf_bridge)%>
-				translator.AddInterfaceBridgeCreator(typeof(<%=CsFullTypeName(itf_bridge)%>), <%=CSVariableName(itf_bridge)%>Bridge.__Create);
-				<%end)%>
-			});
+		    XLua.LuaEnv.AddIniter(Init);
 		}
 		
 		
