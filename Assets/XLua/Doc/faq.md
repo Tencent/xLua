@@ -52,7 +52,7 @@ il2cpp默认会对诸如引擎、c#系统api，第三方dll等等进行代码剪
 
 编译链接的是：unity安装目录\Editor\Data\MonoBleedingEdge\lib\mono\4.7.1-api\mscorlib.dll
 
-解决办法：2.1.14支持外部mono环境，安装个Unity2017，然后把Unity2017安装目录下的MonoBleedingEdge目录拷贝到工程目录下的Tools目录下即可。
+解决办法：用黑名单排除报错方法即可。不过2019年8月6号以前的版本的黑名单配置对泛型不友好，要一个个泛型实例的配置（比如，Dictionary<int, int>和Dictionary<float, int>要分别配置），而目前发现该问题主要出在泛型Dictionary上。可以更新到2019年8月6号之后的版本，该版本支持配置一个过滤器对泛型方法过滤。这里有对unity 2018的Dictionary的[针对性配置](https://github.com/Tencent/xLua/blob/master/Assets/XLua/Editor/ExampleConfig.cs#L277)，直接拷贝使用，如果碰到其它泛型也有多出来的方法，参考Dictionary进行配置。
 
 ## Plugins源码在哪里可以找到，怎么使用？
 
