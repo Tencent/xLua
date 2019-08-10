@@ -1368,8 +1368,9 @@ namespace XLua
 				LuaAPI.xlua_pushasciistring(L, path[i]);
 				if (0 != LuaAPI.xlua_pgettable(L, -2))
 				{
+					var err = LuaAPI.lua_tostring(L, -1);
 					LuaAPI.lua_settop(L, oldTop);
-					throw new Exception("SetCSTable for [" + type + "] error: " + LuaAPI.lua_tostring(L, -1));
+					throw new Exception("SetCSTable for [" + type + "] error: " + err);
 				}
 				if (LuaAPI.lua_isnil(L, -1))
 				{
