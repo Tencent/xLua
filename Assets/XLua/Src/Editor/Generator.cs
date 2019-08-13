@@ -527,6 +527,14 @@ namespace CSObjectWrapEditor
             if (mb is FieldInfo && (mb as FieldInfo).FieldType.IsPointer) return true;
             if (mb is PropertyInfo && (mb as PropertyInfo).PropertyType.IsPointer) return true;
 
+            foreach(var filter in memberFilters)
+            {
+                if (filter(mb))
+                {
+                    return true;
+                }
+            }
+
             foreach (var exclude in BlackList)
             {
                 if (mb.DeclaringType.ToString() == exclude[0] && mb.Name == exclude[1])
@@ -545,6 +553,14 @@ namespace CSObjectWrapEditor
             //指针目前不支持，先过滤
             if (mb.GetParameters().Any(pInfo => pInfo.ParameterType.IsPointer)) return true;
             if (mb is MethodInfo && (mb as MethodInfo).ReturnType.IsPointer) return false;
+
+            foreach (var filter in memberFilters)
+            {
+                if (filter(mb))
+                {
+                    return true;
+                }
+            }
 
             foreach (var exclude in BlackList)
             {
@@ -1270,6 +1286,8 @@ namespace CSObjectWrapEditor
 
         public static List<string> assemblyList = null;
 
+        public static List<Func<MemberInfo, bool>> memberFilters = null;
+
         static void AddToList(List<Type> list, Func<object> get, object attr)
         {
             object obj = get();
@@ -1382,6 +1400,10 @@ namespace CSObjectWrapEditor
             {
                 BlackList.AddRange(get_cfg() as List<List<string>>);
             }
+            if (isDefined(test, typeof(BlackListAttribute)) && typeof(Func<MemberInfo, bool>).IsAssignableFrom(cfg_type))
+            {
+                memberFilters.Add(get_cfg() as Func<MemberInfo, bool>);
+            }
 
             if (isDefined(test, typeof(AdditionalPropertiesAttribute))
                         && (typeof(Dictionary<Type, List<string>>)).IsAssignableFrom(cfg_type))
@@ -1456,6 +1478,8 @@ namespace CSObjectWrapEditor
 #else
             assemblyList = new List<string>();
 #endif
+            memberFilters = new List<Func<MemberInfo, bool>>();
+
             foreach (var t in check_types)
             {
                 MergeCfg(t, null, () => t);
