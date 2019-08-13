@@ -186,7 +186,7 @@ namespace XLua
                 {
                     continue;
                 }
-                TryDelayWrapLoader(L, nested_type);
+                GetTypeId(L, nested_type);
             }
             
             return true;
