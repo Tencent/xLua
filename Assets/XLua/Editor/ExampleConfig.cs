@@ -142,9 +142,9 @@ public static class ExampleConfig
     //{
     //    get
     //    {
-    //        return (from type in Assembly.Load("Assembly-CSharp").GetExportedTypes()
-    //                           where type.Namespace == null || !type.Namespace.StartsWith("XLua")
-    //                           select type);
+    //        return (from type in Assembly.Load("Assembly-CSharp").GetTypes()
+    //                where type.Namespace == null || !type.Namespace.StartsWith("XLua")
+    //                select type);
     //    }
     //}
     //--------------begin 热补丁自动化配置-------------------------
