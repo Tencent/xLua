@@ -137,6 +137,7 @@ if (APPLE)
            ${THIRDPART_SRC}
         )
     else ()
+        ADD_DEFINITIONS(-DLUA_USE_MACOSX) #osx platform emmylua debugger must have this option or can not load cpath
         set(CMAKE_OSX_ARCHITECTURES "$(ARCHS_STANDARD_32_64_BIT)")
         add_library(xlua MODULE
             ${LUA_CORE}
