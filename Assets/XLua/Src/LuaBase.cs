@@ -23,8 +23,8 @@ namespace XLua
     public abstract class LuaBase : IDisposable
     {
         protected bool disposed;
-        protected int luaReference;
-        protected LuaEnv luaEnv;
+        protected readonly int luaReference;
+        protected readonly LuaEnv luaEnv;
 
 #if UNITY_EDITOR || XLUA_GENERAL
         protected int _errorFuncRef { get { return luaEnv.errorFuncRef; } }
@@ -55,7 +55,7 @@ namespace XLua
             {
                 if (luaReference != 0)
                 {
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
                     lock (luaEnv.luaEnvLock)
                     {
 #endif
@@ -68,11 +68,10 @@ namespace XLua
                         {
                             luaEnv.equeueGCAction(new LuaEnv.GCAction { Reference = luaReference, IsDelegate = is_delegate });
                         }
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
                     }
 #endif
                 }
-                luaEnv = null;
                 disposed = true;
             }
         }
@@ -81,7 +80,7 @@ namespace XLua
         {
             if (o != null && this.GetType() == o.GetType())
             {
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
                 lock (luaEnv.luaEnvLock)
                 {
 #endif
@@ -95,7 +94,7 @@ namespace XLua
                     int equal = LuaAPI.lua_rawequal(L, -1, -2);
                     LuaAPI.lua_settop(L, top);
                     return (equal != 0);
-#if THREAD_SAFT || HOTFIX_ENABLE
+#if THREAD_SAFE || HOTFIX_ENABLE
                 }
 #endif
             }
@@ -104,7 +103,10 @@ namespace XLua
 
         public override int GetHashCode()
         {
-            return luaReference + ((luaEnv != null) ? luaEnv.L.ToInt32() : 0);
+            LuaAPI.lua_getref(luaEnv.L, luaReference);
+            var pointer = LuaAPI.lua_topointer(luaEnv.L, -1);
+            LuaAPI.lua_pop(luaEnv.L, 1);
+            return pointer.ToInt32();
         }
 
         internal virtual void push(RealStatePtr L)

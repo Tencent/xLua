@@ -1,0 +1,170 @@
+@import "_common"
+
+#footer
+    color rgb(125,125,125)
+    background-color #171f26
+    text-align center
+    font-size 14px
+    padding 85px
+    p
+        padding-top 5px
+        a
+            color rgb(125,125,125)
+
+#mobile-header
+    display none
+
+#header
+    background-color: $main-color;
+    height: $header-height
+    padding $heading-padding-vertical 20px
+    position relative
+    z-index 999
+
+ #nav
+    list-style-type none
+    margin 0
+    padding 0
+    position absolute
+    right 30px
+    top $heading-padding-vertical
+    height $header-height
+    line-height $header-height
+    .break
+        display none
+    li
+        display inline-block
+        position relative
+        margin 0 .6em
+        color: $contrast-color
+        a
+            color: $contrast-color
+
+#logo
+    display inline-block
+    font-size 1.5em
+    line-height $header-height
+    color $main-font-color
+    font-family $logo-font
+    font-weight 500
+    img
+        vertical-align middle
+        margin-right 6px
+        width $header-height
+        height $header-height
+
+.search-query
+    height 26px
+    line-height 30px
+    padding 0 15px 0 30px
+    margin-bottom 3px
+    border 1px solid #fff
+    color $main-font-color
+    outline none
+    border-radius 15px
+    margin-right 5px
+    transition .2s ease
+    background url(../images/search.png) 8px 4px no-repeat
+    background-size 20px
+    vertical-align middle !important
+    &:focus
+        background #fff url(../images/search.focus.png) 8px 4px no-repeat
+        background-size 20px
+
+@media screen and (max-width: 899px)
+    #mobile-header
+        position relative
+        padding $heading-padding-vertical 20px
+        height: $header-height
+        display block
+        background-color: $main-color;
+        #github
+            display block
+            float right
+            img
+                width: $header-height
+                height: $header-height
+                
+        #mobile-nav-toggle
+            padding-top 4px
+            float left
+            .mobile-nav-toggle-bar
+                border-bottom: 2px solid $contrast-color
+                display block
+                width 25px
+                height 2px
+                margin-bottom 4px
+
+    #header
+        display: none
+
+
+#index-body
+    background: $main-color
+    height 325px
+    text-align center
+    h2
+        color: $contrast-color
+        padding 40px 40px
+        line-height: 50px
+        font-size 24px
+        margin-bottom 30px
+    #get-start
+        border: 1px solid $contrast-color
+        padding 12px 40px
+        color: $contrast-color
+    
+    #get-start:hover
+        background-color: $contrast-color
+        color: $main-color
+
+@media screen and (max-width: 699px)
+    #index-content
+        padding 60px 40px 40px 40px
+        text-align center
+        .intro-feature
+            height 135px
+            padding-bottom 60px
+            text-align center
+            img
+                width 45px
+                height 45px
+            h3
+                color: $main-color
+                font-size 20px
+                padding-bottom 20px;
+            p
+                text-align center
+                font-size 14px
+
+@media screen and (min-width: 700px)
+    #index-body
+        height 500px
+        h2
+            padding 120px 80px 80px 80px
+            font-size 36px
+
+    #index-content
+        padding 60px 40px 40px 40px
+        text-align center
+        li
+            width 50%
+            float left
+            .intro-feature
+                text-align center
+                height 135px
+                padding-bottom 60px
+                img
+                    width 45px
+                    height 45px
+                h3
+                    color: $main-color
+                    font-size 24px
+                p
+                    text-align center
+                    font-size 15px
+
+    #index-content
+        ul
+            margin 0 auto
+            max-width 1150px

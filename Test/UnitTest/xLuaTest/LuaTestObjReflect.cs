@@ -515,6 +515,11 @@ public class LuaTestObjReflect
         return 0;
     }
 
+	public static int VariableParamFunc2(params int[] strs)
+    {
+        return strs.Length;
+    }
+	
     public static string FirstPushEnumFunc(int i)
 	{
         string luaScript = @"
@@ -995,4 +1000,35 @@ public class TestTableAutoTransClassReflect
         }
         return value;
     }
+}
+
+
+//验证构造函数支持refer，out修饰符，add@2017.05.09 for v2.1.7
+public class ReferTestClassReflect
+{
+    public ReferTestClassReflect(int x, ref int y, out string z)
+    {
+        var_x = x;
+        var_y = y;
+        y = y - 1;
+        z = "test1";
+        var_z = z;
+    }
+
+    public ReferTestClassReflect(int x, out string z)
+    {
+        var_x = x;
+        var_y = 10;
+        z = "test3";
+        var_z = z;
+    }
+
+    public int Get_X_Y_ADD()
+    {
+        return var_x + var_y;
+    }
+
+    private int var_x;
+    private int var_y;
+    private string var_z;
 }

@@ -96,10 +96,11 @@ public class LuaTestCommon
 
 #if !XLUA_GENERAL
 //注意：用户自己代码不建议在这里配置，建议通过标签来声明!!
-public class TestCaseGenConfig : XLua.GenConfig
+public class TestCaseGenConfig
 {
 
     //lua中要使用到C#库的配置，比如C#标准库，或者Unity API，第三方库等。
+    [LuaCallCSharp]
     public List<Type> LuaCallCSharp
     {
         get
@@ -108,23 +109,6 @@ public class TestCaseGenConfig : XLua.GenConfig
             {
                 typeof(UnityEngine.TextAsset),
             };
-        }
-    }
-
-    //C#静态调用Lua的配置（包括事件的原型），仅可以配delegate，interface
-    public List<Type> CSharpCallLua {
-        get
-        {
-            return null;
-        }
-    }
-
-    //黑名单
-    public List<List<string>> BlackList
-    {
-        get
-        {
-            return null;
         }
     }
 }

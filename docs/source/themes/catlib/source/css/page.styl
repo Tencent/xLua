@@ -1,0 +1,140 @@
+@import "_common"
+@import "_sidebar"
+@import "_markdown"
+
+nav
+    height 5rem
+    background-color $main-bg-color
+    position absolute
+    width 100%
+    z-index 9999
+    img
+        width 140px
+        height 42px 
+        float left 
+        position absolute  
+        margin-top 1rem
+    
+    .nav-link
+        li
+            float right 
+            padding 1.75rem 1rem
+            a
+                color $main-color
+    
+    button
+        float right
+        margin-top 1rem
+        padding 0.75rem 1.25rem
+        background-color $main-color
+        color $contrast-color
+        border-radius 5px
+        margin-top 0.4rem
+
+.container
+    margin 0 auto 
+    max-width 80rem 
+    padding 0rem 10rem 3rem 15rem 
+    position relative
+
+.sidebar
+    padding 2.187rem 
+    padding-top 7rem 
+    width 11.25rem 
+    margin-left -15rem 
+    float left
+
+article 
+    padding 7.75rem 7.75rem 0rem 3.25rem 
+    margin-left 1.25rem
+
+.sub-nav
+    position absolute
+    top 15rem 
+    right 0 
+    width 10rem
+
+    dl 
+        dt
+            color #525252 
+            font-weight 700
+            margin-bottom 1rem
+            padding-left 0.5rem
+        
+        dd
+            margin-bottom 0.25rem
+            padding-left 0.5rem
+            overflow hidden
+            text-overflow ellipsis
+        dd.select
+            border-left:0.125rem #f4645f solid; 
+            padding-left:0.375rem;
+
+.footer
+    text-align center;
+    margin-top 2.75rem;
+    color: $sub-font-color
+    font-size 0.75rem
+
+footer
+    background-color rgb(52,52,52) 
+    height 3.125rem 
+    padding 1.875rem
+
+footer p
+    text-align center 
+    color rgb(174,174,174) 
+    font-size 0.8125rem 
+    line-height 1.8
+
+.disable
+    color rgb(175,175,175)
+
+.disable:hover 
+    color rgb(175,175,175) 
+    text-decoration none
+
+@media screen and (min-width: 960px)
+    .hiden-in-pc 
+        display none
+
+    .hiden-in-phone 
+        display inline
+
+    nav 
+        button
+            margin-top 1rem
+        button:hover
+            background-color #dc504b
+    
+    footer
+        padding 3.125rem
+
+@media screen and (max-width: 960px)
+    .hiden-in-pc 
+        display inline
+    
+    .hiden-in-phone 
+        display none
+        
+    nav
+        height 3rem
+        position fixed
+        button
+            margin-top 0.4rem 
+            padding 0.35rem 0.75rem
+        img
+            width 110px
+            height 30px
+            margin-top 0.5rem
+
+    .container
+        margin 0
+        padding 0rem 0rem 3rem 0rem
+
+    .sidebar
+        display none
+        
+    article
+        padding 5.5rem 1.75rem 0.2rem 0.2rem 
+        min-height 35rem

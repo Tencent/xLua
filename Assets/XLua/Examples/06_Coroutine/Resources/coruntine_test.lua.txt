@@ -4,24 +4,29 @@
 -- http://opensource.org/licenses/MIT
 -- Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
 
-local util = require 'xlua.util'
+local cs_coroutine = (require 'cs_coroutine')
 
-local yield_return = (require 'cs_coroutine').yield_return
+local a = cs_coroutine.start(function()
+    print('coroutine a started')
 
-local co = coroutine.create(function()
-    print('coroutine start!')
-    local s = os.time()
-    yield_return(CS.UnityEngine.WaitForSeconds(3))
-    print('wait interval:', os.time() - s)
-    
-    local www = CS.UnityEngine.WWW('http://www.qq.com')
-    yield_return(www)
-	if not www.error then
-        print(www.bytes)
-	else
-	    print('error:', www.error)
+	coroutine.yield(cs_coroutine.start(function() 
+		print('coroutine b stated inside cotoutine a')
+		coroutine.yield(CS.UnityEngine.WaitForSeconds(1))
+		print('i am coroutine b')
+	end))
+	print('coroutine b finish')
+
+	while true do
+		coroutine.yield(CS.UnityEngine.WaitForSeconds(1))
+		print('i am coroutine a')
 	end
 end)
 
-assert(coroutine.resume(co))
+cs_coroutine.start(function()
+    print('stop coroutine a after 5 seconds')
+	coroutine.yield(CS.UnityEngine.WaitForSeconds(5))
+	cs_coroutine.stop(a)
+    print('coroutine a stoped')
+end)
+
 

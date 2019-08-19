@@ -1,0 +1,23 @@
+language: csharp
+script:
+  - cd build
+  - chmod +x *.sh
+  - ./make_linux64_lua53.sh
+  - ./make_linux64_luajit.sh
+  - cd ../General
+  - msbuild /property:Configuration=Release vs2013/XLua.sln
+  - cp ../build/build_linux64/libxlua.so Bin/
+  - cp ../build/build_linux64/libxlua.so Tools/
+  - mono Bin/XLuaUnitTest.exe
+  - mono Tools/XLuaGenerate.exe Bin/XLuaTest.exe
+  - mv Gen Gen1
+  - mono Tools/XLuaGenerate.exe Bin/XLuaUnitTest.exe
+  - mv Gen Gen2
+  - msbuild /property:Configuration=Release vs2013/XLuaGenTest.sln
+  - mono Bin/XLuaUnitTestGenCode.exe
+  - cp ../build/build_linux64_lj/libxlua.so Bin/
+  - mono Bin/XLuaUnitTest.exe
+  - mono Bin/XLuaUnitTestGenCode.exe
+#  - pdb2mdb Bin/XLuaTestGenCode.exe
+#  - mono Tools/XLuaHotfixInject.exe Bin/XLuaTestGenCode.exe ./
+#  - mono Bin/XLuaTestGenCode.exe

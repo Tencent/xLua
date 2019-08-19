@@ -20,7 +20,7 @@
     <OutputPath>..\Tools\</OutputPath>
     <BaseIntermediateOutputPath>obj\Any CPU\Debug\XLuaGenerate\</BaseIntermediateOutputPath>
     <IntermediateOutputPath>$(BaseIntermediateOutputPath)</IntermediateOutputPath>
-    <DefineConstants>_DEBUG;DEBUG;TRACE;;XLUA_GENERAL</DefineConstants>
+    <DefineConstants>_DEBUG;DEBUG;TRACE;;XLUA_GENERAL;XLUA_ALL_OBSOLETE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -31,7 +31,7 @@
     <OutputPath>..\Tools\</OutputPath>
     <BaseIntermediateOutputPath>obj\Any CPU\Release\XLuaGenerate\</BaseIntermediateOutputPath>
     <IntermediateOutputPath>$(BaseIntermediateOutputPath)</IntermediateOutputPath>
-    <DefineConstants>;XLUA_GENERAL</DefineConstants>
+    <DefineConstants>;XLUA_GENERAL;XLUA_ALL_OBSOLETE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>

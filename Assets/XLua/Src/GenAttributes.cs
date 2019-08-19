@@ -14,6 +14,7 @@ namespace XLua
     public enum GenFlag
     {
         No = 0,
+        [Obsolete("use GCOptimizeAttribute instead")]
         GCOptimize = 1
     }
 
@@ -46,10 +47,29 @@ namespace XLua
 
     }
 
+    [Flags]
+    public enum OptimizeFlag
+    {
+        Default = 0,
+        PackAsTable = 1
+    }
+
     //如果想对struct生成免GC代码，加这个标签
     public class GCOptimizeAttribute : Attribute
     {
+        OptimizeFlag flag;
+        public OptimizeFlag Flag
+        {
+            get
+            {
+                return flag;
+            }
+        }
 
+        public GCOptimizeAttribute(OptimizeFlag flag = OptimizeFlag.Default)
+        {
+            this.flag = flag;
+        }
     }
 
     //如果想在反射下使用，加这个标签
@@ -58,15 +78,31 @@ namespace XLua
 
     }
 
+    //只能标注Dictionary<Type, List<string>>的field或者property
+    public class DoNotGenAttribute : Attribute
+    {
+        
+    }
+
     public class AdditionalPropertiesAttribute : Attribute
     {
 
     }
 
+    [Flags]
     public enum HotfixFlag
     {
         Stateless = 0,
+        [Obsolete("use xlua.util.state instead!", true)]
         Stateful = 1,
+        ValueTypeBoxing = 2,
+        IgnoreProperty = 4,
+        IgnoreNotPublic = 8,
+        Inline = 16,
+        IntKey = 32,
+        AdaptByDelegate = 64,
+        IgnoreCompilerGenerated = 128,
+        NoBaseProxy = 256,
     }
 
     public class HotfixAttribute : Attribute

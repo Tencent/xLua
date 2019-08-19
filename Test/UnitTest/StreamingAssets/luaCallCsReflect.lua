@@ -1121,9 +1121,9 @@ end
 
 function CMyTestCaseLuaCallCSReflect.CaseVariableParamFunc2_1_4(self)
     self.count = 1 + self.count
-	local ret, error = pcall(function() CS.LuaTestObjReflect.VariableParamFunc(0, CS.LuaTestObjReflect()) end)
+	local ret, err = pcall(function() CS.LuaTestObjReflect.VariableParamFunc(0, CS.LuaTestObjReflect()) end)
 	ASSERT_EQ(ret, false)
-	ASSERT_EQ(error, "invalid arguments to VariableParamFunc")
+	ASSERT_TRUE(err:find("invalid arguments"))
 end
 
 function CMyTestCaseLuaCallCSReflect.CaseFirstPushEnum(self)
@@ -1132,4 +1132,29 @@ function CMyTestCaseLuaCallCSReflect.CaseFirstPushEnum(self)
 	ASSERT_EQ(ret, "1")
 	local ret = CS.LuaTestObjReflect.FirstPushEnumFunc(2)
 	ASSERT_EQ(ret, "4")
+end
+
+function CMyTestCaseLuaCallCSReflect.CaseReferTestClass(self)
+	self.count = 1 + self.count
+	local int_x = 10
+	local int_y = 12
+	local str_z = "abc"
+	local class1, ret_y, ret_z = CS.ReferTestClassReflect(int_x, int_y)
+	local ret = class1:Get_X_Y_ADD()
+	ASSERT_EQ(ret, 22)
+	ASSERT_EQ(ret_y, 11)
+	ASSERT_EQ(ret_z, "test1")
+	
+	local class3, ret_z = CS.ReferTestClassReflect(int_x)
+	local ret = class3:Get_X_Y_ADD()
+	ASSERT_EQ(ret, 20)
+	ASSERT_EQ(ret_z, "test3")
+end
+
+function CMyTestCaseLuaCallCSReflect.CaseVariableParamFuncNoParam(self)
+    self.count = 1 + self.count
+	local ret = CS.LuaTestObjReflect.VariableParamFunc2()
+	ASSERT_EQ(ret, 0)
+	local ret = CS.LuaTestObjReflect.VariableParamFunc2("abc", "haha")
+	ASSERT_EQ(ret, 2)
 end

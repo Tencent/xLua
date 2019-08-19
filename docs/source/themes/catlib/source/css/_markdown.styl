@@ -1,0 +1,266 @@
+article
+    color:rgb(82,82,82); 
+    text-align left
+    h1,h2
+        font-size 2.25rem 
+        font-weight 500
+        margin-bottom 3rem
+    h3,h4,h5
+        font-weight 400
+    h3
+        font-size 1.375rem 
+        margin-top 3.125rem
+        margin-bottom 1.875rem
+    h3:before
+        content "#"
+        margin-right 0.25rem 
+        color $main-color 
+        opacity 0.3
+    h4
+        font-size 1rem  
+        margin-top 2.125rem
+        margin-bottom 1.25rem
+    h5
+        font-size 1rem
+        margin-left 1.25rem
+        margin-top 2.125rem
+    p
+        font-size 1rem
+        margin-bottom 1.25rem 
+        margin-top 0.625rem 
+        line-height 1.8
+        color rgb(82,82,82)
+    ul
+        padding-left 2 rem
+        position inherit
+        list-style disc
+        font-size 0.9rem
+        li
+            padding-top 0.25rem
+            color rgb(82,82,82);
+    table
+        width 100%
+        border-collapse collapse 
+        border 0
+        border-spacing 0  
+        margin-bottom 1rem
+        margin-top 1rem;
+        tr:nth-child(even) 
+            td
+                background-color rgb(247,247,247)
+        .title-row 
+            background-color #ededed
+        tr 
+            th, td
+                padding 0.5rem 1rem 0.5rem 1rem
+                color rgb(82,82,82)
+            th
+                background-color #e8e8e8
+                font-weight bold
+                font-size 0.85rem
+            td
+                font-size 0.75rem
+    blockquote
+        padding 12px 24px 12px 30px
+        margin 2em 0
+        border-left 4px solid $main-color
+        background-color rgb(248,248,248)
+        position relative
+        p
+            padding 0
+            margin 0
+        &:before
+            position absolute
+            top 14px
+            left -12px
+            background-color $main-color
+            color #fff
+            content "!"
+            width 20px
+            height 20px
+            border-radius 100%
+            text-align center
+            line-height 20px
+            font-weight bold
+            font-family $code-font
+            font-size 14px
+        code
+            background-color #efefef
+        em
+            color $medium
+    code
+        border-radius 3px 
+        background-color rgb(240, 242, 241) 
+        font-size 0.75rem
+        line-height 1.8 
+        padding 1px 5px 1px 5px 
+        color: $main-color 
+        font-family source-code-pro, monospace
+        margin-left 5px 
+        margin-right 5px
+        text-shadow 0px 1px white
+    p.tip
+        background-color: $main-color
+        border-radius 3px
+        color #fff
+        padding 10px 15px 10px 15px
+        margin-bottom 50px
+        a
+            color #FFF
+        p
+            color #FFF
+            margin 0 auto
+        p a
+            text-decoration underline
+            color #FFF
+        p a:hover
+            color:rgb(252,216,214);
+    ol
+        list-style-type:none;
+        counter-reset:sectioncounter;
+        padding-left 1 rem
+        position inherit
+        font-size 0.9rem
+        li
+            color rgb(82,82,82);
+            padding-top 0.25rem
+        li:before
+            content:counter(sectioncounter) ". "
+            counter-increment:sectioncounter 
+    hr
+        height:1px;
+        border:none;
+        border-top:1px dashed rgb(220,220,220);
+    figure
+        margin 1.2rem 0
+    .highlight
+        overflow-x auto
+        position relative
+        padding 0
+        background-color rgb(248,248,248)
+        padding .8rem .8rem .4rem
+        line-height 1.1rem
+        border-radius $radius
+        font-size 0.85rem
+        table, tr, td
+            width 100%
+            border-collapse collapse
+            padding 0
+            margin 0
+        .gutter
+            width 1.5rem
+        .code
+            $code-line-height = 1.5rem
+            color #525252
+            font-size 0.825rem
+            pre
+                padding 1.2rem 1.4rem
+                line-height $code-line-height
+                margin 0
+            .line
+                min-height $code-line-height
+        &.html, &.js, &.bash, &.css, &.csharp, &.lua
+            .code:after
+                position absolute
+                top 0
+                right 0
+                color #ccc
+                text-align right
+                font-size .75rem
+                padding 5px 10px 0
+                line-height 15px
+                height 15px
+                font-weight 600
+        &.html .code:after
+            content 'HTML'
+        &.csharp .code:after
+            content 'C#'
+        &.lua .code:after
+            content 'Lua'
+        &.js .code:after
+            content 'JS'
+        &.bash .code:after
+            content 'Shell'
+        &.css .code:after
+            content 'CSS'
+    .gutter pre
+        color #999
+    pre
+        color: #525252
+        .function .keyword,
+        .constant
+            color: $main-color
+        .keyword,
+        .attribute
+            color: $main-color
+        .number,
+        .literal
+            color: #AE81FF
+        .tag,
+        .tag .title,
+        .change,
+        .winutils,
+        .flow,
+        .lisp .title,
+        .clojure .built_in,
+        .nginx .title,
+        .tex .special
+            color: #2973b7
+        .class .title
+            color: white
+        .symbol,
+        .symbol .string,
+        .value,
+        .regexp
+            color: $main-color
+        .title
+            color: #2973b7
+        .tag .value,
+        .string,
+        .subst,
+        .haskell .type,
+        .preprocessor,
+        .ruby .class .parent,
+        .built_in,
+        .sql .aggregate,
+        .django .template_tag,
+        .django .variable,
+        .smalltalk .class,
+        .javadoc,
+        .django .filter .argument,
+        .smalltalk .localvars,
+        .smalltalk .array,
+        .attr_selector,
+        .pseudo,
+        .addition,
+        .stream,
+        .envvar,
+        .apache .tag,
+        .apache .cbracket,
+        .tex .command,
+        .prompt
+            color: $main-color
+        .comment,
+        .java .annotation,
+        .python .decorator,
+        .template_comment,
+        .pi,
+        .doctype,
+        .deletion,
+        .shebang,
+        .apache .sqbracket,
+        .tex .formula
+            color: #b3b3b3
+        .coffeescript .javascript,
+        .javascript .xml,
+        .tex .formula,
+        .xml .javascript,
+        .xml .vbscript,
+        .xml .css,
+        .xml .cdata
+            opacity: 0.5
+
+@media screen and (min-width: 960px)
+    article
+        .highlight
+            font-size 1.125rem

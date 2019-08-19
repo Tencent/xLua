@@ -38,9 +38,6 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="xlua">
-      <HintPath>..\..\Assets\Plugins\x86_64\xlua.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\..\Assets\XLua\Src\CodeEmit.cs">
@@ -55,8 +52,11 @@
     <Compile Include="..\..\Assets\XLua\Src\GenAttributes.cs">
       <Link>Assets\XLua\Src\GenAttributes.cs</Link>
     </Compile>
-    <Compile Include="..\..\Assets\XLua\Src\GenConfig.cs">
-      <Link>Assets\XLua\Src\GenConfig.cs</Link>
+    <Compile Include="..\..\Assets\XLua\Src\GenericDelegateBridge.cs">
+      <Link>Assets\XLua\Src\GenericDelegateBridge.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Assets\XLua\Src\InternalGlobals.cs">
+      <Link>Assets\XLua\Src\InternalGlobals.cs</Link>
     </Compile>
     <Compile Include="..\..\Assets\XLua\Src\LuaBase.cs">
       <Link>Assets\XLua\Src\LuaBase.cs</Link>
@@ -90,6 +90,9 @@
     </Compile>
     <Compile Include="..\..\Assets\XLua\Src\ObjectTranslatorPool.cs">
       <Link>Assets\XLua\Src\ObjectTranslatorPool.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Assets\XLua\Src\RawObject.cs">
+      <Link>Assets\XLua\Src\RawObject.cs</Link>
     </Compile>
     <Compile Include="..\..\Assets\XLua\Src\SignatureLoader.cs">
       <Link>Assets\XLua\Src\SignatureLoader.cs</Link>

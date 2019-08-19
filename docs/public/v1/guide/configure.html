@@ -1,0 +1,278 @@
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+
+    <title>XLua的配置 — XLua</title>
+    <meta charset="utf-8">
+    <meta name="description" content="XLua">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+    <link rel="stylesheet" href="/xLua/public/css/page.css">
+
+    <script src="/xLua/public/js/vue.js"></script>
+    <script src="/xLua/public/js/jquery.js"></script>
+    </head>
+
+    <body>
+        
+            <nav class="nav">
+    <div class="border">
+        <img src="/xLua/public/images/logo.png" />
+        <button class="hiden-in-phone">V2.1</button>
+        <button id="btn-menu" class="hiden-in-pc">菜单</button>
+        <ul class="nav-link hiden-in-phone">
+            <!--li>
+                <form id="search-form">
+                    <input type="text" id="search-query" class="search-query">
+                </form>
+            </li!-->
+            <li><a href="https://github.com/Tencent/xLua" class="nav-link-li">下载项目</a></li>
+            <li><a href="/xLua/public/v1/guide/use.html" class="nav-link-li">使用案例</a></li>
+            <li><a href="/xLua/public/v1/guide/version.html" class="nav-link-li">更新记录</a></li>
+            <li><a href="/xLua/public/v1/guide/contribution.html" class="nav-link-li">贡献指南</li>
+            <li><a href="/xLua/public/v1/guide/index.html" class="nav-link-li">教程</a></li>
+            <li><a href="/xLua/public/" class="nav-link-li current">首页</a></li>
+        </ul>
+    </div>
+</nav>
+
+<div id="container" class="container clear">
+    <section class="sidebar clearfix">
+    <ul>
+        
+            
+            
+                <li><h3>基础</h3></li>
+            
+            
+            
+            <li>
+                <p><a href="/xLua/public/v1/guide/index.html" class="sidebar-link">介绍</a></p>
+            </li>
+        
+            
+            
+            
+            
+            <li>
+                <p><a href="/xLua/public/v1/guide/version.html" class="sidebar-link">更新记录</a></p>
+            </li>
+        
+            
+            
+            
+            
+            <li>
+                <p><a href="/xLua/public/v1/guide/use.html" class="sidebar-link">商业案例</a></p>
+            </li>
+        
+            
+            
+            
+            
+            <li>
+                <p><a href="/xLua/public/v1/guide/faq.html" class="sidebar-link">FAQ</a></p>
+            </li>
+        
+            
+            
+            
+                <li><h3>教程</h3></li>
+            
+            
+            <li>
+                <p><a href="/xLua/public/v1/guide/tutorial.html" class="sidebar-link">从零开始</a></p>
+            </li>
+        
+            
+            
+            
+            
+            <li>
+                <p><a href="/xLua/public/v1/guide/configure.html" class="sidebar-link current">XLua的配置</a></p>
+            </li>
+        
+            
+            
+            
+            
+            <li>
+                <p><a href="/xLua/public/v1/guide/api.html" class="sidebar-link">C# API</a></p>
+            </li>
+        
+            
+            
+            
+            
+            <li>
+                <p><a href="/xLua/public/v1/guide/crtdel-3rd.html" class="sidebar-link">添加删除第三方库</a></p>
+            </li>
+        
+            
+            
+            
+            
+            <li>
+                <p><a href="/xLua/public/v1/guide/gc-optimization.html" class="sidebar-link">GC优化指南</a></p>
+            </li>
+        
+            
+            
+            
+            
+            <li>
+                <p><a href="/xLua/public/v1/guide/performance-analysis.html" class="sidebar-link">性能分析工具</a></p>
+            </li>
+        
+            
+            
+            
+            
+            <li>
+                <p><a href="/xLua/public/v1/guide/signature.html" class="sidebar-link">数字签名</a></p>
+            </li>
+        
+            
+            
+            
+            
+                <li><h3>其他</h3></li>
+            
+            <li>
+                <p><a href="/xLua/public/v1/guide/hotfix.html" class="sidebar-link">热标识</a></p>
+            </li>
+        
+            
+            
+            
+            
+            <li>
+                <p><a href="/xLua/public/v1/guide/features.html" class="sidebar-link">特性</a></p>
+            </li>
+        
+    </ul>
+</section>
+    <article class="clearfix">
+    <h2 id="XLua的配置"><a href="#XLua的配置" class="headerlink" title="XLua的配置"></a>XLua的配置</h2><p>xLua所有的配置都支持三种方式：<code>打标签</code>, <code>静态列表</code>, <code>动态列表</code>。</p>
+<p>配置有两必须两建议：</p>
+<ul>
+<li>列表方式均必须是static的字段/属性</li>
+<li>列表方式均必须放到一个static类</li>
+<li>建议不用标签方式</li>
+<li>建议列表方式配置放Editor目录</li>
+</ul>
+<h3 id="打标签"><a href="#打标签" class="headerlink" title="打标签"></a>打标签</h3><p>xLua用白名单来指明生成哪些代码，而白名单通过attribute来配置，比如你想从lua调用c#的某个类，希望生成适配代码，你可以为这个类型打一个LuaCallCSharp标签：</p>
+<figure class="highlight csharp"><table><tr><td class="code"><pre><div class="line">[<span class="meta">LuaCallCSharp</span>]</div><div class="line">publicclassA</div><div class="line">&#123;</div><div class="line"></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>该方式方便，但在il2cpp下会增加不少的代码量，不建议使用。</p>
+<h3 id="静态列表"><a href="#静态列表" class="headerlink" title="静态列表"></a>静态列表</h3><p>有时我们无法直接给一个类型打标签，比如系统api，没源码的库，或者实例化的泛化类型，这时你可以在一个静态类里声明一个静态字段，该字段的类型除BlackList和AdditionalProperties之外只要实现了IEnumerable&lt;Type&gt;就可以了（这两个例外后面具体会说），然后为这字段加上标签：</p>
+<figure class="highlight csharp"><table><tr><td class="code"><pre><div class="line">[<span class="meta">LuaCallCSharp</span>]</div><div class="line"><span class="keyword">public</span> <span class="keyword">static</span> List&lt;Type&gt; mymodule_lua_call_cs_list = <span class="keyword">new</span> List&lt;Type&gt;()</div><div class="line">&#123;</div><div class="line">    <span class="keyword">typeof</span>(GameObject),</div><div class="line">    <span class="keyword">typeof</span>(Dictionary&lt;<span class="keyword">string</span>, <span class="keyword">int</span>&gt;),</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
+<p>这个字段需要放到一个 <strong>静态类</strong> 里头，建议放到 <strong>Editor目录</strong> 。</p>
+<h3 id="动态列表"><a href="#动态列表" class="headerlink" title="动态列表"></a>动态列表</h3><p>声明一个静态属性，打上相应的标签即可。</p>
+<figure class="highlight csharp"><table><tr><td class="code"><pre><div class="line">[<span class="meta">Hotfix</span>]</div><div class="line"><span class="keyword">public</span> <span class="keyword">static</span> List&lt;Type&gt; by_property</div><div class="line">&#123;</div><div class="line">    <span class="keyword">get</span></div><div class="line">    &#123;</div><div class="line">        <span class="keyword">return</span> (<span class="keyword">from</span> type <span class="keyword">in</span> Assembly.GetExecutingAssembly().GetTypes()</div><div class="line">                <span class="keyword">where</span> type.Namespace == <span class="string">"XXXX"</span></div><div class="line">                <span class="keyword">select</span> type).ToList();</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>Getter是代码，你可以实现很多效果，比如按名字空间配置，按程序集配置等等。</p>
+<p>这个属性需要放到一个 <strong>静态类</strong> 里头，建议放到 <strong>Editor目录</strong> 。</p>
+<h3 id="LuaCallCSharp"><a href="#LuaCallCSharp" class="headerlink" title="LuaCallCSharp"></a>LuaCallCSharp</h3><p>一个C#类型加了这个配置，xLua会生成这个类型的适配代码（包括构造该类型实例，访问其成员属性、方法，静态属性、方法），否则将会尝试用性能较低的反射方式来访问。</p>
+<p>一个类型的扩展方法（Extension Methods）加了这配置，也会生成适配代码并追加到被扩展类型的成员方法上。</p>
+<p>xLua只会生成加了该配置的类型，不会自动生成其父类的适配代码，当访问子类对象的父类方法，如果该父类加了LuaCallCSharp配置，则执行父类的适配代码，否则会尝试用反射来访问。</p>
+<p>反射访问除了性能不佳之外，在il2cpp下还有可能因为代码剪裁而导致无法访问，后者可以通过下面介绍的ReflectionUse标签来避免。</p>
+<h3 id="ReflectionUse"><a href="#ReflectionUse" class="headerlink" title="ReflectionUse"></a>ReflectionUse</h3><p>一个C#类型类型加了这个配置，xLua会生成link.xml阻止il2cpp的代码剪裁。</p>
+<p>对于扩展方法，必须加上LuaCallCSharp或者ReflectionUse才可以被访问到。</p>
+<p>建议所有要在Lua访问的类型，要么加LuaCallCSharp，要么加上ReflectionUse，这才能够保证在各平台都能正常运行。</p>
+<h3 id="CSharpCallLua"><a href="#CSharpCallLua" class="headerlink" title="CSharpCallLua"></a>CSharpCallLua</h3><p>如果希望把一个lua函数适配到一个C# delegate（一类是C#侧各种回调：UI事件，delegate参数，比如List&lt;T&gt;:ForEach；另外一类场景是通过LuaTable的Get函数指明一个lua函数绑定到一个delegate）。或者把一个lua table适配到一个C# interface，该delegate或者interface需要加上该配置。</p>
+<h3 id="GCOptimize"><a href="#GCOptimize" class="headerlink" title="GCOptimize"></a>GCOptimize</h3><p>一个C#纯值类型（注：指的是一个只包含值类型的struct，可以嵌套其它只包含值类型的struct）或者C#枚举值加上了这个配置。xLua会为该类型生成gc优化代码，效果是该值类型在lua和c#间传递不产生（C#）gc alloc，该类型的数组访问也不产生gc。各种无GC的场景，可以参考05_NoGc例子。</p>
+<p>除枚举之外，包含无参构造函数的复杂类型，都会生成lua table到该类型，以及改类型的一维数组的转换代码，这将会优化这个转换的性能，包括更少的gc alloc。</p>
+<h3 id="AdditionalProperties"><a href="#AdditionalProperties" class="headerlink" title="AdditionalProperties"></a>AdditionalProperties</h3><p>这个是GCOptimize的扩展配置，有的时候，一些struct喜欢把field做成是私有的，通过property来访问field，这时就需要用到该配置（默认情况下GCOptimize只对public的field打解包）。</p>
+<p>标签方式比较简单，配置方式复杂一点，要求是Dictionary&lt;Type, List&lt;string&gt;&gt;类型，Dictionary的Key是要生效的类型，Value是属性名列表。可以参考XLua对几个UnityEngine下值类型的配置，SysGCOptimize类。</p>
+<h3 id="BlackList"><a href="#BlackList" class="headerlink" title="BlackList"></a>BlackList</h3><p>如果你不要生成一个类型的一些成员的适配代码，你可以通过这个配置来实现。</p>
+<p>标签方式比较简单，对应的成员上加就可以了。</p>
+<p>由于考虑到有可能需要把重载函数的其中一个重载列入黑名单，配置方式比较复杂，类型是List&lt;List&lt;string&gt;&gt;，对于每个成员，在第一层List有一个条目，第二层List是个string的列表，第一个string是类型的全路径名，第二个string是成员名，如果成员是一个方法，还需要从第三个string开始，把其参数的类型全路径全列出来。</p>
+<p>例如下面是对GameObject的一个属性以及FileInfo的一个方法列入黑名单：</p>
+<figure class="highlight csharp"><table><tr><td class="code"><pre><div class="line"></div><div class="line">[<span class="meta">BlackList</span>]</div><div class="line"><span class="keyword">public</span> <span class="keyword">static</span> List&lt;List&lt;<span class="keyword">string</span>&gt;&gt; BlackList = <span class="keyword">new</span> List&lt;List&lt;<span class="keyword">string</span>&gt;&gt;()  &#123;</div><div class="line">    <span class="keyword">new</span> List&lt;<span class="keyword">string</span>&gt;()&#123;<span class="string">"UnityEngine.GameObject"</span>, <span class="string">"networkView"</span>&#125;,</div><div class="line">    <span class="keyword">new</span> List&lt;<span class="keyword">string</span>&gt;()&#123;<span class="string">"System.IO.FileInfo"</span>, <span class="string">"GetAccessControl"</span>, <span class="string">"System.Security.AccessControl.AccessControlSections"</span>&#125;,</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
+<h3 id="下面是生成期配置，必须放到Editor目录下"><a href="#下面是生成期配置，必须放到Editor目录下" class="headerlink" title="下面是生成期配置，必须放到Editor目录下"></a>下面是生成期配置，必须放到Editor目录下</h3><p><strong>CSObjectWrapEditor.GenPath</strong></p>
+<p>配置生成代码的放置路径，类型是string。默认放在&quot;Assets/XLua/Gen/&quot;下。</p>
+<p><strong>CSObjectWrapEditor.GenCodeMenu</strong></p>
+<p>该配置用于生成引擎的二次开发，一个无参数函数加了这个标签，在执行&quot;XLua/Generate Code&quot;菜单时会触发这个函数的调用。</p>
+
+    <div class="footer">
+        发现错误？想参与编辑？ 
+        <a href="https://github.com/Tencent/xLua/tree/master/docs/source/src/v1/guide/configure.md" target="_blank">
+            在 Github 上编辑此页！
+        </a>
+    </div>
+</article>
+
+<div class="sub-nav hiden-in-phone">
+    <dl id="sub-nav">
+        <dt>本文内容</dt>
+        <dd v-for="(ele, index) in sub_nav">
+           <a v-bind:href="ele.href">{{ ele.name }}</a>
+        </dd>
+    </dl>
+</div> 
+</div>
+
+<footer>
+    <div>
+        <p>© Copyright 2017 Tencent All Rights Reserved</p>
+        <p>Tencent 2017</p>
+    </div>
+</footer>
+
+
+<script>
+var vm = new Vue({
+    el : '#container',
+    data: {
+        sub_nav : [ ]
+    },
+    created:function(){
+        var obj = [];
+        $("article h3").each(function(){
+            obj.push({name :  $(this).find("a").attr("title") , href : "#"+$(this).attr("id") });
+        });
+
+        this.sub_nav = obj;       
+    }
+});
+
+var isShow = false;
+$("nav").on("click","#btn-menu" , function(){
+
+    if(!isShow){
+        
+        if($(document).scrollTop() > $(".sidebar").height() - 100){
+
+            $('html, body').animate({scrollTop:0} , 300, "swing",function(){
+
+                $(".sidebar").fadeIn();
+                $(".container").animate({"left" : "15rem"}, 500,"swing");
+            });
+        }else{
+
+                $(".sidebar").fadeIn();
+                $(".container").animate({"left" : "15rem"}, 500,"swing");
+
+        }
+
+    }else{
+        $(".sidebar").fadeOut();
+        $(".container").animate({"left" : "0rem"}, 500,"swing");
+    }
+    isShow = !isShow;
+
+});
+
+$(".container").on("click" , "article" , function(){
+
+    if(isShow){
+        $(".sidebar").fadeOut();
+        $(".container").animate({"left" : "0rem"}, 500,"swing");
+        isShow = false;    
+    }
+
+});
+</script>
+        
+    </body>
+</html>

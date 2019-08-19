@@ -1,0 +1,24 @@
+<% var isIndex = page.path === 'index.html' %>
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+
+    <title><%- page.title ? page.title + ' — ' : '' %>XLua</title>
+    <meta charset="utf-8">
+    <meta name="description" content="<%- theme.site_description %>">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+    <%- css(isIndex ? '/css/index' : '/css/page') %>
+
+    <script src="<%- url_for("/js/vue.js") %>"></script>
+    <script src="<%- url_for("/js/jquery.js") %>"></script>
+    </head>
+
+    <body>
+        <% if(isIndex){ %>
+            <script>window.location.href='v1/guide/index.html';</script>
+        <% }else{ %>
+            <%- partial('page') %>
+        <% } %>
+    </body>
+</html>

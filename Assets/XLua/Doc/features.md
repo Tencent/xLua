@@ -3,16 +3,17 @@
 ## 总体
 
 * Lua虚拟机支持
- * Lua5.3.3
- * Luajit2.1beta2
+ * Lua5.3
+ * Luajit2.1
 * Unity3D版本支持
- * Unity5
- * Unity4
+ * 各版本均支持
 * 平台支持
  * windows 64/32
  * android
  * ios 64/32/bitcode
  * osx
+ * uwp
+ * webgl
 * 互访技术
  * 生成适配代码
  * 反射

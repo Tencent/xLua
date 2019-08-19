@@ -1,0 +1,99 @@
+#if USE_UNI_LUA
+using LuaAPI = UniLua.Lua;
+using RealStatePtr = UniLua.ILuaState;
+using LuaCSFunction = UniLua.CSharpFunctionDelegate;
+#else
+using LuaAPI = XLua.LuaDLL.Lua;
+using RealStatePtr = System.IntPtr;
+using LuaCSFunction = XLua.LuaDLL.lua_CSFunction;
+#endif
+
+using XLua;
+using System.Collections.Generic;
+<%
+require "TemplateCommon"
+local enum_or_op = debug.getmetatable(CS.System.Reflection.BindingFlags.Public).__bor
+%>
+
+namespace XLua
+{
+	public partial class ObjectTranslator
+    {
+    <%ForEachCsList(types, function(type)
+	local fields = type2fields and type2fields[type] or type:GetFields(enum_or_op(CS.System.Reflection.BindingFlags.Public, CS.System.Reflection.BindingFlags.Static))
+	local fields_to_gen  = {}
+	ForEachCsList(fields, function(field) 
+	    if field.Name ~= "value__" and not IsObsolute(field) then 
+		    table.insert(fields_to_gen, field)
+		end
+	end)
+	local v_type_name = CSVariableName(type)
+	%>
+		public void __Register<%=v_type_name%>(RealStatePtr L)
+        {
+		    Utils.BeginObjectRegister(typeof(<%=CsFullTypeName(type)%>), L, this, 0, 0, 0, 0);
+			Utils.EndObjectRegister(typeof(<%=CsFullTypeName(type)%>), L, this, null, null, null, null, null);
+			
+			Utils.BeginClassRegister(typeof(<%=CsFullTypeName(type)%>), L, null, <%=fields.Length + 1%>, 0, 0);
+<%if #fields_to_gen <= 20 then%>
+            <% ForEachCsList(fields, function(field) 
+			if field.Name == "value__" or IsObsolute(field) then return end
+			%>
+            Utils.RegisterObject(L, this, Utils.CLS_IDX, "<%=field.Name%>", <%=CsFullTypeName(type)%>.<%=UnK(field.Name)%>);
+            <%end)%>
+<%else%>
+            Utils.RegisterEnumType(L, typeof(<%=CsFullTypeName(type)%>));
+<%end%>
+			Utils.RegisterFunc(L, Utils.CLS_IDX, "__CastFrom", __CastFrom<%=v_type_name%>);
+            
+            Utils.EndClassRegister(typeof(<%=CsFullTypeName(type)%>), L, this);
+        }
+		
+        int __CastFrom<%=v_type_name%>(RealStatePtr L, int __gen_top)
+		{
+			LuaTypes lua_type = LuaAPI.lua_type(L, 1);
+            if (lua_type == LuaTypes.LUA_TNUMBER)
+            {
+                Push<%=v_type_name%>(L, (<%=CsFullTypeName(type)%>)LuaAPI.xlua_tointeger(L, 1));
+            }
+			<%if #fields_to_gen > 0 then%>
+            else if(lua_type == LuaTypes.LUA_TSTRING)
+            {
+<%if #fields_to_gen <= 20 then%>
+			    <%
+                local is_first = true
+				ForEachCsList(fields, function(field, i) 
+			        if field.Name == "value__" or IsObsolute(field) then return end
+			    %><%=(is_first and "" or "else ")%>if (LuaAPI.xlua_is_eq_str(L, 1, "<%=field.Name%>"))
+                {
+                    Push<%=v_type_name%>(L, <%=CsFullTypeName(type)%>.<%=UnK(field.Name)%>);
+                }
+				<%
+				is_first = false
+				end)
+                %>else
+                {
+                    return LuaAPI.luaL_error(L, "invalid string for <%=CsFullTypeName(type)%>!");
+                }
+<%else%>
+                try
+				{
+                    TranslateToEnumToTop(L, typeof(<%=CsFullTypeName(type)%>), 1);
+				}
+				catch (System.Exception e)
+				{
+					return LuaAPI.luaL_error(L, "cast to " + typeof(<%=CsFullTypeName(type)%>) + " exception:" + e);
+				}
+<%end%>
+            }
+			<%end%>
+            else
+            {
+                return LuaAPI.luaL_error(L, "invalid lua type for <%=CsFullTypeName(type)%>! Expect number or string, got + " + lua_type);
+            }
+
+            return 1;
+		}
+    <%end)%>
+	}
+}

@@ -221,7 +221,12 @@ public class LuaTestObj
 	{
 		return 0;
 	}
-
+	
+	public static int VariableParamFunc2(params int[] strs)
+    {
+        return strs.Length;
+    }
+	
 	public static int TestEnumFunc(LuaTestType x)
 	{
 		return (int)x;
@@ -727,7 +732,8 @@ public struct ConStruct{
 	}
 }
 
-[LuaCallCSharp(GenFlag.GCOptimize)]
+[GCOptimize]
+[LuaCallCSharp]
 public struct StaticPusherStructA
 {
 	public byte byteVar;
@@ -740,7 +746,8 @@ public struct StaticPusherStructA
 }
 
 
-[LuaCallCSharp(GenFlag.GCOptimize)]
+[GCOptimize]
+[LuaCallCSharp]
 public struct StaticPusherStructB
 {
 	public short shortVar;
@@ -756,7 +763,8 @@ public struct StaticPusherStructB
 	}
 }
 
-[LuaCallCSharp(GenFlag.GCOptimize)]
+[GCOptimize]
+[LuaCallCSharp]
 public struct StaticPusherStructAll
 {
 	public long longVar;
@@ -1527,7 +1535,8 @@ public class TestNoGenFloatStructClass {
 	private NoGen6FloatStruct struct_6; 
 }
 
-[LuaCallCSharp(GenFlag.GCOptimize)]
+[GCOptimize]
+[LuaCallCSharp]
 public struct Gen2FloatStruct{
 	public float a;
 	public float b;
@@ -1538,7 +1547,8 @@ public struct Gen2FloatStruct{
 	}
 }
 
-[LuaCallCSharp(GenFlag.GCOptimize)]
+[GCOptimize]
+[LuaCallCSharp]
 public struct Gen3FloatStruct{
 	public float a;
 	public float b;
@@ -1551,7 +1561,8 @@ public struct Gen3FloatStruct{
 	}
 }
 
-[LuaCallCSharp(GenFlag.GCOptimize)]
+[GCOptimize]
+[LuaCallCSharp]
 public struct Gen4FloatStruct{
 	public float a;
 	public float b;
@@ -1566,7 +1577,8 @@ public struct Gen4FloatStruct{
 	}
 }
 
-[LuaCallCSharp(GenFlag.GCOptimize)]
+[GCOptimize]
+[LuaCallCSharp]
 public struct Gen5FloatStruct{
 	public float a;
 	public float b;
@@ -1583,7 +1595,8 @@ public struct Gen5FloatStruct{
 	}
 }
 
-[LuaCallCSharp(GenFlag.GCOptimize)]
+[GCOptimize]
+[LuaCallCSharp]
 public struct Gen6FloatStruct{
 	public float a;
 	public float b;
@@ -1806,7 +1819,8 @@ public class Manager : EmployeeTemplate
 	}
 }
 
-[LuaCallCSharp(GenFlag.GCOptimize)]
+[GCOptimize]
+[LuaCallCSharp]
 public class TableAutoTransSimpleClass
 {
     public TableAutoTransSimpleClass()
@@ -1846,7 +1860,8 @@ public class TableAutoTransSimpleClass
     public long z;
 }
 
-[LuaCallCSharp(GenFlag.GCOptimize)]
+[GCOptimize]
+[LuaCallCSharp]
 public class TableAutoTransComplexClass
 {
     public TableAutoTransComplexClass()
@@ -1878,13 +1893,15 @@ public class TableAutoTransComplexClass
     public TableAutoTransSimpleClass B;
 }
 
-[LuaCallCSharp(GenFlag.GCOptimize)]
+[GCOptimize]
+[LuaCallCSharp]
 public struct TableAutoTransSimpleStruct
 {
     public byte a;
 }
 
-[LuaCallCSharp(GenFlag.GCOptimize)]
+[GCOptimize]
+[LuaCallCSharp]
 public struct TableAutoTransComplexStruct
 {
     public int a;
@@ -1893,7 +1910,8 @@ public struct TableAutoTransComplexStruct
     public TableAutoTransSimpleStruct d;
 }
 
-[LuaCallCSharp(GenFlag.GCOptimize)]
+[GCOptimize]
+[LuaCallCSharp]
 public class TestTableAutoTransClass
 {
     public TableAutoTransSimpleClass SimpleClassMethod(TableAutoTransSimpleClass p)
@@ -1938,4 +1956,35 @@ public class TestTableAutoTransClass
         }
         return value;
     }
+}
+
+//验证构造函数支持refer，out修饰符，add@2017.05.09 for v2.1.7
+[LuaCallCSharp]
+public class ReferTestClass
+{
+    public ReferTestClass(int x, ref int y, out string z)
+    {
+        var_x = x;
+        var_y = y;
+        y = y - 1;
+        z = "test1";
+        var_z = z;
+    }
+
+    public ReferTestClass(int x, out string z)
+    {
+        var_x = x;
+        var_y = 10;
+        z = "test3";
+        var_z = z;
+    }
+
+    public int Get_X_Y_ADD()
+    {
+        return var_x + var_y;
+    }
+
+    private int var_x;
+    private int var_y;
+    private string var_z;
 }

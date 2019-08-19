@@ -106,10 +106,14 @@ static int io_noclose (lua_State *L) {
 ** function to close 'popen' files
 */
 static int io_pclose (lua_State *L) {
+#if defined(WINAPI_FAMILY_PARTITION)
+  return luaL_error(L, "unsupport api in uwp platform");
+#else
   FILE **p = tofilep(L);
   int ok = lua_pclose(L, *p);
   *p = NULL;
   return pushresult(L, ok, NULL);
+#endif
 }
 
 
@@ -172,11 +176,15 @@ static int io_open (lua_State *L) {
 ** correct __close for 'popen' files
 */
 static int io_popen (lua_State *L) {
+#if defined(WINAPI_FAMILY_PARTITION)
+  return luaL_error(L, "unsupport api in uwp platform");
+#else
   const char *filename = luaL_checkstring(L, 1);
   const char *mode = luaL_optstring(L, 2, "r");
   FILE **pf = newfile(L);
   *pf = lua_popen(L, filename, mode);
   return (*pf == NULL) ? pushresult(L, 0, filename) : 1;
+#endif
 }
 
 
