@@ -583,13 +583,14 @@ namespace XLua
 		public static void loadUpvalue(RealStatePtr L, Type type, string metafunc, int num)
 		{
 			ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
-			LuaAPI.xlua_pushasciistring(L, metafunc);
-			LuaAPI.lua_rawget(L, LuaIndexes.LUA_REGISTRYINDEX);
-			translator.Push(L, type);
-			LuaAPI.lua_rawget(L, -2);
+			LuaAPI.xlua_pushasciistring(L, metafunc); // "metafunc"
+			LuaAPI.lua_rawget(L, LuaIndexes.LUA_REGISTRYINDEX); // {metafunc}
+			translator.Push(L, type); // {metafunc} c:type
+			LuaAPI.lua_rawget(L, -2); // {metafunc} function
+			LuaAPI.lua_remove(L, -2); // function
 			for (int i = 1; i <= num; i++)
 			{
-				LuaAPI.lua_getupvalue(L, -i, i);
+				LuaAPI.lua_getupvalue(L, -i, i); // function upvalue
 				if (LuaAPI.lua_isnil(L, -1))
 				{
 					LuaAPI.lua_pop(L, 1);
@@ -602,6 +603,7 @@ namespace XLua
 			{
 				LuaAPI.lua_remove(L, -num - 1);
 			}
+			// upvalue
 		}
 
         public static void RegisterEnumType(RealStatePtr L, Type type)
