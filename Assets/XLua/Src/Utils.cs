@@ -580,17 +580,17 @@ namespace XLua
 			}
 		}
 
-		public static void loadUpvalue(RealStatePtr L, Type type, string metafunc, int num)
+		public static void loadUpvalue(RealStatePtr L, Type type, string metafunc, int index)
 		{
 			ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
-			LuaAPI.xlua_pushasciistring(L, metafunc); // "metafunc"
-			LuaAPI.lua_rawget(L, LuaIndexes.LUA_REGISTRYINDEX); // {metafunc}
-			translator.Push(L, type); // {metafunc} c:type
-			LuaAPI.lua_rawget(L, -2); // {metafunc} function
-			LuaAPI.lua_remove(L, -2); // function
-			for (int i = 1; i <= num; i++)
+			LuaAPI.xlua_pushasciistring(L, metafunc);
+			LuaAPI.lua_rawget(L, LuaIndexes.LUA_REGISTRYINDEX);
+			translator.Push(L, type);
+			LuaAPI.lua_rawget(L, -2);
+			LuaAPI.lua_remove(L, -2);
+			for (int i = 1; i <= index; i++)
 			{
-				LuaAPI.lua_getupvalue(L, -i, i); // function upvalue
+				LuaAPI.lua_getupvalue(L, -i, i);
 				if (LuaAPI.lua_isnil(L, -1))
 				{
 					LuaAPI.lua_pop(L, 1);
@@ -599,11 +599,10 @@ namespace XLua
 					LuaAPI.lua_setupvalue(L, -i - 2, i);
 				}
 			}
-			for (int i = 0; i < num; i++)
+			for (int i = 0; i < index; i++)
 			{
-				LuaAPI.lua_remove(L, -num - 1);
+				LuaAPI.lua_remove(L, -2);
 			}
-			// upvalue
 		}
 
         public static void RegisterEnumType(RealStatePtr L, Type type)
@@ -640,7 +639,8 @@ namespace XLua
 
 			loadUpvalue(L, type, LuaIndexsFieldName, 2);
 			int obj_getter = LuaAPI.lua_gettop(L);
-			int obj_field = obj_getter - 1;
+			loadUpvalue(L, type, LuaIndexsFieldName, 1);
+			int obj_field = LuaAPI.lua_gettop(L);
 
 			loadUpvalue(L, type, LuaNewIndexsFieldName, 1);
 			int obj_setter = LuaAPI.lua_gettop(L);
@@ -737,7 +737,6 @@ namespace XLua
 							if (memberType == LazyMemberTypes.FieldGet)
 							{
 								loadUpvalue(L, type, LuaIndexsFieldName, 2);
-								LuaAPI.lua_remove(L, -2);
 							}
 							else
 							{
@@ -771,7 +770,6 @@ namespace XLua
 							if (memberType == LazyMemberTypes.PropertyGet)
 							{
 								loadUpvalue(L, type, LuaIndexsFieldName, 2);
-								LuaAPI.lua_remove(L, -2);
 							}
 							else
 							{
