@@ -1732,27 +1732,6 @@ namespace CSObjectWrapEditor
             clear(GeneratorConfig.common_path);
         }
 
-#if UNITY_2018
-        [MenuItem("XLua/Generate Minimize Code", false, 3)]
-        public static void GenMini()
-        {
-            var start = DateTime.Now;
-            Directory.CreateDirectory(GeneratorConfig.common_path);
-            GetGenConfig(XLua.Utils.GetAllTypes());
-            luaenv.DoString("require 'TemplateCommon'");
-            var gen_push_types_setter = luaenv.Global.Get<LuaFunction>("SetGenPushAndUpdateTypes");
-            gen_push_types_setter.Call(GCOptimizeList.Where(t => !t.IsPrimitive && SizeOf(t) != -1).Distinct().ToList());
-            var xlua_classes_setter = luaenv.Global.Get<LuaFunction>("SetXLuaClasses");
-            xlua_classes_setter.Call(XLua.Utils.GetAllTypes().Where(t => t.Namespace == "XLua").ToList());
-            GenDelegateBridges(XLua.Utils.GetAllTypes(false));
-            GenCodeForClass(true);
-            GenLuaRegister(true);
-            callCustomGen();
-            Debug.Log("finished! use " + (DateTime.Now - start).TotalMilliseconds + " ms");
-            AssetDatabase.Refresh();
-        }
-#endif
-
         public delegate IEnumerable<CustomGenTask> GetTasks(LuaEnv lua_env, UserConfig user_cfg);
 
         public static void CustomGen(string template_src, GetTasks get_tasks)
