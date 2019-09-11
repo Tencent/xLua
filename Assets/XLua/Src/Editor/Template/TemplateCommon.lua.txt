@@ -464,3 +464,10 @@ end
 function LocalName(name)
     return "_" .. name
 end
+
+function TypeIsEditor(type)
+   if type~=nil and type.Namespace ~= nil and string.match(type.Namespace,'^UnityEditor') then
+       return true
+   end
+   return false
+end

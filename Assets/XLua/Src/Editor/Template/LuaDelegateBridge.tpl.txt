@@ -28,6 +28,19 @@ namespace XLua
 		local return_type_name = has_return and CsFullTypeName(delegate.ReturnType) or "void"
 		local out_idx = has_return and 2 or 1
 		if has_return then out_num = out_num + 1 end
+		local isEditor = false
+		if has_return then isEditor = TypeIsEditor(delegate.ReturnType)	end
+		if isEditor == false then
+			ForEachCsList(parameters, function(parameter, pi) 
+					if TypeIsEditor(parameter.ParameterType) then
+						isEditor = isEditor or true
+						return
+					end 
+				end)
+		end
+		if isEditor == true then%>
+#if UNITY_EDITOR<%
+		end
 		%>
 		public <%=return_type_name%> __Gen_Delegate_Imp<%=group_idx%>(<%ForEachCsList(parameters, function(parameter, pi) 
 			if pi ~= 0 then 
@@ -73,6 +86,10 @@ namespace XLua
             }
 #endif
 		}
+		<%if isEditor == true then%>
+#endif<%
+		end
+		%>
         <%end)%>
         
 		static DelegateBridge()
@@ -88,10 +105,14 @@ namespace XLua
             if delegate.DeclaringType then
 			local delegate_type_name = CsFullTypeName(delegate.DeclaringType)
 		%>
+		<% if TypeIsEditor(delegate.DeclaringType) then%>
+#if UNITY_EDITOR<%end%>
 		    if (type == typeof(<%=delegate_type_name%>))
 			{
 			    return new <%=delegate_type_name%>(__Gen_Delegate_Imp<%=group_idx%>);
 			}
+			<% if TypeIsEditor(delegate.DeclaringType) then%>
+#endif<%end%>
 		<%
             end
 		    end)
