@@ -45,6 +45,11 @@ namespace Tutorial
 		E2
 	}
 
+    [LuaCallCSharp]
+    public interface ICalc
+    {
+        int add(int a, int b);
+    }
 
 	[LuaCallCSharp]
 	public class DerivedClass : BaseClass
@@ -149,12 +154,6 @@ namespace Tutorial
 		{
 			Debug.Log("GenericMethod<" + typeof(T) + ">");
 		}
-	}
-
-	[LuaCallCSharp]
-	public interface ICalc
-	{
-		int add(int a, int b);
 	}
 
 	[LuaCallCSharp]
