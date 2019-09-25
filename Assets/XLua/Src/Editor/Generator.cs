@@ -1118,7 +1118,7 @@ namespace CSObjectWrapEditor
             var extension_methods_from_lcs = (from t in LuaCallCSharp
                                     where isDefined(t, typeof(ExtensionAttribute))
                                     from method in t.GetMethods(BindingFlags.Static | BindingFlags.Public)
-                                    where isDefined(method, typeof(ExtensionAttribute))
+                                    where isDefined(method, typeof(ExtensionAttribute)) && !isObsolete(method)
                                     where !method.ContainsGenericParameters || isSupportedGenericMethod(method)
                                     select makeGenericMethodIfNeeded(method))
                                     .Where(method => !lookup.ContainsKey(method.GetParameters()[0].ParameterType));
@@ -1126,7 +1126,7 @@ namespace CSObjectWrapEditor
             var extension_methods = (from t in ReflectionUse
                                      where isDefined(t, typeof(ExtensionAttribute))
                                      from method in t.GetMethods(BindingFlags.Static | BindingFlags.Public)
-                                     where isDefined(method, typeof(ExtensionAttribute))
+                                     where isDefined(method, typeof(ExtensionAttribute)) && !isObsolete(method)
                                      where !method.ContainsGenericParameters || isSupportedGenericMethod(method)
                                      select makeGenericMethodIfNeeded(method)).Concat(extension_methods_from_lcs);
             GenOne(typeof(DelegateBridgeBase), (type, type_info) =>
