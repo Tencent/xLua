@@ -6,7 +6,7 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
 */
 
-#if UNITY_EDITOR || XLUA_GENERAL
+#if (UNITY_EDITOR || XLUA_GENERAL) && !NET_STANDARD_2_0
 using System.Collections.Generic;
 using System.Reflection.Emit;
 using System.Reflection;
@@ -128,6 +128,8 @@ namespace XLua
                 {typeof(float), LuaAPI_lua_tonumber},
                 {typeof(ushort), LuaAPI_xlua_tointeger},
             };
+
+            initBlackList();
         }
 
         private void emitPush(ILGenerator il, Type type, short dataPos, bool isParam, LocalBuilder L, LocalBuilder translator, bool isArg)
@@ -214,7 +216,7 @@ namespace XLua
 
         public Type EmitDelegateImpl(IEnumerable<IGrouping<MethodInfo, Type>> groups)
         {
-            TypeBuilder impl_type_builder = CodeEmitModule.DefineType("XLuaGenDelegateImpl" + (genID++), TypeAttributes.Public, typeof(DelegateBridgeBase));
+            TypeBuilder impl_type_builder = CodeEmitModule.DefineType("XLuaGenDelegateImpl" + (genID++), TypeAttributes.Public, typeof(DelegateBridge));
 
             MethodBuilder get_deleate_by_type = impl_type_builder.DefineMethod("GetDelegateByType", MethodAttributes.Public
                     | MethodAttributes.HideBySig
@@ -229,7 +231,7 @@ namespace XLua
             {
                 var to_be_impl = group.Key;
 
-                var method_builder = defineImplementMethod(impl_type_builder, to_be_impl, to_be_impl.Attributes, "Invoke" + (genID++));
+                var method_builder = defineImplementMethod(impl_type_builder, to_be_impl, to_be_impl.Attributes, "__Gen_Delegate_Imp" + (genID++));
 
                 emitMethodImpl(to_be_impl, method_builder.GetILGenerator(), false);
 
@@ -251,7 +253,7 @@ namespace XLua
 
             // Constructor
             var ctor_param_types = new Type[] { typeof(int), typeof(LuaEnv) };
-            ConstructorInfo parent_ctor = typeof(DelegateBridgeBase).GetConstructor(ctor_param_types);
+            ConstructorInfo parent_ctor = typeof(DelegateBridge).GetConstructor(ctor_param_types);
             var ctor_builder = impl_type_builder.DefineConstructor(MethodAttributes.Public, CallingConventions.Standard, ctor_param_types);
             var ctor_il = ctor_builder.GetILGenerator();
             ctor_il.Emit(OpCodes.Ldarg_0);
@@ -647,9 +649,9 @@ namespace XLua
             {
                 il.Emit(OpCodes.Ldnull);
             }
-            else if(type.IsPrimitive || type.IsEnum)
+            else if(type.IsPrimitive || type.IsEnum())
             {
-                if (type.IsEnum)
+                if (type.IsEnum())
                 {
                     type = Enum.GetUnderlyingType(type);
                 }
@@ -681,7 +683,7 @@ namespace XLua
                 {
                     il.Emit(OpCodes.Ldc_I8, (long)Convert.ToUInt64(obj));
                 }
-                else if (typeof(IntPtr) == type || typeof(IntPtr) == type)
+                else if (typeof(IntPtr) == type || typeof(UIntPtr) == type)
                 {
                     il.Emit(OpCodes.Ldloca, localIndex);
                     il.Emit(OpCodes.Initobj, type);
@@ -1128,6 +1130,104 @@ namespace XLua
             return methodBuilder;
         }
 
+        static HashSet<MemberInfo> BlackList = new HashSet<MemberInfo>();
+
+        static void addToBlackList(List<string> info)
+        {
+            try
+            {
+                var type = Type.GetType(info[0], true);
+                var members = type.GetMember(info[1], BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+                foreach(var member in members)
+                {
+                    if (member.MemberType == MemberTypes.Method)
+                    {
+                        var mb = member as MethodBase;
+                        var parameters = mb.GetParameters();
+                        if (parameters.Length != info.Count - 2)
+                        {
+                            continue;
+                        }
+
+                        bool paramsMatch = true;
+
+                        for (int i = 0; i < parameters.Length; i++)
+                        {
+                            if (parameters[i].ParameterType.FullName != info[i + 2])
+                            {
+                                paramsMatch = false;
+                                break;
+                            }
+                        }
+                        if (paramsMatch)
+                        {
+                            BlackList.Add(member);
+                        }
+                    }
+                    else if (info.Count == 2)
+                    {
+                        BlackList.Add(member);
+                    }
+                }
+            } catch { }
+        }
+
+        static void initBlackList()
+        {
+            foreach (var t in Utils.GetAllTypes(true))
+            {
+                if (!t.IsAbstract || !t.IsSealed) continue;
+
+                var fields = t.GetFields(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
+                for (int i = 0; i < fields.Length; i++)
+                {
+                    var field = fields[i];
+                    if (field.IsDefined(typeof(BlackListAttribute), false)
+                        && (typeof(List<List<string>>)).IsAssignableFrom(field.FieldType))
+                    {
+                        foreach (var info in (field.GetValue(null) as List<List<string>>))
+                        {
+                            addToBlackList(info);
+                        }
+                    }
+                }
+
+                var props = t.GetProperties(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
+                for (int i = 0; i < props.Length; i++)
+                {
+                    var prop = props[i];
+                    if (prop.IsDefined(typeof(BlackListAttribute), false)
+                        && (typeof(List<List<string>>)).IsAssignableFrom(prop.PropertyType))
+                    {
+                        foreach (var info in (prop.GetValue(null, null) as List<List<string>>))
+                        {
+                            addToBlackList(info);
+                        }
+                    }
+                }
+            }
+        }
+
+        static bool isMemberInBlackList(MemberInfo mb)
+        {
+            if (mb is FieldInfo && (mb as FieldInfo).FieldType.IsPointer) return true;
+            if (mb is PropertyInfo && (mb as PropertyInfo).PropertyType.IsPointer) return true;
+
+            if (mb.IsDefined(typeof(BlackListAttribute), false) || mb.IsDefined(typeof(ObsoleteAttribute), false)) return true;
+
+            return BlackList.Contains(mb);
+        }
+
+        static bool isMethodInBlackList(MethodBase mb)
+        {
+            if (mb.GetParameters().Any(pInfo => pInfo.ParameterType.IsPointer)) return true;
+            if (mb is MethodInfo && (mb as MethodInfo).ReturnType.IsPointer) return false;
+
+            if (mb.IsDefined(typeof(BlackListAttribute), false) || mb.IsDefined(typeof(ObsoleteAttribute), false)) return true;
+
+            return BlackList.Contains(mb);
+        }
+
         public Type EmitTypeWrap(Type toBeWrap)
         {
             TypeBuilder wrapTypeBuilder = CodeEmitModule.DefineType(toBeWrap.Name + "Wrap" + (genID++), TypeAttributes.Public | TypeAttributes.Class | TypeAttributes.Abstract | TypeAttributes.Sealed);
@@ -1146,11 +1246,13 @@ namespace XLua
             var instanceFlag = BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly;
             var staticFlag = BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly;
 
-            var instanceFields = toBeWrap.GetFields(instanceFlag);
-            var instanceProperties = toBeWrap.GetProperties(instanceFlag);
+            var instanceFields = toBeWrap.GetFields(instanceFlag).Where(m => !isMemberInBlackList(m));
+            var instanceProperties = toBeWrap.GetProperties(instanceFlag).Where(m => !isMemberInBlackList(m));
             var extensionMethods = Utils.GetExtensionMethodsOf(toBeWrap);
+            extensionMethods = (extensionMethods == null) ? Enumerable.Empty<MethodInfo>() : extensionMethods.Where(m => !isMemberInBlackList(m));
             var instanceMethods = toBeWrap.GetMethods(instanceFlag)
-                .Concat(extensionMethods == null ? Enumerable.Empty<MethodInfo>() : Utils.GetExtensionMethodsOf(toBeWrap))
+                .Where(m => !isMethodInBlackList(m))
+                .Concat(extensionMethods)
                 .Where(m => Utils.IsSupportedMethod(m))
                 .Where(m => !m.IsSpecialName
                     || (
@@ -1159,6 +1261,7 @@ namespace XLua
                        )
                 ).GroupBy(m => m.Name).ToList();
             var supportOperators = toBeWrap.GetMethods(staticFlag)
+                .Where(m => !isMethodInBlackList(m))
                 .Where(m => m.IsSpecialName && InternalGlobals.supportOp.ContainsKey(m.Name))
                 .GroupBy(m => m.Name);
 
@@ -1228,7 +1331,7 @@ namespace XLua
                 emitRegisterFunc(il, emitMethodWrap(wrapTypeBuilder, group.Cast<MethodBase>().ToList(), false, toBeWrap), Utils.OBJ_META_IDX, InternalGlobals.supportOp[group.Key]);
             }
 
-            foreach (var ev in toBeWrap.GetEvents(instanceFlag))
+            foreach (var ev in toBeWrap.GetEvents(instanceFlag).Where(m => !isMemberInBlackList(m)))
             {
                 emitRegisterFunc(il, emitEventWrap(wrapTypeBuilder, ev), Utils.METHOD_IDX, ev.Name);
             }
@@ -1262,6 +1365,7 @@ namespace XLua
             il.Emit(OpCodes.Ldnull);
             il.Emit(OpCodes.Ldftn, emitMethodWrap(wrapTypeBuilder,
                 toBeWrap.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.IgnoreCase)
+                .Where(m => !isMethodInBlackList(m))
                 .Cast<MethodBase>().ToList(), false, toBeWrap, toBeWrap.ToString() + " constructor"));
             il.Emit(OpCodes.Newobj, LuaCSFunction_Constructor);
             il.Emit(OpCodes.Ldc_I4_1);
@@ -1270,19 +1374,20 @@ namespace XLua
             il.Emit(OpCodes.Call, Utils_BeginClassRegister);
 
             var staticMethods = toBeWrap.GetMethods(staticFlag)
+                .Where(m => !isMethodInBlackList(m))
                 .Where(m => Utils.IsSupportedMethod(m))
                 .Where(m => !m.IsSpecialName).GroupBy(m => m.Name);
 
-            var staticFields = toBeWrap.GetFields(staticFlag);
+            var staticFields = toBeWrap.GetFields(staticFlag).Where(m => !isMemberInBlackList(m));
 
-            var staticProperties = toBeWrap.GetProperties(staticFlag);
+            var staticProperties = toBeWrap.GetProperties(staticFlag).Where(m => !isMemberInBlackList(m));
 
             foreach (var group in staticMethods)
             {
                 emitRegisterFunc(il, emitMethodWrap(wrapTypeBuilder, group.Cast<MethodBase>().ToList(), false, toBeWrap), Utils.CLS_IDX, group.Key);
             }
 
-            foreach (var ev in toBeWrap.GetEvents(staticFlag))
+            foreach (var ev in toBeWrap.GetEvents(staticFlag).Where(m => !isMemberInBlackList(m)))
             {
                 emitRegisterFunc(il, emitEventWrap(wrapTypeBuilder, ev), Utils.CLS_IDX, ev.Name);
             }
@@ -1462,7 +1567,7 @@ namespace XLua
 
         void emitUpdateIfNeeded(ILGenerator il, LocalBuilder L, LocalBuilder translator, Type type, int luaIndex, int localIndex)
         {
-            if (type.IsValueType && !type.IsPrimitive && !type.IsEnum && type != typeof(decimal))
+            if (type.IsValueType && !type.IsPrimitive && !type.IsEnum() && type != typeof(decimal))
             {
                 //UnityEngine.Debug.LogWarning("-----------------emit update:" + type);
                 il.Emit(OpCodes.Ldloc, translator);

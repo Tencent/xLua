@@ -164,7 +164,10 @@ namespace XLua
                 if (udata != -1)
                 {
                     ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
-                    translator.collectObject(udata);
+                    if ( translator != null )
+                    {
+                        translator.collectObject(udata);
+                    }
                 }
                 return 0;
             }
@@ -633,10 +636,20 @@ namespace XLua
         }
 #endif
 
+#if (!UNITY_SWITCH && !UNITY_WEBGL) || UNITY_EDITOR
         [MonoPInvokeCallback(typeof(LuaCSFunction))]
         internal static int LoadSocketCore(RealStatePtr L)
         {
             return LuaAPI.luaopen_socket_core(L);
+        }
+#endif
+
+        [MonoPInvokeCallback(typeof(LuaCSFunction))]
+        internal static int LoadCS(RealStatePtr L)
+        {
+            LuaAPI.xlua_pushasciistring(L, LuaEnv.CSHARP_NAMESPACE);
+            LuaAPI.lua_rawget(L, LuaIndexes.LUA_REGISTRYINDEX);
+            return 1;
         }
 
         [MonoPInvokeCallback(typeof(LuaCSFunction))]
@@ -874,7 +887,7 @@ namespace XLua
                 string className = LuaAPI.lua_tostring(L, 1);
                 if (className.EndsWith("<>")) className = className.Substring(0, className.Length - 2);
                 Type genericDef = translator.FindType(className + "`" + (top - 1));
-                if (genericDef == null || !genericDef.IsGenericTypeDefinition)
+                if (genericDef == null || !genericDef.IsGenericTypeDefinition())
                 {
                     LuaAPI.lua_pushnil(L);
                 }
@@ -1033,7 +1046,7 @@ namespace XLua
                 while(type != null)
                 {
                     translator.PrivateAccessible(L, type);
-                    type = type.BaseType;
+                    type = type.BaseType();
                 }
                 return 0;
             }

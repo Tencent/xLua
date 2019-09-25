@@ -34,6 +34,26 @@ il2cpp默认会对诸如引擎、c#系统api，第三方dll等等进行代码剪
 
 解决办法：增加引用（比如配置到LuaCallCSharp，或者你自己C#代码增加那函数的访问），或者通过link.xml配置（当配置了ReflectionUse后，xlua会自动帮你配置到link.xml）告诉il2cpp别剪裁某类型。
 
+## Unity 2018兼容性问题解决
+
+2.1.14前的版本都建议先升级到2.1.14，升级后，还有如下两个使用注意事项：
+
+1、默认配置不生成代码运行会报错
+
+这是因为Api Compatibility Level设置为.NET Standard 2.0，而.NET Standard 2.0不支持emit导致的。
+
+解决方案：平时开发Api Compatibility Level设置为.NET 4.x，就能支持编辑器不生成代码开发。发布手机版本时，按Unity官方的建议，可配置为.NET Standard 2.0，包会更小些。
+
+2、生成代码后，一些系统类型的生成代码会报一些方法不存在。
+
+据研究表明，Unity 2018设置.NET 4.X Equivalent的话，其运行和编译用的库不一致，前者比后者多一些API。
+
+运行用的是：unity安装目录\Editor\Data\MonoBleedingEdge\lib\mono\unityjit\mscorlib.dll
+
+编译链接的是：unity安装目录\Editor\Data\MonoBleedingEdge\lib\mono\4.7.1-api\mscorlib.dll
+
+解决办法：用黑名单排除报错方法即可。不过2019年8月6号以前的版本的黑名单配置对泛型不友好，要一个个泛型实例的配置（比如，Dictionary<int, int>和Dictionary<float, int>要分别配置），而目前发现该问题主要出在泛型Dictionary上。可以更新到2019年8月6号之后的版本，该版本支持配置一个过滤器对泛型方法过滤。这里有对unity 2018的Dictionary的[针对性配置](https://github.com/Tencent/xLua/blob/master/Assets/XLua/Editor/ExampleConfig.cs#L277)，直接拷贝使用，如果碰到其它泛型也有多出来的方法，参考Dictionary进行配置。
+
 ## Plugins源码在哪里可以找到，怎么使用？
 
 Plugins源码位于xLua_Project_Root/build下。
@@ -49,6 +69,14 @@ ios和osx需要在mac下编译。
 ## 报类似“xlua.access, no field __Hitfix0_Update”的错误怎么解决？
 
 按[Hotfix操作指南](hotfix.md)一步步操作。
+
+## visual studio 2017下编译UWP原生库
+
+visual studio 2017需要安装：1、“工作负载”下的“通用Window平台开发”；2、“单个组件”下的“用于ARM的Visual C++编译器和库”、“用于ARM64的Visual C++编译器和库”、“是用于ARM64的C++通用Windows平台工具”
+
+## visual studio 2015下编译原生库
+
+把build\vs2015下的bat文件拷贝到build目录，覆盖同名文件
 
 ## 报“please install the Tools”
 
@@ -140,9 +168,10 @@ ios下的限制有两个：1、没有jit；2、代码剪裁（stripping）；
 
 ## 支持泛型方法的调用么？
 
-部分支持，支持的程度可以看下[例子9](../Examples/09_GenericMethod/)
+1、泛型约束到某个基类的支持，看例子：(../Examples/09_GenericMethod/)
 
-其它情况也有办法调用到。如果是静态方法，可以自己写个封装来实例化泛型方法。
+2、没有泛型约束的建议封装为非泛型使用
+如果是静态方法，可以自己写个封装来实例化泛型方法。
 
 如果是成员方法，xLua支持扩展方法，你可以添加一个扩展方法来实例化泛型方法。该扩展方法使用起来就和普通成员方法一样。
 
@@ -162,7 +191,7 @@ go:GetButton().onClick:AddListener(function()
 end)
 ```
 
-如果xlua版本大于2.1.12的话，新增反射调用泛型方法的支持，比如对于这么个C#类型：
+3、如果xlua版本大于2.1.12的话，新增反射调用泛型方法的支持（有一定的限制，看后面的说明），比如对于这么个C#类型：
 ```csharp
 public class GetGenericMethodTest
 {
@@ -201,6 +230,12 @@ print(ret)
 -- call static method
 bar(2, nil)
 ```
+
+使用限制，只有下面几种情况可以：
+
+* mono下可以
+* il2cpp下，如果泛型参数是引用类型可以
+* il2cpp下，如果泛型参数是值类型，C#那有用同样的泛型参数调用过（如果是hotfix场景下，一般在C#那会用同样的泛型参数调用过，所以在hotfix功能下一般都可用）
 
 
 ## 支持lua调用C#重载函数吗？
@@ -469,4 +504,10 @@ f2(obj, 1, 2) --调用int版本
 
 * 1、设置GcPause，让gc更快开启，默认200表示2倍上次回收内存时开启，coco2dx设置为100，表示完成一趟gc后马上开启下一趟，另外也可以设置GcStepmul来加快gc回收速度，默认是200表示回收比内存分配快两倍，GcStepmul在coco2dx设置为5000
 * 2、可以在场景切换之类对于性能要求不高的地方加入全量gc调用（通过LuaEnv.FullGc或者在lua里头调用collectgarbage('collect')都可以）。
+
+## 多线程下莫名crash怎么解决
+
+多线程使用需要在（Player Setting/Scripting Define Symbols）下添加THREAD_SAFE宏。
+
+常见的不明显的多线程的场景，比如c#异步socket，对象析构函数等。
 

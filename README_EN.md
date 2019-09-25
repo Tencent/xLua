@@ -1,7 +1,7 @@
 ![](Assets/XLua/Doc/xLua.png)
 
 [![license](http://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/Tencent/xLua/blob/master/LICENSE.TXT)
-[![release](https://img.shields.io/badge/release-v2.1.12-blue.svg)](https://github.com/Tencent/xLua/releases)
+[![release](https://img.shields.io/badge/release-v2.1.14-blue.svg)](https://github.com/Tencent/xLua/releases)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-blue.svg)](https://github.com/Tencent/xLua/pulls)
 [![Build status](https://travis-ci.org/Tencent/xLua.svg?branch=master)](https://travis-ci.org/Tencent/xLua)
 
@@ -79,16 +79,6 @@ It is recommended that you bind once and reuse it. If code is generated, no gc a
 * If you have problems, you can also use Lua to patch. Then the Lua code logic is involved.
 
 [Here](Assets/XLua/Doc/Hotfix_EN.md) is the usage guide:
-
-## Lua 5.3 vs LuaJIT
-
-There are two versions of xLua, which integrate Lua 5.3 and LuaJIT respectively. Choose one of them for each project. The C# code in the two versions are the same, except for the Plugins.
-
-Lua 5.3 has richer features, such as support for native 64-bit integers, Apple Bitcode, UTF-8, and so on. Any problems that exist are caused by pure C code, and positioning is easy. Lua has less impact on the installation package than LuaJIT.
-
-Also, LuaJIT has higher performance. Its performance is an order of magnitude higher than Lua if its JIT is not faulty. At present, the LuaJIT developer does not plan to maintain LuaJIT. He is looking for someone to take over the maintenance, the outlook remaining uncertain.
-
-The project manager can determine which solutiuon is more suitable accordingly. Because Lua 5.3 is currently used more often, and the default package in the Plugins directory of the xLua project is Lua 5.3.
 
 ## More Examples
 

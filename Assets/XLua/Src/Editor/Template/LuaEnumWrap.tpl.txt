@@ -19,7 +19,13 @@ namespace XLua.CSObjectWrap
 {
     using Utils = XLua.Utils;
     <%ForEachCsList(types, function(type)
-	local fields = type:GetFields(enum_or_op(CS.System.Reflection.BindingFlags.Public, CS.System.Reflection.BindingFlags.Static))
+	local fields = type2fields and type2fields[type] or type:GetFields(enum_or_op(CS.System.Reflection.BindingFlags.Public, CS.System.Reflection.BindingFlags.Static))
+	local fields_to_gen  = {}
+	ForEachCsList(fields, function(field) 
+	    if field.Name ~= "value__" and not IsObsolute(field) then 
+		    table.insert(fields_to_gen, field)
+		end
+	end)
 	%>
     public class <%=CSVariableName(type)%>Wrap
     {
@@ -30,11 +36,15 @@ namespace XLua.CSObjectWrap
 			Utils.EndObjectRegister(typeof(<%=CsFullTypeName(type)%>), L, translator, null, null, null, null, null);
 			
 			Utils.BeginClassRegister(typeof(<%=CsFullTypeName(type)%>), L, null, <%=fields.Length + 1%>, 0, 0);
+<%if #fields_to_gen <= 20 then%>
             <% ForEachCsList(fields, function(field) 
 			if field.Name == "value__" or IsObsolute(field) then return end
 			%>
             Utils.RegisterObject(L, translator, Utils.CLS_IDX, "<%=field.Name%>", <%=CsFullTypeName(type)%>.<%=UnK(field.Name)%>);
             <%end)%>
+<%else%>
+            Utils.RegisterEnumType(L, typeof(<%=CsFullTypeName(type)%>));
+<%end%>
 			Utils.RegisterFunc(L, Utils.CLS_IDX, "__CastFrom", __CastFrom);
             
             Utils.EndClassRegister(typeof(<%=CsFullTypeName(type)%>), L, translator);
@@ -49,9 +59,10 @@ namespace XLua.CSObjectWrap
             {
                 translator.Push<%=CSVariableName(type)%>(L, (<%=CsFullTypeName(type)%>)LuaAPI.xlua_tointeger(L, 1));
             }
-			<%if fields.Length > 0 then%>
+			<%if #fields_to_gen > 0 then%>
             else if(lua_type == LuaTypes.LUA_TSTRING)
             {
+<%if #fields_to_gen <= 20 then%>
 			    <%
                 local is_first = true
 				ForEachCsList(fields, function(field, i) 
@@ -67,6 +78,16 @@ namespace XLua.CSObjectWrap
                 {
                     return LuaAPI.luaL_error(L, "invalid string for <%=CsFullTypeName(type)%>!");
                 }
+<%else%>
+                try
+				{
+                    translator.TranslateToEnumToTop(L, typeof(<%=CsFullTypeName(type)%>), 1);
+				}
+				catch (System.Exception e)
+				{
+					return LuaAPI.luaL_error(L, "cast to " + typeof(<%=CsFullTypeName(type)%>) + " exception:" + e);
+				}
+<%end%>
             }
 			<%end%>
             else

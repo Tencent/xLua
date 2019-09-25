@@ -4,29 +4,26 @@ using System.Collections.Generic;
 using System.Collections;
 using System;
 
-public class Coroutine_Runner : MonoBehaviour
+namespace XLuaTest
 {
-}
-
-public class IEnumeratorHolder : XLua.Cast.Any<IEnumerator>
-{
-    public IEnumeratorHolder(IEnumerator i) : base(i)
+    public class Coroutine_Runner : MonoBehaviour
     {
     }
-}
 
-public static class CoroutineConfig
-{
-    [LuaCallCSharp]
-    public static List<Type> LuaCallCSharp
+
+    public static class CoroutineConfig
     {
-        get
+        [LuaCallCSharp]
+        public static List<Type> LuaCallCSharp
         {
-            return new List<Type>()
+            get
+            {
+                return new List<Type>()
             {
                 typeof(WaitForSeconds),
                 typeof(WWW)
             };
+            }
         }
     }
 }

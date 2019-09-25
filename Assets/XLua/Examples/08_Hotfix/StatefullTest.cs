@@ -1,76 +1,82 @@
 ﻿using UnityEngine;
 
-[XLua.Hotfix]
-public class StatefullTest {
-    public StatefullTest()
+namespace XLuaTest
+{
+    [XLua.Hotfix]
+    public class StatefullTest
     {
-
-    }
-
-    public StatefullTest(int a, int b)
-    {
-        if (a > 0)
+        public StatefullTest()
         {
-            return;
+
         }
 
-        Debug.Log("a=" + a);
-        if (b > 0)
+        public StatefullTest(int a, int b)
         {
-            return;
-        }
-        else
-        {
-            if (a + b > 0)
+            if (a > 0)
             {
                 return;
             }
+
+            Debug.Log("a=" + a);
+            if (b > 0)
+            {
+                return;
+            }
+            else
+            {
+                if (a + b > 0)
+                {
+                    return;
+                }
+            }
+            Debug.Log("b=" + b);
         }
-        Debug.Log("b=" + b);
-    }
 
-    public int AProp
-    {
-        get;
-        set;
-    }
-
-    public event System.Action<int, double> AEvent;
-
-    public int this[string field]
-    {
-        get
+        public int AProp
         {
-            return 1;
+            get;
+            set;
         }
-        set
+
+        public event System.Action<int, double> AEvent;
+
+        public int this[string field]
+        {
+            get
+            {
+                return 1;
+            }
+            set
+            {
+            }
+        }
+
+        public void Start()
+        {
+
+        }
+
+        void Update()
+        {
+
+        }
+
+        public void GenericTest<T>(T a)
+        {
+
+        }
+
+        static public void StaticFunc(int a, int b)
         {
         }
-    }
+        static public void StaticFunc(string a, int b, int c)
+        {
+        }
 
-    public void Start () {
-	
-	}
-	
-	void Update () {
-	
-	}
-
-    public void GenericTest<T>(T a)
-    {
-
-    }
-
-    static public void StaticFunc(int a, int b)
-    {
-    }
-    static public void StaticFunc(string a, int b, int c)
-    {
-    }
-
-    ~StatefullTest()
-    {
-        Debug.Log("~StatefullTest");
+        ~StatefullTest()
+        {
+            Debug.Log("~StatefullTest");
+        }
     }
 }
 

@@ -190,7 +190,7 @@ namespace CSObjectWrapEditor
 
                 type_has_extension_methods = from type in gen_types
                                              where type.GetMethods(BindingFlags.Static | BindingFlags.Public)
-                                                    .Any(method => method.IsDefined(typeof(ExtensionAttribute), false))
+                                                    .Any(method => isDefined(method, typeof(ExtensionAttribute)))
                                              select type;
             }
             return from type in type_has_extension_methods
@@ -202,7 +202,7 @@ namespace CSObjectWrapEditor
 
         static bool isSupportedExtensionMethod(MethodBase method, Type extendedType)
         {
-            if (!method.IsDefined(typeof(ExtensionAttribute), false))
+            if (!isDefined(method, typeof(ExtensionAttribute)))
                 return false;
             var methodParameters = method.GetParameters();
             if (methodParameters.Length < 1)
@@ -305,7 +305,7 @@ namespace CSObjectWrapEditor
 
             //warnning: filter all method start with "op_"  "add_" "remove_" may  filter some ordinary method
             parameters.Set("methods", type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.IgnoreCase | BindingFlags.DeclaredOnly)
-                .Where(method => !method.IsDefined(typeof (ExtensionAttribute), false) || method.GetParameters()[0].ParameterType.IsInterface || method.DeclaringType != type)
+                .Where(method => !isDefined(method, typeof (ExtensionAttribute)) || method.GetParameters()[0].ParameterType.IsInterface || method.DeclaringType != type)
                 .Where(method => !method.IsSpecialName 
                     || (
                          ((method.Name == "get_Item" && method.GetParameters().Length == 1) || (method.Name == "set_Item" && method.GetParameters().Length == 2)) 
@@ -315,7 +315,7 @@ namespace CSObjectWrapEditor
                 .Concat(extension_methods)
                 .Where(method => !IsDoNotGen(type, method.Name))
                 .Where(method => !isMethodInBlackList(method) && (!method.IsGenericMethod || extension_methods.Contains(method) || isSupportedGenericMethod(method)) && !isObsolete(method))
-                .GroupBy(method => (method.Name + ((method.IsStatic && (!method.IsDefined(typeof (ExtensionAttribute), false) || method.GetParameters()[0].ParameterType.IsInterface)) ? "_xlua_st_" : "")), (k, v) =>
+                .GroupBy(method => (method.Name + ((method.IsStatic && (!isDefined(method, typeof (ExtensionAttribute)) || method.GetParameters()[0].ParameterType.IsInterface)) ? "_xlua_st_" : "")), (k, v) =>
                 {
                     var overloads = new List<MethodBase>();
                     List<int> def_vals = new List<int>();
@@ -350,7 +350,7 @@ namespace CSObjectWrapEditor
 
                     return new {
                         Name = k,
-                        IsStatic = overloads[0].IsStatic && (!overloads[0].IsDefined(typeof(ExtensionAttribute), false) || overloads[0].GetParameters()[0].ParameterType.IsInterface),
+                        IsStatic = overloads[0].IsStatic && (!isDefined(overloads[0], typeof(ExtensionAttribute)) || overloads[0].GetParameters()[0].ParameterType.IsInterface),
                         Overloads = overloads,
                         DefaultValues = def_vals
                     };
@@ -503,8 +503,8 @@ namespace CSObjectWrapEditor
         static bool isObsolete(MemberInfo mb)
         {
             if (mb == null) return false;
-            ObsoleteAttribute oa = Attribute.GetCustomAttribute(mb, typeof(ObsoleteAttribute)) as ObsoleteAttribute;
-#if XLUA_GENERAL || XLUA_JUST_EXCLUDE_ERROR
+            ObsoleteAttribute oa = GetCustomAttribute(mb, typeof(ObsoleteAttribute)) as ObsoleteAttribute;
+#if XLUA_GENERAL && !XLUA_ALL_OBSOLETE || XLUA_JUST_EXCLUDE_ERROR
             return oa != null && oa.IsError;
 #else
             return oa != null;
@@ -523,13 +523,21 @@ namespace CSObjectWrapEditor
 
         static bool isMemberInBlackList(MemberInfo mb)
         {
-            if (mb.IsDefined(typeof(BlackListAttribute), false)) return true;
+            if (isDefined(mb, typeof(BlackListAttribute))) return true;
             if (mb is FieldInfo && (mb as FieldInfo).FieldType.IsPointer) return true;
             if (mb is PropertyInfo && (mb as PropertyInfo).PropertyType.IsPointer) return true;
 
+            foreach(var filter in memberFilters)
+            {
+                if (filter(mb))
+                {
+                    return true;
+                }
+            }
+
             foreach (var exclude in BlackList)
             {
-                if (mb.DeclaringType.FullName == exclude[0] && mb.Name == exclude[1])
+                if (mb.DeclaringType.ToString() == exclude[0] && mb.Name == exclude[1])
                 {
                     return true;
                 }
@@ -540,15 +548,23 @@ namespace CSObjectWrapEditor
 
         static bool isMethodInBlackList(MethodBase mb)
         {
-            if (mb.IsDefined(typeof(BlackListAttribute), false)) return true;
+            if (isDefined(mb, typeof(BlackListAttribute))) return true;
 
             //指针目前不支持，先过滤
             if (mb.GetParameters().Any(pInfo => pInfo.ParameterType.IsPointer)) return true;
             if (mb is MethodInfo && (mb as MethodInfo).ReturnType.IsPointer) return false;
 
+            foreach (var filter in memberFilters)
+            {
+                if (filter(mb))
+                {
+                    return true;
+                }
+            }
+
             foreach (var exclude in BlackList)
             {
-                if (mb.DeclaringType.FullName == exclude[0] && mb.Name == exclude[1])
+                if (mb.DeclaringType.ToString() == exclude[0] && mb.Name == exclude[1])
                 {
                     var parameters = mb.GetParameters();
                     if (parameters.Length != exclude.Count - 2)
@@ -559,7 +575,7 @@ namespace CSObjectWrapEditor
 
                     for (int i = 0; i < parameters.Length; i++)
                     {
-                        if (parameters[i].ParameterType.FullName != exclude[i + 2])
+                        if (parameters[i].ParameterType.ToString() != exclude[i + 2])
                         {
                             paramsMatch = false;
                             break;
@@ -618,6 +634,10 @@ namespace CSObjectWrapEditor
             
             GenOne(null, (type, type_info) =>
             {
+                var type2fields = luaenv.NewTable();
+                foreach(var _type in types)
+                    type2fields.Set(_type, _type.GetFields(BindingFlags.Public | BindingFlags.Static).Where(x => !isMemberInBlackList(x)).ToArray());
+                type_info.Set("type2fields", type2fields);
                 type_info.Set("types", types.ToList());
             }, templateRef.LuaEnumWrap, textWriter);
 
@@ -839,7 +859,8 @@ namespace CSObjectWrapEditor
                     }
                 }
 
-                return true;
+                var lastPos = xParams.Length - 1;
+                return lastPos < 0 || xParams[lastPos].IsParamArray == yParams[lastPos].IsParamArray;
             }
             public int GetHashCode(MethodInfoSimulation obj)
             {
@@ -885,9 +906,15 @@ namespace CSObjectWrapEditor
 
             var bindingAttrOfMethod = BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly | BindingFlags.NonPublic;
             var bindingAttrOfConstructor = BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly | BindingFlags.NonPublic;
-            foreach (var type in (from type in hotfix_check_types where type.IsDefined(typeof(HotfixAttribute), false) select type))
+            foreach (var type in (from type in hotfix_check_types where isDefined(type, typeof(HotfixAttribute)) select type))
             {
-                HotfixCfg[type] = ((type.GetCustomAttributes(typeof(HotfixAttribute), false)[0]) as HotfixAttribute).Flag;
+                var ca = GetCustomAttribute(type, typeof(HotfixAttribute));
+#if XLUA_GENERAL
+                var hotfixType = (HotfixFlag)Convert.ToInt32(ca.GetType().GetProperty("Flag").GetValue(ca, null));
+#else
+                var hotfixType = (ca as HotfixAttribute).Flag;
+#endif
+                HotfixCfg[type] = hotfixType;
             }
             foreach (var kv in HotfixCfg)
             {
@@ -898,7 +925,7 @@ namespace CSObjectWrapEditor
                 bool ignoreProperty = kv.Value.HasFlag(HotfixFlag.IgnoreProperty);
                 bool ignoreNotPublic = kv.Value.HasFlag(HotfixFlag.IgnoreNotPublic);
                 bool ignoreCompilerGenerated = kv.Value.HasFlag(HotfixFlag.IgnoreCompilerGenerated);
-                if (ignoreCompilerGenerated && kv.Key.IsDefined(typeof(CompilerGeneratedAttribute), false))
+                if (ignoreCompilerGenerated && isDefined(kv.Key, typeof(CompilerGeneratedAttribute)))
                 {
                     continue;
                 }
@@ -906,7 +933,7 @@ namespace CSObjectWrapEditor
                 hotfxDelegates.AddRange(kv.Key.GetMethods(bindingAttrOfMethod)
                     .Where(method => method.GetMethodBody() != null)
                     .Where(method => !method.Name.Contains("<"))
-                    .Where(method => !ignoreCompilerGenerated || !method.IsDefined(typeof(CompilerGeneratedAttribute), false))
+                    .Where(method => !ignoreCompilerGenerated || !isDefined(method, typeof(CompilerGeneratedAttribute)))
                     .Where(method => !ignoreNotPublic || method.IsPublic)
                     .Where(method => !ignoreProperty || !method.IsSpecialName || (!method.Name.StartsWith("get_") && !method.Name.StartsWith("set_")))
                     .Cast<MethodBase>()
@@ -921,6 +948,7 @@ namespace CSObjectWrapEditor
             }
 
             var delegates_groups = types.Select(delegate_type => makeMethodInfoSimulation(delegate_type.GetMethod("Invoke")))
+                .Where(d => d.DeclaringType.FullName != null)
                 .Concat(hotfxDelegates)
                 .GroupBy(d => d, comparer).Select((group) => new { Key = group.Key, Value = group.ToList()});
             GenOne(typeof(DelegateBridge), (type, type_info) =>
@@ -1084,12 +1112,23 @@ namespace CSObjectWrapEditor
 
             string filePath = GeneratorConfig.common_path + "XLuaGenAutoRegister.cs";
             StreamWriter textWriter = new StreamWriter(filePath, false, Encoding.UTF8);
-            var extension_methods = from t in ReflectionUse
-                                    where t.IsDefined(typeof(ExtensionAttribute), false)
+
+            var lookup = LuaCallCSharp.Distinct().ToDictionary(t => t);
+
+            var extension_methods_from_lcs = (from t in LuaCallCSharp
+                                    where isDefined(t, typeof(ExtensionAttribute))
                                     from method in t.GetMethods(BindingFlags.Static | BindingFlags.Public)
-                                    where method.IsDefined(typeof(ExtensionAttribute), false)
+                                    where isDefined(method, typeof(ExtensionAttribute))
                                     where !method.ContainsGenericParameters || isSupportedGenericMethod(method)
-                                    select makeGenericMethodIfNeeded(method);
+                                    select makeGenericMethodIfNeeded(method))
+                                    .Where(method => !lookup.ContainsKey(method.GetParameters()[0].ParameterType));
+
+            var extension_methods = (from t in ReflectionUse
+                                     where isDefined(t, typeof(ExtensionAttribute))
+                                     from method in t.GetMethods(BindingFlags.Static | BindingFlags.Public)
+                                     where isDefined(method, typeof(ExtensionAttribute))
+                                     where !method.ContainsGenericParameters || isSupportedGenericMethod(method)
+                                     select makeGenericMethodIfNeeded(method)).Concat(extension_methods_from_lcs);
             GenOne(typeof(DelegateBridgeBase), (type, type_info) =>
             {
 #if GENERIC_SHARING
@@ -1134,7 +1173,7 @@ namespace CSObjectWrapEditor
                 foreach(var propInfo in type.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))
                 {
                     if ((AdditionalProperties.ContainsKey(type) && AdditionalProperties[type].Contains(propInfo.Name))
-                        || propInfo.IsDefined(typeof(AdditionalPropertiesAttribute), false))
+                        || isDefined(propInfo, typeof(AdditionalPropertiesAttribute)))
                     {
                         AllSubStruct(propInfo.PropertyType, cb);
                     }
@@ -1165,7 +1204,7 @@ namespace CSObjectWrapEditor
                         .Concat(t.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
                         .Where(prop => {
                             return (AdditionalProperties.ContainsKey(t) && AdditionalProperties[t].Contains(prop.Name))
-                                || prop.IsDefined(typeof(AdditionalPropertiesAttribute), false);
+                                || isDefined(prop, typeof(AdditionalPropertiesAttribute));
                         })
                         .Select(prop => new XluaFieldInfo { Name = prop.Name, Type = prop.PropertyType, IsField = false, Size = SizeOf(prop.PropertyType) }));
             int float_field_count = 0;
@@ -1247,6 +1286,8 @@ namespace CSObjectWrapEditor
 
         public static List<string> assemblyList = null;
 
+        public static List<Func<MemberInfo, bool>> memberFilters = null;
+
         static void AddToList(List<Type> list, Func<object> get, object attr)
         {
             object obj = get();
@@ -1262,9 +1303,15 @@ namespace CSObjectWrapEditor
             {
                 throw new InvalidOperationException("Only field/property with the type IEnumerable<Type> can be marked " + attr.GetType().Name);
             }
+#if XLUA_GENERAL
+            if (attr != null && attr.GetType().ToString() == typeof(GCOptimizeAttribute).ToString())
+            {
+                var flag = (OptimizeFlag)Convert.ToInt32(attr.GetType().GetProperty("Flag").GetValue(attr, null));
+#else
             if (attr is GCOptimizeAttribute)
             {
                 var flag = (attr as GCOptimizeAttribute).Flag;
+#endif
                 if (obj is Type)
                 {
                     OptimizeCfg.Add(obj as Type, flag);
@@ -1279,37 +1326,62 @@ namespace CSObjectWrapEditor
             }
         }
 
+        static bool isDefined(MemberInfo test, Type type)
+        {
+#if XLUA_GENERAL
+            return test.GetCustomAttributes(false).Any(ca => ca.GetType().ToString() == type.ToString());
+#else
+            return test.IsDefined(type, false);
+#endif
+        }
+
+        static object GetCustomAttribute(MemberInfo test, Type type)
+        {
+#if XLUA_GENERAL
+            return test.GetCustomAttributes(false).FirstOrDefault(ca => ca.GetType().ToString() == type.ToString());
+#else
+            return test.GetCustomAttributes(type, false).FirstOrDefault();
+#endif
+        }
+
         static void MergeCfg(MemberInfo test, Type cfg_type, Func<object> get_cfg)
         {
-            if (test.IsDefined(typeof(LuaCallCSharpAttribute), false))
+            if (isDefined(test, typeof(LuaCallCSharpAttribute)))
             {
-                object[] ccla = test.GetCustomAttributes(typeof(LuaCallCSharpAttribute), false);
-                AddToList(LuaCallCSharp, get_cfg, ccla[0]);
+                object ccla = GetCustomAttribute(test, typeof(LuaCallCSharpAttribute));
+                AddToList(LuaCallCSharp, get_cfg, ccla);
+#if !XLUA_GENERAL
 #pragma warning disable 618
-                if (ccla.Length == 1 && (((ccla[0] as LuaCallCSharpAttribute).Flag & GenFlag.GCOptimize) != 0))
+                if (ccla != null && (((ccla as LuaCallCSharpAttribute).Flag & GenFlag.GCOptimize) != 0))
 #pragma warning restore 618
                 {
-                    AddToList(GCOptimizeList, get_cfg, ccla[0]);
+                    AddToList(GCOptimizeList, get_cfg, ccla);
                 }
+#endif
             }
-            if (test.IsDefined(typeof(CSharpCallLuaAttribute), false))
+            if (isDefined(test, typeof(CSharpCallLuaAttribute)))
             {
-                AddToList(CSharpCallLua, get_cfg, test.GetCustomAttributes(typeof(CSharpCallLuaAttribute), false)[0]);
+                AddToList(CSharpCallLua, get_cfg, GetCustomAttribute(test, typeof(CSharpCallLuaAttribute)));
             }
-            if (test.IsDefined(typeof(GCOptimizeAttribute), false))
+            if (isDefined(test, typeof(GCOptimizeAttribute)))
             {
-                AddToList(GCOptimizeList, get_cfg, test.GetCustomAttributes(typeof(GCOptimizeAttribute), false)[0]);
+                AddToList(GCOptimizeList, get_cfg, GetCustomAttribute(test, typeof(GCOptimizeAttribute)));
             }
-            if (test.IsDefined(typeof(ReflectionUseAttribute), false))
+            if (isDefined(test, typeof(ReflectionUseAttribute)))
             {
-                AddToList(ReflectionUse, get_cfg, test.GetCustomAttributes(typeof(ReflectionUseAttribute), false)[0]);
+                AddToList(ReflectionUse, get_cfg, GetCustomAttribute(test, typeof(ReflectionUseAttribute)));
             }
-            if (test.IsDefined(typeof(HotfixAttribute), false))
+            if (isDefined(test, typeof(HotfixAttribute)))
             {
                 object cfg = get_cfg();
                 if (cfg is IEnumerable<Type>)
                 {
-                    var hotfixType = ((test.GetCustomAttributes(typeof(HotfixAttribute), false)[0]) as HotfixAttribute).Flag;
+                    var ca = GetCustomAttribute(test, typeof(HotfixAttribute));
+#if XLUA_GENERAL
+                    var hotfixType = (HotfixFlag)Convert.ToInt32(ca.GetType().GetProperty("Flag").GetValue(ca, null));
+#else
+                    var hotfixType = (ca as HotfixAttribute).Flag;
+#endif
                     foreach (var type in cfg as IEnumerable<Type>)
                     {
                         if (!HotfixCfg.ContainsKey(type) && !isObsolete(type) 
@@ -1323,13 +1395,17 @@ namespace CSObjectWrapEditor
                     }
                 }
             }
-            if (test.IsDefined(typeof(BlackListAttribute), false)
+            if (isDefined(test, typeof(BlackListAttribute))
                         && (typeof(List<List<string>>)).IsAssignableFrom(cfg_type))
             {
                 BlackList.AddRange(get_cfg() as List<List<string>>);
             }
+            if (isDefined(test, typeof(BlackListAttribute)) && typeof(Func<MemberInfo, bool>).IsAssignableFrom(cfg_type))
+            {
+                memberFilters.Add(get_cfg() as Func<MemberInfo, bool>);
+            }
 
-            if (test.IsDefined(typeof(AdditionalPropertiesAttribute), false)
+            if (isDefined(test, typeof(AdditionalPropertiesAttribute))
                         && (typeof(Dictionary<Type, List<string>>)).IsAssignableFrom(cfg_type))
             {
                 var cfg = get_cfg() as Dictionary<Type, List<string>>;
@@ -1342,7 +1418,7 @@ namespace CSObjectWrapEditor
                 }
             }
 
-            if (test.IsDefined(typeof(DoNotGenAttribute), false)
+            if (isDefined(test, typeof(DoNotGenAttribute))
                         && (typeof(Dictionary<Type, List<string>>)).IsAssignableFrom(cfg_type))
             {
                 var cfg = get_cfg() as Dictionary<Type, List<string>>;
@@ -1402,6 +1478,8 @@ namespace CSObjectWrapEditor
 #else
             assemblyList = new List<string>();
 #endif
+            memberFilters = new List<Func<MemberInfo, bool>>();
+
             foreach (var t in check_types)
             {
                 MergeCfg(t, null, () => t);
@@ -1481,7 +1559,7 @@ namespace CSObjectWrapEditor
             {
                 foreach (var propInfo in type.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))
                 {
-                    if ((AdditionalProperties.ContainsKey(type) && AdditionalProperties[type].Contains(propInfo.Name)) || propInfo.IsDefined(typeof(AdditionalPropertiesAttribute), false))
+                    if ((AdditionalProperties.ContainsKey(type) && AdditionalProperties[type].Contains(propInfo.Name)) || isDefined(propInfo, typeof(AdditionalPropertiesAttribute)))
                     {
                         int t_size = SizeOf(propInfo.PropertyType);
                         if (t_size == -1)
@@ -1521,6 +1599,16 @@ namespace CSObjectWrapEditor
         }
 
 #if XLUA_GENERAL
+        static bool IsExtensionMethod(MethodInfo method)
+        {
+            return isDefined(method, typeof(ExtensionAttribute));
+        }
+
+        static bool IsDelegate(Type type)
+        {
+            return type.BaseType != null && type.BaseType.ToString() == "System.MulticastDelegate";
+        }
+
         public static void GenAll(XLuaTemplates templates, IEnumerable<Type> all_types)
         {
             var start = DateTime.Now;
@@ -1528,6 +1616,8 @@ namespace CSObjectWrapEditor
             templateRef = templates;
             GetGenConfig(all_types.Where(type => !type.IsGenericTypeDefinition));
             luaenv.DoString("require 'TemplateCommon'");
+            luaenv.Global.Set("IsExtensionMethod", new Func<MethodInfo, bool>(IsExtensionMethod));
+            luaenv.Global.Set("IsDelegate", new Func<Type, bool>(IsDelegate));
             var gen_push_types_setter = luaenv.Global.Get<LuaFunction>("SetGenPushAndUpdateTypes");
             gen_push_types_setter.Call(GCOptimizeList.Where(t => !t.IsPrimitive && SizeOf(t) != -1).Concat(LuaCallCSharp.Where(t => t.IsEnum)).Distinct().ToList());
             var xlua_classes_setter = luaenv.Global.Get<LuaFunction>("SetXLuaClasses");
@@ -1555,6 +1645,13 @@ namespace CSObjectWrapEditor
         [MenuItem("XLua/Generate Code", false, 1)]
         public static void GenAll()
         {
+#if UNITY_2018 && (UNITY_EDITOR_WIN || UNITY_EDITOR_OSX)
+            if (File.Exists("./Tools/MonoBleedingEdge/bin/mono.exe"))
+            {
+                GenUsingCLI();
+                return;
+            }
+#endif
             var start = DateTime.Now;
             Directory.CreateDirectory(GeneratorConfig.common_path);
             GetGenConfig(XLua.Utils.GetAllTypes());
@@ -1571,6 +1668,63 @@ namespace CSObjectWrapEditor
             Debug.Log("finished! use " + (DateTime.Now - start).TotalMilliseconds + " ms");
             AssetDatabase.Refresh();
         }
+
+#if UNITY_EDITOR_OSX || UNITY_EDITOR_WIN
+        public static void GenUsingCLI()
+        {
+#if UNITY_EDITOR_OSX
+            var monoPath = "./Tools/MonoBleedingEdge/bin/mono";
+#else
+            var monoPath = "./Tools/MonoBleedingEdge/bin/mono.exe";
+#endif
+
+            var args = new List<string>()
+            {
+                "./Tools/XLuaGenerate.exe",
+                "./Library/ScriptAssemblies/Assembly-CSharp.dll",
+                "./Library/ScriptAssemblies/Assembly-CSharp-Editor.dll",
+                GeneratorConfig.common_path
+            };
+
+            var searchPaths = new List<string>();
+            foreach (var path in
+                (from asm in AppDomain.CurrentDomain.GetAssemblies() select asm.ManifestModule.FullyQualifiedName)
+                 .Distinct())
+            {
+                try
+                {
+                    searchPaths.Add(Path.GetDirectoryName(path));
+                }
+                catch { }
+            }
+            args.AddRange(searchPaths.Distinct());
+
+            System.Diagnostics.Process process = new System.Diagnostics.Process();
+            process.StartInfo.FileName = monoPath;
+            process.StartInfo.Arguments = "\"" + string.Join("\" \"", args.ToArray()) + "\"";
+            process.StartInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
+            process.StartInfo.RedirectStandardOutput = true;
+            process.StartInfo.RedirectStandardError = true;
+            process.StartInfo.UseShellExecute = false;
+            process.StartInfo.CreateNoWindow = true;
+            process.Start();
+
+            while (!process.StandardError.EndOfStream)
+            {
+                Debug.LogError(process.StandardError.ReadLine());
+            }
+
+            while (!process.StandardOutput.EndOfStream)
+            {
+                Debug.Log(process.StandardOutput.ReadLine());
+            }
+
+            process.WaitForExit();
+            GetGenConfig(XLua.Utils.GetAllTypes());
+            callCustomGen();
+            AssetDatabase.Refresh();
+        }
+#endif
 
         [MenuItem("XLua/Clear Generated Code", false, 2)]
         public static void ClearAll()

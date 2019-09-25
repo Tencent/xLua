@@ -16,7 +16,6 @@ namespace XLua {
 			lock(luaEnv.luaEnvLock) {
 #endif
 				var L = luaEnv.L;
-                var translator = luaEnv.translator;
                 int oldTop = LuaAPI.lua_gettop(L);
                 int errFunc = LuaAPI.load_error_func(L, luaEnv.errorFuncRef);
                 LuaAPI.lua_getref(L, luaReference);

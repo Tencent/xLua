@@ -1,12 +1,16 @@
 ## 使用方式
 
-1、添加HOTFIX_ENABLE宏打开该特性（在Unity3D的File->Build Setting->Scripting Define Symbols下添加）。编辑器、各手机平台这个宏要分别设置！如果是自动化打包，要注意在代码里头用API设置的宏是不生效的，需要在编辑器设置。
+1、打开该特性
+
+添加HOTFIX_ENABLE宏，（在Unity3D的File->Build Setting->Scripting Define Symbols下添加）。编辑器、各手机平台这个宏要分别设置！如果是自动化打包，要注意在代码里头用API设置的宏是不生效的，需要在编辑器设置。
 
 （建议平时开发业务代码不打开HOTFIX_ENABLE，只在build手机版本或者要在编译器下开发补丁时打开HOTFIX_ENABLE）
 
 2、执行XLua/Generate Code菜单。
 
-3、注入，构建手机包这个步骤会在构建时自动进行，编辑器下开发补丁需要手动执行"XLua/Hotfix Inject In Editor"菜单。注入成功会打印“hotfix inject finish!”或者“had injected!”。
+3、注入，构建手机包这个步骤会在构建时自动进行，编辑器下开发补丁需要手动执行"XLua/Hotfix Inject In Editor"菜单。打印“hotfix inject finish!”或者“had injected!”才算成功，否则会打印错误信息。
+
+如果已经打印了“hotfix inject finish!”或者“had injected!”，执行xlua.hotfix仍然报类似“xlua.access, no field __Hitfix0_Update”的错误，要么是该类没配置到Hotfix列表，要么是注入成功后，又触发了编译，覆盖了注入结果。
 
 ## 约束
 
