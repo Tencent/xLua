@@ -1,19 +1,23 @@
-if [ -z "$ANDROID_NDK" ]; then
-    export ANDROID_NDK=~/android-ndk-r10e
+if [ -n "$ANDROID_NDK" ]; then
+    export NDK=${ANDROID_NDK}
+elif [ -n "$ANDROID_NDK_HOME" ]; then
+    export NDK=${ANDROID_NDK_HOME}
+elif [ -n "$ANDROID_NDK_HOME" ]; then
+    export NDK=${ANDROID_NDK_HOME}
+else
+    export NDK=~/android-ndk-r16b
 fi
 
-mkdir -p build_v7a && cd build_v7a
-cmake -DANDROID_ABI=armeabi-v7a -DCMAKE_TOOLCHAIN_FILE=../cmake/android.toolchain.cmake -DANDROID_TOOLCHAIN_NAME=arm-linux-androideabi-clang3.6 -DANDROID_NATIVE_API_LEVEL=android-9 ../
-cd ..
-cmake --build build_v7a --config Release
-mkdir -p plugin_lua53/Plugins/Android/libs/armeabi-v7a/
-cp build_v7a/libxlua.so plugin_lua53/Plugins/Android/libs/armeabi-v7a/libxlua.so
+function build() {
+    API=$1
+    ABI=$2
+    TOOLCHAIN_ANME=$3
+    BUILD_PATH=build.${ABI}
+    cmake -H. -B${BUILD_PATH} -DCMAKE_TOOLCHAIN_FILE=${NDK}/build/cmake/android.toolchain.cmake -DANDROID_NATIVE_API_LEVEL=${API} -DANDROID_TOOLCHAIN=clang -DANDROID_TOOLCHAIN_NAME=${TOOLCHAIN_ANME}
+    cmake --build ${BUILD_PATH} --config Release
+    mkdir -p plugin_lua53/Plugins/Android/libs/${ABI}/
+    cp ${BUILD_PATH}/libxlua.so plugin_lua53/Plugins/Android/libs/${ABI}/libxlua.so
+}
 
-mkdir -p build_x86 && cd build_x86
-cmake -DANDROID_ABI=x86 -DCMAKE_TOOLCHAIN_FILE=../cmake/android.toolchain.cmake -DANDROID_TOOLCHAIN_NAME=x86-clang3.5 -DANDROID_NATIVE_API_LEVEL=android-9 ../
-cd ..
-cmake --build build_x86 --config Release
-mkdir -p plugin_lua53/Plugins/Android/libs/x86/
-cp build_x86/libxlua.so plugin_lua53/Plugins/Android/libs/x86/libxlua.so
-
-
+build android-16 armeabi-v7a arm-linux-androideabi-4.9
+build android-16 x86 x86-4.9
