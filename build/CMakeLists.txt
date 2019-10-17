@@ -64,7 +64,7 @@ if (USING_LUAJIT)
     endif ()
 	set ( LUA_LIB )
 else ()
-	set ( LUA_IDSIZE 120 CACHE NUMBER "gives the maximum size for the description of the source." )
+	set ( LUA_IDSIZE 120 CACHE STRING "gives the maximum size for the description of the source." )
 
 	configure_file ( ${LUA_SRC_PATH}/luaconf.h.in ${CMAKE_CURRENT_BINARY_DIR}/luaconf.h )
 
