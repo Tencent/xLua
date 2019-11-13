@@ -5,7 +5,7 @@ elif [ -n "$ANDROID_NDK_HOME" ]; then
 elif [ -n "$ANDROID_NDK_HOME" ]; then
     export NDK=${ANDROID_NDK_HOME}
 else
-    export NDK=~/android-ndk-r16b
+    export NDK=~/android-ndk-r15c
 fi
 
 if [ ! -d "$NDK" ]; then
@@ -25,4 +25,5 @@ function build() {
 }
 
 build android-16 armeabi-v7a arm-linux-androideabi-4.9
+build android-16 arm64-v8a  arm-linux-androideabi-clang
 build android-16 x86 x86-4.9
