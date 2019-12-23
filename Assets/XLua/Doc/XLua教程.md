@@ -243,7 +243,7 @@ C#的delegate调用：和调用普通lua函数一样
 
 ##### 64位整数支持
 
-    Lua53版本64位整数（long，ulong）映射到原生的64未整数，而luajit版本，相当于lua5.1的标准，本身不支持64位，xlua做了个64位支持的扩展库，C#的long和ulong都将映射到userdata：
+    Lua53版本64位整数（long，ulong）映射到原生的64位整数，而luajit版本，相当于lua5.1的标准，本身不支持64位，xlua做了个64位支持的扩展库，C#的long和ulong都将映射到userdata：
     
     支持在lua里头进行64位的运算，比较，打印
     
