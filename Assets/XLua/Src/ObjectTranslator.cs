@@ -349,7 +349,7 @@ namespace XLua
         Dictionary<Type, Func<DelegateBridgeBase, Delegate>> delegateCreatorCache
             = new Dictionary<Type, Func<DelegateBridgeBase, Delegate>>();
 
-        Func<DelegateBridgeBase, Delegate> getDelegateUsingGeneric(DelegateBridgeBase bridge, Type delegateType, MethodInfo delegateMethod)
+        Func<DelegateBridgeBase, Delegate> getCreatorUsingGeneric(DelegateBridgeBase bridge, Type delegateType, MethodInfo delegateMethod)
         {
             Func<DelegateBridgeBase, Delegate> genericDelegateCreator = null;
 
@@ -447,12 +447,13 @@ namespace XLua
 #else
                             foundMethod.CreateDelegate(delegateType, o); 
 #endif
+                        break;
                     }
                 }
 
                 if (delegateCreator == null)
                 {
-                    delegateCreator = getDelegateUsingGeneric(bridge, delegateType, delegateMethod);
+                    delegateCreator = getCreatorUsingGeneric(bridge, delegateType, delegateMethod);
                 }
                 delegateCreatorCache.Add(delegateType, delegateCreator);
             }
