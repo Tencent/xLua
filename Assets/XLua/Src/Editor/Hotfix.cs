@@ -982,6 +982,15 @@ namespace XLua
                     }
                 }
             }
+
+            int offset = 0;
+            for (int i = 0; i < instructions.Count; i++)
+            {
+                var instruction = instructions[i];
+                instruction.Offset = offset;
+                offset += instruction.GetSize();
+            }
+
             for (int i = 0; i < instructions.Count; i++)
             {
                 var instruction = instructions[i];
