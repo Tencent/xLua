@@ -210,8 +210,14 @@ local function _CsFullTypeName(t)
 end
 
 function CsFullTypeName(t)
-    local name = _CsFullTypeName(t)
-	return xLuaClasses[name] and ("global::" .. name) or name
+    if t.DeclaringType then
+        local name = _CsFullTypeName(t)
+        local declaringTypeName = _CsFullTypeName(t.DeclaringType);
+        return xLuaClasses[declaringTypeName] and ("global::" .. name) or name
+    else
+        local name = _CsFullTypeName(t)
+        return xLuaClasses[name] and ("global::" .. name) or name
+    end
 end
 
 function CSVariableName(t)
