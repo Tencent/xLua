@@ -644,14 +644,18 @@ namespace CSObjectWrapEditor
             textWriter.Close();
         }
 
+        static string NonmalizeName(string name)
+        {
+            return name.Replace("+", "_").Replace(".", "_").Replace("`", "_").Replace("&", "_").Replace("[", "_").Replace("]", "_").Replace(",", "_");
+        }
+
         static void GenInterfaceBridge(IEnumerable<Type> types, string save_path)
         {
             foreach (var wrap_type in types)
             {
                 if (!wrap_type.IsInterface) continue;
 
-                string filePath = save_path + wrap_type.ToString().Replace("+", "").Replace(".", "")
-                    .Replace("`", "").Replace("&", "").Replace("[", "").Replace("]", "").Replace(",", "") + "Bridge.cs";
+                string filePath = save_path + NonmalizeName(wrap_type.ToString()) + "Bridge.cs";
                 StreamWriter textWriter = new StreamWriter(filePath, false, Encoding.UTF8);
                 GenOne(wrap_type, (type, type_info) =>
                 {
@@ -995,8 +999,7 @@ namespace CSObjectWrapEditor
 
             foreach (var wrap_type in types)
             {
-                string filePath = save_path + wrap_type.ToString().Replace("+", "").Replace(".", "")
-                    .Replace("`", "").Replace("&", "").Replace("[", "").Replace("]", "").Replace(",", "") + "Wrap.cs";
+                string filePath = save_path + NonmalizeName(wrap_type.ToString()) + "Wrap.cs";
                 StreamWriter textWriter = new StreamWriter(filePath, false, Encoding.UTF8);
                 if (wrap_type.IsEnum)
                 {
