@@ -235,11 +235,11 @@
     <Compile Include="..\Gen2\TestChineseStringWrap.cs">
       <Link>Gen2\TestChineseStringWrap.cs</Link>
     </Compile>
-    <Compile Include="..\Gen2\TestExtensionMethodTestExtensionMethodFOrClassWrap.cs">
-      <Link>Gen2\TestExtensionMethodTestExtensionMethodFOrClassWrap.cs</Link>
+    <Compile Include="..\Gen2\TestExtensionMethod_TestExtensionMethodFOrClassWrap.cs">
+      <Link>Gen2\TestExtensionMethod_TestExtensionMethodFOrClassWrap.cs</Link>
     </Compile>
-    <Compile Include="..\Gen2\TestExtensionMethodTestExtensionMethodForStructWrap.cs">
-      <Link>Gen2\TestExtensionMethodTestExtensionMethodForStructWrap.cs</Link>
+    <Compile Include="..\Gen2\TestExtensionMethod_TestExtensionMethodForStructWrap.cs">
+      <Link>Gen2\TestExtensionMethod_TestExtensionMethodForStructWrap.cs</Link>
     </Compile>
     <Compile Include="..\Gen2\TestGenFloatStructClassWrap.cs">
       <Link>Gen2\TestGenFloatStructClassWrap.cs</Link>
@@ -274,35 +274,35 @@
     <Compile Include="..\Gen2\tableVarIncludeInfBridge.cs">
       <Link>Gen2\tableVarIncludeInfBridge.cs</Link>
     </Compile>
-    <Compile Include="..\Gen2\testLuaCallCSChildCalssWrap.cs">
-      <Link>Gen2\testLuaCallCSChildCalssWrap.cs</Link>
+    <Compile Include="..\Gen2\testLuaCallCS_ChildCalssWrap.cs">
+      <Link>Gen2\testLuaCallCS_ChildCalssWrap.cs</Link>
     </Compile>
-    <Compile Include="..\Gen2\testLuaCallCSMultiContClassWrap.cs">
-      <Link>Gen2\testLuaCallCSMultiContClassWrap.cs</Link>
+    <Compile Include="..\Gen2\testLuaCallCS_MultiContClassWrap.cs">
+      <Link>Gen2\testLuaCallCS_MultiContClassWrap.cs</Link>
     </Compile>
-    <Compile Include="..\Gen2\testLuaCallCSOneParamContClassWrap.cs">
-      <Link>Gen2\testLuaCallCSOneParamContClassWrap.cs</Link>
+    <Compile Include="..\Gen2\testLuaCallCS_OneParamContClassWrap.cs">
+      <Link>Gen2\testLuaCallCS_OneParamContClassWrap.cs</Link>
     </Compile>
-    <Compile Include="..\Gen2\testLuaCallCSOverClassAWrap.cs">
-      <Link>Gen2\testLuaCallCSOverClassAWrap.cs</Link>
+    <Compile Include="..\Gen2\testLuaCallCS_OverClassAWrap.cs">
+      <Link>Gen2\testLuaCallCS_OverClassAWrap.cs</Link>
     </Compile>
-    <Compile Include="..\Gen2\testLuaCallCSOverClassBWrap.cs">
-      <Link>Gen2\testLuaCallCSOverClassBWrap.cs</Link>
+    <Compile Include="..\Gen2\testLuaCallCS_OverClassBWrap.cs">
+      <Link>Gen2\testLuaCallCS_OverClassBWrap.cs</Link>
     </Compile>
-    <Compile Include="..\Gen2\testLuaCallCSOverClassCDeriveNGAWrap.cs">
-      <Link>Gen2\testLuaCallCSOverClassCDeriveNGAWrap.cs</Link>
+    <Compile Include="..\Gen2\testLuaCallCS_OverClassCDeriveNGAWrap.cs">
+      <Link>Gen2\testLuaCallCS_OverClassCDeriveNGAWrap.cs</Link>
     </Compile>
-    <Compile Include="..\Gen2\testLuaCallCSOverClassCWrap.cs">
-      <Link>Gen2\testLuaCallCSOverClassCWrap.cs</Link>
+    <Compile Include="..\Gen2\testLuaCallCS_OverClassCWrap.cs">
+      <Link>Gen2\testLuaCallCS_OverClassCWrap.cs</Link>
     </Compile>
-    <Compile Include="..\Gen2\testLuaCallCSStaticTestClassWrap.cs">
-      <Link>Gen2\testLuaCallCSStaticTestClassWrap.cs</Link>
+    <Compile Include="..\Gen2\testLuaCallCS_StaticTestClassWrap.cs">
+      <Link>Gen2\testLuaCallCS_StaticTestClassWrap.cs</Link>
     </Compile>
-    <Compile Include="..\Gen2\testLuaCallCSTwoParamsContClassWrap.cs">
-      <Link>Gen2\testLuaCallCSTwoParamsContClassWrap.cs</Link>
+    <Compile Include="..\Gen2\testLuaCallCS_TwoParamsContClassWrap.cs">
+      <Link>Gen2\testLuaCallCS_TwoParamsContClassWrap.cs</Link>
     </Compile>
-    <Compile Include="..\Gen2\testLuaCallCSabstractFatherClassWrap.cs">
-      <Link>Gen2\testLuaCallCSabstractFatherClassWrap.cs</Link>
+    <Compile Include="..\Gen2\testLuaCallCS_abstractFatherClassWrap.cs">
+      <Link>Gen2\testLuaCallCS_abstractFatherClassWrap.cs</Link>
     </Compile>
     <Compile Include="..\Src\XLuaUnitTest.cs">
       <Link>Src\XLuaUnitTest.cs</Link>
