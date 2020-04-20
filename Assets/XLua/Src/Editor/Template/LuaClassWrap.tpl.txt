@@ -413,7 +413,8 @@ namespace XLua.CSObjectWrap
 					    local keyType = overload:GetParameters()[0].ParameterType
 						local valueType = overload:GetParameters()[1].ParameterType%>
 					<%=GetCasterStatement(keyType, 2, "key", true)%>;
-					<%=GetCasterStatement(valueType, 3, "gen_to_be_invoked[key]")%>;
+					<%=GetCasterStatement(valueType, 3, "gen_value", true)%>;
+                    gen_to_be_invoked[key] = gen_value;
                     <% else
                     in_pos = 0;
                     ForEachCsList(parameters, function(parameter, pi) 
