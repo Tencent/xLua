@@ -49,7 +49,6 @@ namespace XLua
                 int errFunc = LuaAPI.pcall_prepare(L, errorFuncRef, luaReference);
                 <%if CallNeedTranslator(delegate, "") then %>
                     var translator = luaEnv.translator;
-                    ObjectTranslatorExtensions translator1;
                     <%end%>
                 <%
                 local param_count = parameters.Length
