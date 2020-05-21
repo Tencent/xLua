@@ -15,7 +15,7 @@ using LuaAPI = XLua.LuaDLL.Lua;
 using RealStatePtr = System.IntPtr;
 using LuaCSFunction = XLua.LuaDLL.lua_CSFunction;
 #endif
-#if UNITY_EDITOR
+#if !XLUA_GENERAL
 using UnityEngine;
 #endif
 
@@ -86,7 +86,7 @@ namespace XLua
                 LuaAPI.luaopen_xlua(rawL);
                 LuaAPI.luaopen_i64lib(rawL);
 
-#if UNITY_EDITOR
+#if !XLUA_GENERAL
                 if (CreateObjectTranslatorDelegate != null)
                     translator = CreateObjectTranslatorDelegate(this, rawL);
                 else
