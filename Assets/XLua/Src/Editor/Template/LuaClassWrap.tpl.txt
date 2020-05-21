@@ -406,16 +406,15 @@ namespace XLua.CSObjectWrap
                     end)%>) <%end%>
                 {
                     <%if overload.Name == "get_Item" and overload.IsSpecialName then
-					    local keyType = overload:GetParameters()[0].ParameterType%>
-					<%=GetCasterStatement(keyType, 2, "key", true)%>;
-					<%=GetPushStatement(overload.ReturnType, "gen_to_be_invoked[key]")%>;
-					<%elseif overload.Name == "set_Item" and overload.IsSpecialName then
-					    local keyType = overload:GetParameters()[0].ParameterType
-						local valueType = overload:GetParameters()[1].ParameterType%>
-					<%=GetCasterStatement(keyType, 2, "key", true)%>;
-					<%=GetCasterStatement(valueType, 3, "gen_value", true)%>;						<%=GetCasterStatement(valueType, 3, "gen_to_be_invoked[key]")%>;
-                                        gen_to_be_invoked[key] = gen_value;
-					<%=GetCasterStatement(valueType, 3, "gen_to_be_invoked[key]")%>;
+                            local keyType = overload:GetParameters()[0].ParameterType%>
+                        <%=GetCasterStatement(keyType, 2, "key", true)%>;
+                        <%=GetPushStatement(overload.ReturnType, "gen_to_be_invoked[key]")%>;
+                        <%elseif overload.Name == "set_Item" and overload.IsSpecialName then
+                            local keyType = overload:GetParameters()[0].ParameterType
+                            local valueType = overload:GetParameters()[1].ParameterType%>
+                        <%=GetCasterStatement(keyType, 2, "key", true)%>;
+                        <%=GetCasterStatement(valueType, 3, "gen_value", true)%>;
+                    gen_to_be_invoked[key] = gen_value;
                     <% else
                     in_pos = 0;
                     ForEachCsList(parameters, function(parameter, pi) 

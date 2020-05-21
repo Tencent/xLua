@@ -77,7 +77,7 @@ namespace XLua
 			end
 			if type_info.Flag == CS.XLua.OptimizeFlag.PackAsTable then
 			%>
-			<%if PushObjectNeedTranslator(type_info) then %>    ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);<%end%>
+			<%if PushObjectNeedTranslator(type_info) then %>    var translator = ObjectTranslatorPool.Instance.Find(L) as ObjectTranslatorExtensions;<%end%>
 			LuaAPI.xlua_pushcstable(L, <%=type_info.FieldInfos.Count%>, <%=type_id_var_name%>);
 			<%ForEachCsList(type_info.FieldInfos, function(fieldInfo)%>
 			LuaAPI.xlua_pushasciistring(L, "<%=fieldInfo.Name%>");
@@ -214,8 +214,9 @@ namespace XLua
             return false;
 		}
 		
-		internal static bool __tryArraySet(Type type, RealStatePtr L, ObjectTranslator translator, object obj, int array_idx, int obj_idx)
+		internal static bool __tryArraySet(Type type, RealStatePtr L, ObjectTranslator translatorBase, object obj, int array_idx, int obj_idx)
 		{
+		var translator = translatorBase as ObjectTranslatorExtensions;
 		<%
 		local is_first = true
 		ForEachCsList(purevaluetypes, tableoptimzetypes, function(type_info)

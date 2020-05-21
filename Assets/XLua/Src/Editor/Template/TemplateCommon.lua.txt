@@ -184,24 +184,24 @@ local valueType = typeof(CS.System.ValueType)
 
 local function _CsFullTypeName(t)
     if t.IsArray then
-	    local element_name, element_is_array = _CsFullTypeName(t:GetElementType())
-		if element_is_array then
-		    local bracket_pos = element_name:find('%[')
-			return element_name:sub(1, bracket_pos - 1) .. '[' .. string.rep(',', t:GetArrayRank() - 1) .. ']' .. element_name:sub(bracket_pos, -1), true
-		else
+        local element_name, element_is_array = _CsFullTypeName(t:GetElementType())
+        if element_is_array then
+            local bracket_pos = element_name:find('%[')
+            return element_name:sub(1, bracket_pos - 1) .. '[' .. string.rep(',', t:GetArrayRank() - 1) .. ']' .. element_name:sub(bracket_pos, -1), true
+        else
             return element_name .. '[' .. string.rep(',', t:GetArrayRank() - 1) .. ']', true
-	    end
+        end
     elseif t.IsByRef then
         return _CsFullTypeName(t:GetElementType())
     elseif t.IsGenericParameter then
         return (t.BaseType == objType or t.BaseType == valueType) and t.Name or _CsFullTypeName(t.BaseType) --TODO:应该判断是否类型约束
     end
 
-    local name = t.FullName:gsub("&", ""):gsub("%+", ".") 
-    if not t.IsGenericType then 
+    local name = t.FullName:gsub("&", ""):gsub("%+", ".")
+    if not t.IsGenericType then
         return friendlyNameMap[name] or name
     end
-	local genericParameter = ""
+    local genericParameter = ""
     ForEachCsList(t:GetGenericArguments(), function(at, ati)
         if ati ~= 0 then  genericParameter = genericParameter .. ', ' end
         genericParameter = genericParameter .. _CsFullTypeName(at)
@@ -210,8 +210,8 @@ local function _CsFullTypeName(t)
 end
 
 function CsFullTypeName(t)
-    if t.DeclaringType then	    local name = _CsFullTypeName(t)
-        local name = _CsFullTypeName(t)		return xLuaClasses[name] and ("global::" .. name) or name
+    if t.DeclaringType then
+        local name = _CsFullTypeName(t)
         local declaringTypeName = _CsFullTypeName(t.DeclaringType);
         return xLuaClasses[declaringTypeName] and ("global::" .. name) or name
     else
