@@ -120,7 +120,7 @@ local generic_arg_list, type_constraints = GenericArgumentList(type)
 %>
 namespace XLua
 {
-    public partial class ObjectTranslator
+    public partial class ObjectTranslatorExtensions:ObjectTranslator
     {
         public void __Register<%=v_type_name%><%=generic_arg_list%>(RealStatePtr L) <%=type_constraints%>
         {
@@ -163,7 +163,7 @@ namespace XLua
             if constructors.Count == 0 and (not type.IsValueType)  then 
             %>return LuaAPI.luaL_error(L, "<%=CsFullTypeName(type)%> does not have a constructor!");<% 
             else %>
-            ObjectTranslator translator = this;
+            ObjectTranslatorExtensions translator = this;
 			<% 
 			local hasZeroParamsCtor = false
 			ForEachCsList(constructors, function(constructor, ci)
@@ -228,7 +228,7 @@ namespace XLua
         int __CSIndexer<%=v_type_name%><%=generic_arg_list%>(RealStatePtr L, int gen_param_count) <%=type_constraints%>
         {
 			<%if type.IsArray then %>
-			ObjectTranslator translator = this;
+			ObjectTranslatorExtensions translator = this;
 			if (<%=GetCheckStatement(type, 1)%> && LuaAPI.lua_isnumber(L, 2))
 			{
 				int index = (int)LuaAPI.lua_tonumber(L, 2);
@@ -238,7 +238,7 @@ namespace XLua
 				return 2;
 			}
 			<%elseif indexers.Count > 0 then
-			%>ObjectTranslator translator = this;
+			%>ObjectTranslatorExtensions translator = this;
 			<%
 				ForEachCsList(indexers, function(indexer)
 					local paramter = indexer:GetParameters()[0]
@@ -262,7 +262,7 @@ namespace XLua
 		<%if type.IsArray or ((newindexers.Count or 0) > 0) then%>
         int __NewIndexer<%=v_type_name%><%=generic_arg_list%>(RealStatePtr L, int gen_param_count) <%=type_constraints%>
         {
-			<%if type.IsArray or newindexers.Count > 0 then %>ObjectTranslator translator = this;<%end%>
+			<%if type.IsArray or newindexers.Count > 0 then %>ObjectTranslatorExtensions translator = this;<%end%>
 			<%if type.IsArray then 
 				local elementType = type:GetElementType()
 			%>
@@ -300,7 +300,7 @@ namespace XLua
         <%ForEachCsList(operators, function(operator) %>
         int <%=v_type_name%><%=OpNameMap[operator.Name]%><%=generic_arg_list%>(RealStatePtr L, int gen_param_count) <%=type_constraints%>
         {
-            ObjectTranslator translator = this;
+            ObjectTranslatorExtensions translator = this;
             <% if operator.Name ~= "op_UnaryNegation" and operator.Name ~= "op_OnesComplement"  then 
                 ForEachCsList(operator.Overloads, function(overload)
                 local left_param = overload:GetParameters()[0]
@@ -332,7 +332,7 @@ namespace XLua
             local need_obj = not method.IsStatic
             if MethodCallNeedTranslator(method) then
             %>
-            ObjectTranslator translator = this;
+            ObjectTranslatorExtensions translator = this;
             <%end%>
             <%if need_obj then%>
             <%=GetSelfStatement(type)%>;
@@ -428,7 +428,7 @@ namespace XLua
         %>
         int <%=v_type_name%>_g_get_<%=getter.Name%><%=generic_arg_list%>(RealStatePtr L, int gen_param_count) <%=type_constraints%>
         {
-            <%if AccessorNeedTranslator(getter) then %>ObjectTranslator translator = this;<%end%>
+            <%if AccessorNeedTranslator(getter) then %>ObjectTranslatorExtensions translator = this;<%end%>
 			<%if not getter.IsStatic then%>
 			<%=GetSelfStatement(type)%>;
 			<%=GetPushStatement(getter.Type, "gen_to_be_invoked."..UnK(getter.Name))%>;<% else %>    <%=GetPushStatement(getter.Type, CsFullTypeName(type).."."..UnK(getter.Name))%>;<% end%>
@@ -441,7 +441,7 @@ namespace XLua
         %>
         int <%=v_type_name%>_s_set_<%=setter.Name%><%=generic_arg_list%>(RealStatePtr L, int gen_param_count) <%=type_constraints%>
         {
-            <%if AccessorNeedTranslator(setter) then %>ObjectTranslator translator = this;<%end%>
+            <%if AccessorNeedTranslator(setter) then %>ObjectTranslatorExtensions translator = this;<%end%>
 			<%if not setter.IsStatic then %>
             <%=GetSelfStatement(type)%>;
             <%if is_struct then %><%=GetCasterStatement(setter.Type, 2, "gen_value", true)%>;
@@ -462,7 +462,7 @@ namespace XLua
 		<%ForEachCsList(events, function(event) if not event.IsStatic then %>
         int <%=v_type_name%>_e_<%=event.Name%><%=generic_arg_list%>(RealStatePtr L, int gen_param_count) <%=type_constraints%>
         {
-            ObjectTranslator translator = this;
+            ObjectTranslatorExtensions translator = this;
 			<%=GetSelfStatement(type)%>;
 			<%=GetCasterStatement(event.Type, 3, "gen_delegate", true)%>;
 			if (gen_delegate == null) {
@@ -492,7 +492,7 @@ namespace XLua
 		<%ForEachCsList(events, function(event) if event.IsStatic then %>
         int <%=v_type_name%>_e_<%=event.Name%><%=generic_arg_list%>(RealStatePtr L, int gen_param_count) <%=type_constraints%>
         {
-            ObjectTranslator translator = this;
+            ObjectTranslatorExtensions translator = this;
 			<%=GetCasterStatement(event.Type, 2, "gen_delegate", true)%>;
 			if (gen_delegate == null) {
 				return LuaAPI.luaL_error(L, "#2 need <%=CsFullTypeName(event.Type)%>!");

@@ -210,14 +210,8 @@ local function _CsFullTypeName(t)
 end
 
 function CsFullTypeName(t)
-    if t.DeclaringType then
-        local name = _CsFullTypeName(t)
-        local declaringTypeName = _CsFullTypeName(t.DeclaringType);
-        return xLuaClasses[declaringTypeName] and ("global::" .. name) or name
-    else
-        local name = _CsFullTypeName(t)
-        return xLuaClasses[name] and ("global::" .. name) or name
-    end
+    local name = _CsFullTypeName(t)
+	return xLuaClasses[name] and ("global::" .. name) or name
 end
 
 function CSVariableName(t)
@@ -375,13 +369,14 @@ function GetPushStatement(t, variable, is_v_params)
     if fixPush[testname] then
         return fixPush[testname] .. "(L, ".. variable ..")" 
     elseif genPushAndUpdateTypes[t] then
-        return "translator.Push".. CSVariableName(t) .."(L, "..variable..")"
+        return 
+        "if((translator as ObjectTranslatorExtensions) != null)\n        {\n            (translator as ObjectTranslatorExtensions).Push".. CSVariableName(t) .."(L, "..variable..");\n        }"
     elseif t.IsGenericParameter and not t.DeclaringMethod then
-	    return "translator.PushByType(L, "..variable..")"
-	elseif t.IsInterface or GetNullableUnderlyingType(t) then
-	    return "translator.PushAny(L, "..variable..")"
+	    return "if((translator as ObjectTranslatorExtensions) != null)\n        {\n            (translator as ObjectTranslatorExtensions).PushByType(L, "..variable..");\n        }\n        else\n        translator.PushByType(L, "..variable..")"
+    elseif t.IsInterface or GetNullableUnderlyingType(t) then
+	    return "if((translator as ObjectTranslatorExtensions) != null)\n        {\n            (translator as ObjectTranslatorExtensions).PushAny(L, "..variable..");\n        }\n        else\n        translator.PushAny(L, "..variable..")"
     else
-        return "translator.Push(L, "..variable..")"
+        return "if((translator as ObjectTranslatorExtensions) != null)\n        {\n            (translator as ObjectTranslatorExtensions).Push(L, "..variable..");\n        }\n        else\n        translator.Push(L, "..variable..")"
     end
 end
 
@@ -415,10 +410,6 @@ end
 
 function AccessorNeedTranslator(accessor)
     return not accessor.IsStatic or not JustLuaType(accessor.Type)
-end
-
-function PushObjectNeedTranslator(type_info)
-    return IfAny(type_info.FieldInfos, function(field_info) return not JustLuaType(field_info.Type) end)
 end
 
 local GenericParameterAttributes = CS.System.Reflection.GenericParameterAttributes

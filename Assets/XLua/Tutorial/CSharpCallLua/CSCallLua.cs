@@ -69,7 +69,11 @@ namespace Tutorial
         // Use this for initialization
         void Start()
         {
+            var prefab = Resources.Load<GameObject>("LuaEnvStarter");
+            var go = Instantiate(prefab);
+            
             luaenv = new LuaEnv();
+            
             luaenv.DoString(script);
 
             Debug.Log("_G.a = " + luaenv.Global.Get<int>("a"));

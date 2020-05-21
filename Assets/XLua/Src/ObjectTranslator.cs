@@ -102,7 +102,7 @@ namespace XLua
     public delegate int CSharpWrapper(IntPtr L, int top);
 #endif
 
-    public partial class ObjectTranslator
+    public class ObjectTranslator
 	{
         internal MethodWrapsCache methodWrapsCache;
         internal ObjectCheckers objectCheckers;

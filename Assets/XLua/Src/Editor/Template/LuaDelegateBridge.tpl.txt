@@ -47,7 +47,10 @@ namespace XLua
 #endif
                 RealStatePtr L = luaEnv.rawL;
                 int errFunc = LuaAPI.pcall_prepare(L, errorFuncRef, luaReference);
-                <%if CallNeedTranslator(delegate, "") then %>ObjectTranslator translator = luaEnv.translator;<%end%>
+                <%if CallNeedTranslator(delegate, "") then %>
+                    var translator = luaEnv.translator;
+                    ObjectTranslatorExtensions translator1;
+                    <%end%>
                 <%
                 local param_count = parameters.Length
                 local has_v_params = param_count > 0 and parameters[param_count - 1].IsParamArray

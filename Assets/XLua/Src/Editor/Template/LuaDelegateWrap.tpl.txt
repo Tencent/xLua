@@ -27,7 +27,7 @@ namespace XLua.CSObjectWrap
     {
 		public static void __Register(RealStatePtr L)
         {
-            ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
+            var translator = ObjectTranslatorPool.Instance.Find(L) as ObjectTranslatorExtensions;
 		    Utils.BeginObjectRegister(typeof(<%=CsFullTypeName(type)%>), L, translator, 0, 0, 0, 0);
 			Utils.EndObjectRegister(typeof(<%=CsFullTypeName(type)%>), L, translator, null, null, null, null, null);
 			
@@ -44,7 +44,7 @@ namespace XLua.CSObjectWrap
 		[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
         static int __CallMeta(RealStatePtr L)
         {
-			ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
+			var translator = ObjectTranslatorPool.Instance.Find(L) as ObjectTranslatorExtensions;
 			try {
 				if(LuaAPI.lua_gettop(L) == <%=in_num+1%> && <%=GetCheckStatement(type, 1)%><%
 					ForEachCsList(parameters, function(parameter) 
@@ -100,7 +100,7 @@ namespace XLua.CSObjectWrap
 		[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
         static int __AddMeta(RealStatePtr L)
 		{
-			ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
+			var translator = ObjectTranslatorPool.Instance.Find(L) as ObjectTranslatorExtensions;
 			try {
 				<%=GetCasterStatement(type, 1, "leftside", true)%>;
 				<%=GetCasterStatement(type, 2, "rightside", true)%>;
@@ -114,7 +114,7 @@ namespace XLua.CSObjectWrap
 		[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
         static int __SubMeta(RealStatePtr L)
 		{
-			ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
+			var translator = ObjectTranslatorPool.Instance.Find(L) as ObjectTranslatorExtensions;
 			try {
 				<%=GetCasterStatement(type, 1, "leftside", true)%>;
 				<%=GetCasterStatement(type, 2, "rightside", true)%>;

@@ -15,7 +15,7 @@ require "TemplateCommon"
 
 namespace XLua
 {
-    public partial class ObjectTranslator
+    public partial class ObjectTranslatorExtensions:ObjectTranslator
     {
         <%if purevaluetypes.Count > 0 then
         local init_class_name = "IniterAdder" .. CSVariableName(purevaluetypes[0].Type)
@@ -27,8 +27,9 @@ namespace XLua
                 LuaEnv.AddIniter(Init);
             }
 			
-			static void Init(LuaEnv luaenv, ObjectTranslator translator)
+			static void Init(LuaEnv luaenv, ObjectTranslator translatorBase)
 			{
+			var translator = translatorBase as ObjectTranslatorExtensions;
 			<%ForEachCsList(purevaluetypes, function(type_info)
             if not type_info.Type.IsValueType then return end
             local full_type_name = CsFullTypeName(type_info.Type)%>
@@ -76,7 +77,6 @@ namespace XLua
 			end
 			if type_info.Flag == CS.XLua.OptimizeFlag.PackAsTable then
 			%>
-			<%if PushObjectNeedTranslator(type_info) then %>    ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);<%end%>
 			LuaAPI.xlua_pushcstable(L, <%=type_info.FieldInfos.Count%>, <%=type_id_var_name%>);
 			<%ForEachCsList(type_info.FieldInfos, function(fieldInfo)%>
 			LuaAPI.xlua_pushasciistring(L, "<%=fieldInfo.Name%>");
@@ -196,8 +196,9 @@ namespace XLua
 	
 	public partial class StaticLuaCallbacks
     {
-	    internal static bool __tryArrayGet(Type type, RealStatePtr L, ObjectTranslator translator, object obj, int index)
+	    internal static bool __tryArrayGet(Type type, RealStatePtr L, ObjectTranslator translatorBase, object obj, int index)
 		{
+		var translator = translatorBase as ObjectTranslatorExtensions;
 		<%ForEachCsList(purevaluetypes, function(type_info, idx)
 		if not type_info.Type.IsValueType then return end
 		local full_type_name = CsFullTypeName(type_info.Type)
