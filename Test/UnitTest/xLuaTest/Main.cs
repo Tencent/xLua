@@ -5,6 +5,19 @@ using XLua;
 
 public class Main : MonoBehaviour {
 	LuaEnv luaenv;
+
+	void Awake(){
+		 var prefab = Resources.Load<GameObject>("LuaEnvStarter");
+            if (prefab)
+            {
+                var go = Instantiate(prefab);
+
+            }
+            else
+            {
+                Debug.LogError("Not generate wraps");
+            }
+	}
 	// Use this for initialization
 	void Start () {
 		luaenv = LuaEnvSingleton.Instance;
