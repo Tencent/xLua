@@ -1621,7 +1621,7 @@ namespace XLua
         [MenuItem("XLua/Hotfix Inject In Editor", false, 3)]
         public static void HotfixInject()
         {
-            HotfixInject("./Library/ScriptAssemblies/");
+            HotfixInject("./Library/ScriptAssemblies");
         }
 
         public static void HotfixInject(string assemblyDir)
@@ -1660,7 +1660,7 @@ namespace XLua
                 return;
             }
 
-            var assembly_csharp_path = assemblyDir + "Assembly-CSharp.dll";
+            var assembly_csharp_path = Path.Combine(assemblyDir, "Assembly-CSharp.dll");
             var id_map_file_path = CSObjectWrapEditor.GeneratorConfig.common_path + "Resources/hotfix_id_map.lua.txt";
             var hotfix_cfg_in_editor = CSObjectWrapEditor.GeneratorConfig.common_path + "hotfix_cfg_in_editor.data";
 
@@ -1702,7 +1702,7 @@ namespace XLua
             var idMapFileNames = new List<string>();
             foreach (var injectAssemblyPath in injectAssemblyPaths)
             {
-                args[0] = assemblyDir + Path.GetFileName(injectAssemblyPath);
+                args[0] = Path.Combine(assemblyDir, Path.GetFileName(injectAssemblyPath));
                 if (ContainNotAsciiChar(args[0]))
                 {
                     throw new Exception("project path must contain only ascii characters");
