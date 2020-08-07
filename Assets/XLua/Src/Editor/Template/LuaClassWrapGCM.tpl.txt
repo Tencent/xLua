@@ -191,7 +191,7 @@ namespace XLua
 				if pi >= real_param_count then return end 
 				%><%=GetCasterStatement(parameter.ParameterType, pi+2, LocalName(parameter.Name), true, has_v_params and pi == param_count - 1)%>;
 				<%end)%>
-				<%=CsFullTypeName(type)%> gen_ret = new <%=CsFullTypeName(type)%>(<%ForEachCsList(parameters, function(parameter, pi) if pi >= real_param_count then return end; if pi ~=0 then %><%=', '%><% end ;if parameter.IsOut and parameter.ParameterType.IsByRef then %>out <% elseif parameter.ParameterType.IsByRef then %>ref <% end %><%=LocalName(parameter.Name)%><% end)%>);
+				var gen_ret = new <%=CsFullTypeName(type)%>(<%ForEachCsList(parameters, function(parameter, pi) if pi >= real_param_count then return end; if pi ~=0 then %><%=', '%><% end ;if parameter.IsOut and parameter.ParameterType.IsByRef then %>out <% elseif parameter.ParameterType.IsByRef then %>ref <% end %><%=LocalName(parameter.Name)%><% end)%>);
 				<%=GetPushStatement(type, "gen_ret")%>;
 				<%local in_pos = 0
 				ForEachCsList(parameters, function(parameter, pi)
@@ -379,7 +379,7 @@ namespace XLua
 				<%end)%>
 				<%
 				if has_return then
-				%><%=CsFullTypeName(overload.ReturnType)%> gen_ret = <%
+				%>var gen_ret = <%
 				end
 				%><%if method.IsStatic then
 				%><%=CsFullTypeName(type).."."..UnK(overload.Name)%><%

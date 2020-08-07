@@ -66,7 +66,7 @@ namespace XLua.CSObjectWrap
 				
 				<%
                 if has_return then
-                    %>    <%=CsFullTypeName(delegate.ReturnType)%> __cl_gen_ret = <%
+                    %>    var __cl_gen_ret = <%
                 end
                 %>    __cl_gen_to_be_invoked( <%ForEachCsList(parameters, function(parameter, pi) if pi ~= 0 then %>, <% end; if parameter.IsOut then %>out <% elseif parameter.ParameterType.IsByRef then %>ref <% end %><%=parameter.Name%><% end) %> );
                 <%
