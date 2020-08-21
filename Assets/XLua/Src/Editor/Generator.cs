@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Tencent is pleased to support the open source community by making xLua available.
  * Copyright (C) 2016 THL A29 Limited, a Tencent company. All rights reserved.
  * Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
@@ -320,8 +320,16 @@ namespace CSObjectWrapEditor
                     var overloads = new List<MethodBase>();
                     List<int> def_vals = new List<int>();
                     bool isOverride = false;
+                    bool isLuaCSFunc = false;
                     foreach (var overload in v.Cast<MethodBase>().OrderBy(mb => OverloadCosting(mb)))
                     {
+                        if(overload.IsDefined(typeof(LuaCSFunctionAttribute)))
+                        {
+                            isLuaCSFunc = true;
+                            overloads.Clear();
+                            overloads.Add(overload);
+                            break;
+                        }
                         int def_count = 0;
                         overloads.Add(overload);
                         def_vals.Add(def_count);
@@ -347,12 +355,13 @@ namespace CSObjectWrapEditor
                             }
                         }
                     }
-
-                    return new {
+                    return new
+                    {
                         Name = k,
                         IsStatic = overloads[0].IsStatic && (!isDefined(overloads[0], typeof(ExtensionAttribute)) || overloads[0].GetParameters()[0].ParameterType.IsInterface),
                         Overloads = overloads,
-                        DefaultValues = def_vals
+                        DefaultValues = def_vals,
+                        IsLuaCSFunc = isLuaCSFunc,
                     };
                 }).ToList());
 
@@ -1374,6 +1383,7 @@ namespace CSObjectWrapEditor
             {
                 AddToList(ReflectionUse, get_cfg, GetCustomAttribute(test, typeof(ReflectionUseAttribute)));
             }
+
             if (isDefined(test, typeof(HotfixAttribute)))
             {
                 object cfg = get_cfg();
@@ -1534,6 +1544,7 @@ namespace CSObjectWrapEditor
             { typeof(double), 8 },
             { typeof(decimal), 16 }
         };
+
 
         static int SizeOf(Type type)
         {

@@ -370,7 +370,38 @@ namespace XLua.CSObjectWrap
         [MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
         static int _m_<%=method.Name%>(RealStatePtr L)
         {
-		    try {
+        <%if method.IsLuaCSFunc then %>
+#if LUACSFUNC_TRY_CATCH
+            try
+#endif
+            {
+            <%local overload = method.Overloads[0]%>
+            <%if not method.IsStatic then %>
+                ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
+                <%=GetSelfStatement(type)%>;
+                if (gen_to_be_invoked != null)
+                {   
+                    LuaAPI.lua_remove(L, 1);
+                    return gen_to_be_invoked.<%=UnK(overload.Name)%>(L);
+                }
+                else 
+                    return LuaAPI.luaL_error(L, "c# exception: Null Reference");
+            <%else%>
+                return <%=CsFullTypeName(type).."."..UnK(overload.Name)%>(L);
+            <%end%>
+            }
+#if LUACSFUNC_TRY_CATCH
+            catch (System.Reflection.TargetInvocationException e)
+            {
+                return LuaAPI.luaL_error(L, "c# exception:" + e.InnerException.Message + ",stack:" + e.InnerException.StackTrace);
+            }
+            catch (System.Exception e)
+            {
+                return LuaAPI.luaL_error(L, "c# exception:" + e.Message + ",stack:" + e.StackTrace);
+            }
+#endif
+        <%else%>
+            try {
             <%
             local need_obj = not method.IsStatic
             if MethodCallNeedTranslator(method) then
@@ -381,7 +412,7 @@ namespace XLua.CSObjectWrap
                 <%=GetSelfStatement(type)%>;
             <%end%>
             <%if method.Overloads.Count > 1 then%>
-			    int gen_param_count = LuaAPI.lua_gettop(L);
+                int gen_param_count = LuaAPI.lua_gettop(L);
             <%end%>
                 <%ForEachCsList(method.Overloads, function(overload, oi)
                 local parameters = MethodParameters(overload)
@@ -391,7 +422,7 @@ namespace XLua.CSObjectWrap
                 local in_pos = 0
                 local has_return = (overload.ReturnType.FullName ~= "System.Void")
                 local def_count = method.DefaultValues[oi]
-				local param_count = parameters.Length
+                local param_count = parameters.Length
                 local real_param_count = param_count - def_count
                 local has_v_params = param_count > 0 and IsParams(parameters[param_count - 1])
                 if method.Overloads.Count > 1 then
@@ -406,14 +437,14 @@ namespace XLua.CSObjectWrap
                     end)%>) <%end%>
                 {
                     <%if overload.Name == "get_Item" and overload.IsSpecialName then
-					    local keyType = overload:GetParameters()[0].ParameterType%>
-					<%=GetCasterStatement(keyType, 2, "key", true)%>;
-					<%=GetPushStatement(overload.ReturnType, "gen_to_be_invoked[key]")%>;
-					<%elseif overload.Name == "set_Item" and overload.IsSpecialName then
-					    local keyType = overload:GetParameters()[0].ParameterType
-						local valueType = overload:GetParameters()[1].ParameterType%>
-					<%=GetCasterStatement(keyType, 2, "key", true)%>;
-					<%=GetCasterStatement(valueType, 3, "gen_value", true)%>;
+                        local keyType = overload:GetParameters()[0].ParameterType%>
+                    <%=GetCasterStatement(keyType, 2, "key", true)%>;
+                    <%=GetPushStatement(overload.ReturnType, "gen_to_be_invoked[key]")%>;
+                    <%elseif overload.Name == "set_Item" and overload.IsSpecialName then
+                        local keyType = overload:GetParameters()[0].ParameterType
+                        local valueType = overload:GetParameters()[1].ParameterType%>
+                    <%=GetCasterStatement(keyType, 2, "key", true)%>;
+                    <%=GetCasterStatement(valueType, 3, "gen_value", true)%>;
                     gen_to_be_invoked[key] = gen_value;
                     <% else
                     in_pos = 0;
@@ -422,7 +453,7 @@ namespace XLua.CSObjectWrap
                         %><%if not (parameter.IsOut and parameter.ParameterType.IsByRef) then 
                             in_pos = in_pos + 1
                         %><%=GetCasterStatement(parameter.ParameterType, in_pos+param_offset, LocalName(parameter.Name), true, has_v_params and pi == param_count - 1)%><%
-					    else%><%=CsFullTypeName(parameter.ParameterType)%> <%=LocalName(parameter.Name)%><%end%>;
+                        else%><%=CsFullTypeName(parameter.ParameterType)%> <%=LocalName(parameter.Name)%><%end%>;
                     <%end)%>
                     <%
                     if has_return then
@@ -449,12 +480,12 @@ namespace XLua.CSObjectWrap
                         if parameter.ParameterType.IsByRef then
                         %><%=GetPushStatement(parameter.ParameterType:GetElementType(), LocalName(parameter.Name))%>;
                         <%if not parameter.IsOut and parameter.ParameterType.IsByRef and NeedUpdate(parameter.ParameterType) then 
-                  %><%=GetUpdateStatement(parameter.ParameterType:GetElementType(), in_pos+param_offset, LocalName(parameter.Name))%>;
+                %><%=GetUpdateStatement(parameter.ParameterType:GetElementType(), in_pos+param_offset, LocalName(parameter.Name))%>;
                         <%end%>
                     <%
                         end
                     end)
-					end
+                    end
                     %>
                     <%if NeedUpdate(type) and not method.IsStatic then%>
                         <%=GetUpdateStatement(type, 1, "gen_to_be_invoked")%>;
@@ -469,6 +500,7 @@ namespace XLua.CSObjectWrap
             <%if method.Overloads.Count > 1 then%>
             return LuaAPI.luaL_error(L, "invalid arguments to <%=CsFullTypeName(type)%>.<%=method.Overloads[0].Name%>!");
             <%end%>
+        <%end%>
         }
         <% end)%>
         

@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Tencent is pleased to support the open source community by making xLua available.
  * Copyright (C) 2016 THL A29 Limited, a Tencent company. All rights reserved.
  * Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
@@ -1607,6 +1607,22 @@ namespace XLua
             {
                 needCheckParameterType = true;
             }
+            bool isLuaCSFunc = false;
+            for (int i = 0; i < methodsToCall.Count; i++)
+            {
+                var method = methodsToCall[i];
+                if (method.IsDefined(typeof(LuaCSFunctionAttribute)))
+                {
+                    isLuaCSFunc = true;
+                    if (methodsToCall.Count > 1)
+                    {
+                        methodsToCall.Clear();
+                        methodsToCall.Add(method);
+                        //UnityEngine.Debug.LogWarning("LuaCSFunction can not make overloads");
+                    }
+                    break;
+                }
+            }
 
             ILGenerator il = methodBuilder.GetILGenerator();
 
@@ -1618,7 +1634,6 @@ namespace XLua
 
             il.Emit(OpCodes.Ldarg_0);
             il.Emit(OpCodes.Stloc, L);
-
             Label exceptionBlock = il.BeginExceptionBlock();
             Label retPoint = il.DefineLabel();
             il.Emit(OpCodes.Ldarg_0);
@@ -1631,6 +1646,7 @@ namespace XLua
                 il.Emit(OpCodes.Call, LuaAPI_lua_gettop);
                 il.Emit(OpCodes.Stloc, top);
             }
+
 
             for (int i = 0; i < methodsToCall.Count; i++)
             {
@@ -1646,7 +1662,32 @@ namespace XLua
                 int outParamCount = 0;
                 bool hasParams = paramInfos.Length > 0 && paramInfos[paramInfos.Length - 1].IsDefined(typeof(ParamArrayAttribute), false);
                 bool hasOptional = false;
-
+                if (isLuaCSFunc)
+                {
+                    bool needObj = false;
+                    Type objType = null;
+                    if (method.IsDefined(typeof(System.Runtime.CompilerServices.ExtensionAttribute)))
+                    {
+                        needObj = true;
+                        objType = paramInfos[0].ParameterType;
+                    }
+                    else if(!isStatic)
+                    {
+                        needObj = true;
+                        objType = method.DeclaringType;
+                    }
+                    if(needObj)
+                    {
+                        EmitGetObject(il, 1, objType, L, translator, null);
+                        il.Emit(OpCodes.Ldloc, L);
+                        il.Emit(OpCodes.Ldc_I4_1);
+                        il.Emit(OpCodes.Call, LuaAPI_lua_remove);
+                    }
+                    il.Emit(OpCodes.Ldarg_0);
+                    il.Emit(isStatic ? OpCodes.Call : OpCodes.Callvirt, method as MethodInfo);
+                    il.Emit(OpCodes.Ret);
+                    break;
+                }
                 LocalBuilder methodReturn = null;
 
                 for (int j = 0; j < paramInfos.Length; j++)

@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Tencent is pleased to support the open source community by making xLua available.
  * Copyright (C) 2016 THL A29 Limited, a Tencent company. All rights reserved.
  * Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
@@ -282,12 +282,72 @@ namespace XLua
         private string methodName;
         private List<OverloadMethodWrap> overloads = new List<OverloadMethodWrap>();
         private bool forceCheck;
-
+        private LuaCSFunction function;
         public MethodWrap(string methodName, List<OverloadMethodWrap> overloads, bool forceCheck)
         {
             this.methodName = methodName;
             this.overloads = overloads;
             this.forceCheck = forceCheck;
+        }
+
+        public static LuaCSFunction GenLuaCSFuncWrap(string methodName, MethodInfo methodInfo,ObjectTranslator translator)
+        {
+            bool need_obj = methodInfo.IsDefined(typeof(System.Runtime.CompilerServices.ExtensionAttribute)) ||
+                !methodInfo.IsStatic;
+            LuaCSFunction toCall;
+            if (need_obj)
+            {
+                var args = new object[1];
+                toCall = (L) =>
+                {
+#if LUACSFUNC_TRY_CATCH
+                    try
+#endif
+                    {
+
+                        object obj = translator.FastGetCSObj(L, 1);
+                        args[0] = L;
+                        LuaAPI.lua_remove(L, 1);
+                        return (int)methodInfo.Invoke(obj, args);
+                    }
+#if LUACSFUNC_TRY_CATCH
+                    catch (System.Reflection.TargetInvocationException e)
+                    {
+                        return LuaAPI.luaL_error(L, "c# exception:" + e.InnerException.Message + ",stack:" + e.InnerException.StackTrace);
+                    }
+                    catch (System.Exception e)
+                    {
+                        return LuaAPI.luaL_error(L, "c# exception:" + e.Message + ",stack:" + e.StackTrace);
+                    }
+#endif
+                };
+            }
+            else
+            {
+                var luaCSFunc = methodInfo.CreateDelegate(typeof(LuaCSFunction)) as LuaCSFunction;
+#if LUACSFUNC_TRY_CATCH
+                toCall = (L) =>
+                {
+                    try
+                    {
+                        return luaCSFunc(L);
+                    }
+
+                    catch (System.Reflection.TargetInvocationException e)
+                    {
+                        return LuaAPI.luaL_error(L, "c# exception:" + e.InnerException.Message + ",stack:" + e.InnerException.StackTrace);
+                    }
+                    catch (System.Exception e)
+                    {
+                        return LuaAPI.luaL_error(L, "c# exception:" + e.Message + ",stack:" + e.StackTrace);
+                    }
+                };
+
+#else
+                toCall = luaCSFunc;
+#endif
+            }
+            return toCall;
         }
 
         public int Call(RealStatePtr L)
@@ -315,6 +375,7 @@ namespace XLua
                 return LuaAPI.luaL_error(L, "c# exception:" + e.Message + ",stack:" + e.StackTrace);
             }
         }
+
     }
 
     public class MethodWrapsCache

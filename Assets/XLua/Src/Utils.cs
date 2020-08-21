@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Tencent is pleased to support the open source community by making xLua available.
  * Copyright (C) 2016 THL A29 Limited, a Tencent company. All rights reserved.
  * Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
@@ -573,8 +573,31 @@ namespace XLua
 				else
 				{
 					LuaAPI.xlua_pushasciistring(L, kv.Key.Name);
-					translator.PushFixCSFunction(L,
-						new LuaCSFunction(translator.methodWrapsCache._GenMethodWrap(type, kv.Key.Name, kv.Value.ToArray()).Call));
+					bool isLuaCSFunc = false;
+					for (int i = 0; i < kv.Value.Count; i++)
+					{
+						var method = kv.Value[i];
+						isLuaCSFunc = method.IsDefined(typeof(LuaCSFunctionAttribute));
+						if (isLuaCSFunc)
+						{
+							if (kv.Value.Count > 1)
+							{
+								kv.Value.Clear();
+								kv.Value.Add(method);
+								//warning ..
+							}
+							break;
+						}
+					}
+					if (isLuaCSFunc)
+					{
+						translator.PushFixCSFunction(L,	MethodWrap.GenLuaCSFuncWrap(kv.Key.Name, kv.Value[0] as MethodInfo, translator));
+					}
+					else
+					{
+						translator.PushFixCSFunction(L,
+							new LuaCSFunction(translator.methodWrapsCache._GenMethodWrap(type, kv.Key.Name, kv.Value.ToArray()).Call));
+					}
 					LuaAPI.lua_rawset(L, kv.Key.IsStatic ? cls_field : obj_field);
 				}
 			}
