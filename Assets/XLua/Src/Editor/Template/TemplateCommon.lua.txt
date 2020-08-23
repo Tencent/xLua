@@ -107,7 +107,6 @@ local fixPush = {
 	["System.UInt16"] = "LuaAPI.xlua_pushinteger",
 	["System.UInt32"] = "LuaAPI.xlua_pushuint",
 	["System.UInt64"] = "LuaAPI.lua_pushuint64",
-    ["System.Single"] = "LuaAPI.lua_pushnumber",
     ["System.Double"] = "LuaAPI.lua_pushnumber",
     ["System.String"] = "LuaAPI.lua_pushstring",
 	["System.Byte[]"] = "LuaAPI.lua_pushstring",
