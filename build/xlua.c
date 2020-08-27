@@ -112,7 +112,7 @@ LUA_API int lua_setfenv(lua_State *L, int idx)
 }
 
 LUA_API uint32_t xlua_objlen (lua_State *L, int idx) {
-	return (uint32_t)lua_rawlen (L, idx);
+	return (uint32_t)luaL_len (L, idx);
 }
 
 LUA_API uint32_t xlua_touint (lua_State *L, int idx) {
