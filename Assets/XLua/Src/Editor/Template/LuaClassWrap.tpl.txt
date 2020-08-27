@@ -379,13 +379,8 @@ namespace XLua.CSObjectWrap
             <%if not method.IsStatic then %>
                 ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
                 <%=GetSelfStatement(type)%>;
-                if (gen_to_be_invoked != null)
-                {   
-                    LuaAPI.lua_remove(L, 1);
-                    return gen_to_be_invoked.<%=UnK(overload.Name)%>(L);
-                }
-                else 
-                    return LuaAPI.luaL_error(L, "c# exception: Null Reference");
+                LuaAPI.lua_remove(L, 1);
+                return gen_to_be_invoked.<%=UnK(overload.Name)%>(L);
             <%else%>
                 return <%=CsFullTypeName(type).."."..UnK(overload.Name)%>(L);
             <%end%>

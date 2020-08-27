@@ -1612,9 +1612,6 @@ namespace XLua
             LocalBuilder wrapRet = il.DeclareLocal(typeof(int));
             LocalBuilder ex = il.DeclareLocal(typeof(Exception));
             Label retPoint = il.DefineLabel();
-#else 
-            //CustomAttributeBuilder cab = new CustomAttributeBuilder(typeof(MonoPInvokeCallbackAttribute).GetConstructor(new Type[]{typeof(Type)}),new object[]{ typeof(LuaCSFunction) });
-            //methodBuilder.SetCustomAttribute(cab);
 #endif
             LocalBuilder L = il.DeclareLocal(typeof(RealStatePtr));
             il.Emit(OpCodes.Ldarg_0);
