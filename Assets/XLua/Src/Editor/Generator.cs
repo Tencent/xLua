@@ -1606,7 +1606,7 @@ namespace CSObjectWrapEditor
 #if XLUA_GENERAL
         static bool IsExtensionMethod(MethodInfo method)
         {
-            return isDefined(method, typeof(ExtensionAttribute));
+            return Utils.IsDefined(method, typeof(ExtensionAttribute));
         }
 
         static bool IsDelegate(Type type)
