@@ -83,7 +83,7 @@ namespace XLua
     {
         
     }
-
+    [AttributeUsage(AttributeTargets.Method)]
     public class LuaCSFunctionAttribute: Attribute
     {
 
