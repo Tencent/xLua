@@ -292,7 +292,7 @@ namespace XLua
 
         public static LuaCSFunction GenLuaCSFuncWrap(string methodName, MethodInfo methodInfo,ObjectTranslator translator)
         {
-            bool need_obj = methodInfo.IsDefined(typeof(System.Runtime.CompilerServices.ExtensionAttribute)) ||
+            bool need_obj = Utils.IsDefined(methodInfo, typeof(System.Runtime.CompilerServices.ExtensionAttribute)) ||
                 !methodInfo.IsStatic;
             LuaCSFunction toCall;
             if (need_obj)

@@ -1597,7 +1597,7 @@ namespace XLua
             var paramInfos = method.GetParameters();
             bool needObj = false;
             Type objType = null;
-            if (method.IsDefined(typeof(System.Runtime.CompilerServices.ExtensionAttribute)))
+            if (Utils.IsDefined(method, typeof(System.Runtime.CompilerServices.ExtensionAttribute)))
             {
                 needObj = true;
                 objType = declaringType;
@@ -1666,7 +1666,7 @@ namespace XLua
             for (int i = 0; i < methodsToCall.Count; i++)
             {
                 var method = methodsToCall[i];
-                if (method.IsDefined(typeof(LuaCSFunctionAttribute)))
+                if (Utils.IsDefined(method, typeof(LuaCSFunctionAttribute)))
                 {
                     if (methodsToCall.Count > 1)
                     {

@@ -577,7 +577,7 @@ namespace XLua
 					for (int i = 0; i < kv.Value.Count; i++)
 					{
 						var method = kv.Value[i];
-						isLuaCSFunc = method.IsDefined(typeof(LuaCSFunctionAttribute));
+						isLuaCSFunc = IsDefined(method,typeof(LuaCSFunctionAttribute));
 						if (isLuaCSFunc)
 						{
 							if (kv.Value.Count > 1)
@@ -601,6 +601,15 @@ namespace XLua
 					LuaAPI.lua_rawset(L, kv.Key.IsStatic ? cls_field : obj_field);
 				}
 			}
+		}
+
+		public static bool IsDefined(MemberInfo test,Type attribute)
+		{
+#if XLUA_GENERAL
+            return test.GetCustomAttributes(false).Any(ca => ca.GetType().ToString() == attribute.ToString());
+#else
+			return test.IsDefined(attribute, false);
+#endif
 		}
 
 		public static void loadUpvalue(RealStatePtr L, Type type, string metafunc, int index)
