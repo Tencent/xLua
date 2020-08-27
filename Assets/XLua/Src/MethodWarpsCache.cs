@@ -344,7 +344,11 @@ namespace XLua
             }
             else
             {
+#if !UNITY_WSA || UNITY_EDITOR
+                var luaCSFunc = Delegate.CreateDelegate(typeof(LuaCSFunction), methodInfo) as LuaCSFunction;
+#else
                 var luaCSFunc = methodInfo.CreateDelegate(typeof(LuaCSFunction)) as LuaCSFunction;
+#endif
 #if LUACSFUNC_TRY_CATCH
                 toCall = (L) =>
                 {
