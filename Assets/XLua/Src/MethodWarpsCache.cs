@@ -297,7 +297,15 @@ namespace XLua
             LuaCSFunction toCall;
             if (need_obj)
             {
-                var args = new object[1];
+                object[] args;
+                if(methodInfo.IsStatic)
+                {
+                    args = new object[2];
+                }
+                else
+                {
+                    args = new object[1];
+                }
                 toCall = (L) =>
                 {
 #if LUACSFUNC_TRY_CATCH
@@ -306,9 +314,21 @@ namespace XLua
                     {
 
                         object obj = translator.FastGetCSObj(L, 1);
-                        args[0] = L;
                         LuaAPI.lua_remove(L, 1);
-                        return (int)methodInfo.Invoke(obj, args);
+                        int ret = 0;
+                        if (methodInfo.IsStatic)
+                        {
+                            args[0] = obj;args[1] = L;
+                            ret = (int)methodInfo.Invoke(null, args);
+                            args[0] = null;args[1] = null;
+                        }
+                        else
+                        {
+                            args[0] = L;
+                            ret = (int)methodInfo.Invoke(obj, args);
+                            args[0] = null;
+                        }
+                        return ret;
                     }
 #if LUACSFUNC_TRY_CATCH
                     catch (System.Reflection.TargetInvocationException e)

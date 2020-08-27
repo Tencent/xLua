@@ -14,9 +14,12 @@ namespace XLuaTest
             LuaEnv luaenv = new LuaEnv();
             string lua = @"
                 CS.XLuaTest.LuaCSFunc_Reflection.DebugLog('reflection static call')
-                CS.XLuaTest.LuaCSFunc_GenCode.DebugLog('gencode static call')
                 CS.XLuaTest.LuaCSFunc_Reflection():MemberCall('reflection member call')
+                CS.XLuaTest.LuaCSFunc_Reflection():ExLog('reflection ex call')
+                CS.XLuaTest.LuaCSFunc_GenCode.DebugLog('gencode static call')
                 CS.XLuaTest.LuaCSFunc_GenCode():MemberCall('gencode member call')
+                CS.XLuaTest.LuaCSFunc_GenCode():MemberCall('gencode ex call')
+
             ";
             luaenv.DoString(lua);
             //定义 LUACSFUNC_TRY_CATCH 宏，Catch错误并打印lua栈
@@ -26,8 +29,7 @@ namespace XLuaTest
         }
 
     }
-    
-    class LuaCSFunc_Reflection
+    public class LuaCSFunc_Reflection
     {
         string name = "LuaCSFunc_Reflection";
 
@@ -89,4 +91,21 @@ namespace XLuaTest
             throw new Exception(name + ":" + str);
         }
     }
+
+    [LuaCallCSharp]
+    public static class Extension
+    {
+        [LuaCSFunction]
+        public static int ExLog(this LuaCSFunc_GenCode obj, IntPtr L)
+        {
+            return obj.MemberCall(L);
+        }
+
+        [LuaCSFunction]
+        public static int ExLog(this LuaCSFunc_Reflection obj, IntPtr L)
+        {
+            return obj.MemberCall(L);
+        }
+    }
+
 }
