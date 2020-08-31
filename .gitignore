@@ -34,3 +34,7 @@ build/luajit-2.1.0b2/src/luajit.exp
 build/luajit-2.1.0b2/src/luajit.lib
 
 /obj
+/General/vs2013/obj
+*.suo
+
+
