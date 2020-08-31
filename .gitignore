@@ -33,3 +33,4 @@ build/luajit-2.1.0b2/src/luajit.exe
 build/luajit-2.1.0b2/src/luajit.exp
 build/luajit-2.1.0b2/src/luajit.lib
 
+/obj

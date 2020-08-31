@@ -10,7 +10,8 @@ using System.Collections.Generic;
 using System;
 using UnityEngine;
 using XLua;
-//using System.Reflection;
+using System.Reflection;
+using UnityEditor;
 //using System.Linq;
 
 //配置的详细介绍请看Doc下《XLua的配置.doc》
@@ -91,4 +92,17 @@ public static class ExampleGenConfig
                 new List<string>(){"System.IO.DirectoryInfo", "Create", "System.Security.AccessControl.DirectorySecurity"},
                 new List<string>(){"UnityEngine.MonoBehaviour", "runInEditMode"},
             };
+
+
+    [Hotfix]
+    public static List<Type> by_testHotfix
+    {
+        get
+        {
+            List<Type> list = new List<Type>();
+            list.Add(typeof(TestHotfixClass1));
+            list.Add(typeof(TestHotfixClass1.Data));
+            return list;
+        }
+    }
 }
