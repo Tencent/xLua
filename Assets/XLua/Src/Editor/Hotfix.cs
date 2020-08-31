@@ -62,7 +62,7 @@ namespace XLua
 
             foreach (var type in get_cfg())
             {
-                if (!type.IsDefined(typeof(ObsoleteAttribute), false)
+                if (!IsDeclaringTypeWithObsoleteAttr(type)
                     && !type.IsEnum && !typeof(Delegate).IsAssignableFrom(type)
                     && (!type.IsGenericType || type.IsGenericTypeDefinition))
                 {
@@ -72,6 +72,20 @@ namespace XLua
                     }
                 }
             }
+        }
+
+        private static bool IsDeclaringTypeWithObsoleteAttr(Type t)
+        {
+            Type attr = typeof(ObsoleteAttribute);
+            while (t != null)
+            {
+                if (t.IsDefined(attr, false))
+                {
+                    return true;
+                }
+                t = t.DeclaringType;
+            }
+            return false;
         }
 
         public static void GetConfig(Dictionary<string, int> hotfixCfg, IEnumerable<Type> cfg_check_types)
