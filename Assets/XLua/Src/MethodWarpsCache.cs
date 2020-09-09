@@ -298,7 +298,7 @@ namespace XLua
             if (need_obj)
             {
                 object[] args;
-                if(methodInfo.IsStatic)
+                if (methodInfo.IsStatic)
                 {
                     args = new object[2];
                 }
@@ -308,67 +308,33 @@ namespace XLua
                 }
                 toCall = (L) =>
                 {
-#if LUACSFUNC_TRY_CATCH
-                    try
-#endif
-                    {
 
-                        object obj = translator.FastGetCSObj(L, 1);
-                        LuaAPI.lua_remove(L, 1);
-                        int ret = 0;
-                        if (methodInfo.IsStatic)
-                        {
-                            args[0] = obj;args[1] = L;
-                            ret = (int)methodInfo.Invoke(null, args);
-                            args[0] = null;args[1] = null;
-                        }
-                        else
-                        {
-                            args[0] = L;
-                            ret = (int)methodInfo.Invoke(obj, args);
-                            args[0] = null;
-                        }
-                        return ret;
-                    }
-#if LUACSFUNC_TRY_CATCH
-                    catch (System.Reflection.TargetInvocationException e)
+                    object obj = translator.FastGetCSObj(L, 1);
+                    LuaAPI.lua_remove(L, 1);
+                    int ret = 0;
+                    if (methodInfo.IsStatic)
                     {
-                        return LuaAPI.luaL_error(L, "c# exception:" + e.InnerException.Message + ",stack:" + e.InnerException.StackTrace);
+                        args[0] = obj; args[1] = L;
+                        ret = (int)methodInfo.Invoke(null, args);
+                        args[0] = null; args[1] = null;
                     }
-                    catch (System.Exception e)
+                    else
                     {
-                        return LuaAPI.luaL_error(L, "c# exception:" + e.Message + ",stack:" + e.StackTrace);
+                        args[0] = L;
+                        ret = (int)methodInfo.Invoke(obj, args);
+                        args[0] = null;
                     }
-#endif
+                    return ret;
+
+
                 };
             }
             else
             {
 #if !UNITY_WSA || UNITY_EDITOR
-                var luaCSFunc = Delegate.CreateDelegate(typeof(LuaCSFunction), methodInfo) as LuaCSFunction;
+                toCall = Delegate.CreateDelegate(typeof(LuaCSFunction), methodInfo) as LuaCSFunction;
 #else
-                var luaCSFunc = methodInfo.CreateDelegate(typeof(LuaCSFunction)) as LuaCSFunction;
-#endif
-#if LUACSFUNC_TRY_CATCH
-                toCall = (L) =>
-                {
-                    try
-                    {
-                        return luaCSFunc(L);
-                    }
-
-                    catch (System.Reflection.TargetInvocationException e)
-                    {
-                        return LuaAPI.luaL_error(L, "c# exception:" + e.InnerException.Message + ",stack:" + e.InnerException.StackTrace);
-                    }
-                    catch (System.Exception e)
-                    {
-                        return LuaAPI.luaL_error(L, "c# exception:" + e.Message + ",stack:" + e.StackTrace);
-                    }
-                };
-
-#else
-                toCall = luaCSFunc;
+                toCall = methodInfo.CreateDelegate(typeof(LuaCSFunction)) as LuaCSFunction;
 #endif
             }
             return toCall;
