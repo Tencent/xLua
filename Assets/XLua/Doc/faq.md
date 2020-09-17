@@ -511,3 +511,10 @@ f2(obj, 1, 2) --调用int版本
 
 常见的不明显的多线程的场景，比如c#异步socket，对象析构函数等。
 
+## maOS10.15以上,启动unity的时候提示xlua.bundle损坏,移动到废纸篓
+
+执行
+
+~~~bash
+sudo xattr -r -d com.apple.quarantine xlua.bundle
+~~~
