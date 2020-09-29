@@ -375,7 +375,7 @@ static int int64_tostring(lua_State* L) {
 
 #endif
 
-#if LUA_VERSION_NUM == 503
+#if LUA_VERSION_NUM >= 503
 LUALIB_API void lua_pushint64(lua_State* L, int64_t n) {
 	lua_pushinteger(L, n);
 }
