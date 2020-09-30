@@ -124,7 +124,9 @@ xLua只会生成加了该配置的类型，不会自动生成其父类的适配�
 [BlackList]
 public static List<List<string>> BlackList = new List<List<string>>()  {
     new List<string>(){"UnityEngine.GameObject", "networkView"},
+    //new List<string>(){ typeof(UnityEngine.GameObject).FullName, "networkView"},
     new List<string>(){"System.IO.FileInfo", "GetAccessControl", "System.Security.AccessControl.AccessControlSections"},
+    //new List<string>(){ typeof(System.IO.FileInfo).FullName, "GetAccessControl",typeof(System.Security.AccessControl.AccessControlSections).FullName },
 };
 
 ~~~
