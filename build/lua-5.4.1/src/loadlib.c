@@ -297,9 +297,13 @@ static void setpath (lua_State *L, const char *fieldname,
                                    const char *dft) {
   const char *dftmark;
   const char *nver = lua_pushfstring(L, "%s%s", envname, LUA_VERSUFFIX);
+#if defined(WINAPI_FAMILY_PARTITION)
+  const char *path = NULL;
+#else
   const char *path = getenv(nver);  /* try versioned name */
   if (path == NULL)  /* no versioned environment variable? */
     path = getenv(envname);  /* try unversioned name */
+#endif
   if (path == NULL || noenv(L))  /* no environment variable? */
     lua_pushstring(L, dft);  /* use default */
   else if ((dftmark = strstr(path, LUA_PATH_SEP LUA_PATH_SEP)) == NULL)

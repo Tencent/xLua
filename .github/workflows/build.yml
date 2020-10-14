@@ -30,7 +30,7 @@ jobs:
     - name: Upload
       uses: actions/upload-artifact@v2
       with:
-        path: ./plugin_lua54/**/*
+        path: ./build/plugin_lua54/**/*
         name: plugin_lua54
   linux:
     runs-on: ubuntu-latest
@@ -44,7 +44,7 @@ jobs:
     - name: Upload
       uses: actions/upload-artifact@v2
       with:
-        path: ./plugin_lua54/**/*
+        path: ./build/plugin_lua54/**/*
         name: plugin_lua54
   ios:
     runs-on: macos-latest
@@ -59,7 +59,7 @@ jobs:
       - name: Upload
         uses: actions/upload-artifact@v2
         with:
-          path: ./plugin_lua54/**/*
+          path: ./build/plugin_lua54/**/*
           name: plugin_lua54
   osx:
     runs-on: macos-latest
@@ -74,7 +74,7 @@ jobs:
       - name: Upload
         uses: actions/upload-artifact@v2
         with:
-          path: ./plugin_lua54/**/*
+          path: ./build/plugin_lua54/**/*
           name: plugin_lua54
   windows:
     runs-on: windows-2016
@@ -93,7 +93,7 @@ jobs:
     - name: Upload
       uses: actions/upload-artifact@v2
       with:
-        path: ./plugin_lua54/**/*
+        path: ./build/plugin_lua54/**/*
         name: plugin_lua54
 
    
