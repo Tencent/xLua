@@ -139,18 +139,17 @@
 
 
 
-static int os_execute (lua_State *L) {
-  const char *cmd = luaL_optstring(L, 1, NULL);
-  int stat;
-  errno = 0;
-  stat = system(cmd);
-  if (cmd != NULL)
-    return luaL_execresult(L, stat);
-  else {
-    lua_pushboolean(L, stat);  /* true if there is a shell */
-    return 1;
-  }
-}
+//static int os_execute (lua_State *L) {
+//  const char *cmd = luaL_optstring(L, 1, NULL);
+//  errno = 0;
+//  stat = system(cmd);
+//  if (cmd != NULL)
+//    return luaL_execresult(L, stat);
+//  else {
+//    lua_pushboolean(L, stat);  /* true if there is a shell */
+//    return 1;
+//  }
+//}
 
 
 static int os_remove (lua_State *L) {
@@ -408,7 +407,7 @@ static const luaL_Reg syslib[] = {
   {"clock",     os_clock},
   {"date",      os_date},
   {"difftime",  os_difftime},
-  {"execute",   os_execute},
+  //{"execute",   os_execute},
   {"exit",      os_exit},
   {"getenv",    os_getenv},
   {"remove",    os_remove},
