@@ -25,13 +25,19 @@ jobs:
     - name: Build
       run: |
         cd build
-        chmod 777 make_android_lua54.sh
+        chmod 777 make_android_lua54.sh make_android_lua53.sh
         ./make_android_lua54.sh
+        ./make_android_lua53.sh
     - name: Upload
       uses: actions/upload-artifact@v2
       with:
         path: ./build/plugin_lua54/**/*
         name: plugin_lua54
+    - name: Upload53
+      uses: actions/upload-artifact@v2
+      with:
+        path: ./build/plugin_lua53/**/*
+        name: plugin_lua53    
   linux:
     runs-on: ubuntu-latest
     steps:
@@ -39,13 +45,19 @@ jobs:
     - name: Build
       run: |
         cd build
-        chmod 777 make_linux_lua54.sh
+        chmod 777 make_linux_lua54.sh make_linux64_lua53.sh
         ./make_linux_lua54.sh
+        ./make_linux64_lua53.sh
     - name: Upload
       uses: actions/upload-artifact@v2
       with:
         path: ./build/plugin_lua54/**/*
         name: plugin_lua54
+    - name: Upload53
+      uses: actions/upload-artifact@v2
+      with:
+        path: ./build/plugin_lua53/**/*
+        name: plugin_lua53    
   ios:
     runs-on: macos-latest
 
@@ -54,13 +66,19 @@ jobs:
       - name: Build
         run: |
           cd build
-          chmod 777 make_ios_lua54.sh
+          chmod 777 make_ios_lua54.sh make_ios_lua53.sh
           ./make_ios_lua54.sh
+          ./make_ios_lua53.sh
       - name: Upload
         uses: actions/upload-artifact@v2
         with:
           path: ./build/plugin_lua54/**/*
           name: plugin_lua54
+      - name: Upload53
+        uses: actions/upload-artifact@v2
+        with:
+          path: ./build/plugin_lua53/**/*
+          name: plugin_lua53  
   osx:
     runs-on: macos-latest
 
@@ -69,13 +87,19 @@ jobs:
       - name: Build
         run: |
           cd build
-          chmod 777 make_osx_lua54.sh
+          chmod 777 make_osx_lua54.sh make_osx_lua53.sh
           ./make_osx_lua54.sh
+          ./make_osx_lua53.sh
       - name: Upload
         uses: actions/upload-artifact@v2
         with:
           path: ./build/plugin_lua54/**/*
           name: plugin_lua54
+      - name: Upload53
+        uses: actions/upload-artifact@v2
+        with:
+          path: ./build/plugin_lua53/**/*
+          name: plugin_lua53  
   windows:
     runs-on: windows-2016
 
@@ -90,10 +114,19 @@ jobs:
         cd build
         .\make_win_lua54.bat
         .\make_uwp_lua54.bat
+        .\make_win32_lua53.bat
+        .\make_win64_lua53.bat
+        .\make_uwp.bat
     - name: Upload
       uses: actions/upload-artifact@v2
       with:
         path: ./build/plugin_lua54/**/*
         name: plugin_lua54
+    - name: Upload53
+      uses: actions/upload-artifact@v2
+      with:
+        path: ./build/plugin_lua53/**/*
+        name: plugin_lua53    
+    
 
    
