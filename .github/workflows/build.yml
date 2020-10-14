@@ -27,6 +27,18 @@ jobs:
         cd build
         chmod 777 make_android_lua54.sh
         ./make_android_lua54.sh
+    - name: Upload
+      uses: actions/upload-artifact@v2
+      with:
+        path: ./plugin_lua54/**/*
+        name: plugin_lua54
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build
+      run: |
+        cd build
         chmod 777 make_linux_lua54.sh
         ./make_linux_lua54.sh
     - name: Upload
