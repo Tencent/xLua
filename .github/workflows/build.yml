@@ -76,7 +76,7 @@ jobs:
     - name: Build
       run: |
         cd build
-        make_win_lua54.bat
+        .\make_win_lua54.bat
     - name: Upload
       uses: actions/upload-artifact@v2
       with:
