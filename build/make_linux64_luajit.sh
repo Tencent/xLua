@@ -6,4 +6,5 @@ mkdir -p build_linux64_lj && cd build_linux64_lj
 cmake -DUSING_LUAJIT=ON ../
 cd ..
 cmake --build build_linux64_lj --config Release
+cp build_linux64_lj/libxlua.so plugin_luajit/Plugins/x86_64/libxlua.so 
 
