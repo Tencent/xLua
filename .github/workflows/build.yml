@@ -38,7 +38,27 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           path: ./build/plugin_luajit/**/*
-          name: plugin_luajit          
+          name: plugin_luajit
+  android_jit_v7:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install NDK
+        run: |
+          cd ~
+          wget -O NDK -q https://dl.google.com/android/repository/android-ndk-r10e-linux-x86_64.zip
+          sudo apt install unzip -y
+          unzip -q NDK
+          ANDROID_NDK_HOME=$(pwd)/android-ndk-r10e
+      - name: Build
+        run: |
+          cd build
+          ./make_android_luajit.sh  
+      - name: UploadJit
+        uses: actions/upload-artifact@v2
+        with:
+          path: ./build/plugin_luajit/**/*
+          name: plugin_luajit            
   linux:
     runs-on: ubuntu-latest
     steps:
