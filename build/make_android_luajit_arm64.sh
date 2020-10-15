@@ -12,7 +12,7 @@ if [[ "$OS" == "Darwin" ]]; then
     PREBUILT_PLATFORM=darwin-x86_64
 fi
 
-NDKABI=16
+NDKABI=21
 
 
 echo "Building arm64-v8a lib"
@@ -44,11 +44,11 @@ make HOST_CC="gcc -m32" CROSS=$NDKP TARGET_SYS=Linux TARGET_FLAGS="$NDKF $NDKARC
 
 cd "$DIR"
 mkdir -p build_lj_v7a && cd build_lj_v7a
-cmake -DUSING_LUAJIT=ON -DANDROID_ABI=arm64-v8a -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK/build/cmake/android.toolchain.cmake -DANDROID_TOOLCHAIN_NAME=arm-linux-androideabi-clang -DANDROID_NATIVE_API_LEVEL=android-9 ../
+cmake -DUSING_LUAJIT=ON -DANDROID_ABI=armeabi-v7a -DCMAKE_TOOLCHAIN_FILE=../cmake/android.toolchain.cmake -DANDROID_TOOLCHAIN_NAME=arm-linux-androideabi-clang3.6 -DANDROID_NATIVE_API_LEVEL=android-9 ../
 cd "$DIR"
 cmake --build build_lj_v7a --config Release
-mkdir -p plugin_luajit/Plugins/Android/libs/arm64-v8a/
-cp build_lj_v7a/libxlua.so plugin_luajit/Plugins/Android/libs/arm64-v8a/libxlua.so
+mkdir -p plugin_luajit/Plugins/Android/libs/armeabi-v7a/
+cp build_lj_v7a/libxlua.so plugin_luajit/Plugins/Android/libs/armeabi-v7a/libxlua.so
 
 echo "Building x86 lib"
 NDKVER=$ANDROID_NDK/toolchains/x86-4.9
