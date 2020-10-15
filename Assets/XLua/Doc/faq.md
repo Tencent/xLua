@@ -90,6 +90,8 @@ visual studio 2017需要安装：1、“工作负载”下的“通用Window平�
 
 如果编辑器下没问题，发布到手机报这错，表示你发布前没生成代码（执行“XLua/Generate Code”）。
 
+如果你Unity版本大于或等于2018，看下前面兼容性的章节。
+
 ## unity5.5以上执行"XLua/Hotfix Inject In Editor"菜单会提示"WARNING: The runtime version supported by this application is unavailable."
 
 这是因为注入工具是用.net3.5编译，而unity5.5意思MonoBleedingEdge的mono环境并没3.5支持导致的，不过一般而言都向下兼容，目前为止也没发现该warning带来什么问题。
