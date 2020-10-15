@@ -50,7 +50,7 @@ jobs:
           ./make_linux_lua54.sh
           ./make_linux64_lua53.sh
           ./make_linux64_luajit.sh
-          apt install gcc-multilib
+          sudo apt install gcc-multilib
           ./make_linux32_lua53.sh
           ./make_linux32_luajit.sh
       - name: Upload
