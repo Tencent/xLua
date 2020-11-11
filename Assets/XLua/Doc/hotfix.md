@@ -53,7 +53,11 @@ util.hotfix_ex(class, method_name, fix)
 
 方式一：直接在类里头打Hotfix标签（不建议，示例只是为了方便演示采取这种方式）；
 
+！！注意，方式一在高版本unity不支持
+
 方式二：在一个static类的static字段或者属性里头配置一个列表。属性可以用于实现的比较复杂的配置，比如根据Namespace做白名单。
+
+！！注意，高版本Unity需要把配置文件放Editor目录下
 
 ~~~csharp
 //如果涉及到Assembly-CSharp.dll之外的其它dll，如下代码需要放到Editor目录
