@@ -134,6 +134,10 @@ jobs:
           .\make_win32_lua53.bat
           .\make_win64_lua53.bat
           .\make_uwp.bat
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Build Luajit
+        run: |
+          cd build
           .\make_win32_luajit.bat
           .\make_win64_luajit.bat
       - name: Upload
