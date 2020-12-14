@@ -72,7 +72,7 @@ public static class ExampleGenConfig
     #endif
                 new List<string>(){"UnityEngine.Texture2D", "alphaIsTransparency"},
                 new List<string>(){"UnityEngine.Security", "GetChainOfTrustValue"},
-                new List<string>(){"UnityEngine.CanvasRenderer", "onRequestRebuild"},
+                new List<string>(){"UnityEngine.CanvasRenderer", "OnRequestRebuild"},
                 new List<string>(){"UnityEngine.Light", "areaSize"},
                 new List<string>(){"UnityEngine.Light", "lightmapBakeType"},
                 new List<string>(){"UnityEngine.WWW", "MovieTexture"},

@@ -19,7 +19,7 @@ public static class PeformentTestConfig {
             };
         }
     }
-    
+
     [BlackList]
     public static List<List<string>> BlackList
     {
@@ -30,7 +30,7 @@ public static class PeformentTestConfig {
                 new List<string>(){"UnityEngine.WWW", "movie"},
                 new List<string>(){"UnityEngine.Texture2D", "alphaIsTransparency"},
                 new List<string>(){"UnityEngine.Security", "GetChainOfTrustValue"},
-                new List<string>(){"UnityEngine.CanvasRenderer", "onRequestRebuild"},
+                new List<string>(){"UnityEngine.CanvasRenderer", "OnRequestRebuild"},
                 new List<string>(){"UnityEngine.Light", "areaSize"},
                 new List<string>(){"UnityEngine.AnimatorOverrideController", "PerformOverrideClipListCleanup"},
     #if !UNITY_WEBPLAYER
