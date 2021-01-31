@@ -380,7 +380,7 @@ function GetPushStatement(t, variable, is_v_params)
 	elseif t.IsInterface or GetNullableUnderlyingType(t) then
 	    return "translator.PushAny(L, "..variable..")"
     else
-        return "translator.Push(L, "..variable..")"
+        return "translator.PushByType(L, "..variable..")"
     end
 end
 
