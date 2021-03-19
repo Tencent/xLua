@@ -7,9 +7,10 @@ using UnityEditor;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
+using UnityEditor.Experimental.AssetImporters;
 
-[UnityEditor.AssetImporters.ScriptedImporter(2, new[] {"lua"})]
-public class LuaImporter : UnityEditor.AssetImporters.ScriptedImporter
+[ScriptedImporter(2, new[] {"lua"})]
+public class LuaImporter : ScriptedImporter
 {
     const string Tag = "LuaImporter";
     public static bool compile = false; // compile to lua byte code
@@ -63,7 +64,7 @@ public class LuaImporter : UnityEditor.AssetImporters.ScriptedImporter
         EditorUtility.ClearProgressBar();
     }
             
-    public override void OnImportAsset(UnityEditor.AssetImporters.AssetImportContext ctx)
+    public override void OnImportAsset(AssetImportContext ctx)
     {
         var prefax = Path.GetExtension(ctx.assetPath).Substring(1);
 
