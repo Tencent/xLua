@@ -68,7 +68,7 @@ ios和osx需要在mac下编译。
 
 ## 报类似“xlua.access, no field __Hitfix0_Update”的错误怎么解决？
 
-按[Hotfix操作指南](hotfix.md)一步步操作，以及注意事项。
+按[Hotfix操作指南](hotfix.md)一步步操作，以及注意事项。确保上述步骤完成后，可尝试使用[解决方案](https://github.com/Tencent/xLua/issues/850)。
 
 ## visual studio 2017下编译UWP原生库
 
