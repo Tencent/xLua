@@ -7,7 +7,12 @@ using UnityEditor;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
+
+#if UNITY_2020_1_OR_NEWER
+using UnityEditor.AssetImporters;
+#else
 using UnityEditor.Experimental.AssetImporters;
+#endif
 
 [ScriptedImporter(2, new[] {"lua"})]
 public class LuaImporter : ScriptedImporter
