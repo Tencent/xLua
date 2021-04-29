@@ -1,3 +1,5 @@
+#if UNITY_2018_1_OR_NEWER
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -182,3 +184,5 @@ public class LuaAssetEditor :  UnityEditor.Editor
         GUI.Box(rect, text, style);
     }
 }
+
+#endif
