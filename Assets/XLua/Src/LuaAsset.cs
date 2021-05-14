@@ -21,7 +21,7 @@ public class LuaAsset : ScriptableObject
         // TODO: your decode function
         decode = encode ? Security.XXTEA.Decrypt(this.data, LuaAsset.LuaDecodeKey) : this.data;
         
-        return data;
+        return decode;
     }
     
     public static byte[] Require(ref string luapath)
