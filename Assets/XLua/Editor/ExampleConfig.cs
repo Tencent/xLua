@@ -187,6 +187,10 @@ public static class ExampleConfig
     //    {
     //        foreach (var typeArg in type.GetGenericArguments())
     //        {
+    //            if (typeArg.IsGenericParameter) {
+    //                //skip unsigned type parameter
+    //                continue;
+    //            } 
     //            if (typeHasEditorRef(typeArg))
     //            {
     //                return true;
