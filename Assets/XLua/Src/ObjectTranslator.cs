@@ -364,11 +364,13 @@ namespace XLua
                 return null;
             }
             var parameters = delegateMethod.GetParameters();
+#if !XLUA_GENERAL
             if ((delegateMethod.ReturnType.IsValueType() && delegateMethod.ReturnType != typeof(void)) || parameters.Length > 4)
             {
                 genericDelegateCreator = (x) => null;
             }
             else
+#endif
             {
                 foreach (var pinfo in parameters)
                 {
