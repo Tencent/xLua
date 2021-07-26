@@ -737,6 +737,10 @@ namespace XLua
                 {
                     continue;
                 }
+                if (method.Parameters.Any(pd => pd.ParameterType.IsPointer) || method.ReturnType.IsPointer)
+                {
+                    continue;
+                }
                 if (method.Name != ".cctor" && !method.IsAbstract && !method.IsPInvokeImpl && method.Body != null && !method.Name.Contains("<"))
                 {
                     //Debug.Log(method);
@@ -763,6 +767,10 @@ namespace XLua
                         continue;
                     }
                     if (ignoreCompilerGenerated && method.CustomAttributes.Any(ca => ca.AttributeType.FullName == "System.Runtime.CompilerServices.CompilerGeneratedAttribute"))
+                    {
+                        continue;
+                    }
+                    if (method.Parameters.Any(pd => pd.ParameterType.IsPointer) || method.ReturnType.IsPointer)
                     {
                         continue;
                     }
