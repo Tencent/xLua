@@ -1257,7 +1257,7 @@ namespace XLua
                 .Where(m => !m.IsSpecialName
                     || (
                          ((m.Name == "get_Item" && m.GetParameters().Length == 1) || (m.Name == "set_Item" && m.GetParameters().Length == 2))
-                         && m.GetParameters()[0].ParameterType.IsAssignableFrom(typeof(string))
+                         && m.GetParameters()[0].ParameterType.IsAssignableFrom(typeof(string)) && toBeWrap.GetCustomAttribute<LuaIndexerAttribute>() == null
                        )
                 ).GroupBy(m => m.Name).ToList();
             var supportOperators = toBeWrap.GetMethods(staticFlag)
@@ -1293,7 +1293,7 @@ namespace XLua
                 {
                     if (prop.GetIndexParameters().Length > 0)
                     {
-                        if (!prop.GetIndexParameters()[0].ParameterType.IsAssignableFrom(typeof(string)))
+                        if (!prop.GetIndexParameters()[0].ParameterType.IsAssignableFrom(typeof(string)) || toBeWrap.GetCustomAttribute<LuaIndexerAttribute>() != null)
                         {
                             itemGetter.Add(getter);
                         }
@@ -1309,7 +1309,7 @@ namespace XLua
                 {
                     if (prop.GetIndexParameters().Length > 0)
                     {
-                        if (!prop.GetIndexParameters()[0].ParameterType.IsAssignableFrom(typeof(string)))
+                        if (!prop.GetIndexParameters()[0].ParameterType.IsAssignableFrom(typeof(string)) || toBeWrap.GetCustomAttribute<LuaIndexerAttribute>() != null)
                         {
                             itemSetter.Add(setter);
                         }
