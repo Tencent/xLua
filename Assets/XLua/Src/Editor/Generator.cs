@@ -1826,7 +1826,7 @@ namespace CSObjectWrapEditor
             }
             if (!DelegateBridge.Gen_Flag)
             {
-                throw new InvalidOperationException("Code has not been genrated, may be not work in phone!");
+                throw new InvalidOperationException("Code has not been generated, may be not work in phone!");
             }
         }
 #endif
