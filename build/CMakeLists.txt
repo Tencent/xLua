@@ -24,6 +24,7 @@ option ( UINT_ESPECIALLY "using custom ulong" OFF )
 option ( USING_LUAJIT "using luajit" OFF )
 option ( GC64 "using gc64" OFF )
 option ( LUAC_COMPATIBLE_FORMAT "compatible format" OFF )
+option ( MAKE_OSX_LIB "compile osx libxlua.a" OFF)
 
 find_path(XLUA_PROJECT_DIR NAMES SConstruct
     PATHS 
@@ -157,14 +158,25 @@ if (APPLE)
     else ()
         ADD_DEFINITIONS(-DLUA_USE_MACOSX) #osx platform emmylua debugger must have this option or can not load cpath
         set(CMAKE_OSX_ARCHITECTURES "$(ARCHS_STANDARD_64_BIT)")
-        add_library(xlua MODULE
-            ${LUA_CORE}
-            ${LUA_LIB}
-            ${LUA_SOCKET}
-            ${XLUA_CORE}
-            ${THIRDPART_SRC}
-        )
-        set_target_properties ( xlua PROPERTIES BUNDLE TRUE )
+        
+        if (MAKE_OSX_LIB)
+            add_library(xlua STATIC
+                ${LUA_CORE}
+                ${LUA_LIB}
+                ${LUA_SOCKET}
+                ${XLUA_CORE}
+                ${THIRDPART_SRC}
+            )
+        else ()
+            add_library(xlua MODULE
+                ${LUA_CORE}
+                ${LUA_LIB}
+                ${LUA_SOCKET}
+                ${XLUA_CORE}
+                ${THIRDPART_SRC}
+            )
+            set_target_properties ( xlua PROPERTIES BUNDLE TRUE )
+        endif ()
         #set_target_properties ( xlua PROPERTIES FRAMEWORK TRUE )
         #set_target_properties ( xlua PROPERTIES MACOSX_RPATH TRUE )
     endif ()
