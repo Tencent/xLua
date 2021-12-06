@@ -1606,7 +1606,7 @@ namespace XLua
             }
         }
 
-
+        public delegate bool CheckFunc<T>(RealStatePtr L, int idx);
         public delegate void GetFunc<T>(RealStatePtr L, int idx,  out T val);
 
         public void RegisterPushAndGetAndUpdate<T>(Action<RealStatePtr, T> push, GetFunc<T> get, Action<RealStatePtr, int, T> update)
@@ -1638,6 +1638,14 @@ namespace XLua
                     update(L, idx, (T)obj);
                 }
             );
+        }
+
+        public void RegisterChecker<T>(CheckFunc<T> check)
+        {
+            objectCheckers.AddChecker(typeof(T), (L, idx) =>
+            {
+                return check(L, idx);
+            });
         }
 
         public void RegisterCaster<T>(GetFunc<T> get)
