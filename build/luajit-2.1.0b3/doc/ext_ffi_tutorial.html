@@ -1,10 +1,9 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<!DOCTYPE html>
 <html>
 <head>
 <title>FFI Tutorial</title>
-<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-<meta name="Author" content="Mike Pall">
-<meta name="Copyright" content="Copyright (C) 2005-2017, Mike Pall">
+<meta charset="utf-8">
+<meta name="Copyright" content="Copyright (C) 2005-2021">
 <meta name="Language" content="en">
 <link rel="stylesheet" type="text/css" href="bluequad.css" media="screen">
 <link rel="stylesheet" type="text/css" href="bluequad-print.css" media="print">
@@ -18,7 +17,7 @@ td.idiomlua b { font-weight: normal; color: #2142bf; }
 </head>
 <body>
 <div id="site">
-<a href="http://luajit.org"><span>Lua<span id="logo">JIT</span></span></a>
+<a href="https://luajit.org"><span>Lua<span id="logo">JIT</span></span></a>
 </div>
 <div id="head">
 <h1>FFI Tutorial</h1>
@@ -27,7 +26,7 @@ td.idiomlua b { font-weight: normal; color: #2142bf; }
 <ul><li>
 <a href="luajit.html">LuaJIT</a>
 <ul><li>
-<a href="http://luajit.org/download.html">Download <span class="ext">&raquo;</span></a>
+<a href="https://luajit.org/download.html">Download <span class="ext">&raquo;</span></a>
 </li><li>
 <a href="install.html">Installation</a>
 </li><li>
@@ -45,6 +44,8 @@ td.idiomlua b { font-weight: normal; color: #2142bf; }
 <a href="ext_ffi_semantics.html">FFI Semantics</a>
 </li></ul>
 </li><li>
+<a href="ext_buffer.html">String Buffers</a>
+</li><li>
 <a href="ext_jit.html">jit.* Library</a>
 </li><li>
 <a href="ext_c_api.html">Lua/C API</a>
@@ -53,17 +54,12 @@ td.idiomlua b { font-weight: normal; color: #2142bf; }
 </li></ul>
 </li><li>
 <a href="status.html">Status</a>
-<ul><li>
-<a href="changes.html">Changes</a>
-</li></ul>
 </li><li>
 <a href="faq.html">FAQ</a>
 </li><li>
-<a href="http://luajit.org/performance.html">Performance <span class="ext">&raquo;</span></a>
-</li><li>
 <a href="http://wiki.luajit.org/">Wiki <span class="ext">&raquo;</span></a>
 </li><li>
-<a href="http://luajit.org/list.html">Mailing List <span class="ext">&raquo;</span></a>
+<a href="https://luajit.org/list.html">Mailing List <span class="ext">&raquo;</span></a>
 </li></ul>
 </div>
 <div id="main">
@@ -222,7 +218,7 @@ a fascinating best-selling game is left as an exercise for the reader.
 <h2 id="zlib">Accessing the zlib Compression Library</h2>
 <p>
 The following code shows how to access the <a
-href="http://zlib.net/">zlib</a> compression library from Lua code.
+href="https://zlib.net/"><span class="ext">&raquo;</span>&nbsp;zlib</a> compression library from Lua code.
 We'll define two convenience wrapper functions that take a string and
 compress or uncompress it to another string:
 </p>
@@ -305,7 +301,7 @@ comes pre-installed. Since <tt>ffi.load()</tt> automatically adds any
 missing standard prefixes/suffixes, we can simply load the
 <tt>"z"</tt> library. On Windows it's named <tt>zlib1.dll</tt> and
 you'll have to download it first from the
-<a href="http://zlib.net/"><span class="ext">&raquo;</span>&nbsp;zlib site</a>. The check for
+<a href="https://zlib.net/"><span class="ext">&raquo;</span>&nbsp;zlib site</a>. The check for
 <tt>ffi.os</tt> makes sure we pass the right name to
 <tt>ffi.load()</tt>.
 </p>
@@ -593,7 +589,7 @@ it to a local variable in the function scope is unnecessary.
 </div>
 <div id="foot">
 <hr class="hide">
-Copyright &copy; 2005-2017 Mike Pall
+Copyright &copy; 2005-2021
 <span class="noprint">
 &middot;
 <a href="contact.html">Contact</a>

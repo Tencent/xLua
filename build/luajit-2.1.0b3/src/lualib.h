@@ -1,6 +1,6 @@
 /*
 ** Standard library header.
-** Copyright (C) 2005-2017 Mike Pall. See Copyright Notice in luajit.h
+** Copyright (C) 2005-2021 Mike Pall. See Copyright Notice in luajit.h
 */
 
 #ifndef _LUALIB_H
@@ -33,6 +33,7 @@ LUALIB_API int luaopen_debug(lua_State *L);
 LUALIB_API int luaopen_bit(lua_State *L);
 LUALIB_API int luaopen_jit(lua_State *L);
 LUALIB_API int luaopen_ffi(lua_State *L);
+LUALIB_API int luaopen_string_buffer(lua_State *L);
 
 LUALIB_API void luaL_openlibs(lua_State *L);
 

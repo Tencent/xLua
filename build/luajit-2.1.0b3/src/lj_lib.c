@@ -1,6 +1,6 @@
 /*
 ** Library function support.
-** Copyright (C) 2005-2017 Mike Pall. See Copyright Notice in luajit.h
+** Copyright (C) 2005-2021 Mike Pall. See Copyright Notice in luajit.h
 */
 
 #define lj_lib_c
@@ -16,6 +16,9 @@
 #include "lj_func.h"
 #include "lj_bc.h"
 #include "lj_dispatch.h"
+#if LJ_HASFFI
+#include "lj_ctype.h"
+#endif
 #include "lj_vm.h"
 #include "lj_strscan.h"
 #include "lj_strfmt.h"
@@ -300,4 +303,57 @@ int lj_lib_checkopt(lua_State *L, int narg, int def, const char *lst)
   }
   return def;
 }
+
+/* -- Strict type checks -------------------------------------------------- */
+
+/* The following type checks do not coerce between strings and numbers.
+** And they handle plain int64_t/uint64_t FFI numbers, too.
+*/
+
+#if LJ_HASBUFFER
+GCstr *lj_lib_checkstrx(lua_State *L, int narg)
+{
+  TValue *o = L->base + narg-1;
+  if (!(o < L->top && tvisstr(o))) lj_err_argt(L, narg, LUA_TSTRING);
+  return strV(o);
+}
+
+int32_t lj_lib_checkintrange(lua_State *L, int narg, int32_t a, int32_t b)
+{
+  TValue *o = L->base + narg-1;
+  lj_assertL(b >= 0, "expected range must be non-negative");
+  if (o < L->top) {
+    if (LJ_LIKELY(tvisint(o))) {
+      int32_t i = intV(o);
+      if (i >= a && i <= b) return i;
+    } else if (LJ_LIKELY(tvisnum(o))) {
+      /* For performance reasons, this doesn't check for integerness or
+      ** integer overflow. Overflow detection still works, since all FPUs
+      ** return either MININT or MAXINT, which is then out of range.
+      */
+      int32_t i = (int32_t)numV(o);
+      if (i >= a && i <= b) return i;
+#if LJ_HASFFI
+    } else if (tviscdata(o)) {
+      GCcdata *cd = cdataV(o);
+      if (cd->ctypeid == CTID_INT64) {
+	int64_t i = *(int64_t *)cdataptr(cd);
+	if (i >= (int64_t)a && i <= (int64_t)b) return (int32_t)i;
+      } else if (cd->ctypeid == CTID_UINT64) {
+	uint64_t i = *(uint64_t *)cdataptr(cd);
+	if ((a < 0 || i >= (uint64_t)a) && i <= (uint64_t)b) return (int32_t)i;
+      } else {
+	goto badtype;
+      }
+#endif
+    } else {
+      goto badtype;
+    }
+    lj_err_arg(L, narg, LJ_ERR_NUMRNG);
+  }
+badtype:
+  lj_err_argt(L, narg, LUA_TNUMBER);
+  return 0;  /* unreachable */
+}
+#endif
 

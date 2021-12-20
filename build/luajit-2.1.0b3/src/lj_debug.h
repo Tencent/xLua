@@ -1,6 +1,6 @@
 /*
 ** Debugging and introspection.
-** Copyright (C) 2005-2017 Mike Pall. See Copyright Notice in luajit.h
+** Copyright (C) 2005-2021 Mike Pall. See Copyright Notice in luajit.h
 */
 
 #ifndef _LJ_DEBUG_H
@@ -29,7 +29,8 @@ typedef struct lj_Debug {
 LJ_FUNC cTValue *lj_debug_frame(lua_State *L, int level, int *size);
 LJ_FUNC BCLine LJ_FASTCALL lj_debug_line(GCproto *pt, BCPos pc);
 LJ_FUNC const char *lj_debug_uvname(GCproto *pt, uint32_t idx);
-LJ_FUNC const char *lj_debug_uvnamev(cTValue *o, uint32_t idx, TValue **tvp);
+LJ_FUNC const char *lj_debug_uvnamev(cTValue *o, uint32_t idx, TValue **tvp,
+				     GCobj **op);
 LJ_FUNC const char *lj_debug_slotname(GCproto *pt, const BCIns *pc,
 				      BCReg slot, const char **name);
 LJ_FUNC const char *lj_debug_funcname(lua_State *L, cTValue *frame,

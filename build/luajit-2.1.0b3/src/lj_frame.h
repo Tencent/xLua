@@ -1,6 +1,6 @@
 /*
 ** Stack frames.
-** Copyright (C) 2005-2017 Mike Pall. See Copyright Notice in luajit.h
+** Copyright (C) 2005-2021 Mike Pall. See Copyright Notice in luajit.h
 */
 
 #ifndef _LJ_FRAME_H
@@ -46,7 +46,7 @@ enum {
 #define frame_gc(f)		(gcval((f)-1))
 #define frame_ftsz(f)		((ptrdiff_t)(f)->ftsz)
 #define frame_pc(f)		((const BCIns *)frame_ftsz(f))
-#define setframe_gc(f, p, tp)	(setgcVraw((f)-1, (p), (tp)))
+#define setframe_gc(f, p, tp)	(setgcVraw((f), (p), (tp)))
 #define setframe_ftsz(f, sz)	((f)->ftsz = (sz))
 #define setframe_pc(f, pc)	((f)->ftsz = (int64_t)(intptr_t)(pc))
 #else
@@ -192,12 +192,12 @@ enum { LJ_CONT_TAILCALL, LJ_CONT_FFI_CALLBACK };  /* Special continuations. */
 #endif
 #define CFRAME_SHIFT_MULTRES	3
 #elif LJ_TARGET_ARM64
-#define CFRAME_OFS_ERRF		196
-#define CFRAME_OFS_NRES		200
-#define CFRAME_OFS_PREV		160
-#define CFRAME_OFS_L		176
-#define CFRAME_OFS_PC		168
-#define CFRAME_OFS_MULTRES	192
+#define CFRAME_OFS_ERRF		36
+#define CFRAME_OFS_NRES		40
+#define CFRAME_OFS_PREV		0
+#define CFRAME_OFS_L		16
+#define CFRAME_OFS_PC		8
+#define CFRAME_OFS_MULTRES	32
 #define CFRAME_SIZE		208
 #define CFRAME_SHIFT_MULTRES	3
 #elif LJ_TARGET_PPC
@@ -226,7 +226,7 @@ enum { LJ_CONT_TAILCALL, LJ_CONT_FFI_CALLBACK };  /* Special continuations. */
 #define CFRAME_OFS_L		36
 #define CFRAME_OFS_PC		32
 #define CFRAME_OFS_MULTRES	28
-#define CFRAME_SIZE		272
+#define CFRAME_SIZE		(LJ_ARCH_HASFPU ? 272 : 128)
 #define CFRAME_SHIFT_MULTRES	3
 #endif
 #elif LJ_TARGET_MIPS32

@@ -1,6 +1,6 @@
 /*
 ** Miscellaneous object handling.
-** Copyright (C) 2005-2017 Mike Pall. See Copyright Notice in luajit.h
+** Copyright (C) 2005-2021 Mike Pall. See Copyright Notice in luajit.h
 */
 
 #define lj_obj_c
@@ -34,12 +34,13 @@ int LJ_FASTCALL lj_obj_equal(cTValue *o1, cTValue *o2)
 }
 
 /* Return pointer to object or its object data. */
-const void * LJ_FASTCALL lj_obj_ptr(cTValue *o)
+const void * LJ_FASTCALL lj_obj_ptr(global_State *g, cTValue *o)
 {
+  UNUSED(g);
   if (tvisudata(o))
     return uddata(udataV(o));
   else if (tvislightud(o))
-    return lightudV(o);
+    return lightudV(g, o);
   else if (LJ_HASFFI && tviscdata(o))
     return cdataptr(cdataV(o));
   else if (tvisgcv(o))

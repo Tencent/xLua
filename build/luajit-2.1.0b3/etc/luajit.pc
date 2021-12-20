@@ -17,7 +17,7 @@ INSTALL_CMOD=${prefix}/${multilib}/lua/${abiver}
 
 Name: LuaJIT
 Description: Just-in-time compiler for Lua
-URL: http://luajit.org
+URL: https://luajit.org
 Version: ${version}
 Requires:
 Libs: -L${libdir} -l${libname}

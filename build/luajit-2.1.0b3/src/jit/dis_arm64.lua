@@ -1,7 +1,7 @@
 ----------------------------------------------------------------------------
 -- LuaJIT ARM64 disassembler module.
 --
--- Copyright (C) 2005-2017 Mike Pall. All rights reserved.
+-- Copyright (C) 2005-2021 Mike Pall. All rights reserved.
 -- Released under the MIT license. See Copyright Notice in luajit.h
 --
 -- Contributed by Djordje Kovacevic and Stefan Pejic from RT-RK.com.
@@ -1089,7 +1089,7 @@ local function disass_ins(ctx)
 	  last = "#"..(sf+32 - immr)
 	  operands[#operands] = last
 	  x = x + 1
-	elseif x >= immr then
+	else
 	  name = a2
 	  x = x - immr + 1
 	end

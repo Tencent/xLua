@@ -1,6 +1,6 @@
 /*
 ** SSA IR (Intermediate Representation) emitter.
-** Copyright (C) 2005-2017 Mike Pall. See Copyright Notice in luajit.h
+** Copyright (C) 2005-2021 Mike Pall. See Copyright Notice in luajit.h
 */
 
 #define lj_ir_c
@@ -30,15 +30,16 @@
 #endif
 #include "lj_vm.h"
 #include "lj_strscan.h"
+#include "lj_serialize.h"
 #include "lj_strfmt.h"
-#include "lj_lib.h"
+#include "lj_prng.h"
 
 /* Some local macros to save typing. Undef'd at the end. */
 #define IR(ref)			(&J->cur.ir[(ref)])
 #define fins			(&J->fold.ins)
 
 /* Pass IR on to next optimization in chain (FOLD). */
-#define emitir(ot, a, b)        (lj_ir_set(J, (ot), (a), (b)), lj_opt_fold(J))
+#define emitir(ot, a, b)	(lj_ir_set(J, (ot), (a), (b)), lj_opt_fold(J))
 
 /* -- IR tables ----------------------------------------------------------- */
 
@@ -90,8 +91,9 @@ static void lj_ir_growbot(jit_State *J)
 {
   IRIns *baseir = J->irbuf + J->irbotlim;
   MSize szins = J->irtoplim - J->irbotlim;
-  lua_assert(szins != 0);
-  lua_assert(J->cur.nk == J->irbotlim || J->cur.nk-1 == J->irbotlim);
+  lj_assertJ(szins != 0, "zero IR size");
+  lj_assertJ(J->cur.nk == J->irbotlim || J->cur.nk-1 == J->irbotlim,
+	     "unexpected IR growth");
   if (J->cur.nins + (szins >> 1) < J->irtoplim) {
     /* More than half of the buffer is free on top: shift up by a quarter. */
     MSize ofs = szins >> 2;
@@ -146,11 +148,12 @@ TRef lj_ir_call(jit_State *J, IRCallID id, ...)
 }
 
 /* Load field of type t from GG_State + offset. Must be 32 bit aligned. */
-LJ_FUNC TRef lj_ir_ggfload(jit_State *J, IRType t, uintptr_t ofs)
+TRef lj_ir_ggfload(jit_State *J, IRType t, uintptr_t ofs)
 {
-  lua_assert((ofs & 3) == 0);
+  lj_assertJ((ofs & 3) == 0, "unaligned GG_State field offset");
   ofs >>= 2;
-  lua_assert(ofs >= IRFL__MAX && ofs <= 0x3ff);  /* 10 bit FOLD key limit. */
+  lj_assertJ(ofs >= IRFL__MAX && ofs <= 0x3ff,
+	     "GG_State field offset breaks 10 bit FOLD key limit");
   lj_ir_set(J, IRT(IR_FLOAD, t), REF_NIL, ofs);
   return lj_opt_fold(J);
 }
@@ -181,7 +184,7 @@ static LJ_AINLINE IRRef ir_nextk(jit_State *J)
 static LJ_AINLINE IRRef ir_nextk64(jit_State *J)
 {
   IRRef ref = J->cur.nk - 2;
-  lua_assert(J->state != LJ_TRACE_ASM);
+  lj_assertJ(J->state != LJ_TRACE_ASM, "bad JIT state");
   if (LJ_UNLIKELY(ref < J->irbotlim)) lj_ir_growbot(J);
   J->cur.nk = ref;
   return ref;
@@ -277,7 +280,7 @@ TRef lj_ir_kgc(jit_State *J, GCobj *o, IRType t)
 {
   IRIns *ir, *cir = J->cur.ir;
   IRRef ref;
-  lua_assert(!isdead(J2G(J), o));
+  lj_assertJ(!isdead(J2G(J), o), "interning of dead GC object");
   for (ref = J->chain[IR_KGC]; ref; ref = cir[ref].prev)
     if (ir_kgc(&cir[ref]) == o)
       goto found;
@@ -299,7 +302,7 @@ TRef lj_ir_ktrace(jit_State *J)
 {
   IRRef ref = ir_nextkgc(J);
   IRIns *ir = IR(ref);
-  lua_assert(irt_toitype_(IRT_P64) == LJ_TTRACE);
+  lj_assertJ(irt_toitype_(IRT_P64) == LJ_TTRACE, "mismatched type mapping");
   ir->t.irt = IRT_P64;
   ir->o = LJ_GC64 ? IR_KNUM : IR_KNULL;  /* Not IR_KGC yet, but same size. */
   ir->op12 = 0;
@@ -313,7 +316,7 @@ TRef lj_ir_kptr_(jit_State *J, IROp op, void *ptr)
   IRIns *ir, *cir = J->cur.ir;
   IRRef ref;
 #if LJ_64 && !LJ_GC64
-  lua_assert((void *)(uintptr_t)u32ptr(ptr) == ptr);
+  lj_assertJ((void *)(uintptr_t)u32ptr(ptr) == ptr, "out-of-range GC pointer");
 #endif
   for (ref = J->chain[op]; ref; ref = cir[ref].prev)
     if (ir_kptr(&cir[ref]) == ptr)
@@ -360,7 +363,8 @@ TRef lj_ir_kslot(jit_State *J, TRef key, IRRef slot)
   IRRef2 op12 = IRREF2((IRRef1)key, (IRRef1)slot);
   IRRef ref;
   /* Const part is not touched by CSE/DCE, so 0-65535 is ok for IRMlit here. */
-  lua_assert(tref_isk(key) && slot == (IRRef)(IRRef1)slot);
+  lj_assertJ(tref_isk(key) && slot == (IRRef)(IRRef1)slot,
+	     "out-of-range key/slot");
   for (ref = J->chain[IR_KSLOT]; ref; ref = cir[ref].prev)
     if (cir[ref].op12 == op12)
       goto found;
@@ -381,13 +385,15 @@ found:
 void lj_ir_kvalue(lua_State *L, TValue *tv, const IRIns *ir)
 {
   UNUSED(L);
-  lua_assert(ir->o != IR_KSLOT);  /* Common mistake. */
+  lj_assertL(ir->o != IR_KSLOT, "unexpected KSLOT");  /* Common mistake. */
   switch (ir->o) {
   case IR_KPRI: setpriV(tv, irt_toitype(ir->t)); break;
   case IR_KINT: setintV(tv, ir->i); break;
   case IR_KGC: setgcV(L, tv, ir_kgc(ir), irt_toitype(ir->t)); break;
-  case IR_KPTR: case IR_KKPTR: setlightudV(tv, ir_kptr(ir)); break;
-  case IR_KNULL: setlightudV(tv, NULL); break;
+  case IR_KPTR: case IR_KKPTR:
+    setnumV(tv, (lua_Number)(uintptr_t)ir_kptr(ir));
+    break;
+  case IR_KNULL: setintV(tv, 0); break;
   case IR_KNUM: setnumV(tv, ir_knum(ir)->n); break;
 #if LJ_HASFFI
   case IR_KINT64: {
@@ -397,7 +403,7 @@ void lj_ir_kvalue(lua_State *L, TValue *tv, const IRIns *ir)
     break;
     }
 #endif
-  default: lua_assert(0); break;
+  default: lj_assertL(0, "bad IR constant op %d", ir->o); break;
   }
 }
 
@@ -457,7 +463,7 @@ int lj_ir_numcmp(lua_Number a, lua_Number b, IROp op)
   case IR_UGE: return !(a < b);
   case IR_ULE: return !(a > b);
   case IR_UGT: return !(a <= b);
-  default: lua_assert(0); return 0;
+  default: lj_assertX(0, "bad IR op %d", op); return 0;
   }
 }
 
@@ -470,7 +476,7 @@ int lj_ir_strcmp(GCstr *a, GCstr *b, IROp op)
   case IR_GE: return (res >= 0);
   case IR_LE: return (res <= 0);
   case IR_GT: return (res > 0);
-  default: lua_assert(0); return 0;
+  default: lj_assertX(0, "bad IR op %d", op); return 0;
   }
 }
 

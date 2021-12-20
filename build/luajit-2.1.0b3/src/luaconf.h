@@ -1,6 +1,6 @@
 /*
 ** Configuration header.
-** Copyright (C) 2005-2017 Mike Pall. See Copyright Notice in luajit.h
+** Copyright (C) 2005-2021 Mike Pall. See Copyright Notice in luajit.h
 */
 
 #ifndef luaconf_h
@@ -102,7 +102,7 @@
 
 /* Note: changing the following defines breaks the Lua 5.1 ABI. */
 #define LUA_INTEGER	ptrdiff_t
-#define LUA_IDSIZE	128	/* Size of lua_Debug.short_src. */
+#define LUA_IDSIZE	60	/* Size of lua_Debug.short_src. */
 /*
 ** Size of lauxlib and io.* on-stack buffers. Weird workaround to avoid using
 ** unreasonable amounts of stack space, but still retain ABI compatibility.
@@ -136,7 +136,7 @@
 
 #define LUALIB_API	LUA_API
 
-/* Support for internal assertions. */
+/* Compatibility support for assertions. */
 #if defined(LUA_USE_ASSERT) || defined(LUA_USE_APICHECK)
 #include <assert.h>
 #endif

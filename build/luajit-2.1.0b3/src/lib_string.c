@@ -1,6 +1,6 @@
 /*
 ** String library.
-** Copyright (C) 2005-2017 Mike Pall. See Copyright Notice in luajit.h
+** Copyright (C) 2005-2021 Mike Pall. See Copyright Notice in luajit.h
 **
 ** Major portions taken verbatim or adapted from the Lua interpreter.
 ** Copyright (C) 1994-2008 Lua.org, PUC-Rio. See Copyright Notice in lua.h
@@ -136,7 +136,7 @@ LJLIB_CF(string_dump)
 /* ------------------------------------------------------------------------ */
 
 /* macro to `unsign' a character */
-#define uchar(c)        ((unsigned char)(c))
+#define uchar(c)	((unsigned char)(c))
 
 #define CAP_UNFINISHED	(-1)
 #define CAP_POSITION	(-2)
@@ -640,89 +640,14 @@ LJLIB_CF(string_gsub)
 
 /* ------------------------------------------------------------------------ */
 
-/* Emulate tostring() inline. */
-static GCstr *string_fmt_tostring(lua_State *L, int arg, int retry)
-{
-  TValue *o = L->base+arg-1;
-  cTValue *mo;
-  lua_assert(o < L->top);  /* Caller already checks for existence. */
-  if (LJ_LIKELY(tvisstr(o)))
-    return strV(o);
-  if (retry != 2 && !tvisnil(mo = lj_meta_lookup(L, o, MM_tostring))) {
-    copyTV(L, L->top++, mo);
-    copyTV(L, L->top++, o);
-    lua_call(L, 1, 1);
-    copyTV(L, L->base+arg-1, --L->top);
-    return NULL;  /* Buffer may be overwritten, retry. */
-  }
-  return lj_strfmt_obj(L, o);
-}
-
 LJLIB_CF(string_format)		LJLIB_REC(.)
 {
-  int arg, top = (int)(L->top - L->base);
-  GCstr *fmt;
-  SBuf *sb;
-  FormatState fs;
-  SFormat sf;
   int retry = 0;
-again:
-  arg = 1;
-  sb = lj_buf_tmp_(L);
-  fmt = lj_lib_checkstr(L, arg);
-  lj_strfmt_init(&fs, strdata(fmt), fmt->len);
-  while ((sf = lj_strfmt_parse(&fs)) != STRFMT_EOF) {
-    if (sf == STRFMT_LIT) {
-      lj_buf_putmem(sb, fs.str, fs.len);
-    } else if (sf == STRFMT_ERR) {
-      lj_err_callerv(L, LJ_ERR_STRFMT, strdata(lj_str_new(L, fs.str, fs.len)));
-    } else {
-      if (++arg > top)
-	luaL_argerror(L, arg, lj_obj_typename[0]);
-      switch (STRFMT_TYPE(sf)) {
-      case STRFMT_INT:
-	if (tvisint(L->base+arg-1)) {
-	  int32_t k = intV(L->base+arg-1);
-	  if (sf == STRFMT_INT)
-	    lj_strfmt_putint(sb, k);  /* Shortcut for plain %d. */
-	  else
-	    lj_strfmt_putfxint(sb, sf, k);
-	} else {
-	  lj_strfmt_putfnum_int(sb, sf, lj_lib_checknum(L, arg));
-	}
-	break;
-      case STRFMT_UINT:
-	if (tvisint(L->base+arg-1))
-	  lj_strfmt_putfxint(sb, sf, intV(L->base+arg-1));
-	else
-	  lj_strfmt_putfnum_uint(sb, sf, lj_lib_checknum(L, arg));
-	break;
-      case STRFMT_NUM:
-	lj_strfmt_putfnum(sb, sf, lj_lib_checknum(L, arg));
-	break;
-      case STRFMT_STR: {
-	GCstr *str = string_fmt_tostring(L, arg, retry);
-	if (str == NULL)
-	  retry = 1;
-	else if ((sf & STRFMT_T_QUOTED))
-	  lj_strfmt_putquoted(sb, str);  /* No formatting. */
-	else
-	  lj_strfmt_putfstr(sb, sf, str);
-	break;
-	}
-      case STRFMT_CHAR:
-	lj_strfmt_putfchar(sb, sf, lj_lib_checkint(L, arg));
-	break;
-      case STRFMT_PTR:  /* No formatting. */
-	lj_strfmt_putptr(sb, lj_obj_ptr(L->base+arg-1));
-	break;
-      default:
-	lua_assert(0);
-	break;
-      }
-    }
-  }
-  if (retry++ == 1) goto again;
+  SBuf *sb;
+  do {
+    sb = lj_buf_tmp_(L);
+    retry = lj_strfmt_putarg(L, sb, 1, -retry);
+  } while (retry > 0);
   setstrV(L, L->top-1, lj_buf_str(L, sb));
   lj_gc_check(L);
   return 1;
@@ -743,6 +668,9 @@ LUALIB_API int luaopen_string(lua_State *L)
   setgcref(basemt_it(g, LJ_TSTR), obj2gco(mt));
   settabV(L, lj_tab_setstr(L, mt, mmname_str(g, MM_index)), tabV(L->top-1));
   mt->nomm = (uint8_t)(~(1u<<MM_index));
+#if LJ_HASBUFFER
+  lj_lib_prereg(L, LUA_STRLIBNAME ".buffer", luaopen_string_buffer, tabV(L->top-1));
+#endif
   return 1;
 }
 

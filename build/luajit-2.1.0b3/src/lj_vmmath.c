@@ -1,6 +1,6 @@
 /*
 ** Math helper functions for assembler VM.
-** Copyright (C) 2005-2017 Mike Pall. See Copyright Notice in luajit.h
+** Copyright (C) 2005-2021 Mike Pall. See Copyright Notice in luajit.h
 */
 
 #define lj_vmmath_c
@@ -48,10 +48,9 @@ double lj_vm_foldarith(double x, double y, int op)
   case IR_NEG - IR_ADD: return -x; break;
   case IR_ABS - IR_ADD: return fabs(x); break;
 #if LJ_HASJIT
-  case IR_ATAN2 - IR_ADD: return atan2(x, y); break;
   case IR_LDEXP - IR_ADD: return ldexp(x, (int)y); break;
-  case IR_MIN - IR_ADD: return x > y ? y : x; break;
-  case IR_MAX - IR_ADD: return x < y ? y : x; break;
+  case IR_MIN - IR_ADD: return x < y ? x : y; break;
+  case IR_MAX - IR_ADD: return x > y ? x : y; break;
 #endif
   default: return x;
   }
@@ -61,7 +60,8 @@ double lj_vm_foldarith(double x, double y, int op)
 int32_t LJ_FASTCALL lj_vm_modi(int32_t a, int32_t b)
 {
   uint32_t y, ua, ub;
-  lua_assert(b != 0);  /* This must be checked before using this function. */
+  /* This must be checked before using this function. */
+  lj_assertX(b != 0, "modulo with zero divisor");
   ua = a < 0 ? (uint32_t)-a : (uint32_t)a;
   ub = b < 0 ? (uint32_t)-b : (uint32_t)b;
   y = ua % ub;
@@ -80,19 +80,12 @@ double lj_vm_log2(double a)
 }
 #endif
 
-#ifdef LUAJIT_NO_EXP2
-double lj_vm_exp2(double a)
-{
-  return exp(a * 0.6931471805599453);
-}
-#endif
-
 #if !LJ_TARGET_X86ORX64
 /* Unsigned x^k. */
 static double lj_vm_powui(double x, uint32_t k)
 {
   double y;
-  lua_assert(k != 0);
+  lj_assertX(k != 0, "pow with zero exponent");
   for (; (k & 1) == 0; k >>= 1) x *= x;
   y = x;
   if ((k >>= 1) != 0) {
@@ -129,15 +122,9 @@ double lj_vm_foldfpm(double x, int fpm)
   case IRFPM_CEIL: return lj_vm_ceil(x);
   case IRFPM_TRUNC: return lj_vm_trunc(x);
   case IRFPM_SQRT: return sqrt(x);
-  case IRFPM_EXP: return exp(x);
-  case IRFPM_EXP2: return lj_vm_exp2(x);
   case IRFPM_LOG: return log(x);
   case IRFPM_LOG2: return lj_vm_log2(x);
-  case IRFPM_LOG10: return log10(x);
-  case IRFPM_SIN: return sin(x);
-  case IRFPM_COS: return cos(x);
-  case IRFPM_TAN: return tan(x);
-  default: lua_assert(0);
+  default: lj_assertX(0, "bad fpm %d", fpm);
   }
   return 0;
 }

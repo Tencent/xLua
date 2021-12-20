@@ -1,10 +1,9 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<!DOCTYPE html>
 <html>
 <head>
 <title>ffi.* API Functions</title>
-<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-<meta name="Author" content="Mike Pall">
-<meta name="Copyright" content="Copyright (C) 2005-2017, Mike Pall">
+<meta charset="utf-8">
+<meta name="Copyright" content="Copyright (C) 2005-2021">
 <meta name="Language" content="en">
 <link rel="stylesheet" type="text/css" href="bluequad.css" media="screen">
 <link rel="stylesheet" type="text/css" href="bluequad-print.css" media="print">
@@ -16,7 +15,7 @@ td.abiparam { font-weight: bold; width: 6em; }
 </head>
 <body>
 <div id="site">
-<a href="http://luajit.org"><span>Lua<span id="logo">JIT</span></span></a>
+<a href="https://luajit.org"><span>Lua<span id="logo">JIT</span></span></a>
 </div>
 <div id="head">
 <h1><tt>ffi.*</tt> API Functions</h1>
@@ -25,7 +24,7 @@ td.abiparam { font-weight: bold; width: 6em; }
 <ul><li>
 <a href="luajit.html">LuaJIT</a>
 <ul><li>
-<a href="http://luajit.org/download.html">Download <span class="ext">&raquo;</span></a>
+<a href="https://luajit.org/download.html">Download <span class="ext">&raquo;</span></a>
 </li><li>
 <a href="install.html">Installation</a>
 </li><li>
@@ -43,6 +42,8 @@ td.abiparam { font-weight: bold; width: 6em; }
 <a href="ext_ffi_semantics.html">FFI Semantics</a>
 </li></ul>
 </li><li>
+<a href="ext_buffer.html">String Buffers</a>
+</li><li>
 <a href="ext_jit.html">jit.* Library</a>
 </li><li>
 <a href="ext_c_api.html">Lua/C API</a>
@@ -51,17 +52,12 @@ td.abiparam { font-weight: bold; width: 6em; }
 </li></ul>
 </li><li>
 <a href="status.html">Status</a>
-<ul><li>
-<a href="changes.html">Changes</a>
-</li></ul>
 </li><li>
 <a href="faq.html">FAQ</a>
 </li><li>
-<a href="http://luajit.org/performance.html">Performance <span class="ext">&raquo;</span></a>
-</li><li>
 <a href="http://wiki.luajit.org/">Wiki <span class="ext">&raquo;</span></a>
 </li><li>
-<a href="http://luajit.org/list.html">Mailing List <span class="ext">&raquo;</span></a>
+<a href="https://luajit.org/list.html">Mailing List <span class="ext">&raquo;</span></a>
 </li></ul>
 </div>
 <div id="main">
@@ -261,7 +257,7 @@ contents of an <tt>__index</tt> table (if any) may be modified
 afterwards. The associated metatable automatically applies to all uses
 of this type, no matter how the objects are created or where they
 originate from. Note that pre-defined operations on types have
-precedence (e.g. declared field names cannot be overriden).
+precedence (e.g. declared field names cannot be overridden).
 </p>
 <p>
 All standard Lua metamethods are implemented. These are called directly,
@@ -469,6 +465,8 @@ otherwise. The following parameters are currently defined:
 <tr class="odd">
 <td class="abiparam">win</td><td class="abidesc">Windows variant of the standard ABI</td></tr>
 <tr class="even">
+<td class="abiparam">uwp</td><td class="abidesc">Universal Windows Platform</td></tr>
+<tr class="odd">
 <td class="abiparam">gc64</td><td class="abidesc">64 bit GC references</td></tr>
 </table>
 
@@ -560,7 +558,7 @@ named <tt>i</tt>.
 </div>
 <div id="foot">
 <hr class="hide">
-Copyright &copy; 2005-2017 Mike Pall
+Copyright &copy; 2005-2021
 <span class="noprint">
 &middot;
 <a href="contact.html">Contact</a>

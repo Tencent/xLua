@@ -1,7 +1,7 @@
 ----------------------------------------------------------------------------
 -- LuaJIT compiler dump module.
 --
--- Copyright (C) 2005-2017 Mike Pall. All rights reserved.
+-- Copyright (C) 2005-2021 Mike Pall. All rights reserved.
 -- Released under the MIT license. See Copyright Notice in luajit.h
 ----------------------------------------------------------------------------
 --
@@ -102,10 +102,12 @@ end
 local function fillsymtab(tr, nexit)
   local t = symtab
   if nexitsym == 0 then
+    local maskaddr = jit.arch == "arm" and -2
     local ircall = vmdef.ircall
     for i=0,#ircall do
       local addr = ircalladdr(i)
       if addr ~= 0 then
+	if maskaddr then addr = band(addr, maskaddr) end
 	if addr < 0 then addr = addr + 2^32 end
 	t[addr] = ircall[i]
       end
@@ -217,8 +219,10 @@ local function colorize_text(s)
   return s
 end
 
-local function colorize_ansi(s, t)
-  return format(colortype_ansi[t], s)
+local function colorize_ansi(s, t, extra)
+  local out = format(colortype_ansi[t], s)
+  if extra then out = "\027[3m"..out end
+  return out
 end
 
 local irtype_ansi = setmetatable({},
@@ -227,9 +231,10 @@ local irtype_ansi = setmetatable({},
 
 local html_escape = { ["<"] = "&lt;", [">"] = "&gt;", ["&"] = "&amp;", }
 
-local function colorize_html(s, t)
+local function colorize_html(s, t, extra)
   s = gsub(s, "[<>&]", html_escape)
-  return format('<span class="irt_%s">%s</span>', irtype_text[t], s)
+  return format('<span class="irt_%s%s">%s</span>',
+		irtype_text[t], extra and " irt_extra" or "", s)
 end
 
 local irtype_html = setmetatable({},
@@ -254,6 +259,7 @@ span.irt_tab { color: #c00000; }
 span.irt_udt, span.irt_lud { color: #00c0c0; }
 span.irt_num { color: #4040c0; }
 span.irt_int, span.irt_i8, span.irt_u8, span.irt_i16, span.irt_u16 { color: #b040b0; }
+span.irt_extra { font-style: italic; }
 </style>
 ]]
 
@@ -269,6 +275,7 @@ local litname = {
     if band(mode, 8) ~= 0 then s = s.."C" end
     if band(mode, 16) ~= 0 then s = s.."R" end
     if band(mode, 32) ~= 0 then s = s.."I" end
+    if band(mode, 64) ~= 0 then s = s.."K" end
     t[mode] = s
     return s
   end}),
@@ -277,15 +284,18 @@ local litname = {
     local s = irtype[band(mode, 31)]
     s = irtype[band(shr(mode, 5), 31)].."."..s
     if band(mode, 0x800) ~= 0 then s = s.." sext" end
-    local c = shr(mode, 14)
-    if c == 2 then s = s.." index" elseif c == 3 then s = s.." check" end
+    local c = shr(mode, 12)
+    if c == 1 then s = s.." none"
+    elseif c == 2 then s = s.." index"
+    elseif c == 3 then s = s.." check" end
     t[mode] = s
     return s
   end}),
   ["FLOAD "] = vmdef.irfield,
   ["FREF  "] = vmdef.irfield,
   ["FPMATH"] = vmdef.irfpm,
-  ["BUFHDR"] = { [0] = "RESET", "APPEND" },
+  ["TMPREF"] = { [0] = "", "IN", "OUT", "INOUT", "", "", "OUT2", "INOUT2" },
+  ["BUFHDR"] = { [0] = "RESET", "APPEND", "WRITE" },
   ["TOSTR "] = { [0] = "INT", "NUM", "CHAR" },
 }
 
@@ -315,7 +325,9 @@ local function formatk(tr, idx, sn)
   local tn = type(k)
   local s
   if tn == "number" then
-    if band(sn or 0, 0x30000) ~= 0 then
+    if t < 12 then
+      s = k == 0 and "NULL" or format("[0x%08x]", k)
+    elseif band(sn or 0, 0x30000) ~= 0 then
       s = band(sn, 0x20000) ~= 0 and "contpc" or "ftsz"
     elseif k == 2^52+2^51 then
       s = "bias"
@@ -343,7 +355,7 @@ local function formatk(tr, idx, sn)
   else
     s = tostring(k) -- For primitives.
   end
-  s = colorize(format("%-4s", s), t)
+  s = colorize(format("%-4s", s), t, band(sn or 0, 0x100000) ~= 0)
   if slot then
     s = format("%s @%d", s, slot)
   end
@@ -363,7 +375,7 @@ local function printsnap(tr, snap)
 	out:write(colorize(format("%04d/%04d", ref, ref+1), 14))
       else
 	local m, ot, op1, op2 = traceir(tr, ref)
-	out:write(colorize(format("%04d", ref), band(ot, 31)))
+	out:write(colorize(format("%04d", ref), band(ot, 31), band(sn, 0x100000) ~= 0))
       end
       out:write(band(sn, 0x10000) == 0 and " " or "|") -- SNAP_FRAME
     else
@@ -582,7 +594,7 @@ local function dump_trace(what, tr, func, pc, otr, oex)
 end
 
 -- Dump recorded bytecode.
-local function dump_record(tr, func, pc, depth, callee)
+local function dump_record(tr, func, pc, depth)
   if depth ~= recdepth then
     recdepth = depth
     recprefix = rep(" .", depth)
@@ -593,7 +605,6 @@ local function dump_record(tr, func, pc, depth, callee)
     if dumpmode.H then line = gsub(line, "[<>&]", html_escape) end
   else
     line = "0000 "..recprefix.." FUNCC      \n"
-    callee = func
   end
   if pc <= 0 then
     out:write(sub(line, 1, -2), "         ; ", fmtfunc(func), "\n")
@@ -607,12 +618,15 @@ end
 
 ------------------------------------------------------------------------------
 
+local gpr64 = jit.arch:match("64")
+local fprmips32 = jit.arch == "mips" or jit.arch == "mipsel"
+
 -- Dump taken trace exits.
 local function dump_texit(tr, ex, ngpr, nfpr, ...)
   out:write("---- TRACE ", tr, " exit ", ex, "\n")
   if dumpmode.X then
     local regs = {...}
-    if jit.arch == "x64" then
+    if gpr64 then
       for i=1,ngpr do
 	out:write(format(" %016x", regs[i]))
 	if i % 4 == 0 then out:write("\n") end
@@ -623,7 +637,7 @@ local function dump_texit(tr, ex, ngpr, nfpr, ...)
 	if i % 8 == 0 then out:write("\n") end
       end
     end
-    if jit.arch == "mips" or jit.arch == "mipsel" then
+    if fprmips32 then
       for i=1,nfpr,2 do
 	out:write(format(" %+17.14g", regs[ngpr+i]))
 	if i % 8 == 7 then out:write("\n") end

@@ -1,6 +1,6 @@
 /*
 ** C data management.
-** Copyright (C) 2005-2017 Mike Pall. See Copyright Notice in luajit.h
+** Copyright (C) 2005-2021 Mike Pall. See Copyright Notice in luajit.h
 */
 
 #include "lj_obj.h"
@@ -35,7 +35,7 @@ GCcdata *lj_cdata_newv(lua_State *L, CTypeID id, CTSize sz, CTSize align)
   uintptr_t adata = (uintptr_t)p + sizeof(GCcdataVar) + sizeof(GCcdata);
   uintptr_t almask = (1u << align) - 1u;
   GCcdata *cd = (GCcdata *)(((adata + almask) & ~almask) - sizeof(GCcdata));
-  lua_assert((char *)cd - p < 65536);
+  lj_assertL((char *)cd - p < 65536, "excessive cdata alignment");
   cdatav(cd)->offset = (uint16_t)((char *)cd - p);
   cdatav(cd)->extra = extra;
   cdatav(cd)->len = sz;
@@ -76,8 +76,8 @@ void LJ_FASTCALL lj_cdata_free(global_State *g, GCcdata *cd)
   } else if (LJ_LIKELY(!cdataisv(cd))) {
     CType *ct = ctype_raw(ctype_ctsG(g), cd->ctypeid);
     CTSize sz = ctype_hassize(ct->info) ? ct->size : CTSIZE_PTR;
-    lua_assert(ctype_hassize(ct->info) || ctype_isfunc(ct->info) ||
-	       ctype_isextern(ct->info));
+    lj_assertG(ctype_hassize(ct->info) || ctype_isfunc(ct->info) ||
+	       ctype_isextern(ct->info), "free of ctype without a size");
     lj_mem_free(g, cd, sizeof(GCcdata) + sz);
   } else {
     lj_mem_free(g, memcdatav(cd), sizecdatav(cd));
@@ -115,7 +115,7 @@ CType *lj_cdata_index(CTState *cts, GCcdata *cd, cTValue *key, uint8_t **pp,
 
   /* Resolve reference for cdata object. */
   if (ctype_isref(ct->info)) {
-    lua_assert(ct->size == CTSIZE_PTR);
+    lj_assertCTS(ct->size == CTSIZE_PTR, "ref is not pointer-sized");
     p = *(uint8_t **)p;
     ct = ctype_child(cts, ct);
   }
@@ -126,7 +126,8 @@ collect_attrib:
     if (ctype_attrib(ct->info) == CTA_QUAL) *qual |= ct->size;
     ct = ctype_child(cts, ct);
   }
-  lua_assert(!ctype_isref(ct->info));  /* Interning rejects refs to refs. */
+  /* Interning rejects refs to refs. */
+  lj_assertCTS(!ctype_isref(ct->info), "bad ref of ref");
 
   if (tvisint(key)) {
     idx = (ptrdiff_t)intV(key);
@@ -212,7 +213,8 @@ collect_attrib:
 static void cdata_getconst(CTState *cts, TValue *o, CType *ct)
 {
   CType *ctt = ctype_child(cts, ct);
-  lua_assert(ctype_isinteger(ctt->info) && ctt->size <= 4);
+  lj_assertCTS(ctype_isinteger(ctt->info) && ctt->size <= 4,
+	       "only 32 bit const supported");  /* NYI */
   /* Constants are already zero-extended/sign-extended to 32 bits. */
   if ((ctt->info & CTF_UNSIGNED) && (int32_t)ct->size < 0)
     setnumV(o, (lua_Number)(uint32_t)ct->size);
@@ -233,13 +235,14 @@ int lj_cdata_get(CTState *cts, CType *s, TValue *o, uint8_t *sp)
   }
 
   /* Get child type of pointer/array/field. */
-  lua_assert(ctype_ispointer(s->info) || ctype_isfield(s->info));
+  lj_assertCTS(ctype_ispointer(s->info) || ctype_isfield(s->info),
+	       "pointer or field expected");
   sid = ctype_cid(s->info);
   s = ctype_get(cts, sid);
 
   /* Resolve reference for field. */
   if (ctype_isref(s->info)) {
-    lua_assert(s->size == CTSIZE_PTR);
+    lj_assertCTS(s->size == CTSIZE_PTR, "ref is not pointer-sized");
     sp = *(uint8_t **)sp;
     sid = ctype_cid(s->info);
     s = ctype_get(cts, sid);
@@ -266,12 +269,13 @@ void lj_cdata_set(CTState *cts, CType *d, uint8_t *dp, TValue *o, CTInfo qual)
   }
 
   /* Get child type of pointer/array/field. */
-  lua_assert(ctype_ispointer(d->info) || ctype_isfield(d->info));
+  lj_assertCTS(ctype_ispointer(d->info) || ctype_isfield(d->info),
+	       "pointer or field expected");
   d = ctype_child(cts, d);
 
   /* Resolve reference for field. */
   if (ctype_isref(d->info)) {
-    lua_assert(d->size == CTSIZE_PTR);
+    lj_assertCTS(d->size == CTSIZE_PTR, "ref is not pointer-sized");
     dp = *(uint8_t **)dp;
     d = ctype_child(cts, d);
   }
@@ -286,7 +290,8 @@ void lj_cdata_set(CTState *cts, CType *d, uint8_t *dp, TValue *o, CTInfo qual)
     d = ctype_child(cts, d);
   }
 
-  lua_assert(ctype_hassize(d->info) && !ctype_isvoid(d->info));
+  lj_assertCTS(ctype_hassize(d->info), "store to ctype without size");
+  lj_assertCTS(!ctype_isvoid(d->info), "store to void type");
 
   if (((d->info|qual) & CTF_CONST)) {
   err_const:

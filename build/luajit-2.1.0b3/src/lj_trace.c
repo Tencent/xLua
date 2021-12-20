@@ -1,6 +1,6 @@
 /*
 ** Trace management.
-** Copyright (C) 2005-2017 Mike Pall. See Copyright Notice in luajit.h
+** Copyright (C) 2005-2021 Mike Pall. See Copyright Notice in luajit.h
 */
 
 #define lj_trace_c
@@ -30,6 +30,7 @@
 #include "lj_vm.h"
 #include "lj_vmevent.h"
 #include "lj_target.h"
+#include "lj_prng.h"
 
 /* -- Error handling ------------------------------------------------------ */
 
@@ -104,7 +105,8 @@ static void perftools_addtrace(GCtrace *T)
     name++;
   else
     name = "(string)";
-  lua_assert(startpc >= proto_bc(pt) && startpc < proto_bc(pt) + pt->sizebc);
+  lj_assertX(startpc >= proto_bc(pt) && startpc < proto_bc(pt) + pt->sizebc,
+	     "trace PC out of range");
   lineno = lj_debug_line(pt, proto_bcpos(pt, startpc));
   if (!fp) {
     char fname[40];
@@ -183,7 +185,7 @@ void lj_trace_reenableproto(GCproto *pt)
 {
   if ((pt->flags & PROTO_ILOOP)) {
     BCIns *bc = proto_bc(pt);
-    BCPos i, sizebc = pt->sizebc;;
+    BCPos i, sizebc = pt->sizebc;
     pt->flags &= ~PROTO_ILOOP;
     if (bc_op(bc[0]) == BC_IFUNCF)
       setbc_op(&bc[0], BC_FUNCF);
@@ -205,27 +207,28 @@ static void trace_unpatch(jit_State *J, GCtrace *T)
     return;  /* No need to unpatch branches in parent traces (yet). */
   switch (bc_op(*pc)) {
   case BC_JFORL:
-    lua_assert(traceref(J, bc_d(*pc)) == T);
+    lj_assertJ(traceref(J, bc_d(*pc)) == T, "JFORL references other trace");
     *pc = T->startins;
     pc += bc_j(T->startins);
-    lua_assert(bc_op(*pc) == BC_JFORI);
+    lj_assertJ(bc_op(*pc) == BC_JFORI, "FORL does not point to JFORI");
     setbc_op(pc, BC_FORI);
     break;
   case BC_JITERL:
   case BC_JLOOP:
-    lua_assert(op == BC_ITERL || op == BC_LOOP || bc_isret(op));
+    lj_assertJ(op == BC_ITERL || op == BC_ITERN || op == BC_LOOP ||
+	       bc_isret(op), "bad original bytecode %d", op);
     *pc = T->startins;
     break;
   case BC_JMP:
-    lua_assert(op == BC_ITERL);
+    lj_assertJ(op == BC_ITERL, "bad original bytecode %d", op);
     pc += bc_j(*pc)+2;
     if (bc_op(*pc) == BC_JITERL) {
-      lua_assert(traceref(J, bc_d(*pc)) == T);
+      lj_assertJ(traceref(J, bc_d(*pc)) == T, "JITERL references other trace");
       *pc = T->startins;
     }
     break;
   case BC_JFUNCF:
-    lua_assert(op == BC_FUNCF);
+    lj_assertJ(op == BC_FUNCF, "bad original bytecode %d", op);
     *pc = T->startins;
     break;
   default:  /* Already unpatched. */
@@ -237,7 +240,8 @@ static void trace_unpatch(jit_State *J, GCtrace *T)
 static void trace_flushroot(jit_State *J, GCtrace *T)
 {
   GCproto *pt = &gcref(T->startpt)->pt;
-  lua_assert(T->root == 0 && pt != NULL);
+  lj_assertJ(T->root == 0, "not a root trace");
+  lj_assertJ(pt != NULL, "trace has no prototype");
   /* First unpatch any modified bytecode. */
   trace_unpatch(J, T);
   /* Unlink root trace from chain anchored in prototype. */
@@ -353,7 +357,8 @@ void lj_trace_freestate(global_State *g)
   {  /* This assumes all traces have already been freed. */
     ptrdiff_t i;
     for (i = 1; i < (ptrdiff_t)J->sizetrace; i++)
-      lua_assert(i == (ptrdiff_t)J->cur.traceno || traceref(J, i) == NULL);
+      lj_assertG(i == (ptrdiff_t)J->cur.traceno || traceref(J, i) == NULL,
+		 "trace still allocated");
   }
 #endif
   lj_mcode_free(J);
@@ -368,8 +373,13 @@ void lj_trace_freestate(global_State *g)
 /* Blacklist a bytecode instruction. */
 static void blacklist_pc(GCproto *pt, BCIns *pc)
 {
-  setbc_op(pc, (int)bc_op(*pc)+(int)BC_ILOOP-(int)BC_LOOP);
-  pt->flags |= PROTO_ILOOP;
+  if (bc_op(*pc) == BC_ITERN) {
+    setbc_op(pc, BC_ITERC);
+    setbc_op(pc+1+bc_j(pc[1]), BC_JMP);
+  } else {
+    setbc_op(pc, (int)bc_op(*pc)+(int)BC_ILOOP-(int)BC_LOOP);
+    pt->flags |= PROTO_ILOOP;
+  }
 }
 
 /* Penalize a bytecode instruction. */
@@ -380,7 +390,7 @@ static void penalty_pc(jit_State *J, GCproto *pt, BCIns *pc, TraceError e)
     if (mref(J->penalty[i].pc, const BCIns) == pc) {  /* Cache slot found? */
       /* First try to bump its hotcount several times. */
       val = ((uint32_t)J->penalty[i].val << 1) +
-	    LJ_PRNG_BITS(J, PENALTY_RNDBITS);
+	    (lj_prng_u64(&J2G(J)->prng) & ((1u<<PENALTY_RNDBITS)-1));
       if (val > PENALTY_MAX) {
 	blacklist_pc(pt, pc);  /* Blacklist it, if that didn't help. */
 	return;
@@ -406,10 +416,11 @@ static void trace_start(jit_State *J)
   TraceNo traceno;
 
   if ((J->pt->flags & PROTO_NOJIT)) {  /* JIT disabled for this proto? */
-    if (J->parent == 0 && J->exitno == 0) {
+    if (J->parent == 0 && J->exitno == 0 && bc_op(*J->pc) != BC_ITERN) {
       /* Lazy bytecode patching to disable hotcount events. */
-      lua_assert(bc_op(*J->pc) == BC_FORL || bc_op(*J->pc) == BC_ITERL ||
-		 bc_op(*J->pc) == BC_LOOP || bc_op(*J->pc) == BC_FUNCF);
+      lj_assertJ(bc_op(*J->pc) == BC_FORL || bc_op(*J->pc) == BC_ITERL ||
+		 bc_op(*J->pc) == BC_LOOP || bc_op(*J->pc) == BC_FUNCF,
+		 "bad hot bytecode %d", bc_op(*J->pc));
       setbc_op(J->pc, (int)bc_op(*J->pc)+(int)BC_ILOOP-(int)BC_LOOP);
       J->pt->flags |= PROTO_ILOOP;
     }
@@ -420,7 +431,8 @@ static void trace_start(jit_State *J)
   /* Get a new trace number. */
   traceno = trace_findfree(J);
   if (LJ_UNLIKELY(traceno == 0)) {  /* No free trace? */
-    lua_assert((J2G(J)->hookmask & HOOK_GC) == 0);
+    lj_assertJ((J2G(J)->hookmask & HOOK_GC) == 0,
+	       "recorder called from GC hook");
     lj_trace_flushall(J->L);
     J->state = LJ_TRACE_IDLE;  /* Silently ignored. */
     return;
@@ -489,6 +501,7 @@ static void trace_stop(jit_State *J)
     J->cur.nextroot = pt->trace;
     pt->trace = (TraceNo1)traceno;
     break;
+  case BC_ITERN:
   case BC_RET:
   case BC_RET0:
   case BC_RET1:
@@ -496,10 +509,14 @@ static void trace_stop(jit_State *J)
     goto addroot;
   case BC_JMP:
     /* Patch exit branch in parent to side trace entry. */
-    lua_assert(J->parent != 0 && J->cur.root != 0);
+    lj_assertJ(J->parent != 0 && J->cur.root != 0, "not a side trace");
     lj_asm_patchexit(J, traceref(J, J->parent), J->exitno, J->cur.mcode);
     /* Avoid compiling a side trace twice (stack resizing uses parent exit). */
-    traceref(J, J->parent)->snap[J->exitno].count = SNAPCOUNT_DONE;
+    {
+      SnapShot *snap = &traceref(J, J->parent)->snap[J->exitno];
+      snap->count = SNAPCOUNT_DONE;
+      if (J->cur.topslot > snap->topslot) snap->topslot = J->cur.topslot;
+    }
     /* Add to side trace chain in root trace. */
     {
       GCtrace *root = traceref(J, J->cur.root);
@@ -515,7 +532,7 @@ static void trace_stop(jit_State *J)
     traceref(J, J->exitno)->link = traceno;
     break;
   default:
-    lua_assert(0);
+    lj_assertJ(0, "bad stop bytecode %d", op);
     break;
   }
 
@@ -536,8 +553,8 @@ static void trace_stop(jit_State *J)
 static int trace_downrec(jit_State *J)
 {
   /* Restart recording at the return instruction. */
-  lua_assert(J->pt != NULL);
-  lua_assert(bc_isret(bc_op(*J->pc)));
+  lj_assertJ(J->pt != NULL, "no active prototype");
+  lj_assertJ(bc_isret(bc_op(*J->pc)), "not at a return bytecode");
   if (bc_op(*J->pc) == BC_RETM)
     return 0;  /* NYI: down-recursion with RETM. */
   J->parent = 0;
@@ -644,8 +661,13 @@ static TValue *trace_state(lua_State *L, lua_CFunction dummy, void *ud)
       J->state = LJ_TRACE_RECORD;  /* trace_start() may change state. */
       trace_start(J);
       lj_dispatch_update(J2G(J));
-      break;
+      if (J->state != LJ_TRACE_RECORD_1ST)
+	break;
+      /* fallthrough */
 
+    case LJ_TRACE_RECORD_1ST:
+      J->state = LJ_TRACE_RECORD;
+      /* fallthrough */
     case LJ_TRACE_RECORD:
       trace_pendpatch(J, 0);
       setvmstate(J2G(J), RECORD);
@@ -750,7 +772,7 @@ static void trace_hotside(jit_State *J, const BCIns *pc)
       isluafunc(curr_func(J->L)) &&
       snap->count != SNAPCOUNT_DONE &&
       ++snap->count >= J->param[JIT_P_hotexit]) {
-    lua_assert(J->state == LJ_TRACE_IDLE);
+    lj_assertJ(J->state == LJ_TRACE_IDLE, "hot side exit while recording");
     /* J->parent is non-zero for a side trace. */
     J->state = LJ_TRACE_START;
     lj_trace_ins(J, pc);
@@ -782,7 +804,9 @@ typedef struct ExitDataCP {
 static TValue *trace_exit_cp(lua_State *L, lua_CFunction dummy, void *ud)
 {
   ExitDataCP *exd = (ExitDataCP *)ud;
-  cframe_errfunc(L->cframe) = -1;  /* Inherit error function. */
+  /* Always catch error here and don't call error function. */
+  cframe_errfunc(L->cframe) = 0;
+  cframe_nres(L->cframe) = -2*LUAI_MAXSTACK*(int)sizeof(TValue);
   exd->pc = lj_snap_restore(exd->J, exd->exptr);
   UNUSED(dummy);
   return NULL;
@@ -812,7 +836,7 @@ static void trace_exit_regs(lua_State *L, ExitState *ex)
 }
 #endif
 
-#ifdef EXITSTATE_PCREG
+#if defined(EXITSTATE_PCREG) || (LJ_UNWIND_JIT && !EXITTRACE_VMSTATE)
 /* Determine trace number from pc of exit instruction. */
 static TraceNo trace_exit_find(jit_State *J, MCode *pc)
 {
@@ -822,7 +846,7 @@ static TraceNo trace_exit_find(jit_State *J, MCode *pc)
     if (T && pc >= T->mcode && pc < (MCode *)((char *)T->mcode + T->szmcode))
       return traceno;
   }
-  lua_assert(0);
+  lj_assertJ(0, "bad exit pc");
   return 0;
 }
 #endif
@@ -834,28 +858,38 @@ int LJ_FASTCALL lj_trace_exit(jit_State *J, void *exptr)
   lua_State *L = J->L;
   ExitState *ex = (ExitState *)exptr;
   ExitDataCP exd;
-  int errcode;
+  int errcode, exitcode = J->exitcode;
+  TValue exiterr;
   const BCIns *pc;
   void *cf;
   GCtrace *T;
+
+  setnilV(&exiterr);
+  if (exitcode) {  /* Trace unwound with error code. */
+    J->exitcode = 0;
+    copyTV(L, &exiterr, L->top-1);
+  }
+
 #ifdef EXITSTATE_PCREG
   J->parent = trace_exit_find(J, (MCode *)(intptr_t)ex->gpr[EXITSTATE_PCREG]);
 #endif
   T = traceref(J, J->parent); UNUSED(T);
 #ifdef EXITSTATE_CHECKEXIT
   if (J->exitno == T->nsnap) {  /* Treat stack check like a parent exit. */
-    lua_assert(T->root != 0);
+    lj_assertJ(T->root != 0, "stack check in root trace");
     J->exitno = T->ir[REF_BASE].op2;
     J->parent = T->ir[REF_BASE].op1;
     T = traceref(J, J->parent);
   }
 #endif
-  lua_assert(T != NULL && J->exitno < T->nsnap);
+  lj_assertJ(T != NULL && J->exitno < T->nsnap, "bad trace or exit number");
   exd.J = J;
   exd.exptr = exptr;
   errcode = lj_vm_cpcall(L, NULL, &exd, trace_exit_cp);
   if (errcode)
     return -errcode;  /* Return negated error code. */
+
+  if (exitcode) copyTV(L, L->top++, &exiterr);  /* Anchor the error object. */
 
   if (!(LJ_HASPROFILE && (G(L)->hookmask & HOOK_PROFILE)))
     lj_vmevent_send(L, TEXIT,
@@ -868,7 +902,9 @@ int LJ_FASTCALL lj_trace_exit(jit_State *J, void *exptr)
   pc = exd.pc;
   cf = cframe_raw(L->cframe);
   setcframe_pc(cf, pc);
-  if (LJ_HASPROFILE && (G(L)->hookmask & HOOK_PROFILE)) {
+  if (exitcode) {
+    return -exitcode;
+  } else if (LJ_HASPROFILE && (G(L)->hookmask & HOOK_PROFILE)) {
     /* Just exit to interpreter. */
   } else if (G(L)->gc.state == GCSatomic || G(L)->gc.state == GCSfinalize) {
     if (!(G(L)->hookmask & HOOK_GC))
@@ -878,13 +914,14 @@ int LJ_FASTCALL lj_trace_exit(jit_State *J, void *exptr)
   }
   if (bc_op(*pc) == BC_JLOOP) {
     BCIns *retpc = &traceref(J, bc_d(*pc))->startins;
-    if (bc_isret(bc_op(*retpc))) {
+    int isret = bc_isret(bc_op(*retpc));
+    if (isret || bc_op(*retpc) == BC_ITERN) {
       if (J->state == LJ_TRACE_RECORD) {
 	J->patchins = *pc;
 	J->patchpc = (BCIns *)pc;
 	*J->patchpc = *retpc;
 	J->bcskip = 1;
-      } else {
+      } else if (isret) {
 	pc = retpc;
 	setcframe_pc(cf, pc);
       }
@@ -905,5 +942,42 @@ int LJ_FASTCALL lj_trace_exit(jit_State *J, void *exptr)
     return 0;
   }
 }
+
+#if LJ_UNWIND_JIT
+/* Given an mcode address determine trace exit address for unwinding. */
+uintptr_t LJ_FASTCALL lj_trace_unwind(jit_State *J, uintptr_t addr, ExitNo *ep)
+{
+#if EXITTRACE_VMSTATE
+  TraceNo traceno = J2G(J)->vmstate;
+#else
+  TraceNo traceno = trace_exit_find(J, (MCode *)addr);
+#endif
+  GCtrace *T = traceref(J, traceno);
+  if (T
+#if EXITTRACE_VMSTATE
+      && addr >= (uintptr_t)T->mcode && addr < (uintptr_t)T->mcode + T->szmcode
+#endif
+     ) {
+    SnapShot *snap = T->snap;
+    SnapNo lo = 0, exitno = T->nsnap;
+    uintptr_t ofs = (uintptr_t)((MCode *)addr - T->mcode);  /* MCode units! */
+    /* Rightmost binary search for mcode offset to determine exit number. */
+    do {
+      SnapNo mid = (lo+exitno) >> 1;
+      if (ofs < snap[mid].mcofs) exitno = mid; else lo = mid + 1;
+    } while (lo < exitno);
+    exitno--;
+    *ep = exitno;
+#ifdef EXITSTUBS_PER_GROUP
+    return (uintptr_t)exitstub_addr(J, exitno);
+#else
+    return (uintptr_t)exitstub_trace_addr(T, exitno);
+#endif
+  }
+  /* Cannot correlate addr with trace/exit. This will be fatal. */
+  lj_assertJ(0, "bad exit pc");
+  return 0;
+}
+#endif
 
 #endif

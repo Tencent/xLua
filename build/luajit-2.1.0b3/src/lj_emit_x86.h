@@ -1,6 +1,6 @@
 /*
 ** x86/x64 instruction emitter.
-** Copyright (C) 2005-2017 Mike Pall. See Copyright Notice in luajit.h
+** Copyright (C) 2005-2021 Mike Pall. See Copyright Notice in luajit.h
 */
 
 /* -- Emit basic instructions --------------------------------------------- */
@@ -45,7 +45,7 @@ static LJ_AINLINE MCode *emit_op(x86Op xo, Reg rr, Reg rb, Reg rx,
     *(uint32_t *)(p+delta-5) = (uint32_t)xo;
     return p+delta-5;
   }
-#if defined(__GNUC__)
+#if defined(__GNUC__) || defined(__clang__)
   if (__builtin_constant_p(xo) && n == -2)
     p[delta-2] = (MCode)(xo >> 24);
   else if (__builtin_constant_p(xo) && n == -3)
@@ -92,7 +92,7 @@ static void emit_rr(ASMState *as, x86Op xo, Reg r1, Reg r2)
 /* [addr] is sign-extended in x64 and must be in lower 2G (not 4G). */
 static int32_t ptr2addr(const void *p)
 {
-  lua_assert((uintptr_t)p < (uintptr_t)0x80000000);
+  lj_assertX((uintptr_t)p < (uintptr_t)0x80000000, "pointer outside 2G range");
   return i32ptr(p);
 }
 #else
@@ -208,7 +208,7 @@ static void emit_mrm(ASMState *as, x86Op xo, Reg rr, Reg rb)
       rb = RID_ESP;
 #endif
     } else if (LJ_GC64 && rb == RID_RIP) {
-      lua_assert(as->mrm.idx == RID_NONE);
+      lj_assertA(as->mrm.idx == RID_NONE, "RIP-rel mrm cannot have index");
       mode = XM_OFS0;
       p -= 4;
       *(int32_t *)p = as->mrm.ofs;
@@ -274,10 +274,12 @@ static void emit_movmroi(ASMState *as, Reg base, int32_t ofs, int32_t i)
 /* mov r, i / xor r, r */
 static void emit_loadi(ASMState *as, Reg r, int32_t i)
 {
-  /* XOR r,r is shorter, but modifies the flags. This is bad for HIOP. */
+  /* XOR r,r is shorter, but modifies the flags. This is bad for HIOP/jcc. */
   if (i == 0 && !(LJ_32 && (IR(as->curins)->o == IR_HIOP ||
 			    (as->curins+1 < as->T->nins &&
-			     IR(as->curins+1)->o == IR_HIOP)))) {
+			     IR(as->curins+1)->o == IR_HIOP))) &&
+		!((*as->mcp == 0x0f && (as->mcp[1] & 0xf0) == XI_JCCn) ||
+		  (*as->mcp & 0xf0) == XI_JCCs)) {
     emit_rr(as, XO_ARITH(XOg_XOR), r, r);
   } else {
     MCode *p = as->mcp;
@@ -343,9 +345,27 @@ static void emit_rma(ASMState *as, x86Op xo, Reg rr, const void *addr)
     emit_rmro(as, xo, rr, RID_DISPATCH, (int32_t)dispofs(as, addr));
   } else if (checki32(mcpofs(as, addr)) && checki32(mctopofs(as, addr))) {
     emit_rmro(as, xo, rr, RID_RIP, (int32_t)mcpofs(as, addr));
-  } else if (!checki32((intptr_t)addr) && (xo == XO_MOV || xo == XO_MOVSD)) {
-    emit_rmro(as, xo, rr, rr, 0);
-    emit_loadu64(as, rr, (uintptr_t)addr);
+  } else if (!checki32((intptr_t)addr)) {
+    Reg ra = (rr & 15);
+    if (xo != XO_MOV) {
+      /* We can't allocate a register here. Use and restore DISPATCH. Ugly. */
+      uint64_t dispaddr = (uintptr_t)J2GG(as->J)->dispatch;
+      uint8_t i8 = xo == XO_GROUP3b ? *as->mcp++ : 0;
+      ra = RID_DISPATCH;
+      if (checku32(dispaddr)) {
+	emit_loadi(as, ra, (int32_t)dispaddr);
+      } else {  /* Full-size 64 bit load. */
+	MCode *p = as->mcp;
+	*(uint64_t *)(p-8) = dispaddr;
+	p[-9] = (MCode)(XI_MOVri+(ra&7));
+	p[-10] = 0x48 + ((ra>>3)&1);
+	p -= 10;
+	as->mcp = p;
+      }
+      if (xo == XO_GROUP3b) emit_i8(as, i8);
+    }
+    emit_rmro(as, xo, rr, ra, 0);
+    emit_loadu64(as, ra, (uintptr_t)addr);
   } else
 #endif
   {
@@ -381,7 +401,8 @@ static void emit_loadk64(ASMState *as, Reg r, IRIns *ir)
     emit_rma(as, xo, r64, k);
   } else {
     if (ir->i) {
-      lua_assert(*k == *(uint64_t*)(as->mctop - ir->i));
+      lj_assertA(*k == *(uint64_t*)(as->mctop - ir->i),
+		 "bad interned 64 bit constant");
     } else if (as->curins <= as->stopins && rset_test(RSET_GPR, r)) {
       emit_loadu64(as, r, *k);
       return;
@@ -413,7 +434,7 @@ static void emit_sjmp(ASMState *as, MCLabel target)
 {
   MCode *p = as->mcp;
   ptrdiff_t delta = target - p;
-  lua_assert(delta == (int8_t)delta);
+  lj_assertA(delta == (int8_t)delta, "short jump target out of range");
   p[-1] = (MCode)(int8_t)delta;
   p[-2] = XI_JMPs;
   as->mcp = p - 2;
@@ -425,7 +446,7 @@ static void emit_sjcc(ASMState *as, int cc, MCLabel target)
 {
   MCode *p = as->mcp;
   ptrdiff_t delta = target - p;
-  lua_assert(delta == (int8_t)delta);
+  lj_assertA(delta == (int8_t)delta, "short jump target out of range");
   p[-1] = (MCode)(int8_t)delta;
   p[-2] = (MCode)(XI_JCCs+(cc&15));
   as->mcp = p - 2;
@@ -451,10 +472,11 @@ static void emit_sfixup(ASMState *as, MCLabel source)
 #define emit_label(as)		((as)->mcp)
 
 /* Compute relative 32 bit offset for jump and call instructions. */
-static LJ_AINLINE int32_t jmprel(MCode *p, MCode *target)
+static LJ_AINLINE int32_t jmprel(jit_State *J, MCode *p, MCode *target)
 {
   ptrdiff_t delta = target - p;
-  lua_assert(delta == (int32_t)delta);
+  UNUSED(J);
+  lj_assertJ(delta == (int32_t)delta, "jump target out of range");
   return (int32_t)delta;
 }
 
@@ -462,7 +484,7 @@ static LJ_AINLINE int32_t jmprel(MCode *p, MCode *target)
 static void emit_jcc(ASMState *as, int cc, MCode *target)
 {
   MCode *p = as->mcp;
-  *(int32_t *)(p-4) = jmprel(p, target);
+  *(int32_t *)(p-4) = jmprel(as->J, p, target);
   p[-5] = (MCode)(XI_JCCn+(cc&15));
   p[-6] = 0x0f;
   as->mcp = p - 6;
@@ -472,7 +494,7 @@ static void emit_jcc(ASMState *as, int cc, MCode *target)
 static void emit_jmp(ASMState *as, MCode *target)
 {
   MCode *p = as->mcp;
-  *(int32_t *)(p-4) = jmprel(p, target);
+  *(int32_t *)(p-4) = jmprel(as->J, p, target);
   p[-5] = XI_JMP;
   as->mcp = p - 5;
 }
@@ -489,7 +511,7 @@ static void emit_call_(ASMState *as, MCode *target)
     return;
   }
 #endif
-  *(int32_t *)(p-4) = jmprel(p, target);
+  *(int32_t *)(p-4) = jmprel(as->J, p, target);
   p[-5] = XI_CALL;
   as->mcp = p - 5;
 }
@@ -539,10 +561,7 @@ static void emit_storeofs(ASMState *as, IRIns *ir, Reg r, Reg base, int32_t ofs)
 static void emit_addptr(ASMState *as, Reg r, int32_t ofs)
 {
   if (ofs) {
-    if ((as->flags & JIT_F_LEA_AGU))
-      emit_rmro(as, XO_LEA, r|REX_GC64, r, ofs);
-    else
-      emit_gri(as, XG_ARITHi(XOg_ADD), r|REX_GC64, ofs);
+    emit_gri(as, XG_ARITHi(XOg_ADD), r|REX_GC64, ofs);
   }
 }
 

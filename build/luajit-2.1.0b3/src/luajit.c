@@ -1,6 +1,6 @@
 /*
 ** LuaJIT frontend. Runs commands, scripts, read-eval-print (REPL) etc.
-** Copyright (C) 2005-2017 Mike Pall. See Copyright Notice in luajit.h
+** Copyright (C) 2005-2021 Mike Pall. See Copyright Notice in luajit.h
 **
 ** Major portions taken verbatim or adapted from the Lua interpreter.
 ** Copyright (C) 1994-2008 Lua.org, PUC-Rio. See Copyright Notice in lua.h
@@ -150,6 +150,7 @@ static void print_jit_status(lua_State *L)
     fputs(s, stdout);
   }
   putc('\n', stdout);
+  lua_settop(L, 0);  /* clear stack */
 }
 
 static void createargtable(lua_State *L, char **argv, int argc, int argf)
@@ -421,6 +422,7 @@ static int collectargs(char **argv, int *flags)
       break;
     case 'e':
       *flags |= FLAGS_EXEC;
+      /* fallthrough */
     case 'j':  /* LuaJIT extension */
     case 'l':
       *flags |= FLAGS_OPTION;

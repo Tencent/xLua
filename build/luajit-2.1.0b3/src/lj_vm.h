@@ -1,6 +1,6 @@
 /*
 ** Assembler VM interface definitions.
-** Copyright (C) 2005-2017 Mike Pall. See Copyright Notice in luajit.h
+** Copyright (C) 2005-2021 Mike Pall. See Copyright Notice in luajit.h
 */
 
 #ifndef _LJ_VM_H
@@ -26,6 +26,9 @@ LJ_ASMF void lj_vm_unwind_ff_eh(void);
 #if LJ_TARGET_X86ORX64
 LJ_ASMF void lj_vm_unwind_rethrow(void);
 #endif
+#if LJ_TARGET_MIPS
+LJ_ASMF void lj_vm_unwind_stub(void);
+#endif
 
 /* Miscellaneous functions. */
 #if LJ_TARGET_X86ORX64
@@ -48,6 +51,7 @@ LJ_ASMF void lj_vm_inshook(void);
 LJ_ASMF void lj_vm_rethook(void);
 LJ_ASMF void lj_vm_callhook(void);
 LJ_ASMF void lj_vm_profhook(void);
+LJ_ASMF void lj_vm_IITERN(void);
 
 /* Trace exit handling. */
 LJ_ASMF void lj_vm_exit_handler(void);
@@ -92,14 +96,10 @@ LJ_ASMF double lj_vm_trunc(double);
 LJ_ASMF double lj_vm_trunc_sf(double);
 #endif
 #endif
-#ifdef LUAJIT_NO_EXP2
-LJ_ASMF double lj_vm_exp2(double);
-#else
-#define lj_vm_exp2	exp2
-#endif
 #if LJ_HASFFI
 LJ_ASMF int lj_vm_errno(void);
 #endif
+LJ_ASMF TValue *lj_vm_next(GCtab *t, uint32_t idx);
 #endif
 
 /* Continuations for metamethods. */
