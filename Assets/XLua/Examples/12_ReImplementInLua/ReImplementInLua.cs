@@ -27,6 +27,7 @@ namespace XLuaTest
             luaenv.DoString(@"
             function test_vector3(title, v1, v2)
                print(title)
+               v1.x = 100
                print(v1.x, v1.y, v1.z)
                print(v1, v2)
                print(v1 + v2)
@@ -63,7 +64,7 @@ namespace XLuaTest
                 end,
 
                 __newindex = function(o, k, v)
-                    return fields_setters[k] and fields_setters[k](o, v) or error('no such field ' .. k)
+                    if fields_setters[k] then fields_setters[k](o, v) else error('no such field ' .. k) end
                 end,
 
                 __tostring = function(o)
