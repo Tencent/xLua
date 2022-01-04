@@ -1,6 +1,6 @@
 /*
 ** OS library.
-** Copyright (C) 2005-2017 Mike Pall. See Copyright Notice in luajit.h
+** Copyright (C) 2005-2021 Mike Pall. See Copyright Notice in luajit.h
 **
 ** Major portions taken verbatim or adapted from the Lua interpreter.
 ** Copyright (C) 1994-2008 Lua.org, PUC-Rio. See Copyright Notice in lua.h
@@ -205,12 +205,12 @@ LJLIB_CF(os_date)
     setboolfield(L, "isdst", stm->tm_isdst);
   } else if (*s) {
     SBuf *sb = &G(L)->tmpbuf;
-    MSize sz = 0;
+    MSize sz = 0, retry = 4;
     const char *q;
     for (q = s; *q; q++)
       sz += (*q == '%') ? 30 : 1;  /* Overflow doesn't matter. */
     setsbufL(sb, L);
-    for (;;) {
+    while (retry--) {  /* Limit growth for invalid format or empty result. */
       char *buf = lj_buf_need(sb, sz);
       size_t len = strftime(buf, sbufsz(sb), s, stm);
       if (len) {

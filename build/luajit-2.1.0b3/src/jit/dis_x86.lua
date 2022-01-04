@@ -1,7 +1,7 @@
 ----------------------------------------------------------------------------
 -- LuaJIT x86/x64 disassembler module.
 --
--- Copyright (C) 2005-2017 Mike Pall. All rights reserved.
+-- Copyright (C) 2005-2021 Mike Pall. All rights reserved.
 -- Released under the MIT license. See Copyright Notice in luajit.h
 ----------------------------------------------------------------------------
 -- This is a helper module used by the LuaJIT machine code dumper module.
@@ -239,6 +239,24 @@ nil,"||psrlvVSXrvm","||psravdXrvm","||psllvVSXrvm",
 --8x
 [0x8c] = "||pmaskmovXrvVSm",
 [0x8e] = "||pmaskmovVSmXvr",
+--9x
+[0x96] = "||fmaddsub132pHXrvm",[0x97] = "||fmsubadd132pHXrvm",
+[0x98] = "||fmadd132pHXrvm",[0x99] = "||fmadd132sHXrvm",
+[0x9a] = "||fmsub132pHXrvm",[0x9b] = "||fmsub132sHXrvm",
+[0x9c] = "||fnmadd132pHXrvm",[0x9d] = "||fnmadd132sHXrvm",
+[0x9e] = "||fnmsub132pHXrvm",[0x9f] = "||fnmsub132sHXrvm",
+--Ax
+[0xa6] = "||fmaddsub213pHXrvm",[0xa7] = "||fmsubadd213pHXrvm",
+[0xa8] = "||fmadd213pHXrvm",[0xa9] = "||fmadd213sHXrvm",
+[0xaa] = "||fmsub213pHXrvm",[0xab] = "||fmsub213sHXrvm",
+[0xac] = "||fnmadd213pHXrvm",[0xad] = "||fnmadd213sHXrvm",
+[0xae] = "||fnmsub213pHXrvm",[0xaf] = "||fnmsub213sHXrvm",
+--Bx
+[0xb6] = "||fmaddsub231pHXrvm",[0xb7] = "||fmsubadd231pHXrvm",
+[0xb8] = "||fmadd231pHXrvm",[0xb9] = "||fmadd231sHXrvm",
+[0xba] = "||fmsub231pHXrvm",[0xbb] = "||fmsub231sHXrvm",
+[0xbc] = "||fnmadd231pHXrvm",[0xbd] = "||fnmadd231sHXrvm",
+[0xbe] = "||fnmsub231pHXrvm",[0xbf] = "||fnmsub231sHXrvm",
 --Dx
 [0xdc] = "||aesencXrvm", [0xdd] = "||aesenclastXrvm",
 [0xde] = "||aesdecXrvm", [0xdf] = "||aesdeclastXrvm",
@@ -483,7 +501,7 @@ local function putpat(ctx, name, pat)
   local operands, regs, sz, mode, sp, rm, sc, rx, sdisp
   local code, pos, stop, vexl = ctx.code, ctx.pos, ctx.stop, ctx.vexl
 
-  -- Chars used: 1DFGIMPQRSTUVWXYabcdfgijlmoprstuvwxyz
+  -- Chars used: 1DFGHIMPQRSTUVWXYabcdfgijlmoprstuvwxyz
   for p in gmatch(pat, ".") do
     local x = nil
     if p == "V" or p == "U" then
@@ -506,6 +524,9 @@ local function putpat(ctx, name, pat)
       sz = ctx.o16 and "X" or "M"; ctx.o16 = false
       if sz == "X" and vexl then sz = "Y"; ctx.vexl = false end
       regs = map_regs[sz]
+    elseif p == "H" then
+      name = name..(ctx.rexw and "d" or "s")
+      ctx.rexw = false
     elseif p == "S" then
       name = name..lower(sz)
     elseif p == "s" then
@@ -735,6 +756,7 @@ map_act = {
   V = putpat, U = putpat, T = putpat,
   M = putpat, X = putpat, P = putpat,
   F = putpat, G = putpat, Y = putpat,
+  H = putpat,
 
   -- Collect prefixes.
   [":"] = function(ctx, name, pat)

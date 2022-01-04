@@ -1,6 +1,6 @@
 /*
 ** Definitions for ARM64 CPUs.
-** Copyright (C) 2005-2017 Mike Pall. See Copyright Notice in luajit.h
+** Copyright (C) 2005-2021 Mike Pall. See Copyright Notice in luajit.h
 */
 
 #ifndef _LJ_TARGET_ARM64_H
@@ -31,6 +31,8 @@ enum {
 
   /* Calling conventions. */
   RID_RET = RID_X0,
+  RID_RETLO = RID_X0,
+  RID_RETHI = RID_X1,
   RID_FPRET = RID_D0,
 
   /* These definitions must match with the *.dasc file(s): */
@@ -132,9 +134,9 @@ static LJ_AINLINE uint32_t *exitstub_trace_addr_(uint32_t *p, uint32_t exitno)
 #define A64F_IMMR(x)	((x) << 16)
 #define A64F_U16(x)	((x) << 5)
 #define A64F_U12(x)	((x) << 10)
-#define A64F_S26(x)	(x)
+#define A64F_S26(x)	(((uint32_t)(x) & 0x03ffffffu))
 #define A64F_S19(x)	(((uint32_t)(x) & 0x7ffffu) << 5)
-#define A64F_S14(x)	((x) << 5)
+#define A64F_S14(x)	(((uint32_t)(x) & 0x3fffu) << 5)
 #define A64F_S9(x)	((x) << 12)
 #define A64F_BIT(x)	((x) << 19)
 #define A64F_SH(sh, x)	(((sh) << 22) | ((x) << 10))
@@ -144,6 +146,9 @@ static LJ_AINLINE uint32_t *exitstub_trace_addr_(uint32_t *p, uint32_t exitno)
 #define A64F_CC(cc)	((cc) << 12)
 #define A64F_LSL16(x)	(((x) / 16) << 21)
 #define A64F_BSH(sh)	((sh) << 10)
+
+/* Check for valid field range. */
+#define A64F_S_OK(x, b)	((((x) + (1 << (b-1))) >> (b)) == 0)
 
 typedef enum A64Ins {
   A64I_S = 0x20000000,
@@ -207,6 +212,8 @@ typedef enum A64Ins {
 
   A64I_EXTRw = 0x13800000,
   A64I_EXTRx = 0x93c00000,
+  A64I_BFMw = 0x33000000,
+  A64I_BFMx = 0xb3400000,
   A64I_SBFMw = 0x13000000,
   A64I_SBFMx = 0x93400000,
   A64I_SXTBw = 0x13001c00,

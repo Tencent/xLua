@@ -1,6 +1,6 @@
 /*
 ** JIT library.
-** Copyright (C) 2005-2017 Mike Pall. See Copyright Notice in luajit.h
+** Copyright (C) 2005-2021 Mike Pall. See Copyright Notice in luajit.h
 */
 
 #define lib_jit_c
@@ -104,13 +104,20 @@ LJLIB_CF(jit_status)
   jit_State *J = L2J(L);
   L->top = L->base;
   setboolV(L->top++, (J->flags & JIT_F_ON) ? 1 : 0);
-  flagbits_to_strings(L, J->flags, JIT_F_CPU_FIRST, JIT_F_CPUSTRING);
-  flagbits_to_strings(L, J->flags, JIT_F_OPT_FIRST, JIT_F_OPTSTRING);
+  flagbits_to_strings(L, J->flags, JIT_F_CPU, JIT_F_CPUSTRING);
+  flagbits_to_strings(L, J->flags, JIT_F_OPT, JIT_F_OPTSTRING);
   return (int)(L->top - L->base);
 #else
   setboolV(L->top++, 0);
   return 1;
 #endif
+}
+
+LJLIB_CF(jit_security)
+{
+  int idx = lj_lib_checkopt(L, 1, -1, LJ_SECURITY_MODESTRING);
+  setintV(L->top++, ((LJ_SECURITY_MODE >> (2*idx)) & 3));
+  return 1;
 }
 
 LJLIB_CF(jit_attach)
@@ -227,7 +234,7 @@ LJLIB_CF(jit_util_funcbc)
   if (pc < pt->sizebc) {
     BCIns ins = proto_bc(pt)[pc];
     BCOp op = bc_op(ins);
-    lua_assert(op < BC__MAX);
+    lj_assertL(op < BC__MAX, "bad bytecode op %d", op);
     setintV(L->top, ins);
     setintV(L->top+1, lj_bc_mode[op]);
     L->top += 2;
@@ -339,11 +346,7 @@ LJLIB_CF(jit_util_tracek)
       ir = &T->ir[ir->op1];
     }
 #if LJ_HASFFI
-    if (ir->o == IR_KINT64 && !ctype_ctsG(G(L))) {
-      ptrdiff_t oldtop = savestack(L, L->top);
-      luaopen_ffi(L);  /* Load FFI library on-demand. */
-      L->top = restorestack(L, oldtop);
-    }
+    if (ir->o == IR_KINT64) ctype_loadffi(L);
 #endif
     lj_ir_kvalue(L, L->top-2, ir);
     setintV(L->top-1, (int32_t)irt_type(ir->t));
@@ -471,7 +474,7 @@ static int jitopt_flag(jit_State *J, const char *str)
     str += str[2] == '-' ? 3 : 2;
     set = 0;
   }
-  for (opt = JIT_F_OPT_FIRST; ; opt <<= 1) {
+  for (opt = JIT_F_OPT; ; opt <<= 1) {
     size_t len = *(const uint8_t *)lst;
     if (len == 0)
       break;
@@ -491,7 +494,7 @@ static int jitopt_param(jit_State *J, const char *str)
   int i;
   for (i = 0; i < JIT_P__MAX; i++) {
     size_t len = *(const uint8_t *)lst;
-    lua_assert(len != 0);
+    lj_assertJ(len != 0, "bad JIT_P_STRING");
     if (strncmp(str, lst+1, len) == 0 && str[len] == '=') {
       int32_t n = 0;
       const char *p = &str[len+1];
@@ -540,15 +543,15 @@ LJLIB_CF(jit_opt_start)
 
 /* Not loaded by default, use: local profile = require("jit.profile") */
 
-static const char KEY_PROFILE_THREAD = 't';
-static const char KEY_PROFILE_FUNC = 'f';
+#define KEY_PROFILE_THREAD	(U64x(80000000,00000000)|'t')
+#define KEY_PROFILE_FUNC	(U64x(80000000,00000000)|'f')
 
 static void jit_profile_callback(lua_State *L2, lua_State *L, int samples,
 				 int vmstate)
 {
   TValue key;
   cTValue *tv;
-  setlightudV(&key, (void *)&KEY_PROFILE_FUNC);
+  key.u64 = KEY_PROFILE_FUNC;
   tv = lj_tab_get(L, tabV(registry(L)), &key);
   if (tvisfunc(tv)) {
     char vmst = (char)vmstate;
@@ -575,9 +578,9 @@ LJLIB_CF(jit_profile_start)
   lua_State *L2 = lua_newthread(L);  /* Thread that runs profiler callback. */
   TValue key;
   /* Anchor thread and function in registry. */
-  setlightudV(&key, (void *)&KEY_PROFILE_THREAD);
+  key.u64 = KEY_PROFILE_THREAD;
   setthreadV(L, lj_tab_set(L, registry, &key), L2);
-  setlightudV(&key, (void *)&KEY_PROFILE_FUNC);
+  key.u64 = KEY_PROFILE_FUNC;
   setfuncV(L, lj_tab_set(L, registry, &key), func);
   lj_gc_anybarriert(L, registry);
   luaJIT_profile_start(L, mode ? strdata(mode) : "",
@@ -592,9 +595,9 @@ LJLIB_CF(jit_profile_stop)
   TValue key;
   luaJIT_profile_stop(L);
   registry = tabV(registry(L));
-  setlightudV(&key, (void *)&KEY_PROFILE_THREAD);
+  key.u64 = KEY_PROFILE_THREAD;
   setnilV(lj_tab_set(L, registry, &key));
-  setlightudV(&key, (void *)&KEY_PROFILE_FUNC);
+  key.u64 = KEY_PROFILE_FUNC;
   setnilV(lj_tab_set(L, registry, &key));
   lj_gc_anybarriert(L, registry);
   return 0;
@@ -640,59 +643,41 @@ JIT_PARAMDEF(JIT_PARAMINIT)
 #undef JIT_PARAMINIT
   0
 };
-#endif
 
 #if LJ_TARGET_ARM && LJ_TARGET_LINUX
 #include <sys/utsname.h>
 #endif
 
-/* Arch-dependent CPU detection. */
-static uint32_t jit_cpudetect(lua_State *L)
+/* Arch-dependent CPU feature detection. */
+static uint32_t jit_cpudetect(void)
 {
   uint32_t flags = 0;
 #if LJ_TARGET_X86ORX64
+
   uint32_t vendor[4];
   uint32_t features[4];
   if (lj_vm_cpuid(0, vendor) && lj_vm_cpuid(1, features)) {
-#if !LJ_HASJIT
-#define JIT_F_SSE2	2
-#endif
-    flags |= ((features[3] >> 26)&1) * JIT_F_SSE2;
-#if LJ_HASJIT
     flags |= ((features[2] >> 0)&1) * JIT_F_SSE3;
     flags |= ((features[2] >> 19)&1) * JIT_F_SSE4_1;
-    if (vendor[2] == 0x6c65746e) {  /* Intel. */
-      if ((features[0] & 0x0fff0ff0) == 0x000106c0)  /* Atom. */
-	flags |= JIT_F_LEA_AGU;
-    } else if (vendor[2] == 0x444d4163) {  /* AMD. */
-      uint32_t fam = (features[0] & 0x0ff00f00);
-      if (fam >= 0x00000f00)  /* K8, K10. */
-	flags |= JIT_F_PREFER_IMUL;
-    }
     if (vendor[0] >= 7) {
       uint32_t xfeatures[4];
       lj_vm_cpuid(7, xfeatures);
       flags |= ((xfeatures[1] >> 8)&1) * JIT_F_BMI2;
     }
-#endif
   }
-  /* Check for required instruction set support on x86 (unnecessary on x64). */
-#if LJ_TARGET_X86
-  if (!(flags & JIT_F_SSE2))
-    luaL_error(L, "CPU with SSE2 required");
-#endif
+  /* Don't bother checking for SSE2 -- the VM will crash before getting here. */
+
 #elif LJ_TARGET_ARM
-#if LJ_HASJIT
+
   int ver = LJ_ARCH_VERSION;  /* Compile-time ARM CPU detection. */
 #if LJ_TARGET_LINUX
   if (ver < 70) {  /* Runtime ARM CPU detection. */
     struct utsname ut;
     uname(&ut);
     if (strncmp(ut.machine, "armv", 4) == 0) {
-      if (ut.machine[4] >= '7')
-	ver = 70;
-      else if (ut.machine[4] == '6')
-	ver = 60;
+      if (ut.machine[4] >= '8') ver = 80;
+      else if (ut.machine[4] == '7') ver = 70;
+      else if (ut.machine[4] == '6') ver = 60;
     }
   }
 #endif
@@ -700,20 +685,22 @@ static uint32_t jit_cpudetect(lua_State *L)
 	   ver >= 61 ? JIT_F_ARMV6T2_ :
 	   ver >= 60 ? JIT_F_ARMV6_ : 0;
   flags |= LJ_ARCH_HASFPU == 0 ? 0 : ver >= 70 ? JIT_F_VFPV3 : JIT_F_VFPV2;
-#endif
+
 #elif LJ_TARGET_ARM64
+
   /* No optional CPU features to detect (for now). */
+
 #elif LJ_TARGET_PPC
-#if LJ_HASJIT
+
 #if LJ_ARCH_SQRT
   flags |= JIT_F_SQRT;
 #endif
 #if LJ_ARCH_ROUND
   flags |= JIT_F_ROUND;
 #endif
-#endif
+
 #elif LJ_TARGET_MIPS
-#if LJ_HASJIT
+
   /* Compile-time MIPS CPU detection. */
 #if LJ_ARCH_VERSION >= 20
   flags |= JIT_F_MIPSXXR2;
@@ -731,31 +718,28 @@ static uint32_t jit_cpudetect(lua_State *L)
     if (x) flags |= JIT_F_MIPSXXR2;  /* Either 0x80000000 (R2) or 0 (R1). */
   }
 #endif
-#endif
+
 #else
 #error "Missing CPU detection for this architecture"
 #endif
-  UNUSED(L);
   return flags;
 }
 
 /* Initialize JIT compiler. */
 static void jit_init(lua_State *L)
 {
-  uint32_t flags = jit_cpudetect(L);
-#if LJ_HASJIT
   jit_State *J = L2J(L);
-  J->flags = flags | JIT_F_ON | JIT_F_OPT_DEFAULT;
+  J->flags = jit_cpudetect() | JIT_F_ON | JIT_F_OPT_DEFAULT;
   memcpy(J->param, jit_param_default, sizeof(J->param));
   lj_dispatch_update(G(L));
-#else
-  UNUSED(flags);
-#endif
 }
+#endif
 
 LUALIB_API int luaopen_jit(lua_State *L)
 {
+#if LJ_HASJIT
   jit_init(L);
+#endif
   lua_pushliteral(L, LJ_OS_NAME);
   lua_pushliteral(L, LJ_ARCH_NAME);
   lua_pushinteger(L, LUAJIT_VERSION_NUM);

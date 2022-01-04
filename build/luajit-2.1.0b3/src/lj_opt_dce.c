@@ -1,6 +1,6 @@
 /*
 ** DCE: Dead Code Elimination. Pre-LOOP only -- ASM already performs DCE.
-** Copyright (C) 2005-2017 Mike Pall. See Copyright Notice in luajit.h
+** Copyright (C) 2005-2021 Mike Pall. See Copyright Notice in luajit.h
 */
 
 #define lj_opt_dce_c
@@ -47,10 +47,7 @@ static void dce_propagate(jit_State *J)
       pchain[ir->o] = &ir->prev;
     } else if (!ir_sideeff(ir)) {
       *pchain[ir->o] = ir->prev;  /* Reroute original instruction chain. */
-      ir->t.irt = IRT_NIL;
-      ir->o = IR_NOP;  /* Replace instruction with NOP. */
-      ir->op1 = ir->op2 = 0;
-      ir->prev = 0;
+      lj_ir_nop(ir);
       continue;
     }
     if (ir->op1 >= REF_FIRST) irt_setmark(IR(ir->op1)->t);

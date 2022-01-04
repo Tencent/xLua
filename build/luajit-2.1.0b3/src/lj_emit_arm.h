@@ -1,6 +1,6 @@
 /*
 ** ARM instruction emitter.
-** Copyright (C) 2005-2017 Mike Pall. See Copyright Notice in luajit.h
+** Copyright (C) 2005-2021 Mike Pall. See Copyright Notice in luajit.h
 */
 
 /* -- Constant encoding --------------------------------------------------- */
@@ -81,7 +81,8 @@ static void emit_m(ASMState *as, ARMIns ai, Reg rm)
 
 static void emit_lsox(ASMState *as, ARMIns ai, Reg rd, Reg rn, int32_t ofs)
 {
-  lua_assert(ofs >= -255 && ofs <= 255);
+  lj_assertA(ofs >= -255 && ofs <= 255,
+	     "load/store offset %d out of range", ofs);
   if (ofs < 0) ofs = -ofs; else ai |= ARMI_LS_U;
   *--as->mcp = ai | ARMI_LS_P | ARMI_LSX_I | ARMF_D(rd) | ARMF_N(rn) |
 	       ((ofs & 0xf0) << 4) | (ofs & 0x0f);
@@ -89,7 +90,8 @@ static void emit_lsox(ASMState *as, ARMIns ai, Reg rd, Reg rn, int32_t ofs)
 
 static void emit_lso(ASMState *as, ARMIns ai, Reg rd, Reg rn, int32_t ofs)
 {
-  lua_assert(ofs >= -4095 && ofs <= 4095);
+  lj_assertA(ofs >= -4095 && ofs <= 4095,
+	     "load/store offset %d out of range", ofs);
   /* Combine LDR/STR pairs to LDRD/STRD. */
   if (*as->mcp == (ai|ARMI_LS_P|ARMI_LS_U|ARMF_D(rd^1)|ARMF_N(rn)|(ofs^4)) &&
       (ai & ~(ARMI_LDR^ARMI_STR)) == ARMI_STR && rd != rn &&
@@ -106,7 +108,8 @@ static void emit_lso(ASMState *as, ARMIns ai, Reg rd, Reg rn, int32_t ofs)
 #if !LJ_SOFTFP
 static void emit_vlso(ASMState *as, ARMIns ai, Reg rd, Reg rn, int32_t ofs)
 {
-  lua_assert(ofs >= -1020 && ofs <= 1020 && (ofs&3) == 0);
+  lj_assertA(ofs >= -1020 && ofs <= 1020 && (ofs&3) == 0,
+	     "load/store offset %d out of range", ofs);
   if (ofs < 0) ofs = -ofs; else ai |= ARMI_LS_U;
   *--as->mcp = ai | ARMI_LS_P | ARMF_D(rd & 15) | ARMF_N(rn) | (ofs >> 2);
 }
@@ -124,7 +127,7 @@ static int emit_kdelta1(ASMState *as, Reg d, int32_t i)
   while (work) {
     Reg r = rset_picktop(work);
     IRRef ref = regcost_ref(as->cost[r]);
-    lua_assert(r != d);
+    lj_assertA(r != d, "dest reg not free");
     if (emit_canremat(ref)) {
       int32_t delta = i - (ra_iskref(ref) ? ra_krefk(as, ref) : IR(ref)->i);
       uint32_t k = emit_isk12(ARMI_ADD, delta);
@@ -142,13 +145,13 @@ static int emit_kdelta1(ASMState *as, Reg d, int32_t i)
 }
 
 /* Try to find a two step delta relative to another constant. */
-static int emit_kdelta2(ASMState *as, Reg d, int32_t i)
+static int emit_kdelta2(ASMState *as, Reg rd, int32_t i)
 {
   RegSet work = ~as->freeset & RSET_GPR;
   while (work) {
     Reg r = rset_picktop(work);
     IRRef ref = regcost_ref(as->cost[r]);
-    lua_assert(r != d);
+    lj_assertA(r != rd, "dest reg %d not free", rd);
     if (emit_canremat(ref)) {
       int32_t other = ra_iskref(ref) ? ra_krefk(as, ref) : IR(ref)->i;
       if (other) {
@@ -159,8 +162,8 @@ static int emit_kdelta2(ASMState *as, Reg d, int32_t i)
 	k2 = emit_isk12(0, delta & (255 << sh));
 	k = emit_isk12(0, delta & ~(255 << sh));
 	if (k) {
-	  emit_dn(as, ARMI_ADD^k2^inv, d, d);
-	  emit_dn(as, ARMI_ADD^k^inv, d, r);
+	  emit_dn(as, ARMI_ADD^k2^inv, rd, rd);
+	  emit_dn(as, ARMI_ADD^k^inv, rd, r);
 	  return 1;
 	}
       }
@@ -171,23 +174,24 @@ static int emit_kdelta2(ASMState *as, Reg d, int32_t i)
 }
 
 /* Load a 32 bit constant into a GPR. */
-static void emit_loadi(ASMState *as, Reg r, int32_t i)
+static void emit_loadi(ASMState *as, Reg rd, int32_t i)
 {
   uint32_t k = emit_isk12(ARMI_MOV, i);
-  lua_assert(rset_test(as->freeset, r) || r == RID_TMP);
+  lj_assertA(rset_test(as->freeset, rd) || rd == RID_TMP,
+	     "dest reg %d not free", rd);
   if (k) {
     /* Standard K12 constant. */
-    emit_d(as, ARMI_MOV^k, r);
+    emit_d(as, ARMI_MOV^k, rd);
   } else if ((as->flags & JIT_F_ARMV6T2) && (uint32_t)i < 0x00010000u) {
     /* 16 bit loword constant for ARMv6T2. */
-    emit_d(as, ARMI_MOVW|(i & 0x0fff)|((i & 0xf000)<<4), r);
-  } else if (emit_kdelta1(as, r, i)) {
+    emit_d(as, ARMI_MOVW|(i & 0x0fff)|((i & 0xf000)<<4), rd);
+  } else if (emit_kdelta1(as, rd, i)) {
     /* One step delta relative to another constant. */
   } else if ((as->flags & JIT_F_ARMV6T2)) {
     /* 32 bit hiword/loword constant for ARMv6T2. */
-    emit_d(as, ARMI_MOVT|((i>>16) & 0x0fff)|(((i>>16) & 0xf000)<<4), r);
-    emit_d(as, ARMI_MOVW|(i & 0x0fff)|((i & 0xf000)<<4), r);
-  } else if (emit_kdelta2(as, r, i)) {
+    emit_d(as, ARMI_MOVT|((i>>16) & 0x0fff)|(((i>>16) & 0xf000)<<4), rd);
+    emit_d(as, ARMI_MOVW|(i & 0x0fff)|((i & 0xf000)<<4), rd);
+  } else if (emit_kdelta2(as, rd, i)) {
     /* Two step delta relative to another constant. */
   } else {
     /* Otherwise construct the constant with up to 4 instructions. */
@@ -197,15 +201,15 @@ static void emit_loadi(ASMState *as, Reg r, int32_t i)
       int32_t m = i & (255 << sh);
       i &= ~(255 << sh);
       if (i == 0) {
-	emit_d(as, ARMI_MOV ^ emit_isk12(0, m), r);
+	emit_d(as, ARMI_MOV ^ emit_isk12(0, m), rd);
 	break;
       }
-      emit_dn(as, ARMI_ORR ^ emit_isk12(0, m), r, r);
+      emit_dn(as, ARMI_ORR ^ emit_isk12(0, m), rd, rd);
     }
   }
 }
 
-#define emit_loada(as, r, addr)		emit_loadi(as, (r), i32ptr((addr)))
+#define emit_loada(as, rd, addr)	emit_loadi(as, (rd), i32ptr((addr)))
 
 static Reg ra_allock(ASMState *as, intptr_t k, RegSet allow);
 
@@ -261,7 +265,7 @@ static void emit_branch(ASMState *as, ARMIns ai, MCode *target)
 {
   MCode *p = as->mcp;
   ptrdiff_t delta = (target - p) - 1;
-  lua_assert(((delta + 0x00800000) >> 24) == 0);
+  lj_assertA(((delta + 0x00800000) >> 24) == 0, "branch target out of range");
   *--p = ai | ((uint32_t)delta & 0x00ffffffu);
   as->mcp = p;
 }
@@ -289,7 +293,7 @@ static void emit_call(ASMState *as, void *target)
 static void emit_movrr(ASMState *as, IRIns *ir, Reg dst, Reg src)
 {
 #if LJ_SOFTFP
-  lua_assert(!irt_isnum(ir->t)); UNUSED(ir);
+  lj_assertA(!irt_isnum(ir->t), "unexpected FP op"); UNUSED(ir);
 #else
   if (dst >= RID_MAX_GPR) {
     emit_dm(as, irt_isnum(ir->t) ? ARMI_VMOV_D : ARMI_VMOV_S,
@@ -313,7 +317,7 @@ static void emit_movrr(ASMState *as, IRIns *ir, Reg dst, Reg src)
 static void emit_loadofs(ASMState *as, IRIns *ir, Reg r, Reg base, int32_t ofs)
 {
 #if LJ_SOFTFP
-  lua_assert(!irt_isnum(ir->t)); UNUSED(ir);
+  lj_assertA(!irt_isnum(ir->t), "unexpected FP op"); UNUSED(ir);
 #else
   if (r >= RID_MAX_GPR)
     emit_vlso(as, irt_isnum(ir->t) ? ARMI_VLDR_D : ARMI_VLDR_S, r, base, ofs);
@@ -326,7 +330,7 @@ static void emit_loadofs(ASMState *as, IRIns *ir, Reg r, Reg base, int32_t ofs)
 static void emit_storeofs(ASMState *as, IRIns *ir, Reg r, Reg base, int32_t ofs)
 {
 #if LJ_SOFTFP
-  lua_assert(!irt_isnum(ir->t)); UNUSED(ir);
+  lj_assertA(!irt_isnum(ir->t), "unexpected FP op"); UNUSED(ir);
 #else
   if (r >= RID_MAX_GPR)
     emit_vlso(as, irt_isnum(ir->t) ? ARMI_VSTR_D : ARMI_VSTR_S, r, base, ofs);

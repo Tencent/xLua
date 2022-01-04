@@ -1,6 +1,6 @@
 |// Low-level VM code for ARM64 CPUs.
 |// Bytecode interpreter, fast functions and helper functions.
-|// Copyright (C) 2005-2017 Mike Pall. See Copyright Notice in luajit.h
+|// Copyright (C) 2005-2021 Mike Pall. See Copyright Notice in luajit.h
 |
 |.arch arm64
 |.section code_op, code_sub
@@ -81,47 +81,48 @@
 |
 |.define CFRAME_SPACE,	208
 |//----- 16 byte aligned, <-- sp entering interpreter
-|// Unused		[sp, #204]	// 32 bit values
-|.define SAVE_NRES,	[sp, #200]
-|.define SAVE_ERRF,	[sp, #196]
-|.define SAVE_MULTRES,	[sp, #192]
-|.define TMPD,		[sp, #184]	// 64 bit values
-|.define SAVE_L,	[sp, #176]
-|.define SAVE_PC,	[sp, #168]
-|.define SAVE_CFRAME,	[sp, #160]
-|.define SAVE_FPR_,	96		// 96+8*8: 64 bit FPR saves
-|.define SAVE_GPR_,	16		// 16+10*8: 64 bit GPR saves
-|.define SAVE_LR,	[sp, #8]
-|.define SAVE_FP,	[sp]
+|.define SAVE_FP_LR_,	192
+|.define SAVE_GPR_,	112		// 112+10*8: 64 bit GPR saves
+|.define SAVE_FPR_,	48		// 48+8*8: 64 bit FPR saves
+|// Unused		[sp, #44]	// 32 bit values
+|.define SAVE_NRES,	[sp, #40]
+|.define SAVE_ERRF,	[sp, #36]
+|.define SAVE_MULTRES,	[sp, #32]
+|.define TMPD,		[sp, #24]	// 64 bit values
+|.define SAVE_L,	[sp, #16]
+|.define SAVE_PC,	[sp, #8]
+|.define SAVE_CFRAME,	[sp, #0]
 |//----- 16 byte aligned, <-- sp while in interpreter.
 |
-|.define TMPDofs,	#184
+|.define TMPDofs,	#24
 |
 |.macro save_, gpr1, gpr2, fpr1, fpr2
-|  stp d..fpr1, d..fpr2, [sp, # SAVE_FPR_+(fpr1-8)*8]
-|  stp x..gpr1, x..gpr2, [sp, # SAVE_GPR_+(gpr1-19)*8]
+|  stp d..fpr2, d..fpr1, [sp, # SAVE_FPR_+(14-fpr1)*8]
+|  stp x..gpr2, x..gpr1, [sp, # SAVE_GPR_+(27-gpr1)*8]
 |.endmacro
 |.macro rest_, gpr1, gpr2, fpr1, fpr2
-|  ldp d..fpr1, d..fpr2, [sp, # SAVE_FPR_+(fpr1-8)*8]
-|  ldp x..gpr1, x..gpr2, [sp, # SAVE_GPR_+(gpr1-19)*8]
+|  ldp d..fpr2, d..fpr1, [sp, # SAVE_FPR_+(14-fpr1)*8]
+|  ldp x..gpr2, x..gpr1, [sp, # SAVE_GPR_+(27-gpr1)*8]
 |.endmacro
 |
 |.macro saveregs
-|  stp fp, lr, [sp, #-CFRAME_SPACE]!
-|  add fp, sp, #0
-|  stp x19, x20, [sp, # SAVE_GPR_]
+|  sub sp, sp, # CFRAME_SPACE
+|  stp fp, lr, [sp, # SAVE_FP_LR_]
+|  add fp, sp, # SAVE_FP_LR_
+|  stp x20, x19, [sp, # SAVE_GPR_+(27-19)*8]
 |  save_ 21, 22, 8, 9
 |  save_ 23, 24, 10, 11
 |  save_ 25, 26, 12, 13
 |  save_ 27, 28, 14, 15
 |.endmacro
 |.macro restoreregs
-|  ldp x19, x20, [sp, # SAVE_GPR_]
+|  ldp x20, x19, [sp, # SAVE_GPR_+(27-19)*8]
 |  rest_ 21, 22, 8, 9
 |  rest_ 23, 24, 10, 11
 |  rest_ 25, 26, 12, 13
 |  rest_ 27, 28, 14, 15
-|  ldp fp, lr, [sp], # CFRAME_SPACE
+|  ldp fp, lr, [sp, # SAVE_FP_LR_]
+|  add sp, sp, # CFRAME_SPACE
 |.endmacro
 |
 |// Type definitions. Some of these are only used for documentation.
@@ -500,8 +501,9 @@ static void build_subroutines(BuildCtx *ctx)
   |    ldr GL, L->glref			// Setup pointer to global state.
   |     mov BASE, CARG2
   |   str CARG1, SAVE_PC		// Any value outside of bytecode is ok.
-  |  str RC, SAVE_CFRAME
-  |  str fp, L->cframe			// Add our C frame to cframe chain.
+  |  add TMP0, sp, #0
+  |   str RC, SAVE_CFRAME
+  |  str TMP0, L->cframe		// Add our C frame to cframe chain.
   |
   |3:  // Entry point for vm_cpcall/vm_resume (BASE = base, PC = ftype).
   |  str L, GL->cur_L
@@ -536,8 +538,9 @@ static void build_subroutines(BuildCtx *ctx)
   |   sub RA, RA, RB			// Compute -savestack(L, L->top).
   |   str RAw, SAVE_NRES		// Neg. delta means cframe w/o frame.
   |  str wzr, SAVE_ERRF			// No error function.
-  |  str RC, SAVE_CFRAME
-  |  str fp, L->cframe			// Add our C frame to cframe chain.
+  |  add TMP0, sp, #0
+  |   str RC, SAVE_CFRAME
+  |  str TMP0, L->cframe		// Add our C frame to cframe chain.
   |    str L, GL->cur_L
   |  blr CARG4			// (lua_State *L, lua_CFunction func, void *ud)
   |  mov BASE, CRET1
@@ -562,12 +565,12 @@ static void build_subroutines(BuildCtx *ctx)
   |    cmp CARG1, #1
   |.endif
   |   ldr PC, [CARG4, #-24]		// Restore PC from [cont|PC].
-  |  ldr CARG3, LFUNC:CARG3->pc
   |    add TMP0, RA, RC
   |    str TISNIL, [TMP0, #-8]		// Ensure one valid arg.
   |.if FFI
   |    bls >1
   |.endif
+  |  ldr CARG3, LFUNC:CARG3->pc
   |  ldr KBASE, [CARG3, #PC2PROTO(k)]
   |  // BASE = base, RA = resultptr, CARG4 = meta base
   |    br CARG1
@@ -711,6 +714,7 @@ static void build_subroutines(BuildCtx *ctx)
   |->vmeta_tsetr:
   |  sxtw CARG3, TMP1w
   |  str BASE, L->base
+  |  mov CARG1, L
   |  str PC, SAVE_PC
   |  bl extern lj_tab_setinth  // (lua_State *L, GCtab *t, int32_t key)
   |  // Returns TValue *.
@@ -992,9 +996,9 @@ static void build_subroutines(BuildCtx *ctx)
   |   ldr STR:RC, GL->gcroot[GCROOT_MMNAME+MM_metatable]
   |  cbz TAB:RB, ->fff_restv
   |  ldr TMP1w, TAB:RB->hmask
-  |   ldr TMP2w, STR:RC->hash
+  |   ldr TMP2w, STR:RC->sid
   |    ldr NODE:CARG3, TAB:RB->node
-  |  and TMP1w, TMP1w, TMP2w		// idx = str->hash & tab->hmask
+  |  and TMP1w, TMP1w, TMP2w		// idx = str->sid & tab->hmask
   |  add TMP1, TMP1, TMP1, lsl #1
   |  movn CARG4, #~LJ_TSTR
   |    add NODE:CARG3, NODE:CARG3, TMP1, lsl #3  // node = tab->node + idx*3*8
@@ -1085,21 +1089,19 @@ static void build_subroutines(BuildCtx *ctx)
   |//-- Base library: iterators -------------------------------------------
   |
   |.ffunc_1 next
-  |  checktp CARG2, CARG1, LJ_TTAB, ->fff_fallback
+  |  checktp CARG1, LJ_TTAB, ->fff_fallback
   |  str TISNIL, [BASE, NARGS8:RC]	// Set missing 2nd arg to nil.
   |  ldr PC, [BASE, FRAME_PC]
-  |   stp BASE, BASE, L->base		// Add frame since C call can throw.
-  |  mov CARG1, L
-  |  add CARG3, BASE, #8
-  |   str PC, SAVE_PC
-  |  bl extern lj_tab_next	// (lua_State *L, GCtab *t, TValue *key)
-  |  // Returns 0 at end of traversal.
+  |  add CARG2, BASE, #8
+  |  sub CARG3, BASE, #16
+  |  bl extern lj_tab_next		// (GCtab *t, cTValue *key, TValue *o)
+  |  // Returns 1=found, 0=end, -1=error.
+  |   mov RC, #(2+1)*8
+  |  tbnz CRET1w, #31, ->fff_fallback	// Invalid key.
+  |  cbnz CRET1, ->fff_res		// Found key/value.
+  |  // End of traversal: return nil.
   |  str TISNIL, [BASE, #-16]
-  |  cbz CRET1, ->fff_res1		// End of traversal: return nil.
-  |  ldp CARG1, CARG2, [BASE, #8]	// Copy key and value to results.
-  |    mov RC, #(2+1)*8
-  |  stp CARG1, CARG2, [BASE, #-16]
-  |  b ->fff_res
+  |  b ->fff_res1
   |
   |.ffunc_1 pairs
   |  checktp TMP1, CARG1, LJ_TTAB, ->fff_fallback
@@ -1162,9 +1164,10 @@ static void build_subroutines(BuildCtx *ctx)
   |//-- Base library: catch errors ----------------------------------------
   |
   |.ffunc pcall
+  |   cmp NARGS8:RC, #8
   |  ldrb TMP0w, GL->hookmask
-  |   subs NARGS8:RC, NARGS8:RC, #8
   |   blo ->fff_fallback
+  |   sub NARGS8:RC, NARGS8:RC, #8
   |    mov RB, BASE
   |    add BASE, BASE, #16
   |  ubfx TMP0w, TMP0w, #HOOK_ACTIVE_SHIFT, #1
@@ -1182,15 +1185,16 @@ static void build_subroutines(BuildCtx *ctx)
   |.ffunc xpcall
   |     ldp CARG1, CARG2, [BASE]
   |  ldrb TMP0w, GL->hookmask
-  |   subs NARGS8:RC, NARGS8:RC, #16
+  |   subs NARGS8:TMP1, NARGS8:RC, #16
   |   blo ->fff_fallback
   |    mov RB, BASE
-  |    add BASE, BASE, #24
   |     asr ITYPE, CARG2, #47
   |  ubfx TMP0w, TMP0w, #HOOK_ACTIVE_SHIFT, #1
   |     cmn ITYPE, #-LJ_TFUNC
   |  add PC, TMP0, #24+FRAME_PCALL
   |     bne ->fff_fallback		// Traceback must be a function.
+  |   mov NARGS8:RC, NARGS8:TMP1
+  |    add BASE, BASE, #24
   |     stp CARG2, CARG1, [RB]		// Swap function and traceback.
   |   cbz NARGS8:RC, ->vm_call_dispatch
   |  b <1
@@ -1487,8 +1491,8 @@ static void build_subroutines(BuildCtx *ctx)
   |  b <6
   |.endmacro
   |
-  |  math_minmax math_min, gt, hi
-  |  math_minmax math_max, lt, lo
+  |  math_minmax math_min, gt, pl
+  |  math_minmax math_max, lt, le
   |
   |//-- String library -----------------------------------------------------
   |
@@ -1587,7 +1591,7 @@ static void build_subroutines(BuildCtx *ctx)
   |   str BASE, L->base
   |   str PC, SAVE_PC
   |   str L, GL->tmpbuf.L
-  |  str TMP0, GL->tmpbuf.p
+  |  str TMP0, GL->tmpbuf.w
   |  bl extern lj_buf_putstr_ .. name
   |  bl extern lj_buf_tostr
   |  b ->fff_resstr
@@ -2033,9 +2037,9 @@ static void build_subroutines(BuildCtx *ctx)
   |  b <2
   |
   |9:  // Rethrow error from the right C frame.
-  |  neg CARG2, CARG1
+  |  neg CARG2w, CARG1w
   |  mov CARG1, L
-  |  bl extern lj_err_throw		// (lua_State *L, int errcode)
+  |  bl extern lj_err_trace		// (lua_State *L, int errcode)
   |.endif
   |
   |//-----------------------------------------------------------------------
@@ -2063,6 +2067,63 @@ static void build_subroutines(BuildCtx *ctx)
   |//-----------------------------------------------------------------------
   |//-- Miscellaneous functions --------------------------------------------
   |//-----------------------------------------------------------------------
+  |
+  |.define NEXT_TAB,		TAB:CARG1
+  |.define NEXT_RES,		CARG1
+  |.define NEXT_IDX,		CARG2w
+  |.define NEXT_LIM,		CARG3w
+  |.define NEXT_TMP0,		TMP0
+  |.define NEXT_TMP0w,		TMP0w
+  |.define NEXT_TMP1,		TMP1
+  |.define NEXT_TMP1w,		TMP1w
+  |.define NEXT_RES_PTR,	sp
+  |.define NEXT_RES_VAL,	[sp]
+  |.define NEXT_RES_KEY,	[sp, #8]
+  |
+  |// TValue *lj_vm_next(GCtab *t, uint32_t idx)
+  |// Next idx returned in CRET2w.
+  |->vm_next:
+  |.if JIT
+  |  ldr NEXT_LIM, NEXT_TAB->asize
+  |   ldr NEXT_TMP1, NEXT_TAB->array
+  |1:  // Traverse array part.
+  |  subs NEXT_TMP0w, NEXT_IDX, NEXT_LIM
+  |  bhs >5				// Index points after array part?
+  |  ldr NEXT_TMP0, [NEXT_TMP1, NEXT_IDX, uxtw #3]
+  |  cmn NEXT_TMP0, #-LJ_TNIL
+  |   cinc NEXT_IDX, NEXT_IDX, eq
+  |  beq <1				// Skip holes in array part.
+  |  str NEXT_TMP0, NEXT_RES_VAL
+  |   movz NEXT_TMP0w, #(LJ_TISNUM>>1)&0xffff, lsl #16
+  |   stp NEXT_IDX, NEXT_TMP0w, NEXT_RES_KEY
+  |  add NEXT_IDX, NEXT_IDX, #1
+  |  mov NEXT_RES, NEXT_RES_PTR
+  |4:
+  |  ret
+  |
+  |5:  // Traverse hash part.
+  |  ldr NEXT_TMP1w, NEXT_TAB->hmask
+  |   ldr NODE:NEXT_RES, NEXT_TAB->node
+  |   add NEXT_TMP0w, NEXT_TMP0w, NEXT_TMP0w, lsl #1
+  |  add NEXT_LIM, NEXT_LIM, NEXT_TMP1w
+  |   add NODE:NEXT_RES, NODE:NEXT_RES, NEXT_TMP0w, uxtw #3
+  |6:
+  |  cmp NEXT_IDX, NEXT_LIM
+  |  bhi >9
+  |  ldr NEXT_TMP0, NODE:NEXT_RES->val
+  |  cmn NEXT_TMP0, #-LJ_TNIL
+  |   add NEXT_IDX, NEXT_IDX, #1
+  |  bne <4
+  |  // Skip holes in hash part.
+  |  add NODE:NEXT_RES, NODE:NEXT_RES, #sizeof(Node)
+  |  b <6
+  |
+  |9:  // End of iteration. Set the key to nil (not the value).
+  |  movn NEXT_TMP0, #0
+  |  str NEXT_TMP0, NEXT_RES_KEY
+  |  mov NEXT_RES, NEXT_RES_PTR
+  |  ret
+  |.endif
   |
   |//-----------------------------------------------------------------------
   |//-- FFI helper functions -----------------------------------------------
@@ -2121,16 +2182,16 @@ static void build_subroutines(BuildCtx *ctx)
   |  // Caveat: needs special frame unwinding, see below.
   |.if FFI
   |  .type CCSTATE, CCallState, x19
-  |  stp fp, lr, [sp, #-32]!
-  |  add fp, sp, #0
-  |  str CCSTATE, [sp, #16]
+  |  stp x20, CCSTATE, [sp, #-32]!
+  |  stp fp, lr, [sp, #16]
+  |  add fp, sp, #16
   |  mov CCSTATE, x0
   |  ldr TMP0w, CCSTATE:x0->spadj
   |   ldrb TMP1w, CCSTATE->nsp
   |    add TMP2, CCSTATE, #offsetof(CCallState, stack)
   |   subs TMP1, TMP1, #1
   |    ldr TMP3, CCSTATE->func
-  |  sub sp, fp, TMP0
+  |  sub sp, sp, TMP0
   |   bmi >2
   |1:  // Copy stack slots
   |  ldr TMP0, [TMP2, TMP1, lsl #3]
@@ -2148,12 +2209,12 @@ static void build_subroutines(BuildCtx *ctx)
   |   ldp d6, d7, CCSTATE->fpr[6]
   |  ldr x8, CCSTATE->retp
   |  blr TMP3
-  |  mov sp, fp
+  |  sub sp, fp, #16
   |  stp x0, x1, CCSTATE->gpr[0]
   |   stp d0, d1, CCSTATE->fpr[0]
   |   stp d2, d3, CCSTATE->fpr[2]
-  |  ldr CCSTATE, [sp, #16]
-  |  ldp fp, lr, [sp], #32
+  |  ldp fp, lr, [sp, #16]
+  |  ldp x20, CCSTATE, [sp], #32
   |  ret
   |.endif
   |// Note: vm_ffi_call must be the last function in this object file!
@@ -2779,7 +2840,7 @@ static void build_ins(BuildCtx *ctx, BCOp op, int defop)
     |2:  // Check if string is white and ensure upvalue is closed.
     |  ldrb TMP0w, UPVAL:CARG1->closed
     |    tst TMP1w, #LJ_GC_WHITES	// iswhite(str)
-    |  ccmp TMP0w, #0, #0, ne
+    |  ccmp TMP0w, #0, #4, ne
     |  beq <1
     |  // Crossed a write barrier. Move the barrier forward.
     |  mov CARG1, GL
@@ -2883,7 +2944,7 @@ static void build_ins(BuildCtx *ctx, BCOp op, int defop)
   case BC_GGET:
     |  // RA = dst, RC = str_const (~)
   case BC_GSET:
-    |  // RA = dst, RC = str_const (~)
+    |  // RA = src, RC = str_const (~)
     |  ldr LFUNC:CARG1, [BASE, FRAME_FUNC]
     |   mvn RC, RC
     |  and LFUNC:CARG1, CARG1, #LJ_GCVMASK
@@ -2941,9 +3002,9 @@ static void build_ins(BuildCtx *ctx, BCOp op, int defop)
     |->BC_TGETS_Z:
     |  // TAB:CARG2 = GCtab *, STR:RC = GCstr *, RA = dst
     |  ldr TMP1w, TAB:CARG2->hmask
-    |   ldr TMP2w, STR:RC->hash
+    |   ldr TMP2w, STR:RC->sid
     |    ldr NODE:CARG3, TAB:CARG2->node
-    |  and TMP1w, TMP1w, TMP2w		// idx = str->hash & tab->hmask
+    |  and TMP1w, TMP1w, TMP2w		// idx = str->sid & tab->hmask
     |  add TMP1, TMP1, TMP1, lsl #1
     |  movn CARG4, #~LJ_TSTR
     |    add NODE:CARG3, NODE:CARG3, TMP1, lsl #3  // node = tab->node + idx*3*8
@@ -3067,9 +3128,9 @@ static void build_ins(BuildCtx *ctx, BCOp op, int defop)
     |->BC_TSETS_Z:
     |  // TAB:CARG2 = GCtab *, STR:RC = GCstr *, RA = src
     |  ldr TMP1w, TAB:CARG2->hmask
-    |   ldr TMP2w, STR:RC->hash
+    |   ldr TMP2w, STR:RC->sid
     |    ldr NODE:CARG3, TAB:CARG2->node
-    |  and TMP1w, TMP1w, TMP2w		// idx = str->hash & tab->hmask
+    |  and TMP1w, TMP1w, TMP2w		// idx = str->sid & tab->hmask
     |  add TMP1, TMP1, TMP1, lsl #1
     |  movn CARG4, #~LJ_TSTR
     |    add NODE:CARG3, NODE:CARG3, TMP1, lsl #3  // node = tab->node + idx*3*8
@@ -3320,10 +3381,11 @@ static void build_ins(BuildCtx *ctx, BCOp op, int defop)
     break;
 
   case BC_ITERN:
-    |  // RA = base, (RB = nresults+1, RC = nargs+1 (2+1))
     |.if JIT
-    |  // NYI: add hotloop, record BC_ITERN.
+    |  hotloop
     |.endif
+    |->vm_IITERN:
+    |  // RA = base, (RB = nresults+1, RC = nargs+1 (2+1))
     |  add RA, BASE, RA, lsl #3
     |  ldr TAB:RB, [RA, #-16]
     |    ldrh TMP3w, [PC, # OFS_RD]
@@ -3382,7 +3444,7 @@ static void build_ins(BuildCtx *ctx, BCOp op, int defop)
     |   ccmp CARG4, TISNIL, #0, eq
     |  ccmp TMP1w, #FF_next_N, #0, eq
     |  bne >5
-    |  mov TMP0w, #0xfffe7fff
+    |  mov TMP0w, #0xfffe7fff		// LJ_KEYINDEX
     |  lsl TMP0, TMP0, #32
     |  str TMP0, [RA, #-8]		// Initialize control var.
     |1:
@@ -3390,11 +3452,28 @@ static void build_ins(BuildCtx *ctx, BCOp op, int defop)
     |  ins_next
     |
     |5:  // Despecialize bytecode if any of the checks fail.
+    |.if JIT
+    |  ldrb TMP2w, [RC, # OFS_OP]
+    |.endif
     |  mov TMP0, #BC_JMP
     |   mov TMP1, #BC_ITERC
     |  strb TMP0w, [PC, #-4+OFS_OP]
+    |.if JIT
+    |  cmp TMP2w, #BC_ITERN
+    |  bne >6
+    |.endif
     |   strb TMP1w, [RC, # OFS_OP]
     |  b <1
+    |.if JIT
+    |6:  // Unpatch JLOOP.
+    |  ldr RA, [GL, #GL_J(trace)]
+    |  ldrh TMP2w, [RC, # OFS_RD]
+    |  ldr TRACE:RA, [RA, TMP2, lsl #3]
+    |  ldr TMP2w, TRACE:RA->startins
+    |  bfxil TMP2w, TMP1w, #0, #8
+    |  str TMP2w, [RC]
+    |  b <1
+    |.endif
     break;
 
   case BC_VARG:
@@ -3859,7 +3938,7 @@ static int build_backend(BuildCtx *ctx)
 static void emit_asm_debug(BuildCtx *ctx)
 {
   int fcofs = (int)((uint8_t *)ctx->glob[GLOB_vm_ffi_call] - ctx->code);
-  int i, cf = CFRAME_SIZE >> 3;
+  int i;
   switch (ctx->mode) {
   case BUILD_elfasm:
     fprintf(ctx->fp, "\t.section .debug_frame,\"\",%%progbits\n");
@@ -3873,7 +3952,7 @@ static void emit_asm_debug(BuildCtx *ctx)
 	"\t.uleb128 0x1\n"
 	"\t.sleb128 -8\n"
 	"\t.byte 30\n"				/* Return address is in lr. */
-	"\t.byte 0xc\n\t.uleb128 31\n\t.uleb128 0\n"	/* def_cfa sp */
+	"\t.byte 0xc\n\t.uleb128 29\n\t.uleb128 16\n"	/* def_cfa fp 16 */
 	"\t.align 3\n"
 	".LECIE0:\n\n");
     fprintf(ctx->fp,
@@ -3883,15 +3962,14 @@ static void emit_asm_debug(BuildCtx *ctx)
 	"\t.long .Lframe0\n"
 	"\t.quad .Lbegin\n"
 	"\t.quad %d\n"
-	"\t.byte 0xe\n\t.uleb128 %d\n"		/* def_cfa_offset */
-	"\t.byte 0x9d\n\t.uleb128 %d\n"		/* offset fp */
-	"\t.byte 0x9e\n\t.uleb128 %d\n",	/* offset lr */
-	fcofs, CFRAME_SIZE, cf, cf-1);
+	"\t.byte 0x9e\n\t.uleb128 1\n"		/* offset lr */
+	"\t.byte 0x9d\n\t.uleb128 2\n",		/* offset fp */
+	fcofs);
     for (i = 19; i <= 28; i++)  /* offset x19-x28 */
-      fprintf(ctx->fp, "\t.byte 0x%x\n\t.uleb128 %d\n", 0x80+i, cf-i+17);
+      fprintf(ctx->fp, "\t.byte 0x%x\n\t.uleb128 %d\n", 0x80+i, i+(3-19));
     for (i = 8; i <= 15; i++)  /* offset d8-d15 */
       fprintf(ctx->fp, "\t.byte 5\n\t.uleb128 0x%x\n\t.uleb128 %d\n",
-	      64+i, cf-i-4);
+	      64+i, i+(3+(28-19+1)-8));
     fprintf(ctx->fp,
 	"\t.align 3\n"
 	".LEFDE0:\n\n");
@@ -3903,10 +3981,10 @@ static void emit_asm_debug(BuildCtx *ctx)
 	"\t.long .Lframe0\n"
 	"\t.quad lj_vm_ffi_call\n"
 	"\t.quad %d\n"
-	"\t.byte 0xe\n\t.uleb128 32\n"		/* def_cfa_offset */
-	"\t.byte 0x9d\n\t.uleb128 4\n"		/* offset fp */
-	"\t.byte 0x9e\n\t.uleb128 3\n"		/* offset lr */
-	"\t.byte 0x93\n\t.uleb128 2\n"		/* offset x19 */
+	"\t.byte 0x9e\n\t.uleb128 1\n"		/* offset lr */
+	"\t.byte 0x9d\n\t.uleb128 2\n"		/* offset fp */
+	"\t.byte 0x93\n\t.uleb128 3\n"		/* offset x19 */
+	"\t.byte 0x94\n\t.uleb128 4\n"		/* offset x20 */
 	"\t.align 3\n"
 	".LEFDE1:\n\n", (int)ctx->codesz - fcofs);
 #endif
@@ -3925,7 +4003,7 @@ static void emit_asm_debug(BuildCtx *ctx)
 	"\t.byte 0x1b\n"			/* pcrel|sdata4 */
 	"\t.long lj_err_unwind_dwarf-.\n"
 	"\t.byte 0x1b\n"			/* pcrel|sdata4 */
-	"\t.byte 0xc\n\t.uleb128 31\n\t.uleb128 0\n"	/* def_cfa sp */
+	"\t.byte 0xc\n\t.uleb128 29\n\t.uleb128 16\n"	/* def_cfa fp 16 */
 	"\t.align 3\n"
 	".LECIE1:\n\n");
     fprintf(ctx->fp,
@@ -3936,15 +4014,14 @@ static void emit_asm_debug(BuildCtx *ctx)
 	"\t.long .Lbegin-.\n"
 	"\t.long %d\n"
 	"\t.uleb128 0\n"			/* augmentation length */
-	"\t.byte 0xe\n\t.uleb128 %d\n"		/* def_cfa_offset */
-	"\t.byte 0x9d\n\t.uleb128 %d\n"		/* offset fp */
-	"\t.byte 0x9e\n\t.uleb128 %d\n",	/* offset lr */
-	fcofs, CFRAME_SIZE, cf, cf-1);
+	"\t.byte 0x9e\n\t.uleb128 1\n"		/* offset lr */
+	"\t.byte 0x9d\n\t.uleb128 2\n",		/* offset fp */
+	fcofs);
     for (i = 19; i <= 28; i++)  /* offset x19-x28 */
-      fprintf(ctx->fp, "\t.byte 0x%x\n\t.uleb128 %d\n", 0x80+i, cf-i+17);
+      fprintf(ctx->fp, "\t.byte 0x%x\n\t.uleb128 %d\n", 0x80+i, i+(3-19));
     for (i = 8; i <= 15; i++)  /* offset d8-d15 */
       fprintf(ctx->fp, "\t.byte 5\n\t.uleb128 0x%x\n\t.uleb128 %d\n",
-	      64+i, cf-i-4);
+	      64+i, i+(3+(28-19+1)-8));
     fprintf(ctx->fp,
 	"\t.align 3\n"
 	".LEFDE2:\n\n");
@@ -3961,7 +4038,7 @@ static void emit_asm_debug(BuildCtx *ctx)
 	"\t.byte 30\n"				/* Return address is in lr. */
 	"\t.uleb128 1\n"			/* augmentation length */
 	"\t.byte 0x1b\n"			/* pcrel|sdata4 */
-	"\t.byte 0xc\n\t.uleb128 31\n\t.uleb128 0\n"	/* def_cfa sp */
+	"\t.byte 0xc\n\t.uleb128 29\n\t.uleb128 16\n"	/* def_cfa fp 16 */
 	"\t.align 3\n"
 	".LECIE2:\n\n");
     fprintf(ctx->fp,
@@ -3972,14 +4049,106 @@ static void emit_asm_debug(BuildCtx *ctx)
 	"\t.long lj_vm_ffi_call-.\n"
 	"\t.long %d\n"
 	"\t.uleb128 0\n"			/* augmentation length */
-	"\t.byte 0xe\n\t.uleb128 32\n"		/* def_cfa_offset */
-	"\t.byte 0x9d\n\t.uleb128 4\n"		/* offset fp */
-	"\t.byte 0x9e\n\t.uleb128 3\n"		/* offset lr */
-	"\t.byte 0x93\n\t.uleb128 2\n"		/* offset x19 */
+	"\t.byte 0x9e\n\t.uleb128 1\n"		/* offset lr */
+	"\t.byte 0x9d\n\t.uleb128 2\n"		/* offset fp */
+	"\t.byte 0x93\n\t.uleb128 3\n"		/* offset x19 */
+	"\t.byte 0x94\n\t.uleb128 4\n"		/* offset x20 */
 	"\t.align 3\n"
 	".LEFDE3:\n\n", (int)ctx->codesz - fcofs);
 #endif
     break;
+#if !LJ_NO_UNWIND
+  case BUILD_machasm: {
+#if LJ_HASFFI
+    int fcsize = 0;
+#endif
+    int j;
+    fprintf(ctx->fp, "\t.section __TEXT,__eh_frame,coalesced,no_toc+strip_static_syms+live_support\n");
+    fprintf(ctx->fp,
+	"EH_frame1:\n"
+	"\t.set L$set$x,LECIEX-LSCIEX\n"
+	"\t.long L$set$x\n"
+	"LSCIEX:\n"
+	"\t.long 0\n"
+	"\t.byte 0x1\n"
+	"\t.ascii \"zPR\\0\"\n"
+	"\t.uleb128 0x1\n"
+	"\t.sleb128 -8\n"
+	"\t.byte 30\n"				/* Return address is in lr. */
+	"\t.uleb128 6\n"			/* augmentation length */
+	"\t.byte 0x9b\n"			/* indirect|pcrel|sdata4 */
+	"\t.long _lj_err_unwind_dwarf@GOT-.\n"
+	"\t.byte 0x1b\n"			/* pcrel|sdata4 */
+	"\t.byte 0xc\n\t.uleb128 29\n\t.uleb128 16\n"	/* def_cfa fp 16 */
+	"\t.align 3\n"
+	"LECIEX:\n\n");
+    for (j = 0; j < ctx->nsym; j++) {
+      const char *name = ctx->sym[j].name;
+      int32_t size = ctx->sym[j+1].ofs - ctx->sym[j].ofs;
+      if (size == 0) continue;
+#if LJ_HASFFI
+      if (!strcmp(name, "_lj_vm_ffi_call")) { fcsize = size; continue; }
+#endif
+      fprintf(ctx->fp,
+	"LSFDE%d:\n"
+	"\t.set L$set$%d,LEFDE%d-LASFDE%d\n"
+	"\t.long L$set$%d\n"
+	"LASFDE%d:\n"
+	"\t.long LASFDE%d-EH_frame1\n"
+	"\t.long %s-.\n"
+	"\t.long %d\n"
+	"\t.uleb128 0\n"			/* augmentation length */
+	"\t.byte 0x9e\n\t.uleb128 1\n"		/* offset lr */
+	"\t.byte 0x9d\n\t.uleb128 2\n",		/* offset fp */
+	j, j, j, j, j, j, j, name, size);
+      for (i = 19; i <= 28; i++)  /* offset x19-x28 */
+	fprintf(ctx->fp, "\t.byte 0x%x\n\t.uleb128 %d\n", 0x80+i, i+(3-19));
+      for (i = 8; i <= 15; i++)  /* offset d8-d15 */
+	fprintf(ctx->fp, "\t.byte 5\n\t.uleb128 0x%x\n\t.uleb128 %d\n",
+		64+i, i+(3+(28-19+1)-8));
+      fprintf(ctx->fp,
+	"\t.align 3\n"
+	"LEFDE%d:\n\n", j);
+    }
+#if LJ_HASFFI
+    if (fcsize) {
+      fprintf(ctx->fp,
+	"EH_frame2:\n"
+	"\t.set L$set$y,LECIEY-LSCIEY\n"
+	"\t.long L$set$y\n"
+	"LSCIEY:\n"
+	"\t.long 0\n"
+	"\t.byte 0x1\n"
+	"\t.ascii \"zR\\0\"\n"
+	"\t.uleb128 0x1\n"
+	"\t.sleb128 -8\n"
+	"\t.byte 30\n"				/* Return address is in lr. */
+	"\t.uleb128 1\n"			/* augmentation length */
+	"\t.byte 0x1b\n"			/* pcrel|sdata4 */
+	"\t.byte 0xc\n\t.uleb128 29\n\t.uleb128 16\n"	/* def_cfa fp 16 */
+	"\t.align 3\n"
+	"LECIEY:\n\n");
+      fprintf(ctx->fp,
+	"LSFDEY:\n"
+	"\t.set L$set$yy,LEFDEY-LASFDEY\n"
+	"\t.long L$set$yy\n"
+	"LASFDEY:\n"
+	"\t.long LASFDEY-EH_frame2\n"
+	"\t.long _lj_vm_ffi_call-.\n"
+	"\t.long %d\n"
+	"\t.uleb128 0\n"			/* augmentation length */
+	"\t.byte 0x9e\n\t.uleb128 1\n"		/* offset lr */
+	"\t.byte 0x9d\n\t.uleb128 2\n"		/* offset fp */
+	"\t.byte 0x93\n\t.uleb128 3\n"		/* offset x19 */
+	"\t.byte 0x94\n\t.uleb128 4\n"		/* offset x20 */
+	"\t.align 3\n"
+	"LEFDEY:\n\n", fcsize);
+    }
+#endif
+    fprintf(ctx->fp, ".subsections_via_symbols\n");
+    }
+    break;
+#endif
   default:
     break;
   }

@@ -1,6 +1,6 @@
 /*
 ** Math library.
-** Copyright (C) 2005-2017 Mike Pall. See Copyright Notice in luajit.h
+** Copyright (C) 2005-2021 Mike Pall. See Copyright Notice in luajit.h
 */
 
 #include <math.h>
@@ -15,6 +15,7 @@
 #include "lj_obj.h"
 #include "lj_lib.h"
 #include "lj_vm.h"
+#include "lj_prng.h"
 
 /* ------------------------------------------------------------------------ */
 
@@ -33,19 +34,19 @@ LJLIB_ASM(math_sqrt)		LJLIB_REC(math_unary IRFPM_SQRT)
   lj_lib_checknum(L, 1);
   return FFH_RETRY;
 }
-LJLIB_ASM_(math_log10)		LJLIB_REC(math_unary IRFPM_LOG10)
-LJLIB_ASM_(math_exp)		LJLIB_REC(math_unary IRFPM_EXP)
-LJLIB_ASM_(math_sin)		LJLIB_REC(math_unary IRFPM_SIN)
-LJLIB_ASM_(math_cos)		LJLIB_REC(math_unary IRFPM_COS)
-LJLIB_ASM_(math_tan)		LJLIB_REC(math_unary IRFPM_TAN)
-LJLIB_ASM_(math_asin)		LJLIB_REC(math_atrig FF_math_asin)
-LJLIB_ASM_(math_acos)		LJLIB_REC(math_atrig FF_math_acos)
-LJLIB_ASM_(math_atan)		LJLIB_REC(math_atrig FF_math_atan)
-LJLIB_ASM_(math_sinh)		LJLIB_REC(math_htrig IRCALL_sinh)
-LJLIB_ASM_(math_cosh)		LJLIB_REC(math_htrig IRCALL_cosh)
-LJLIB_ASM_(math_tanh)		LJLIB_REC(math_htrig IRCALL_tanh)
+LJLIB_ASM_(math_log10)		LJLIB_REC(math_call IRCALL_log10)
+LJLIB_ASM_(math_exp)		LJLIB_REC(math_call IRCALL_exp)
+LJLIB_ASM_(math_sin)		LJLIB_REC(math_call IRCALL_sin)
+LJLIB_ASM_(math_cos)		LJLIB_REC(math_call IRCALL_cos)
+LJLIB_ASM_(math_tan)		LJLIB_REC(math_call IRCALL_tan)
+LJLIB_ASM_(math_asin)		LJLIB_REC(math_call IRCALL_asin)
+LJLIB_ASM_(math_acos)		LJLIB_REC(math_call IRCALL_acos)
+LJLIB_ASM_(math_atan)		LJLIB_REC(math_call IRCALL_atan)
+LJLIB_ASM_(math_sinh)		LJLIB_REC(math_call IRCALL_sinh)
+LJLIB_ASM_(math_cosh)		LJLIB_REC(math_call IRCALL_cosh)
+LJLIB_ASM_(math_tanh)		LJLIB_REC(math_call IRCALL_tanh)
 LJLIB_ASM_(math_frexp)
-LJLIB_ASM_(math_modf)		LJLIB_REC(.)
+LJLIB_ASM_(math_modf)
 
 LJLIB_ASM(math_log)		LJLIB_REC(math_log)
 {
@@ -105,34 +106,11 @@ LJLIB_PUSH(1e310) LJLIB_SET(huge)
 ** Full-period ME-CF generator with L=64, J=4, k=223, N1=49.
 */
 
-/* PRNG state. */
-struct RandomState {
-  uint64_t gen[4];	/* State of the 4 LFSR generators. */
-  int valid;		/* State is valid. */
-};
-
 /* Union needed for bit-pattern conversion between uint64_t and double. */
 typedef union { uint64_t u64; double d; } U64double;
 
-/* Update generator i and compute a running xor of all states. */
-#define TW223_GEN(i, k, q, s) \
-  z = rs->gen[i]; \
-  z = (((z<<q)^z) >> (k-s)) ^ ((z&((uint64_t)(int64_t)-1 << (64-k)))<<s); \
-  r ^= z; rs->gen[i] = z;
-
-/* PRNG step function. Returns a double in the range 1.0 <= d < 2.0. */
-LJ_NOINLINE uint64_t LJ_FASTCALL lj_math_random_step(RandomState *rs)
-{
-  uint64_t z, r = 0;
-  TW223_GEN(0, 63, 31, 18)
-  TW223_GEN(1, 58, 19, 28)
-  TW223_GEN(2, 55, 24,  7)
-  TW223_GEN(3, 47, 21,  8)
-  return (r & U64x(000fffff,ffffffff)) | U64x(3ff00000,00000000);
-}
-
-/* PRNG initialization function. */
-static void random_init(RandomState *rs, double d)
+/* PRNG seeding function. */
+static void random_seed(PRNGState *rs, double d)
 {
   uint32_t r = 0x11090601;  /* 64-k[i] as four 8 bit constants. */
   int i;
@@ -141,24 +119,22 @@ static void random_init(RandomState *rs, double d)
     uint32_t m = 1u << (r&255);
     r >>= 8;
     u.d = d = d * 3.14159265358979323846 + 2.7182818284590452354;
-    if (u.u64 < m) u.u64 += m;  /* Ensure k[i] MSB of gen[i] are non-zero. */
-    rs->gen[i] = u.u64;
+    if (u.u64 < m) u.u64 += m;  /* Ensure k[i] MSB of u[i] are non-zero. */
+    rs->u[i] = u.u64;
   }
-  rs->valid = 1;
   for (i = 0; i < 10; i++)
-    lj_math_random_step(rs);
+    (void)lj_prng_u64(rs);
 }
 
 /* PRNG extract function. */
-LJLIB_PUSH(top-2)  /* Upvalue holds userdata with RandomState. */
+LJLIB_PUSH(top-2)  /* Upvalue holds userdata with PRNGState. */
 LJLIB_CF(math_random)		LJLIB_REC(.)
 {
   int n = (int)(L->top - L->base);
-  RandomState *rs = (RandomState *)(uddata(udataV(lj_lib_upvalue(L, 1))));
+  PRNGState *rs = (PRNGState *)(uddata(udataV(lj_lib_upvalue(L, 1))));
   U64double u;
   double d;
-  if (LJ_UNLIKELY(!rs->valid)) random_init(rs, 0.0);
-  u.u64 = lj_math_random_step(rs);
+  u.u64 = lj_prng_u64d(rs);
   d = u.d - 1.0;
   if (n > 0) {
 #if LJ_DUALNUM
@@ -203,11 +179,11 @@ LJLIB_CF(math_random)		LJLIB_REC(.)
 }
 
 /* PRNG seed function. */
-LJLIB_PUSH(top-2)  /* Upvalue holds userdata with RandomState. */
+LJLIB_PUSH(top-2)  /* Upvalue holds userdata with PRNGState. */
 LJLIB_CF(math_randomseed)
 {
-  RandomState *rs = (RandomState *)(uddata(udataV(lj_lib_upvalue(L, 1))));
-  random_init(rs, lj_lib_checknum(L, 1));
+  PRNGState *rs = (PRNGState *)(uddata(udataV(lj_lib_upvalue(L, 1))));
+  random_seed(rs, lj_lib_checknum(L, 1));
   return 0;
 }
 
@@ -217,9 +193,8 @@ LJLIB_CF(math_randomseed)
 
 LUALIB_API int luaopen_math(lua_State *L)
 {
-  RandomState *rs;
-  rs = (RandomState *)lua_newuserdata(L, sizeof(RandomState));
-  rs->valid = 0;  /* Use lazy initialization to save some time on startup. */
+  PRNGState *rs = (PRNGState *)lua_newuserdata(L, sizeof(PRNGState));
+  lj_prng_seed_fixed(rs);
   LJ_LIB_REG(L, LUA_MATHLIBNAME, math);
   return 1;
 }

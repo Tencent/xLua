@@ -1,10 +1,9 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<!DOCTYPE html>
 <html>
 <head>
 <title>Extensions</title>
-<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-<meta name="Author" content="Mike Pall">
-<meta name="Copyright" content="Copyright (C) 2005-2017, Mike Pall">
+<meta charset="utf-8">
+<meta name="Copyright" content="Copyright (C) 2005-2021">
 <meta name="Language" content="en">
 <link rel="stylesheet" type="text/css" href="bluequad.css" media="screen">
 <link rel="stylesheet" type="text/css" href="bluequad-print.css" media="print">
@@ -28,7 +27,7 @@ td.excinterop {
 </head>
 <body>
 <div id="site">
-<a href="http://luajit.org"><span>Lua<span id="logo">JIT</span></span></a>
+<a href="https://luajit.org"><span>Lua<span id="logo">JIT</span></span></a>
 </div>
 <div id="head">
 <h1>Extensions</h1>
@@ -37,7 +36,7 @@ td.excinterop {
 <ul><li>
 <a href="luajit.html">LuaJIT</a>
 <ul><li>
-<a href="http://luajit.org/download.html">Download <span class="ext">&raquo;</span></a>
+<a href="https://luajit.org/download.html">Download <span class="ext">&raquo;</span></a>
 </li><li>
 <a href="install.html">Installation</a>
 </li><li>
@@ -55,6 +54,8 @@ td.excinterop {
 <a href="ext_ffi_semantics.html">FFI Semantics</a>
 </li></ul>
 </li><li>
+<a href="ext_buffer.html">String Buffers</a>
+</li><li>
 <a href="ext_jit.html">jit.* Library</a>
 </li><li>
 <a href="ext_c_api.html">Lua/C API</a>
@@ -63,25 +64,20 @@ td.excinterop {
 </li></ul>
 </li><li>
 <a href="status.html">Status</a>
-<ul><li>
-<a href="changes.html">Changes</a>
-</li></ul>
 </li><li>
 <a href="faq.html">FAQ</a>
 </li><li>
-<a href="http://luajit.org/performance.html">Performance <span class="ext">&raquo;</span></a>
-</li><li>
 <a href="http://wiki.luajit.org/">Wiki <span class="ext">&raquo;</span></a>
 </li><li>
-<a href="http://luajit.org/list.html">Mailing List <span class="ext">&raquo;</span></a>
+<a href="https://luajit.org/list.html">Mailing List <span class="ext">&raquo;</span></a>
 </li></ul>
 </div>
 <div id="main">
 <p>
 LuaJIT is fully upwards-compatible with Lua 5.1. It supports all
-<a href="http://www.lua.org/manual/5.1/manual.html#5"><span class="ext">&raquo;</span>&nbsp;standard Lua
+<a href="https://www.lua.org/manual/5.1/manual.html#5"><span class="ext">&raquo;</span>&nbsp;standard Lua
 library functions</a> and the full set of
-<a href="http://www.lua.org/manual/5.1/manual.html#3"><span class="ext">&raquo;</span>&nbsp;Lua/C API
+<a href="https://www.lua.org/manual/5.1/manual.html#3"><span class="ext">&raquo;</span>&nbsp;Lua/C API
 functions</a>.
 </p>
 <p>
@@ -105,7 +101,7 @@ LuaJIT comes with several built-in extension modules:
 <h3 id="bit"><tt>bit.*</tt> &mdash; Bitwise operations</h3>
 <p>
 LuaJIT supports all bitwise operations as defined by
-<a href="http://bitop.luajit.org"><span class="ext">&raquo;</span>&nbsp;Lua BitOp</a>:
+<a href="https://bitop.luajit.org"><span class="ext">&raquo;</span>&nbsp;Lua BitOp</a>:
 </p>
 <pre class="code">
 bit.tobit  bit.tohex  bit.bnot    bit.band bit.bor  bit.bxor
@@ -114,7 +110,7 @@ bit.lshift bit.rshift bit.arshift bit.rol  bit.ror  bit.bswap
 <p>
 This module is a LuaJIT built-in &mdash; you don't need to download or
 install Lua BitOp. The Lua BitOp site has full documentation for all
-<a href="http://bitop.luajit.org/api.html"><span class="ext">&raquo;</span>&nbsp;Lua BitOp API functions</a>.
+<a href="https://bitop.luajit.org/api.html"><span class="ext">&raquo;</span>&nbsp;Lua BitOp API functions</a>.
 The FFI adds support for
 <a href="ext_ffi_semantics.html#cdata_arith">64&nbsp;bit bitwise operations</a>,
 using the same API functions.
@@ -209,9 +205,8 @@ bytecode (e.g. from Lua 5.1) is incompatible and cannot be loaded.
 </p>
 <p>
 Note: <tt>LJ_GC64</tt> mode requires a different frame layout, which implies
-a different, incompatible bytecode format for ports that use this mode (e.g.
-ARM64 or MIPS64) or when explicitly enabled for x64. This may be rectified
-in the future.
+a different, incompatible bytecode format for all 64 bit ports. This may be
+rectified in the future.
 </p>
 
 <h3 id="table_new"><tt>table.new(narray, nhash)</tt> allocates a pre-sized table</h3>
@@ -253,6 +248,10 @@ platforms and makes use of all bits in the seed argument.
 for every call. The result is uniformly distributed between 0.0 and 1.0.
 It's correctly scaled up and rounded for <tt>math.random(n&nbsp;[,m])</tt> to
 preserve uniformity.
+</p>
+<p>
+Important: Neither this nor any other PRNG based on the simplistic
+<tt>math.random()</tt> API is suitable for cryptographic use.
 </p>
 
 <h3 id="io"><tt>io.*</tt> functions handle 64&nbsp;bit file offsets</h3>
@@ -374,6 +373,7 @@ LuaJIT supports some extensions from Lua&nbsp;5.3:
 <li>Unicode escape <tt>'\u{XX...}'</tt> embeds the UTF-8 encoding in string literals.</li>
 <li>The argument table <tt>arg</tt> can be read (and modified) by <tt>LUA_INIT</tt> and <tt>-e</tt> chunks.</li>
 <li><tt>io.read()</tt> and <tt>file:read()</tt> accept formats with or without a leading <tt>*</tt>.</li>
+<li><tt>assert()</tt> accepts any type of error object.</li>
 <li><tt>table.move(a1, f, e, t [,a2])</tt>.</li>
 <li><tt>coroutine.isyieldable()</tt>.</li>
 <li>Lua/C API extensions:
@@ -394,29 +394,19 @@ the toolchain used to compile LuaJIT:
 <td class="excinterop">Interoperability</td>
 </tr>
 <tr class="odd separate">
-<td class="excplatform">POSIX/x64, DWARF2 unwinding</td>
-<td class="exccompiler">GCC 4.3+, Clang</td>
+<td class="excplatform">External frame unwinding</td>
+<td class="exccompiler">GCC, Clang, MSVC</td>
 <td class="excinterop"><b style="color: #00a000;">Full</b></td>
 </tr>
 <tr class="even">
-<td class="excplatform">ARM <tt>-DLUAJIT_UNWIND_EXTERNAL</tt></td>
-<td class="exccompiler">GCC, Clang</td>
-<td class="excinterop"><b style="color: #00a000;">Full</b></td>
-</tr>
-<tr class="odd">
-<td class="excplatform">Other platforms, DWARF2 unwinding</td>
+<td class="excplatform">Internal frame unwinding + DWARF2</td>
 <td class="exccompiler">GCC, Clang</td>
 <td class="excinterop"><b style="color: #c06000;">Limited</b></td>
 </tr>
-<tr class="even">
-<td class="excplatform">Windows/x64</td>
-<td class="exccompiler">MSVC or WinSDK</td>
-<td class="excinterop"><b style="color: #00a000;">Full</b></td>
-</tr>
 <tr class="odd">
-<td class="excplatform">Windows/x86</td>
-<td class="exccompiler">Any</td>
-<td class="excinterop"><b style="color: #00a000;">Full</b></td>
+<td class="excplatform">Windows 64 bit</td>
+<td class="exccompiler">non-MSVC</td>
+<td class="excinterop"><b style="color: #c06000;">Limited</b></td>
 </tr>
 <tr class="even">
 <td class="excplatform">Other platforms</td>
@@ -437,7 +427,9 @@ the toolchain used to compile LuaJIT:
 on the C&nbsp;stack. The contents of the C++&nbsp;exception object
 pass through unmodified.</li>
 <li>Lua errors can be caught on the C++ side with <tt>catch(...)</tt>.
-The corresponding Lua error message can be retrieved from the Lua stack.</li>
+The corresponding Lua error message can be retrieved from the Lua stack.<br>
+For MSVC for Windows 64 bit this requires compilation of your C++ code
+with <tt>/EHa</tt>.</li>
 <li>Throwing Lua errors across C++ frames is safe. C++ destructors
 will be called.</li>
 </ul>
@@ -472,7 +464,7 @@ C++ destructors.</li>
 </div>
 <div id="foot">
 <hr class="hide">
-Copyright &copy; 2005-2017 Mike Pall
+Copyright &copy; 2005-2021
 <span class="noprint">
 &middot;
 <a href="contact.html">Contact</a>

@@ -1,6 +1,6 @@
 /*
 ** Metamethod handling.
-** Copyright (C) 2005-2017 Mike Pall. See Copyright Notice in luajit.h
+** Copyright (C) 2005-2021 Mike Pall. See Copyright Notice in luajit.h
 **
 ** Portions taken verbatim or adapted from the Lua interpreter.
 ** Copyright (C) 1994-2008 Lua.org, PUC-Rio. See Copyright Notice in lua.h
@@ -47,7 +47,7 @@ void lj_meta_init(lua_State *L)
 cTValue *lj_meta_cache(GCtab *mt, MMS mm, GCstr *name)
 {
   cTValue *mo = lj_tab_getstr(mt, name);
-  lua_assert(mm <= MM_FAST);
+  lj_assertX(mm <= MM_FAST, "bad metamethod %d", mm);
   if (!mo || tvisnil(mo)) {  /* No metamethod? */
     mt->nomm |= (uint8_t)(1u<<mm);  /* Set negative cache flag. */
     return NULL;
@@ -86,8 +86,8 @@ int lj_meta_tailcall(lua_State *L, cTValue *tv)
   else
     top->u32.lo = LJ_CONT_TAILCALL;
   setframe_pc(top++, pc);
-  if (LJ_FR2) top++;
   setframe_gc(top, obj2gco(L), LJ_TTHREAD);  /* Dummy frame object. */
+  if (LJ_FR2) top++;
   setframe_ftsz(top, ((char *)(top+1) - (char *)base) + FRAME_CONT);
   L->base = L->top = top+1;
   /*
@@ -240,8 +240,8 @@ TValue *lj_meta_cat(lua_State *L, TValue *top, int left)
   int fromc = 0;
   if (left < 0) { left = -left; fromc = 1; }
   do {
-    if (!(tvisstr(top) || tvisnumber(top)) ||
-	!(tvisstr(top-1) || tvisnumber(top-1))) {
+    if (!(tvisstr(top) || tvisnumber(top) || tvisbuf(top)) ||
+	!(tvisstr(top-1) || tvisnumber(top-1) || tvisbuf(top-1))) {
       cTValue *mo = lj_meta_lookup(L, top-1, MM_concat);
       if (tvisnil(mo)) {
 	mo = lj_meta_lookup(L, top, MM_concat);
@@ -277,10 +277,12 @@ TValue *lj_meta_cat(lua_State *L, TValue *top, int left)
       ** next step: [...][CAT stack ............]
       */
       TValue *e, *o = top;
-      uint64_t tlen = tvisstr(o) ? strV(o)->len : STRFMT_MAXBUF_NUM;
+      uint64_t tlen = tvisstr(o) ? strV(o)->len :
+		      tvisbuf(o) ? sbufxlen(bufV(o)) : STRFMT_MAXBUF_NUM;
       SBuf *sb;
       do {
-	o--; tlen += tvisstr(o) ? strV(o)->len : STRFMT_MAXBUF_NUM;
+	o--; tlen += tvisstr(o) ? strV(o)->len :
+		     tvisbuf(o) ? sbufxlen(bufV(o)) : STRFMT_MAXBUF_NUM;
       } while (--left > 0 && (tvisstr(o-1) || tvisnumber(o-1)));
       if (tlen >= LJ_MAX_STR) lj_err_msg(L, LJ_ERR_STROV);
       sb = lj_buf_tmp_(L);
@@ -290,6 +292,9 @@ TValue *lj_meta_cat(lua_State *L, TValue *top, int left)
 	  GCstr *s = strV(o);
 	  MSize len = s->len;
 	  lj_buf_putmem(sb, strdata(s), len);
+	} else if (tvisbuf(o)) {
+	  SBufExt *sbx = bufV(o);
+	  lj_buf_putmem(sb, sbx->r, sbufxlen(sbx));
 	} else if (tvisint(o)) {
 	  lj_strfmt_putint(sb, intV(o));
 	} else {
@@ -363,7 +368,7 @@ TValue * LJ_FASTCALL lj_meta_equal_cd(lua_State *L, BCIns ins)
   } else if (op == BC_ISEQN) {
     o2 = &mref(curr_proto(L)->k, cTValue)[bc_d(ins)];
   } else {
-    lua_assert(op == BC_ISEQP);
+    lj_assertL(op == BC_ISEQP, "bad bytecode op %d", op);
     setpriV(&tv, ~bc_d(ins));
     o2 = &tv;
   }
@@ -426,7 +431,7 @@ void lj_meta_istype(lua_State *L, BCReg ra, BCReg tp)
 {
   L->top = curr_topL(L);
   ra++; tp--;
-  lua_assert(LJ_DUALNUM || tp != ~LJ_TNUMX);  /* ISTYPE -> ISNUM broken. */
+  lj_assertL(LJ_DUALNUM || tp != ~LJ_TNUMX, "bad type for ISTYPE");
   if (LJ_DUALNUM && tp == ~LJ_TNUMX) lj_lib_checkint(L, ra);
   else if (tp == ~LJ_TNUMX+1) lj_lib_checknum(L, ra);
   else if (tp == ~LJ_TSTR) lj_lib_checkstr(L, ra);

@@ -1,6 +1,6 @@
 |// Low-level VM code for ARM CPUs.
 |// Bytecode interpreter, fast functions and helper functions.
-|// Copyright (C) 2005-2017 Mike Pall. See Copyright Notice in luajit.h
+|// Copyright (C) 2005-2021 Mike Pall. See Copyright Notice in luajit.h
 |
 |.arch arm
 |.section code_op, code_sub
@@ -539,13 +539,13 @@ static void build_subroutines(BuildCtx *ctx)
   |    cmp CARG1, #1
   |.endif
   |   ldr PC, [CARG4, #-12]		// Restore PC from [cont|PC].
-  |  ldr CARG3, LFUNC:CARG3->field_pc
   |    mvn INS, #~LJ_TNIL
   |    add CARG2, RA, RC
   |    str INS, [CARG2, #-4]		// Ensure one valid arg.
   |.if FFI
   |    bls >1
   |.endif
+  |  ldr CARG3, LFUNC:CARG3->field_pc
   |  ldr KBASE, [CARG3, #PC2PROTO(k)]
   |  // BASE = base, RA = resultptr, CARG4 = meta base
   |    bx CARG1
@@ -699,6 +699,7 @@ static void build_subroutines(BuildCtx *ctx)
   |->vmeta_tsetr:
   |  str BASE, L->base
   |  .IOS mov RC, BASE
+  |  mov CARG1, L
   |  str PC, SAVE_PC
   |  bl extern lj_tab_setinth  // (lua_State *L, GCtab *t, int32_t key)
   |  // Returns TValue *.
@@ -1011,9 +1012,9 @@ static void build_subroutines(BuildCtx *ctx)
   |  cmp TAB:RB, #0
   |  beq ->fff_restv
   |  ldr CARG3, TAB:RB->hmask
-  |   ldr CARG4, STR:RC->hash
+  |   ldr CARG4, STR:RC->sid
   |    ldr NODE:INS, TAB:RB->node
-  |  and CARG3, CARG3, CARG4		// idx = str->hash & tab->hmask
+  |  and CARG3, CARG3, CARG4		// idx = str->sid & tab->hmask
   |  add CARG3, CARG3, CARG3, lsl #1
   |    add NODE:INS, NODE:INS, CARG3, lsl #3	// node = tab->node + idx*3*8
   |3:  // Rearranged logic, because we expect _not_ to find the key.
@@ -1110,24 +1111,18 @@ static void build_subroutines(BuildCtx *ctx)
   |  checktab CARG2, ->fff_fallback
   |   strd CARG34, [BASE, NARGS8:RC]	// Set missing 2nd arg to nil.
   |   ldr PC, [BASE, FRAME_PC]
-  |  mov CARG2, CARG1
-  |    str BASE, L->base		// Add frame since C call can throw.
-  |  mov CARG1, L
-  |    str BASE, L->top			// Dummy frame length is ok.
-  |  add CARG3, BASE, #8
-  |   str PC, SAVE_PC
-  |  bl extern lj_tab_next	// (lua_State *L, GCtab *t, TValue *key)
-  |  // Returns 0 at end of traversal.
+  |  add CARG2, BASE, #8
+  |  sub CARG3, BASE, #8
+  |  bl extern lj_tab_next		// (GCtab *t, cTValue *key, TValue *o)
+  |  // Returns 1=found, 0=end, -1=error.
   |  .IOS ldr BASE, L->base
   |  cmp CRET1, #0
-  |  mvneq CRET2, #~LJ_TNIL
-  |  beq ->fff_restv			// End of traversal: return nil.
-  |  ldrd CARG12, [BASE, #8]		// Copy key and value to results.
-  |   ldrd CARG34, [BASE, #16]
-  |    mov RC, #(2+1)*8
-  |  strd CARG12, [BASE, #-8]
-  |   strd CARG34, [BASE]
-  |  b ->fff_res
+  |   mov RC, #(2+1)*8
+  |  bgt ->fff_res			// Found key/value.
+  |  bmi ->fff_fallback			// Invalid key.
+  |  // End of traversal: return nil.
+  |  mvn CRET2, #~LJ_TNIL
+  |  b ->fff_restv
   |
   |.ffunc_1 pairs
   |  checktab CARG2, ->fff_fallback
@@ -1715,8 +1710,8 @@ static void build_subroutines(BuildCtx *ctx)
   |.endif
   |.endmacro
   |
-  |  math_minmax math_min, gt, hi
-  |  math_minmax math_max, lt, lo
+  |  math_minmax math_min, gt, pl
+  |  math_minmax math_max, lt, le
   |
   |//-- String library -----------------------------------------------------
   |
@@ -1809,7 +1804,7 @@ static void build_subroutines(BuildCtx *ctx)
   |   str BASE, L->base
   |   str PC, SAVE_PC
   |   str L, SBUF:CARG1->L
-  |  str CARG4, SBUF:CARG1->p
+  |  str CARG4, SBUF:CARG1->w
   |  bl extern lj_buf_putstr_ .. name
   |  bl extern lj_buf_tostr
   |  b ->fff_resstr
@@ -2246,7 +2241,7 @@ static void build_subroutines(BuildCtx *ctx)
   |9:  // Rethrow error from the right C frame.
   |  rsb CARG2, CARG1, #0
   |  mov CARG1, L
-  |  bl extern lj_err_throw		// (lua_State *L, int errcode)
+  |  bl extern lj_err_trace		// (lua_State *L, int errcode)
   |.endif
   |
   |//-----------------------------------------------------------------------
@@ -2428,6 +2423,64 @@ static void build_subroutines(BuildCtx *ctx)
   |//-----------------------------------------------------------------------
   |//-- Miscellaneous functions --------------------------------------------
   |//-----------------------------------------------------------------------
+  |
+  |.define NEXT_TAB,		TAB:CARG1
+  |.define NEXT_RES,		CARG1
+  |.define NEXT_IDX,		CARG2
+  |.define NEXT_TMP0,		CARG3
+  |.define NEXT_TMP1,		CARG4
+  |.define NEXT_LIM,		r12
+  |.define NEXT_RES_PTR,	sp
+  |.define NEXT_RES_VAL,	[sp]
+  |.define NEXT_RES_KEY_I,	[sp, #8]
+  |.define NEXT_RES_KEY_IT,	[sp, #12]
+  |
+  |// TValue *lj_vm_next(GCtab *t, uint32_t idx)
+  |// Next idx returned in CRET2.
+  |->vm_next:
+  |.if JIT
+  |  ldr NEXT_TMP0, NEXT_TAB->array
+  |   ldr NEXT_LIM, NEXT_TAB->asize
+  |  add NEXT_TMP0, NEXT_TMP0, NEXT_IDX, lsl #3
+  |1:  // Traverse array part.
+  |   subs NEXT_TMP1, NEXT_IDX, NEXT_LIM
+  |   bhs >5
+  |  ldr NEXT_TMP1, [NEXT_TMP0, #4]
+  |   str NEXT_IDX, NEXT_RES_KEY_I
+  |   add NEXT_TMP0, NEXT_TMP0, #8
+  |   add NEXT_IDX, NEXT_IDX, #1
+  |  checktp NEXT_TMP1, LJ_TNIL
+  |  beq <1				// Skip holes in array part.
+  |  ldr NEXT_TMP0, [NEXT_TMP0, #-8]
+  |   mov NEXT_RES, NEXT_RES_PTR
+  |  strd NEXT_TMP0, NEXT_RES_VAL	// Stores NEXT_TMP1, too.
+  |  mvn NEXT_TMP0, #~LJ_TISNUM
+  |  str NEXT_TMP0, NEXT_RES_KEY_IT
+  |  bx lr
+  |
+  |5:  // Traverse hash part.
+  |  ldr NEXT_TMP0, NEXT_TAB->hmask
+  |   ldr NODE:NEXT_RES, NEXT_TAB->node
+  |   add NEXT_TMP1, NEXT_TMP1, NEXT_TMP1, lsl #1
+  |  add NEXT_LIM, NEXT_LIM, NEXT_TMP0
+  |   add NODE:NEXT_RES, NODE:NEXT_RES, NEXT_TMP1, lsl #3
+  |6:
+  |  cmp NEXT_IDX, NEXT_LIM
+  |  bhi >9
+  |  ldr NEXT_TMP1, NODE:NEXT_RES->val.it
+  |  checktp NEXT_TMP1, LJ_TNIL
+  |   add NEXT_IDX, NEXT_IDX, #1
+  |  bxne lr
+  |  // Skip holes in hash part.
+  |  add NEXT_RES, NEXT_RES, #sizeof(Node)
+  |  b <6
+  |
+  |9:  // End of iteration. Set the key to nil (not the value).
+  |  mvn NEXT_TMP0, #0
+  |   mov NEXT_RES, NEXT_RES_PTR
+  |  str NEXT_TMP0, NEXT_RES_KEY_IT
+  |  bx lr
+  |.endif
   |
   |//-----------------------------------------------------------------------
   |//-- FFI helper functions -----------------------------------------------
@@ -3499,10 +3552,10 @@ static void build_ins(BuildCtx *ctx, BCOp op, int defop)
     |->BC_TGETS_Z:
     |  // (TAB:RB =) TAB:CARG1 = GCtab *, STR:RC = GCstr *, RA = dst*8
     |  ldr CARG3, TAB:CARG1->hmask
-    |   ldr CARG4, STR:RC->hash
+    |   ldr CARG4, STR:RC->sid
     |    ldr NODE:INS, TAB:CARG1->node
     |     mov TAB:RB, TAB:CARG1
-    |  and CARG3, CARG3, CARG4			// idx = str->hash & tab->hmask
+    |  and CARG3, CARG3, CARG4			// idx = str->sid & tab->hmask
     |  add CARG3, CARG3, CARG3, lsl #1
     |    add NODE:INS, NODE:INS, CARG3, lsl #3	// node = tab->node + idx*3*8
     |1:
@@ -3646,10 +3699,10 @@ static void build_ins(BuildCtx *ctx, BCOp op, int defop)
     |->BC_TSETS_Z:
     |  // (TAB:RB =) TAB:CARG1 = GCtab *, STR:RC = GCstr *, RA = dst*8
     |  ldr CARG3, TAB:CARG1->hmask
-    |   ldr CARG4, STR:RC->hash
+    |   ldr CARG4, STR:RC->sid
     |    ldr NODE:INS, TAB:CARG1->node
     |     mov TAB:RB, TAB:CARG1
-    |  and CARG3, CARG3, CARG4			// idx = str->hash & tab->hmask
+    |  and CARG3, CARG3, CARG4			// idx = str->sid & tab->hmask
     |  add CARG3, CARG3, CARG3, lsl #1
     |   mov CARG4, #0
     |    add NODE:INS, NODE:INS, CARG3, lsl #3	// node = tab->node + idx*3*8
@@ -3919,10 +3972,11 @@ static void build_ins(BuildCtx *ctx, BCOp op, int defop)
     break;
 
   case BC_ITERN:
-    |  // RA = base*8, (RB = nresults+1, RC = nargs+1 (2+1))
     |.if JIT
-    |  // NYI: add hotloop, record BC_ITERN.
+    |  hotloop
     |.endif
+    |->vm_IITERN:
+    |  // RA = base*8, (RB = nresults+1, RC = nargs+1 (2+1))
     |  add RA, BASE, RA
     |  ldr TAB:RB, [RA, #-16]
     |  ldr CARG1, [RA, #-8]		// Get index from control var.
@@ -3988,7 +4042,7 @@ static void build_ins(BuildCtx *ctx, BCOp op, int defop)
     |   ins_next1
     |   ins_next2
     |  mov CARG1, #0
-    |  mvn CARG2, #0x00018000
+    |  mvn CARG2, #~LJ_KEYINDEX
     |  strd CARG1, [RA, #-8]		// Initialize control var.
     |1:
     |   ins_next3
@@ -3997,9 +4051,25 @@ static void build_ins(BuildCtx *ctx, BCOp op, int defop)
     |   mov OP, #BC_ITERC
     |  strb CARG1, [PC, #-4]
     |   sub PC, RC, #0x20000
+    |.if JIT
+    |   ldrb CARG1, [PC]
+    |   cmp CARG1, #BC_ITERN
+    |   bne >6
+    |.endif
     |   strb OP, [PC]			// Subsumes ins_next1.
     |   ins_next2
     |  b <1
+    |.if JIT
+    |6:  // Unpatch JLOOP.
+    |  ldr CARG1, [DISPATCH, #DISPATCH_J(trace)]
+    |  ldrh CARG2, [PC, #2]
+    |  ldr TRACE:CARG1, [CARG1, CARG2, lsl #2]
+    |  // Subsumes ins_next1 and ins_next2.
+    |  ldr INS, TRACE:CARG1->startins
+    |  bfi INS, OP, #0, #8
+    |  str INS, [PC], #4
+    |  b <1
+    |.endif
     break;
 
   case BC_VARG:

@@ -1,6 +1,6 @@
 /*
 ** Debug library.
-** Copyright (C) 2005-2017 Mike Pall. See Copyright Notice in luajit.h
+** Copyright (C) 2005-2021 Mike Pall. See Copyright Notice in luajit.h
 **
 ** Major portions taken verbatim or adapted from the Lua interpreter.
 ** Copyright (C) 1994-2008 Lua.org, PUC-Rio. See Copyright Notice in lua.h
@@ -231,8 +231,8 @@ LJLIB_CF(debug_upvalueid)
   int32_t n = lj_lib_checkint(L, 2) - 1;
   if ((uint32_t)n >= fn->l.nupvalues)
     lj_err_arg(L, 2, LJ_ERR_IDXRNG);
-  setlightudV(L->top-1, isluafunc(fn) ? (void *)gcref(fn->l.uvptr[n]) :
-					(void *)&fn->c.upvalue[n]);
+  lua_pushlightuserdata(L, isluafunc(fn) ? (void *)gcref(fn->l.uvptr[n]) :
+					   (void *)&fn->c.upvalue[n]);
   return 1;
 }
 
@@ -283,13 +283,13 @@ LJLIB_CF(debug_setuservalue)
 
 /* ------------------------------------------------------------------------ */
 
-#define KEY_HOOK	((void *)0x3004)
+#define KEY_HOOK	(U64x(80000000,00000000)|'h')
 
 static void hookf(lua_State *L, lua_Debug *ar)
 {
   static const char *const hooknames[] =
     {"call", "return", "line", "count", "tail return"};
-  lua_pushlightuserdata(L, KEY_HOOK);
+  (L->top++)->u64 = KEY_HOOK;
   lua_rawget(L, LUA_REGISTRYINDEX);
   if (lua_isfunction(L, -1)) {
     lua_pushstring(L, hooknames[(int)ar->event]);
@@ -334,7 +334,7 @@ LJLIB_CF(debug_sethook)
     count = luaL_optint(L, arg+3, 0);
     func = hookf; mask = makemask(smask, count);
   }
-  lua_pushlightuserdata(L, KEY_HOOK);
+  (L->top++)->u64 = KEY_HOOK;
   lua_pushvalue(L, arg+1);
   lua_rawset(L, LUA_REGISTRYINDEX);
   lua_sethook(L, func, mask, count);
@@ -349,7 +349,7 @@ LJLIB_CF(debug_gethook)
   if (hook != NULL && hook != hookf) {  /* external hook? */
     lua_pushliteral(L, "external hook");
   } else {
-    lua_pushlightuserdata(L, KEY_HOOK);
+    (L->top++)->u64 = KEY_HOOK;
     lua_rawget(L, LUA_REGISTRYINDEX);   /* get hook */
   }
   lua_pushstring(L, unmakemask(mask, buff));
@@ -369,7 +369,8 @@ LJLIB_CF(debug_debug)
       return 0;
     if (luaL_loadbuffer(L, buffer, strlen(buffer), "=(debug command)") ||
 	lua_pcall(L, 0, 0, 0)) {
-      fputs(lua_tostring(L, -1), stderr);
+      const char *s = lua_tostring(L, -1);
+      fputs(s ? s : "(error object is not a string)", stderr);
       fputs("\n", stderr);
     }
     lua_settop(L, 0);  /* remove eventual returns */

@@ -1,6 +1,6 @@
 /*
 ** Function handling (prototypes, functions and upvalues).
-** Copyright (C) 2005-2017 Mike Pall. See Copyright Notice in luajit.h
+** Copyright (C) 2005-2021 Mike Pall. See Copyright Notice in luajit.h
 **
 ** Portions taken verbatim or adapted from the Lua interpreter.
 ** Copyright (C) 1994-2008 Lua.org, PUC-Rio. See Copyright Notice in lua.h
@@ -24,9 +24,11 @@ void LJ_FASTCALL lj_func_freeproto(global_State *g, GCproto *pt)
 
 /* -- Upvalues ------------------------------------------------------------ */
 
-static void unlinkuv(GCupval *uv)
+static void unlinkuv(global_State *g, GCupval *uv)
 {
-  lua_assert(uvprev(uvnext(uv)) == uv && uvnext(uvprev(uv)) == uv);
+  UNUSED(g);
+  lj_assertG(uvprev(uvnext(uv)) == uv && uvnext(uvprev(uv)) == uv,
+	     "broken upvalue chain");
   setgcrefr(uvnext(uv)->prev, uv->prev);
   setgcrefr(uvprev(uv)->next, uv->next);
 }
@@ -40,7 +42,7 @@ static GCupval *func_finduv(lua_State *L, TValue *slot)
   GCupval *uv;
   /* Search the sorted list of open upvalues. */
   while (gcref(*pp) != NULL && uvval((p = gco2uv(gcref(*pp)))) >= slot) {
-    lua_assert(!p->closed && uvval(p) != &p->tv);
+    lj_assertG(!p->closed && uvval(p) != &p->tv, "closed upvalue in chain");
     if (uvval(p) == slot) {  /* Found open upvalue pointing to same slot? */
       if (isdead(g, obj2gco(p)))  /* Resurrect it, if it's dead. */
 	flipwhite(obj2gco(p));
@@ -61,7 +63,8 @@ static GCupval *func_finduv(lua_State *L, TValue *slot)
   setgcrefr(uv->next, g->uvhead.next);
   setgcref(uvnext(uv)->prev, obj2gco(uv));
   setgcref(g->uvhead.next, obj2gco(uv));
-  lua_assert(uvprev(uvnext(uv)) == uv && uvnext(uvprev(uv)) == uv);
+  lj_assertG(uvprev(uvnext(uv)) == uv && uvnext(uvprev(uv)) == uv,
+	     "broken upvalue chain");
   return uv;
 }
 
@@ -84,12 +87,13 @@ void LJ_FASTCALL lj_func_closeuv(lua_State *L, TValue *level)
   while (gcref(L->openupval) != NULL &&
 	 uvval((uv = gco2uv(gcref(L->openupval)))) >= level) {
     GCobj *o = obj2gco(uv);
-    lua_assert(!isblack(o) && !uv->closed && uvval(uv) != &uv->tv);
+    lj_assertG(!isblack(o), "bad black upvalue");
+    lj_assertG(!uv->closed && uvval(uv) != &uv->tv, "closed upvalue in chain");
     setgcrefr(L->openupval, uv->nextgc);  /* No longer in open list. */
     if (isdead(g, o)) {
       lj_func_freeuv(g, uv);
     } else {
-      unlinkuv(uv);
+      unlinkuv(g, uv);
       lj_gc_closeuv(g, uv);
     }
   }
@@ -98,7 +102,7 @@ void LJ_FASTCALL lj_func_closeuv(lua_State *L, TValue *level)
 void LJ_FASTCALL lj_func_freeuv(global_State *g, GCupval *uv)
 {
   if (!uv->closed)
-    unlinkuv(uv);
+    unlinkuv(g, uv);
   lj_mem_freet(g, uv);
 }
 

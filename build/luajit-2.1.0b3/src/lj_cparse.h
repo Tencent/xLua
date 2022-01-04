@@ -1,6 +1,6 @@
 /*
 ** C declaration parser.
-** Copyright (C) 2005-2017 Mike Pall. See Copyright Notice in luajit.h
+** Copyright (C) 2005-2021 Mike Pall. See Copyright Notice in luajit.h
 */
 
 #ifndef _LJ_CPARSE_H
@@ -59,6 +59,8 @@ typedef struct CPState {
 } CPState;
 
 LJ_FUNC int lj_cparse(CPState *cp);
+
+LJ_FUNC int lj_cparse_case(GCstr *str, const char *match);
 
 #endif
 

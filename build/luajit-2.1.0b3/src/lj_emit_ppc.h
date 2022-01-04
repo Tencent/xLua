@@ -1,6 +1,6 @@
 /*
 ** PPC instruction emitter.
-** Copyright (C) 2005-2017 Mike Pall. See Copyright Notice in luajit.h
+** Copyright (C) 2005-2021 Mike Pall. See Copyright Notice in luajit.h
 */
 
 /* -- Emit basic instructions --------------------------------------------- */
@@ -41,13 +41,13 @@ static void emit_rot(ASMState *as, PPCIns pi, Reg ra, Reg rs,
 
 static void emit_slwi(ASMState *as, Reg ra, Reg rs, int32_t n)
 {
-  lua_assert(n >= 0 && n < 32);
+  lj_assertA(n >= 0 && n < 32, "shift out or range");
   emit_rot(as, PPCI_RLWINM, ra, rs, n, 0, 31-n);
 }
 
 static void emit_rotlwi(ASMState *as, Reg ra, Reg rs, int32_t n)
 {
-  lua_assert(n >= 0 && n < 32);
+  lj_assertA(n >= 0 && n < 32, "shift out or range");
   emit_rot(as, PPCI_RLWINM, ra, rs, n, 0, 31);
 }
 
@@ -57,17 +57,17 @@ static void emit_rotlwi(ASMState *as, Reg ra, Reg rs, int32_t n)
 #define emit_canremat(ref)	((ref) <= REF_BASE)
 
 /* Try to find a one step delta relative to another constant. */
-static int emit_kdelta1(ASMState *as, Reg t, int32_t i)
+static int emit_kdelta1(ASMState *as, Reg rd, int32_t i)
 {
   RegSet work = ~as->freeset & RSET_GPR;
   while (work) {
     Reg r = rset_picktop(work);
     IRRef ref = regcost_ref(as->cost[r]);
-    lua_assert(r != t);
+    lj_assertA(r != rd, "dest reg %d not free", rd);
     if (ref < ASMREF_L) {
       int32_t delta = i - (ra_iskref(ref) ? ra_krefk(as, ref) : IR(ref)->i);
       if (checki16(delta)) {
-	emit_tai(as, PPCI_ADDI, t, r, delta);
+	emit_tai(as, PPCI_ADDI, rd, r, delta);
 	return 1;
       }
     }
@@ -144,7 +144,7 @@ static void emit_condbranch(ASMState *as, PPCIns pi, PPCCC cc, MCode *target)
 {
   MCode *p = --as->mcp;
   ptrdiff_t delta = (char *)target - (char *)p;
-  lua_assert(((delta + 0x8000) >> 16) == 0);
+  lj_assertA(((delta + 0x8000) >> 16) == 0, "branch target out of range");
   pi ^= (delta & 0x8000) * (PPCF_Y/0x8000);
   *p = pi | PPCF_CC(cc) | ((uint32_t)delta & 0xffffu);
 }

@@ -1,6 +1,6 @@
 /*
 ** String formatting for floating-point numbers.
-** Copyright (C) 2005-2017 Mike Pall. See Copyright Notice in luajit.h
+** Copyright (C) 2005-2021 Mike Pall. See Copyright Notice in luajit.h
 ** Contributed by Peter Cawley.
 */
 
@@ -257,7 +257,7 @@ static int nd_similar(uint32_t* nd, uint32_t ndhi, uint32_t* ref, MSize hilen,
   } else {
     prec -= hilen - 9;
   }
-  lua_assert(prec < 9);
+  lj_assertX(prec < 9, "bad precision %d", prec);
   lj_strfmt_wuint9(nd9, nd[ndhi]);
   lj_strfmt_wuint9(ref9, *ref);
   return !memcmp(nd9, ref9, prec) && (nd9[prec] < '5') == (ref9[prec] < '5');
@@ -414,14 +414,14 @@ static char *lj_strfmt_wfnum(SBuf *sb, SFormat sf, lua_Number n, char *p)
 	** Rescaling was performed, but this introduced some error, and might
 	** have pushed us across a rounding boundary. We check whether this
 	** error affected the result by introducing even more error (2ulp in
-	** either direction), and seeing whether a roundary boundary was
+	** either direction), and seeing whether a rounding boundary was
 	** crossed. Having already converted the -2ulp case, we save off its
 	** most significant digits, convert the +2ulp case, and compare them.
 	*/
 	int32_t eidx = e + 70 + (ND_MUL2K_MAX_SHIFT < 29)
 			 + (t.u32.lo >= 0xfffffffe && !(~t.u32.hi << 12));
 	const int8_t *m_e = four_ulp_m_e + eidx * 2;
-	lua_assert(0 <= eidx && eidx < 128);
+	lj_assertG_(G(sbufL(sb)), 0 <= eidx && eidx < 128, "bad eidx %d", eidx);
 	nd[33] = nd[ndhi];
 	nd[32] = nd[(ndhi - 1) & 0x3f];
 	nd[31] = nd[(ndhi - 2) & 0x3f];
@@ -576,7 +576,7 @@ static char *lj_strfmt_wfnum(SBuf *sb, SFormat sf, lua_Number n, char *p)
 /* Add formatted floating-point number to buffer. */
 SBuf *lj_strfmt_putfnum(SBuf *sb, SFormat sf, lua_Number n)
 {
-  setsbufP(sb, lj_strfmt_wfnum(sb, sf, n, NULL));
+  sb->w = lj_strfmt_wfnum(sb, sf, n, NULL);
   return sb;
 }
 

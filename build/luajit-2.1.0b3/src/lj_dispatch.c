@@ -1,6 +1,6 @@
 /*
 ** Instruction dispatch handling.
-** Copyright (C) 2005-2017 Mike Pall. See Copyright Notice in luajit.h
+** Copyright (C) 2005-2021 Mike Pall. See Copyright Notice in luajit.h
 */
 
 #define lj_dispatch_c
@@ -68,6 +68,8 @@ void lj_dispatch_init(GG_State *GG)
   /* The JIT engine is off by default. luaopen_jit() turns it on. */
   disp[BC_FORL] = disp[BC_IFORL];
   disp[BC_ITERL] = disp[BC_IITERL];
+  /* Workaround for stable v2.1 bytecode. TODO: Replace with BC_IITERN. */
+  disp[BC_ITERN] = &lj_vm_IITERN;
   disp[BC_LOOP] = disp[BC_ILOOP];
   disp[BC_FUNCF] = disp[BC_IFUNCF];
   disp[BC_FUNCV] = disp[BC_IFUNCV];
@@ -118,19 +120,21 @@ void lj_dispatch_update(global_State *g)
   mode |= (g->hookmask & LUA_MASKRET) ? DISPMODE_RET : 0;
   if (oldmode != mode) {  /* Mode changed? */
     ASMFunction *disp = G2GG(g)->dispatch;
-    ASMFunction f_forl, f_iterl, f_loop, f_funcf, f_funcv;
+    ASMFunction f_forl, f_iterl, f_itern, f_loop, f_funcf, f_funcv;
     g->dispatchmode = mode;
 
     /* Hotcount if JIT is on, but not while recording. */
     if ((mode & (DISPMODE_JIT|DISPMODE_REC)) == DISPMODE_JIT) {
       f_forl = makeasmfunc(lj_bc_ofs[BC_FORL]);
       f_iterl = makeasmfunc(lj_bc_ofs[BC_ITERL]);
+      f_itern = makeasmfunc(lj_bc_ofs[BC_ITERN]);
       f_loop = makeasmfunc(lj_bc_ofs[BC_LOOP]);
       f_funcf = makeasmfunc(lj_bc_ofs[BC_FUNCF]);
       f_funcv = makeasmfunc(lj_bc_ofs[BC_FUNCV]);
     } else {  /* Otherwise use the non-hotcounting instructions. */
       f_forl = disp[GG_LEN_DDISP+BC_IFORL];
       f_iterl = disp[GG_LEN_DDISP+BC_IITERL];
+      f_itern = &lj_vm_IITERN;
       f_loop = disp[GG_LEN_DDISP+BC_ILOOP];
       f_funcf = makeasmfunc(lj_bc_ofs[BC_IFUNCF]);
       f_funcv = makeasmfunc(lj_bc_ofs[BC_IFUNCV]);
@@ -138,6 +142,7 @@ void lj_dispatch_update(global_State *g)
     /* Init static counting instruction dispatch first (may be copied below). */
     disp[GG_LEN_DDISP+BC_FORL] = f_forl;
     disp[GG_LEN_DDISP+BC_ITERL] = f_iterl;
+    disp[GG_LEN_DDISP+BC_ITERN] = f_itern;
     disp[GG_LEN_DDISP+BC_LOOP] = f_loop;
 
     /* Set dynamic instruction dispatch. */
@@ -165,6 +170,7 @@ void lj_dispatch_update(global_State *g)
       /* Otherwise set dynamic counting ins. */
       disp[BC_FORL] = f_forl;
       disp[BC_ITERL] = f_iterl;
+      disp[BC_ITERN] = f_itern;
       disp[BC_LOOP] = f_loop;
       /* Set dynamic return dispatch. */
       if ((mode & DISPMODE_RET)) {
@@ -252,15 +258,8 @@ int luaJIT_setmode(lua_State *L, int idx, int mode)
     } else {
       if (!(mode & LUAJIT_MODE_ON))
 	G2J(g)->flags &= ~(uint32_t)JIT_F_ON;
-#if LJ_TARGET_X86ORX64
-      else if ((G2J(g)->flags & JIT_F_SSE2))
-	G2J(g)->flags |= (uint32_t)JIT_F_ON;
-      else
-	return 0;  /* Don't turn on JIT compiler without SSE2 support. */
-#else
       else
 	G2J(g)->flags |= (uint32_t)JIT_F_ON;
-#endif
       lj_dispatch_update(g);
     }
     break;
@@ -302,7 +301,7 @@ int luaJIT_setmode(lua_State *L, int idx, int mode)
       if (idx != 0) {
 	cTValue *tv = idx > 0 ? L->base + (idx-1) : L->top + idx;
 	if (tvislightud(tv))
-	  g->wrapf = (lua_CFunction)lightudV(tv);
+	  g->wrapf = (lua_CFunction)lightudV(g, tv);
 	else
 	  return 0;  /* Failed. */
       } else {
@@ -374,7 +373,7 @@ static void callhook(lua_State *L, int event, BCLine line)
     hook_enter(g);
 #endif
     hookf(L, &ar);
-    lua_assert(hook_active(g));
+    lj_assertG(hook_active(g), "active hook flag removed");
     setgcref(g->cur_L, obj2gco(L));
 #if LJ_HASPROFILE && !LJ_PROFILE_SIGPROF
     lj_profile_hook_leave(g);
@@ -422,7 +421,8 @@ void LJ_FASTCALL lj_dispatch_ins(lua_State *L, const BCIns *pc)
 #endif
       J->L = L;
       lj_trace_ins(J, pc-1);  /* The interpreter bytecode PC is offset by 1. */
-      lua_assert(L->top - L->base == delta);
+      lj_assertG(L->top - L->base == delta,
+		 "unbalanced stack after tracing of instruction");
     }
   }
 #endif
@@ -482,7 +482,8 @@ ASMFunction LJ_FASTCALL lj_dispatch_call(lua_State *L, const BCIns *pc)
 #endif
     pc = (const BCIns *)((uintptr_t)pc & ~(uintptr_t)1);
     lj_trace_hot(J, pc);
-    lua_assert(L->top - L->base == delta);
+    lj_assertG(L->top - L->base == delta,
+	       "unbalanced stack after hot call");
     goto out;
   } else if (J->state != LJ_TRACE_IDLE &&
 	     !(g->hookmask & (HOOK_GC|HOOK_VMEVENT))) {
@@ -491,7 +492,8 @@ ASMFunction LJ_FASTCALL lj_dispatch_call(lua_State *L, const BCIns *pc)
 #endif
     /* Record the FUNC* bytecodes, too. */
     lj_trace_ins(J, pc-1);  /* The interpreter bytecode PC is offset by 1. */
-    lua_assert(L->top - L->base == delta);
+    lj_assertG(L->top - L->base == delta,
+	       "unbalanced stack after hot instruction");
   }
 #endif
   if ((g->hookmask & LUA_MASKCALL)) {

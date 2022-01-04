@@ -1,6 +1,6 @@
 /*
 ** Client for the GDB JIT API.
-** Copyright (C) 2005-2017 Mike Pall. See Copyright Notice in luajit.h
+** Copyright (C) 2005-2021 Mike Pall. See Copyright Notice in luajit.h
 */
 
 #define lj_gdbjit_c
@@ -363,7 +363,7 @@ static const ELFheader elfhdr_template = {
   .eosabi = 12,
 #elif defined(__DragonFly__)
   .eosabi = 0,
-#elif (defined(__sun__) && defined(__svr4__))
+#elif LJ_TARGET_SOLARIS
   .eosabi = 6,
 #else
   .eosabi = 0,
@@ -724,7 +724,7 @@ static void gdbjit_buildobj(GDBJITctx *ctx)
   SECTALIGN(ctx->p, sizeof(uintptr_t));
   gdbjit_initsect(ctx, GDBJIT_SECT_eh_frame, gdbjit_ehframe);
   ctx->objsize = (size_t)((char *)ctx->p - (char *)obj);
-  lua_assert(ctx->objsize < sizeof(GDBJITobj));
+  lj_assertX(ctx->objsize < sizeof(GDBJITobj), "GDBJITobj overflow");
 }
 
 #undef SECTALIGN
@@ -782,7 +782,8 @@ void lj_gdbjit_addtrace(jit_State *J, GCtrace *T)
   ctx.spadjp = CFRAME_SIZE_JIT +
 	       (MSize)(parent ? traceref(J, parent)->spadjust : 0);
   ctx.spadj = CFRAME_SIZE_JIT + T->spadjust;
-  lua_assert(startpc >= proto_bc(pt) && startpc < proto_bc(pt) + pt->sizebc);
+  lj_assertJ(startpc >= proto_bc(pt) && startpc < proto_bc(pt) + pt->sizebc,
+	     "start PC out of range");
   ctx.lineno = lj_debug_line(pt, proto_bcpos(pt, startpc));
   ctx.filename = proto_chunknamestr(pt);
   if (*ctx.filename == '@' || *ctx.filename == '=')

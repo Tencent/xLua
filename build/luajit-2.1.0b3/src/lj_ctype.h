@@ -1,6 +1,6 @@
 /*
 ** C type management.
-** Copyright (C) 2005-2017 Mike Pall. See Copyright Notice in luajit.h
+** Copyright (C) 2005-2021 Mike Pall. See Copyright Notice in luajit.h
 */
 
 #ifndef _LJ_CTYPE_H
@@ -260,6 +260,12 @@ typedef struct CTState {
 
 #define CT_MEMALIGN	3	/* Alignment guaranteed by memory allocator. */
 
+#ifdef LUA_USE_ASSERT
+#define lj_assertCTS(c, ...)	(lj_assertG_(cts->g, (c), __VA_ARGS__))
+#else
+#define lj_assertCTS(c, ...)	((void)cts)
+#endif
+
 /* -- Predefined types ---------------------------------------------------- */
 
 /* Target-dependent types. */
@@ -292,6 +298,7 @@ typedef struct CTState {
   _(P_VOID,	CTSIZE_PTR,	CT_PTR, CTALIGN_PTR|CTID_VOID) \
   _(P_CVOID,	CTSIZE_PTR,	CT_PTR, CTALIGN_PTR|CTID_CVOID) \
   _(P_CCHAR,	CTSIZE_PTR,	CT_PTR, CTALIGN_PTR|CTID_CCHAR) \
+  _(P_UINT8,	CTSIZE_PTR,	CT_PTR, CTALIGN_PTR|CTID_UINT8) \
   _(A_CCHAR,		-1,	CT_ARRAY, CTF_CONST|CTALIGN(0)|CTID_CCHAR) \
   _(CTYPEID,		4,	CT_ENUM, CTALIGN(2)|CTID_INT32) \
   CTTYDEFP(_) \
@@ -383,6 +390,16 @@ static LJ_AINLINE CTState *ctype_cts(lua_State *L)
   return cts;
 }
 
+/* Load FFI library on-demand. */
+#define ctype_loadffi(L) \
+  do { \
+    if (!ctype_ctsG(G(L))) { \
+      ptrdiff_t oldtop = (char *)L->top - mref(L->stack, char); \
+      luaopen_ffi(L); \
+      L->top = (TValue *)(mref(L->stack, char) + oldtop); \
+    } \
+  } while (0)
+
 /* Save and restore state of C type table. */
 #define LJ_CTYPE_SAVE(cts)	CTState savects_ = *(cts)
 #define LJ_CTYPE_RESTORE(cts) \
@@ -392,7 +409,8 @@ static LJ_AINLINE CTState *ctype_cts(lua_State *L)
 /* Check C type ID for validity when assertions are enabled. */
 static LJ_AINLINE CTypeID ctype_check(CTState *cts, CTypeID id)
 {
-  lua_assert(id > 0 && id < cts->top); UNUSED(cts);
+  UNUSED(cts);
+  lj_assertCTS(id > 0 && id < cts->top, "bad CTID %d", id);
   return id;
 }
 
@@ -408,8 +426,9 @@ static LJ_AINLINE CType *ctype_get(CTState *cts, CTypeID id)
 /* Get child C type. */
 static LJ_AINLINE CType *ctype_child(CTState *cts, CType *ct)
 {
-  lua_assert(!(ctype_isvoid(ct->info) || ctype_isstruct(ct->info) ||
-	     ctype_isbitfield(ct->info)));  /* These don't have children. */
+  lj_assertCTS(!(ctype_isvoid(ct->info) || ctype_isstruct(ct->info) ||
+	       ctype_isbitfield(ct->info)),
+	       "ctype %08x has no children", ct->info);
   return ctype_get(cts, ctype_cid(ct->info));
 }
 

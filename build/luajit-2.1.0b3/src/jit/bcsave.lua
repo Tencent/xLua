@@ -1,7 +1,7 @@
 ----------------------------------------------------------------------------
 -- LuaJIT module to save/list bytecode.
 --
--- Copyright (C) 2005-2017 Mike Pall. All rights reserved.
+-- Copyright (C) 2005-2021 Mike Pall. All rights reserved.
 -- Released under the MIT license. See Copyright Notice in luajit.h
 ----------------------------------------------------------------------------
 --
@@ -16,6 +16,10 @@ local bit = require("bit")
 
 -- Symbol name prefix for LuaJIT bytecode.
 local LJBC_PREFIX = "luaJIT_BC_"
+
+local type, assert = type, assert
+local format = string.format
+local tremove, tconcat = table.remove, table.concat
 
 ------------------------------------------------------------------------------
 
@@ -56,6 +60,11 @@ local function savefile(name, mode)
   return check(io.open(name, mode))
 end
 
+local function set_stdout_binary(ffi)
+  ffi.cdef[[int _setmode(int fd, int mode);]]
+  ffi.C._setmode(1, 0x8000)
+end
+
 ------------------------------------------------------------------------------
 
 local map_type = {
@@ -63,8 +72,18 @@ local map_type = {
 }
 
 local map_arch = {
-  x86 = true, x64 = true, arm = true, arm64 = true, arm64be = true,
-  ppc = true, mips = true, mipsel = true,
+  x86 =		{ e = "le", b = 32, m = 3, p = 0x14c, },
+  x64 =		{ e = "le", b = 64, m = 62, p = 0x8664, },
+  arm =		{ e = "le", b = 32, m = 40, p = 0x1c0, },
+  arm64 =	{ e = "le", b = 64, m = 183, p = 0xaa64, },
+  arm64be =	{ e = "be", b = 64, m = 183, },
+  ppc =		{ e = "be", b = 32, m = 20, },
+  mips =	{ e = "be", b = 32, m = 8, f = 0x50001006, },
+  mipsel =	{ e = "le", b = 32, m = 8, f = 0x50001006, },
+  mips64 =	{ e = "be", b = 64, m = 8, f = 0x80000007, },
+  mips64el =	{ e = "le", b = 64, m = 8, f = 0x80000007, },
+  mips64r6 =	{ e = "be", b = 64, m = 8, f = 0xa0000407, },
+  mips64r6el =	{ e = "le", b = 64, m = 8, f = 0xa0000407, },
 }
 
 local map_os = {
@@ -73,33 +92,33 @@ local map_os = {
 }
 
 local function checkarg(str, map, err)
-  str = string.lower(str)
+  str = str:lower()
   local s = check(map[str], "unknown ", err)
-  return s == true and str or s
+  return type(s) == "string" and s or str
 end
 
 local function detecttype(str)
-  local ext = string.match(string.lower(str), "%.(%a+)$")
+  local ext = str:lower():match("%.(%a+)$")
   return map_type[ext] or "raw"
 end
 
 local function checkmodname(str)
-  check(string.match(str, "^[%w_.%-]+$"), "bad module name")
-  return string.gsub(str, "[%.%-]", "_")
+  check(str:match("^[%w_.%-]+$"), "bad module name")
+  return str:gsub("[%.%-]", "_")
 end
 
 local function detectmodname(str)
   if type(str) == "string" then
-    local tail = string.match(str, "[^/\\]+$")
+    local tail = str:match("[^/\\]+$")
     if tail then str = tail end
-    local head = string.match(str, "^(.*)%.[^.]*$")
+    local head = str:match("^(.*)%.[^.]*$")
     if head then str = head end
-    str = string.match(str, "^[%w_.%-]+")
+    str = str:match("^[%w_.%-]+")
   else
     str = nil
   end
   check(str, "cannot derive module name, use -n name")
-  return string.gsub(str, "[%.%-]", "_")
+  return str:gsub("[%.%-]", "_")
 end
 
 ------------------------------------------------------------------------------
@@ -111,6 +130,11 @@ local function bcsave_tail(fp, output, s)
 end
 
 local function bcsave_raw(output, s)
+  if output == "-" and jit.os == "Windows" then
+    local ok, ffi = pcall(require, "ffi")
+    check(ok, "FFI library required to write binary file to stdout")
+    set_stdout_binary(ffi)
+  end
   local fp = savefile(output, "wb")
   bcsave_tail(fp, output, s)
 end
@@ -118,8 +142,8 @@ end
 local function bcsave_c(ctx, output, s)
   local fp = savefile(output, "w")
   if ctx.type == "c" then
-    fp:write(string.format([[
-#ifdef _cplusplus
+    fp:write(format([[
+#ifdef __cplusplus
 extern "C"
 #endif
 #ifdef _WIN32
@@ -128,7 +152,7 @@ __declspec(dllexport)
 const unsigned char %s%s[] = {
 ]], LJBC_PREFIX, ctx.modname))
   else
-    fp:write(string.format([[
+    fp:write(format([[
 #define %s%s_SIZE %d
 static const unsigned char %s%s[] = {
 ]], LJBC_PREFIX, ctx.modname, #s, LJBC_PREFIX, ctx.modname))
@@ -138,13 +162,13 @@ static const unsigned char %s%s[] = {
     local b = tostring(string.byte(s, i))
     m = m + #b + 1
     if m > 78 then
-      fp:write(table.concat(t, ",", 1, n), ",\n")
+      fp:write(tconcat(t, ",", 1, n), ",\n")
       n, m = 0, #b + 1
     end
     n = n + 1
     t[n] = b
   end
-  bcsave_tail(fp, output, table.concat(t, ",", 1, n).."\n};\n")
+  bcsave_tail(fp, output, tconcat(t, ",", 1, n).."\n};\n")
 end
 
 local function bcsave_elfobj(ctx, output, s, ffi)
@@ -199,12 +223,8 @@ typedef struct {
 } ELF64obj;
 ]]
   local symname = LJBC_PREFIX..ctx.modname
-  local is64, isbe = false, false
-  if ctx.arch == "x64" or ctx.arch == "arm64" or ctx.arch == "arm64be" then
-    is64 = true
-  elseif ctx.arch == "ppc" or ctx.arch == "mips" then
-    isbe = true
-  end
+  local ai = assert(map_arch[ctx.arch])
+  local is64, isbe = ai.b == 64, ai.e == "be"
 
   -- Handle different host/target endianess.
   local function f32(x) return x end
@@ -237,10 +257,8 @@ typedef struct {
   hdr.eendian = isbe and 2 or 1
   hdr.eversion = 1
   hdr.type = f16(1)
-  hdr.machine = f16(({ x86=3, x64=62, arm=40, arm64=183, arm64be=183, ppc=20, mips=8, mipsel=8 })[ctx.arch])
-  if ctx.arch == "mips" or ctx.arch == "mipsel" then
-    hdr.flags = f32(0x50001006)
-  end
+  hdr.machine = f16(ai.m)
+  hdr.flags = f32(ai.f or 0)
   hdr.version = f32(1)
   hdr.shofs = fofs(ffi.offsetof(o, "sect"))
   hdr.ehsize = f16(ffi.sizeof(hdr))
@@ -275,7 +293,7 @@ typedef struct {
   o.sect[2].size = fofs(ofs)
   o.sect[3].type = f32(3) -- .strtab
   o.sect[3].ofs = fofs(sofs + ofs)
-  o.sect[3].size = fofs(#symname+1)
+  o.sect[3].size = fofs(#symname+2)
   ffi.copy(o.space+ofs+1, symname)
   ofs = ofs + #symname + 2
   o.sect[4].type = f32(1) -- .rodata
@@ -336,12 +354,8 @@ typedef struct {
 } PEobj;
 ]]
   local symname = LJBC_PREFIX..ctx.modname
-  local is64 = false
-  if ctx.arch == "x86" then
-    symname = "_"..symname
-  elseif ctx.arch == "x64" then
-    is64 = true
-  end
+  local ai = assert(map_arch[ctx.arch])
+  local is64 = ai.b == 64
   local symexport = "   /EXPORT:"..symname..",DATA "
 
   -- The file format is always little-endian. Swap if the host is big-endian.
@@ -355,7 +369,7 @@ typedef struct {
   -- Create PE object and fill in header.
   local o = ffi.new("PEobj")
   local hdr = o.hdr
-  hdr.arch = f16(({ x86=0x14c, x64=0x8664, arm=0x1c0, ppc=0x1f2, mips=0x366, mipsel=0x366 })[ctx.arch])
+  hdr.arch = f16(assert(ai.p))
   hdr.nsects = f16(2)
   hdr.symtabofs = f32(ffi.offsetof(o, "sym0"))
   hdr.nsyms = f32(6)
@@ -564,6 +578,9 @@ end
 local function bcsave_obj(ctx, output, s)
   local ok, ffi = pcall(require, "ffi")
   check(ok, "FFI library required to write this file type")
+  if output == "-" and jit.os == "Windows" then
+    set_stdout_binary(ffi)
+  end
   if ctx.os == "windows" then
     return bcsave_peobj(ctx, output, s, ffi)
   elseif ctx.os == "osx" then
@@ -605,16 +622,16 @@ local function docmd(...)
   local n = 1
   local list = false
   local ctx = {
-    strip = true, arch = jit.arch, os = string.lower(jit.os),
+    strip = true, arch = jit.arch, os = jit.os:lower(),
     type = false, modname = false,
   }
   while n <= #arg do
     local a = arg[n]
-    if type(a) == "string" and string.sub(a, 1, 1) == "-" and a ~= "-" then
-      table.remove(arg, n)
+    if type(a) == "string" and a:sub(1, 1) == "-" and a ~= "-" then
+      tremove(arg, n)
       if a == "--" then break end
       for m=2,#a do
-	local opt = string.sub(a, m, m)
+	local opt = a:sub(m, m)
 	if opt == "l" then
 	  list = true
 	elseif opt == "s" then
@@ -627,13 +644,13 @@ local function docmd(...)
 	    if n ~= 1 then usage() end
 	    arg[1] = check(loadstring(arg[1]))
 	  elseif opt == "n" then
-	    ctx.modname = checkmodname(table.remove(arg, n))
+	    ctx.modname = checkmodname(tremove(arg, n))
 	  elseif opt == "t" then
-	    ctx.type = checkarg(table.remove(arg, n), map_type, "file type")
+	    ctx.type = checkarg(tremove(arg, n), map_type, "file type")
 	  elseif opt == "a" then
-	    ctx.arch = checkarg(table.remove(arg, n), map_arch, "architecture")
+	    ctx.arch = checkarg(tremove(arg, n), map_arch, "architecture")
 	  elseif opt == "o" then
-	    ctx.os = checkarg(table.remove(arg, n), map_os, "OS name")
+	    ctx.os = checkarg(tremove(arg, n), map_os, "OS name")
 	  else
 	    usage()
 	  end

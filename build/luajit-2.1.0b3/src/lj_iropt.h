@@ -1,6 +1,6 @@
 /*
 ** Common header for IR emitter and optimizations.
-** Copyright (C) 2005-2017 Mike Pall. See Copyright Notice in luajit.h
+** Copyright (C) 2005-2021 Mike Pall. See Copyright Notice in luajit.h
 */
 
 #ifndef _LJ_IROPT_H
@@ -120,10 +120,11 @@ LJ_FUNC TRef LJ_FASTCALL lj_opt_fwd_hload(jit_State *J);
 LJ_FUNC TRef LJ_FASTCALL lj_opt_fwd_uload(jit_State *J);
 LJ_FUNC TRef LJ_FASTCALL lj_opt_fwd_fload(jit_State *J);
 LJ_FUNC TRef LJ_FASTCALL lj_opt_fwd_xload(jit_State *J);
-LJ_FUNC TRef LJ_FASTCALL lj_opt_fwd_tab_len(jit_State *J);
+LJ_FUNC TRef LJ_FASTCALL lj_opt_fwd_alen(jit_State *J);
 LJ_FUNC TRef LJ_FASTCALL lj_opt_fwd_hrefk(jit_State *J);
 LJ_FUNC int LJ_FASTCALL lj_opt_fwd_href_nokey(jit_State *J);
 LJ_FUNC int LJ_FASTCALL lj_opt_fwd_tptr(jit_State *J, IRRef lim);
+LJ_FUNC int LJ_FASTCALL lj_opt_fwd_sbuf(jit_State *J, IRRef lim);
 LJ_FUNC int lj_opt_fwd_wasnonnil(jit_State *J, IROpT loadop, IRRef xref);
 
 /* Dead-store elimination. */
@@ -150,7 +151,7 @@ LJ_FUNC IRType lj_opt_narrow_forl(jit_State *J, cTValue *forbase);
 /* Optimization passes. */
 LJ_FUNC void lj_opt_dce(jit_State *J);
 LJ_FUNC int lj_opt_loop(jit_State *J);
-#if LJ_SOFTFP || (LJ_32 && LJ_HASFFI)
+#if LJ_SOFTFP32 || (LJ_32 && LJ_HASFFI)
 LJ_FUNC void lj_opt_split(jit_State *J);
 #else
 #define lj_opt_split(J)		UNUSED(J)

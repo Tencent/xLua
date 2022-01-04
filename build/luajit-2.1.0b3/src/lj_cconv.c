@@ -1,6 +1,6 @@
 /*
 ** C type conversions.
-** Copyright (C) 2005-2017 Mike Pall. See Copyright Notice in luajit.h
+** Copyright (C) 2005-2021 Mike Pall. See Copyright Notice in luajit.h
 */
 
 #include "lj_obj.h"
@@ -8,6 +8,7 @@
 #if LJ_HASFFI
 
 #include "lj_err.h"
+#include "lj_buf.h"
 #include "lj_tab.h"
 #include "lj_ctype.h"
 #include "lj_cdata.h"
@@ -122,19 +123,25 @@ void lj_cconv_ct_ct(CTState *cts, CType *d, CType *s,
   CTInfo dinfo = d->info, sinfo = s->info;
   void *tmpptr;
 
-  lua_assert(!ctype_isenum(dinfo) && !ctype_isenum(sinfo));
-  lua_assert(!ctype_isattrib(dinfo) && !ctype_isattrib(sinfo));
+  lj_assertCTS(!ctype_isenum(dinfo) && !ctype_isenum(sinfo),
+	       "unresolved enum");
+  lj_assertCTS(!ctype_isattrib(dinfo) && !ctype_isattrib(sinfo),
+	       "unstripped attribute");
 
   if (ctype_type(dinfo) > CT_MAYCONVERT || ctype_type(sinfo) > CT_MAYCONVERT)
     goto err_conv;
 
   /* Some basic sanity checks. */
-  lua_assert(!ctype_isnum(dinfo) || dsize > 0);
-  lua_assert(!ctype_isnum(sinfo) || ssize > 0);
-  lua_assert(!ctype_isbool(dinfo) || dsize == 1 || dsize == 4);
-  lua_assert(!ctype_isbool(sinfo) || ssize == 1 || ssize == 4);
-  lua_assert(!ctype_isinteger(dinfo) || (1u<<lj_fls(dsize)) == dsize);
-  lua_assert(!ctype_isinteger(sinfo) || (1u<<lj_fls(ssize)) == ssize);
+  lj_assertCTS(!ctype_isnum(dinfo) || dsize > 0, "bad size for number type");
+  lj_assertCTS(!ctype_isnum(sinfo) || ssize > 0, "bad size for number type");
+  lj_assertCTS(!ctype_isbool(dinfo) || dsize == 1 || dsize == 4,
+	       "bad size for bool type");
+  lj_assertCTS(!ctype_isbool(sinfo) || ssize == 1 || ssize == 4,
+	       "bad size for bool type");
+  lj_assertCTS(!ctype_isinteger(dinfo) || (1u<<lj_fls(dsize)) == dsize,
+	       "bad size for integer type");
+  lj_assertCTS(!ctype_isinteger(sinfo) || (1u<<lj_fls(ssize)) == ssize,
+	       "bad size for integer type");
 
   switch (cconv_idx2(dinfo, sinfo)) {
   /* Destination is a bool. */
@@ -357,7 +364,7 @@ void lj_cconv_ct_ct(CTState *cts, CType *d, CType *s,
     if ((flags & CCF_CAST) || (d->info & CTF_VLA) || d != s)
       goto err_conv;  /* Must be exact same type. */
 copyval:  /* Copy value. */
-    lua_assert(dsize == ssize);
+    lj_assertCTS(dsize == ssize, "value copy with different sizes");
     memcpy(dp, sp, dsize);
     break;
 
@@ -389,7 +396,7 @@ int lj_cconv_tv_ct(CTState *cts, CType *s, CTypeID sid,
 	lj_cconv_ct_ct(cts, ctype_get(cts, CTID_DOUBLE), s,
 		       (uint8_t *)&o->n, sp, 0);
 	/* Numbers are NOT canonicalized here! Beware of uninitialized data. */
-	lua_assert(tvisnum(o));
+	lj_assertCTS(tvisnum(o), "non-canonical NaN passed");
       }
     } else {
       uint32_t b = s->size == 1 ? (*sp != 0) : (*(int *)sp != 0);
@@ -406,7 +413,7 @@ int lj_cconv_tv_ct(CTState *cts, CType *s, CTypeID sid,
     CTSize sz;
   copyval:  /* Copy value. */
     sz = s->size;
-    lua_assert(sz != CTSIZE_INVALID);
+    lj_assertCTS(sz != CTSIZE_INVALID, "value copy with invalid size");
     /* Attributes are stripped, qualifiers are kept (but mostly ignored). */
     cd = lj_cdata_new(cts, ctype_typeid(cts, s), sz);
     setcdataV(cts->L, o, cd);
@@ -421,19 +428,22 @@ int lj_cconv_tv_bf(CTState *cts, CType *s, TValue *o, uint8_t *sp)
   CTInfo info = s->info;
   CTSize pos, bsz;
   uint32_t val;
-  lua_assert(ctype_isbitfield(info));
+  lj_assertCTS(ctype_isbitfield(info), "bitfield expected");
   /* NYI: packed bitfields may cause misaligned reads. */
   switch (ctype_bitcsz(info)) {
   case 4: val = *(uint32_t *)sp; break;
   case 2: val = *(uint16_t *)sp; break;
   case 1: val = *(uint8_t *)sp; break;
-  default: lua_assert(0); val = 0; break;
+  default:
+    lj_assertCTS(0, "bad bitfield container size %d", ctype_bitcsz(info));
+    val = 0;
+    break;
   }
   /* Check if a packed bitfield crosses a container boundary. */
   pos = ctype_bitpos(info);
   bsz = ctype_bitbsz(info);
-  lua_assert(pos < 8*ctype_bitcsz(info));
-  lua_assert(bsz > 0 && bsz <= 8*ctype_bitcsz(info));
+  lj_assertCTS(pos < 8*ctype_bitcsz(info), "bad bitfield position");
+  lj_assertCTS(bsz > 0 && bsz <= 8*ctype_bitcsz(info), "bad bitfield size");
   if (pos + bsz > 8*ctype_bitcsz(info))
     lj_err_caller(cts->L, LJ_ERR_FFI_NYIPACKBIT);
   if (!(info & CTF_BOOL)) {
@@ -449,7 +459,7 @@ int lj_cconv_tv_bf(CTState *cts, CType *s, TValue *o, uint8_t *sp)
     }
   } else {
     uint32_t b = (val >> pos) & 1;
-    lua_assert(bsz == 1);
+    lj_assertCTS(bsz == 1, "bad bool bitfield size");
     setboolV(o, b);
     setboolV(&cts->g->tmptv2, b);  /* Remember for trace recorder. */
   }
@@ -553,13 +563,15 @@ void lj_cconv_ct_tv(CTState *cts, CType *d,
     sid = cdataV(o)->ctypeid;
     s = ctype_get(cts, sid);
     if (ctype_isref(s->info)) {  /* Resolve reference for value. */
-      lua_assert(s->size == CTSIZE_PTR);
+      lj_assertCTS(s->size == CTSIZE_PTR, "ref is not pointer-sized");
       sp = *(void **)sp;
       sid = ctype_cid(s->info);
     }
     s = ctype_raw(cts, sid);
     if (ctype_isfunc(s->info)) {
+      CTypeID did = ctype_typeid(cts, d);
       sid = lj_ctype_intern(cts, CTINFO(CT_PTR, CTALIGN_PTR|sid), CTSIZE_PTR);
+      d = ctype_get(cts, did);  /* cts->tab may have been reallocated. */
     } else {
       if (ctype_isenum(s->info)) s = ctype_child(cts, s);
       goto doconv;
@@ -571,7 +583,7 @@ void lj_cconv_ct_tv(CTState *cts, CType *d,
       CType *cct = lj_ctype_getfield(cts, d, str, &ofs);
       if (!cct || !ctype_isconstval(cct->info))
 	goto err_conv;
-      lua_assert(d->size == 4);
+      lj_assertCTS(d->size == 4, "only 32 bit enum supported");  /* NYI */
       sp = (uint8_t *)&cct->size;
       sid = ctype_cid(cct->info);
     } else if (ctype_isrefarray(d->info)) {  /* Copy string to array. */
@@ -610,8 +622,10 @@ void lj_cconv_ct_tv(CTState *cts, CType *d,
     tmpptr = uddata(ud);
     if (ud->udtype == UDTYPE_IO_FILE)
       tmpptr = *(void **)tmpptr;
+    else if (ud->udtype == UDTYPE_BUFFER)
+      tmpptr = ((SBufExt *)tmpptr)->r;
   } else if (tvislightud(o)) {
-    tmpptr = lightudV(o);
+    tmpptr = lightudV(cts->g, o);
   } else if (tvisfunc(o)) {
     void *p = lj_ccallback_new(cts, d, funcV(o));
     if (p) {
@@ -635,10 +649,10 @@ void lj_cconv_bf_tv(CTState *cts, CType *d, uint8_t *dp, TValue *o)
   CTInfo info = d->info;
   CTSize pos, bsz;
   uint32_t val, mask;
-  lua_assert(ctype_isbitfield(info));
+  lj_assertCTS(ctype_isbitfield(info), "bitfield expected");
   if ((info & CTF_BOOL)) {
     uint8_t tmpbool;
-    lua_assert(ctype_bitbsz(info) == 1);
+    lj_assertCTS(ctype_bitbsz(info) == 1, "bad bool bitfield size");
     lj_cconv_ct_tv(cts, ctype_get(cts, CTID_BOOL), &tmpbool, o, 0);
     val = tmpbool;
   } else {
@@ -647,8 +661,8 @@ void lj_cconv_bf_tv(CTState *cts, CType *d, uint8_t *dp, TValue *o)
   }
   pos = ctype_bitpos(info);
   bsz = ctype_bitbsz(info);
-  lua_assert(pos < 8*ctype_bitcsz(info));
-  lua_assert(bsz > 0 && bsz <= 8*ctype_bitcsz(info));
+  lj_assertCTS(pos < 8*ctype_bitcsz(info), "bad bitfield position");
+  lj_assertCTS(bsz > 0 && bsz <= 8*ctype_bitcsz(info), "bad bitfield size");
   /* Check if a packed bitfield crosses a container boundary. */
   if (pos + bsz > 8*ctype_bitcsz(info))
     lj_err_caller(cts->L, LJ_ERR_FFI_NYIPACKBIT);
@@ -659,7 +673,9 @@ void lj_cconv_bf_tv(CTState *cts, CType *d, uint8_t *dp, TValue *o)
   case 4: *(uint32_t *)dp = (*(uint32_t *)dp & ~mask) | (uint32_t)val; break;
   case 2: *(uint16_t *)dp = (*(uint16_t *)dp & ~mask) | (uint16_t)val; break;
   case 1: *(uint8_t *)dp = (*(uint8_t *)dp & ~mask) | (uint8_t)val; break;
-  default: lua_assert(0); break;
+  default:
+    lj_assertCTS(0, "bad bitfield container size %d", ctype_bitcsz(info));
+    break;
   }
 }
 
