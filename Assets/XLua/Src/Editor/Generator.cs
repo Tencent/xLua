@@ -32,7 +32,7 @@ namespace CSObjectWrapEditor
         static GeneratorConfig()
         {
             foreach(var type in (from type in XLua.Utils.GetAllTypes()
-            where type.IsAbstract && type.IsSealed
+            where type.IsAbstract || type.IsSealed
             select type))
             {
                 foreach (var field in type.GetFields(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly))
