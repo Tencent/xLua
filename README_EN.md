@@ -101,5 +101,7 @@ QQ Group 1: 612705778 (may be full)
 
 QQ Group 2: 703073338
 
+QQ Group 3: 811246782
+
 Check answers: If you encounter a problem, please read the FAQs first.
 
