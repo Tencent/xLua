@@ -156,17 +156,29 @@ if (APPLE)
 		set_xcode_property (xlua IPHONEOS_DEPLOYMENT_TARGET "7.0" "all")
     else ()
         ADD_DEFINITIONS(-DLUA_USE_MACOSX) #osx platform emmylua debugger must have this option or can not load cpath
-        set(CMAKE_OSX_ARCHITECTURES "$(ARCHS_STANDARD_64_BIT)")
-        add_library(xlua MODULE
-            ${LUA_CORE}
-            ${LUA_LIB}
-            ${LUA_SOCKET}
-            ${XLUA_CORE}
-            ${THIRDPART_SRC}
-        )
-        set_target_properties ( xlua PROPERTIES BUNDLE TRUE )
-        #set_target_properties ( xlua PROPERTIES FRAMEWORK TRUE )
-        #set_target_properties ( xlua PROPERTIES MACOSX_RPATH TRUE )
+        if (BUILD_SILICON)
+           set(CMAKE_OSX_ARCHITECTURES arm64)
+
+            add_library(xlua SHARED
+                ${LUA_CORE}
+                ${LUA_LIB}
+                ${LUA_SOCKET}
+                ${XLUA_CORE}
+                ${THIRDPART_SRC}
+            )
+        else ()
+            set(CMAKE_OSX_ARCHITECTURES "$(ARCHS_STANDARD_64_BIT)")
+            add_library(xlua MODULE
+                ${LUA_CORE}
+                ${LUA_LIB}
+                ${LUA_SOCKET}
+                ${XLUA_CORE}
+                ${THIRDPART_SRC}
+            )
+            set_target_properties ( xlua PROPERTIES BUNDLE TRUE )
+            #set_target_properties ( xlua PROPERTIES FRAMEWORK TRUE )
+            #set_target_properties ( xlua PROPERTIES MACOSX_RPATH TRUE )
+        end
     endif ()
 elseif ("${CMAKE_SYSTEM_NAME}" STREQUAL "Switch")
     add_library(xlua STATIC

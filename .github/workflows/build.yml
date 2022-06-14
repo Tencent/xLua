@@ -102,6 +102,7 @@ jobs:
           ./make_osx_lua54.sh
           ./make_osx_lua53.sh
           ./make_osx_luajit.sh
+          ./make_osx_silicon_lua53.sh
       - name: Upload
         uses: actions/upload-artifact@v2
         with:
