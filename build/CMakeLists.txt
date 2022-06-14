@@ -178,7 +178,7 @@ if (APPLE)
             set_target_properties ( xlua PROPERTIES BUNDLE TRUE )
             #set_target_properties ( xlua PROPERTIES FRAMEWORK TRUE )
             #set_target_properties ( xlua PROPERTIES MACOSX_RPATH TRUE )
-        end
+        endif ()
     endif ()
 elseif ("${CMAKE_SYSTEM_NAME}" STREQUAL "Switch")
     add_library(xlua STATIC
