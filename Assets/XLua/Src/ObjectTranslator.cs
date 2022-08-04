@@ -1189,6 +1189,16 @@ namespace XLua
                     Push(L, o);
                 }
             }
+	    else if(o is Dictionary<string,object>)
+            {
+                LuaAPI.lua_newtable(L);
+                foreach (var item in o as Dictionary<string, object>)
+                {
+                    PushAny(L, item.Key);
+                    PushAny(L,item.Value);
+                    LuaAPI.xlua_psettable(L, -3);
+                }
+            }
             else
             {
                 Push(L, o);
