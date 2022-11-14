@@ -1,6 +1,6 @@
-if [ -z "$ANDROID_NDK" ]; then
+#if [ -z "$ANDROID_NDK" ]; then
     export ANDROID_NDK=~/android-ndk-r15c
-fi
+#fi
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 SRCDIR=$DIR/luajit-2.1.0b3
