@@ -1340,6 +1340,11 @@ namespace XLua
 
         bool injectGenericMethod(MethodDefinition method, HotfixFlagInTool hotfixType)
         {
+            //如果注入的是xlua所在之外的Assembly的话，不支持该方式
+            if (!isInjectAndGenTheSameAssembly)
+            {
+                return true;
+            }
             var type = method.DeclaringType;
             
             bool isFinalize = (method.Name == "Finalize" && method.IsSpecialName);
