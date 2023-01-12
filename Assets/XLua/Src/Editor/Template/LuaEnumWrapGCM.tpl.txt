@@ -17,7 +17,7 @@ local enum_or_op = debug.getmetatable(CS.System.Reflection.BindingFlags.Public).
 
 namespace XLua
 {
-	public partial class ObjectTranslator
+	public static partial class ObjectTranslator_Gen
     {
     <%ForEachCsList(types, function(type)
 	local fields = type2fields and type2fields[type] or type:GetFields(enum_or_op(CS.System.Reflection.BindingFlags.Public, CS.System.Reflection.BindingFlags.Static))
@@ -29,27 +29,27 @@ namespace XLua
 	end)
 	local v_type_name = CSVariableName(type)
 	%>
-		public void __Register<%=v_type_name%>(RealStatePtr L)
+		public static void __Register<%=v_type_name%>(this ObjectTranslator thiz, RealStatePtr L)
         {
-		    Utils.BeginObjectRegister(typeof(<%=CsFullTypeName(type)%>), L, this, 0, 0, 0, 0);
-			Utils.EndObjectRegister(typeof(<%=CsFullTypeName(type)%>), L, this, null, null, null, null, null);
+		    Utils.BeginObjectRegister(typeof(<%=CsFullTypeName(type)%>), L, thiz, 0, 0, 0, 0);
+			Utils.EndObjectRegister(typeof(<%=CsFullTypeName(type)%>), L, thiz, null, null, null, null, null);
 			
 			Utils.BeginClassRegister(typeof(<%=CsFullTypeName(type)%>), L, null, <%=fields.Length + 1%>, 0, 0);
 <%if #fields_to_gen <= 20 then%>
             <% ForEachCsList(fields, function(field) 
 			if field.Name == "value__" or IsObsolute(field) then return end
 			%>
-            Utils.RegisterObject(L, this, Utils.CLS_IDX, "<%=field.Name%>", <%=CsFullTypeName(type)%>.<%=UnK(field.Name)%>);
+            Utils.RegisterObject(L, thiz, Utils.CLS_IDX, "<%=field.Name%>", <%=CsFullTypeName(type)%>.<%=UnK(field.Name)%>);
             <%end)%>
 <%else%>
             Utils.RegisterEnumType(L, typeof(<%=CsFullTypeName(type)%>));
 <%end%>
-			Utils.RegisterFunc(L, Utils.CLS_IDX, "__CastFrom", __CastFrom<%=v_type_name%>);
+			Utils.RegisterFunc(L, Utils.CLS_IDX, "__CastFrom", thiz.__CastFrom<%=v_type_name%>);
             
-            Utils.EndClassRegister(typeof(<%=CsFullTypeName(type)%>), L, this);
+            Utils.EndClassRegister(typeof(<%=CsFullTypeName(type)%>), L, thiz);
         }
 		
-        int __CastFrom<%=v_type_name%>(RealStatePtr L, int __gen_top)
+        static int __CastFrom<%=v_type_name%>(this ObjectTranslator thiz, RealStatePtr L, int __gen_top)
 		{
 			LuaTypes lua_type = LuaAPI.lua_type(L, 1);
             if (lua_type == LuaTypes.LUA_TNUMBER)
@@ -66,7 +66,7 @@ namespace XLua
 			        if field.Name == "value__" or IsObsolute(field) then return end
 			    %><%=(is_first and "" or "else ")%>if (LuaAPI.xlua_is_eq_str(L, 1, "<%=field.Name%>"))
                 {
-                    Push<%=v_type_name%>(L, <%=CsFullTypeName(type)%>.<%=UnK(field.Name)%>);
+                    thiz.Push<%=v_type_name%>(L, <%=CsFullTypeName(type)%>.<%=UnK(field.Name)%>);
                 }
 				<%
 				is_first = false

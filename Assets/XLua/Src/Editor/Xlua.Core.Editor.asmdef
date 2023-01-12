@@ -1,0 +1,17 @@
+{
+    "name": "Xlua.Core.Editor",
+    "references": [
+        "GUID:5b37a11e6fbbe2542aa3580b9973df17"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

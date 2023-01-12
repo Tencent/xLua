@@ -19,6 +19,8 @@ using LuaCSFunction = XLua.LuaDLL.lua_CSFunction;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Linq;
+using System.Threading;
 
 namespace XLua
 {
@@ -63,6 +65,35 @@ namespace XLua
 #endif
 
         internal static volatile LuaCSFunction LazyReflectionWrap = new LuaCSFunction(Utils.LazyReflectionCall);
+        internal static Type delegate_birdge_type;
+        // -1: not initialized yet, 0: initialized without gencode, 1: initialized with gencode
+        private static volatile int initState = -1;
+        internal static bool Gen_Flag
+        {
+            get
+            {
+                Init();
+                return initState == 1;
+            }
+        }
+        internal static void Init()
+        {
+            if(Interlocked.CompareExchange(ref initState, 0, -1) != -1)
+                return;
+            delegate_birdge_type = (from assembly in AppDomain.CurrentDomain.GetAssemblies()
+                select assembly.GetType("XLua.DelegateBridge_Wrap")).FirstOrDefault(x => x != null);
+            var InternalGlobals_Gen = (from assembly in AppDomain.CurrentDomain.GetAssemblies()
+                select assembly.GetType("XLua.InternalGlobals_Gen")).FirstOrDefault(x => x != null);
+            if (delegate_birdge_type == null || InternalGlobals_Gen == null)
+                return;
+            Interlocked.Exchange(ref initState, 1);
+            var Init = InternalGlobals_Gen.GetMethod("Init", BindingFlags.Static | BindingFlags.NonPublic);
+            var parameters = new object[] {null, null, null};
+            Init.Invoke(null, parameters);
+            extensionMethodMap = parameters[0] as Dictionary<Type, IEnumerable<MethodInfo>>;
+            genTryArrayGetPtr = parameters[1] as TryArrayGet;
+            genTryArraySetPtr = parameters[2] as TryArraySet;
+        }
     }
 
 }

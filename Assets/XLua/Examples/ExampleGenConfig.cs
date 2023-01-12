@@ -75,7 +75,7 @@ public static class ExampleGenConfig
                 new List<string>(){"UnityEngine.CanvasRenderer", "onRequestRebuild"},
                 new List<string>(){"UnityEngine.Light", "areaSize"},
                 new List<string>(){"UnityEngine.Light", "lightmapBakeType"},
-    #if UNITY_ANDROID
+    #if UNITY_ANDROID || UNITY_STANDALONE_WIN
                 new List<string>(){"UnityEngine.Light", "SetLightDirty"},
                 new List<string>(){"UnityEngine.Light", "shadowRadius"},
                 new List<string>(){"UnityEngine.Light", "shadowAngle"},
