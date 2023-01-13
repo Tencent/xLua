@@ -76,6 +76,12 @@ namespace XLua
                 return initState == 1;
             }
         }
+
+        internal static Delegate ConvertDelegate(Delegate sourceDelegate, Type targetType)
+        {
+            return Delegate.CreateDelegate(targetType, sourceDelegate.Target, sourceDelegate.Method);
+        }
+
         internal static void Init()
         {
             if(Interlocked.CompareExchange(ref initState, 0, -1) != -1)
@@ -91,8 +97,8 @@ namespace XLua
             var parameters = new object[] {null, null, null};
             Init.Invoke(null, parameters);
             extensionMethodMap = parameters[0] as Dictionary<Type, IEnumerable<MethodInfo>>;
-            genTryArrayGetPtr = parameters[1] as TryArrayGet;
-            genTryArraySetPtr = parameters[2] as TryArraySet;
+            genTryArrayGetPtr = ConvertDelegate(parameters[1] as Delegate, typeof(TryArrayGet)) as TryArrayGet;
+            genTryArraySetPtr = ConvertDelegate(parameters[2] as Delegate, typeof(TryArraySet)) as TryArraySet;
         }
     }
 
