@@ -1,4 +1,4 @@
-#if USE_UNI_LUA
+﻿#if USE_UNI_LUA
 using LuaAPI = UniLua.Lua;
 using RealStatePtr = UniLua.ILuaState;
 using LuaCSFunction = UniLua.CSharpFunctionDelegate;
@@ -70,7 +70,7 @@ namespace XLua.CSObjectWrap
         split_method_count = split_method_count + 1
         %>}<%end%>
         
-        static void Init(LuaEnv luaenv, ObjectTranslator translator)
+        public static void Init(LuaEnv luaenv, ObjectTranslator translator)
         {
             <%for i = 1, split_method_count do%>
             <%=split_method_perfix%><%=(i - 1)%>(luaenv, translator);
@@ -79,25 +79,12 @@ namespace XLua.CSObjectWrap
             translator.AddInterfaceBridgeCreator(typeof(<%=CsFullTypeName(itf_bridge)%>), <%=CSVariableName(itf_bridge)%>Bridge.__Create);
             <%end)%>
         }
-        
-	    static XLua_Gen_Initer_Register__()
-        {
-		    XLua.LuaEnv.AddIniter(Init);
-		}
-		
-		
 	}
-	
 }
+
 namespace XLua
 {
-	public partial class ObjectTranslator
-	{
-		static XLua.CSObjectWrap.XLua_Gen_Initer_Register__ s_gen_reg_dumb_obj = new XLua.CSObjectWrap.XLua_Gen_Initer_Register__();
-		static XLua.CSObjectWrap.XLua_Gen_Initer_Register__ gen_reg_dumb_obj {get{return s_gen_reg_dumb_obj;}}
-	}
-	
-	internal partial class InternalGlobals
+	internal partial class InternalGlobals_Gen
     {
 	    <%
 		local type_to_methods = {}
@@ -115,8 +102,15 @@ namespace XLua
 		%><%if pi ~= 0 then%>, <%end%><%if parameter.IsOut then %>out <% elseif parameter.ParameterType.IsByRef then %>ref <% end %> <%=CsFullTypeName(parameter.ParameterType)%> <%=parameter.Name%><%
 		end)%>);
 		<%end)%>
-	    static InternalGlobals()
+        private delegate bool TryArrayGet(Type type, RealStatePtr L, ObjectTranslator translator, object obj, int index);
+        private delegate bool TryArraySet(Type type, RealStatePtr L, ObjectTranslator translator, object obj, int array_idx, int obj_idx);
+	    private static void Init(
+            out Dictionary<Type, IEnumerable<MethodInfo>> extensionMethodMap,
+            out TryArrayGet genTryArrayGetPtr,
+            out TryArraySet genTryArraySetPtr)
 		{
+            XLua.LuaEnv.AddIniter(XLua.CSObjectWrap.XLua_Gen_Initer_Register__.Init);
+            XLua.LuaEnv.AddIniter(XLua.ObjectTranslator_Gen.Init);
 		    extensionMethodMap = new Dictionary<Type, IEnumerable<MethodInfo>>()
 			{
 			    <%for _, methods_info in ipairs(seq_tbl) do%>
@@ -133,8 +127,8 @@ namespace XLua
 				<%end%>
 			};
 			
-			genTryArrayGetPtr = StaticLuaCallbacks.__tryArrayGet;
-            genTryArraySetPtr = StaticLuaCallbacks.__tryArraySet;
+            genTryArrayGetPtr = StaticLuaCallbacks_Wrap.__tryArrayGet;
+            genTryArraySetPtr = StaticLuaCallbacks_Wrap.__tryArraySet;
 		}
 	}
 }

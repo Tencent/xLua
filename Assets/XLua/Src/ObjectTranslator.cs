@@ -83,7 +83,7 @@ namespace XLua
         LUA_ERRERR = 5,
     }
 
-    sealed class LuaIndexes
+    public static class LuaIndexes
     {
         public static int LUA_REGISTRYINDEX
         {
@@ -106,7 +106,7 @@ namespace XLua
 	{
         internal MethodWrapsCache methodWrapsCache;
         internal ObjectCheckers objectCheckers;
-        internal ObjectCasters objectCasters;
+        public ObjectCasters objectCasters;
 
         internal readonly ObjectPool objects = new ObjectPool();
         internal readonly Dictionary<object, int> reverseMap = new Dictionary<object, int>(new ReferenceEqualsComparer());
@@ -218,13 +218,6 @@ namespace XLua
 
         public ObjectTranslator(LuaEnv luaenv,RealStatePtr L)
 		{
-#if XLUA_GENERAL  || (UNITY_WSA && !UNITY_EDITOR)
-            var dumb_field = typeof(ObjectTranslator).GetField("s_gen_reg_dumb_obj", BindingFlags.Static| BindingFlags.DeclaredOnly | BindingFlags.NonPublic);
-            if (dumb_field != null)
-            {
-                dumb_field.GetValue(null);
-            }
-#endif
             assemblies = new List<Assembly>();
 
 #if (UNITY_WSA && !ENABLE_IL2CPP) && !UNITY_EDITOR
@@ -265,16 +258,9 @@ namespace XLua
             initCSharpCallLua();
         }
 
-        internal enum LOGLEVEL{
-            NO,
-            INFO,
-            WARN,
-            ERROR
-        }
-
-#if (UNITY_EDITOR || XLUA_GENERAL) && !NET_STANDARD_2_0
         Type delegate_birdge_type;
 
+#if (UNITY_EDITOR || XLUA_GENERAL) && !NET_STANDARD_2_0
         class CompareByArgRet : IEqualityComparer<MethodInfo>
         {
             public bool Equals(MethodInfo x, MethodInfo y)
@@ -296,10 +282,14 @@ namespace XLua
 
         void initCSharpCallLua()
         {
-#if (UNITY_EDITOR || XLUA_GENERAL) && !NET_STANDARD_2_0
-            delegate_birdge_type = typeof(DelegateBridge);
-            if (!DelegateBridge.Gen_Flag)
+            if (DelegateBridge.Gen_Flag)
             {
+                delegate_birdge_type = InternalGlobals.delegate_birdge_type;
+            }
+            else
+            {
+                delegate_birdge_type = typeof(DelegateBridge);
+#if (UNITY_EDITOR || XLUA_GENERAL) && !NET_STANDARD_2_0
                 List<Type> cs_call_lua = new List<Type>();
                 foreach (var type in Utils.GetAllTypes())
                 {
@@ -337,8 +327,8 @@ namespace XLua
 
                 ce.SetGenInterfaces(cs_call_lua.Where(type=>type.IsInterface()).ToList());
                 delegate_birdge_type = ce.EmitDelegateImpl(groups);
-            }
 #endif
+            }
         }
 
 #if (UNITY_EDITOR || XLUA_GENERAL) && !NET_STANDARD_2_0
@@ -511,16 +501,7 @@ namespace XLua
             DelegateBridgeBase bridge;
             try
             {
-#if (UNITY_EDITOR || XLUA_GENERAL) && !NET_STANDARD_2_0
-                if (!DelegateBridge.Gen_Flag)
-                {
-                    bridge = Activator.CreateInstance(delegate_birdge_type, new object[] { reference, luaEnv }) as DelegateBridgeBase;
-                }
-                else
-#endif
-                {
-                    bridge = new DelegateBridge(reference, luaEnv);
-                }
+                bridge = Activator.CreateInstance(delegate_birdge_type, new object[] { reference, luaEnv }) as DelegateBridgeBase;
             }
             catch(Exception e)
             {
@@ -825,7 +806,7 @@ namespace XLua
 			return index;
 		}
 		
-		internal object GetObject(RealStatePtr L,int index)
+		public object GetObject(RealStatePtr L,int index)
 		{
             return (objectCasters.GetCaster(typeof(object))(L, index, null));
         }
@@ -1024,7 +1005,8 @@ namespace XLua
             }
         }
 
-        internal int getTypeId(RealStatePtr L, Type type, out bool is_first, LOGLEVEL log_level = LOGLEVEL.WARN)
+
+        public int getTypeId(RealStatePtr L, Type type, out bool is_first)
         {
             int type_id;
             is_first = false;
@@ -1375,7 +1357,7 @@ namespace XLua
             return getCsObj(L, index, LuaAPI.xlua_tocsobj_safe(L, index));
         }
 
-		internal object FastGetCSObj(RealStatePtr L,int index)
+		public object FastGetCSObj(RealStatePtr L,int index)
 		{
             return getCsObj(L, index, LuaAPI.xlua_tocsobj_fast(L,index));
         }

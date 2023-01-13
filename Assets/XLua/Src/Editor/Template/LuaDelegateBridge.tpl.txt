@@ -1,4 +1,4 @@
-#if USE_UNI_LUA
+﻿#if USE_UNI_LUA
 using LuaAPI = UniLua.Lua;
 using RealStatePtr = UniLua.ILuaState;
 using LuaCSFunction = UniLua.CSharpFunctionDelegate;
@@ -15,8 +15,9 @@ require "TemplateCommon"
 
 namespace XLua
 {
-    public partial class DelegateBridge : DelegateBridgeBase
+    public partial class DelegateBridge_Wrap : DelegateBridge
     {
+		public DelegateBridge_Wrap(int reference, LuaEnv luaenv) : base(reference, luaenv){}
 		<%
 		ForEachCsList(delegates_groups, function(delegates_group, group_idx)
 		local delegate = delegates_group.Key
@@ -45,7 +46,7 @@ namespace XLua
             lock (luaEnv.luaEnvLock)
             {
 #endif
-                RealStatePtr L = luaEnv.rawL;
+                RealStatePtr L = luaEnv.L;
                 int errFunc = LuaAPI.pcall_prepare(L, errorFuncRef, luaReference);
                 <%if CallNeedTranslator(delegate, "") then %>ObjectTranslator translator = luaEnv.translator;<%end%>
                 <%
@@ -74,11 +75,6 @@ namespace XLua
 #endif
 		}
         <%end)%>
-        
-		static DelegateBridge()
-		{
-		    Gen_Flag = true;
-		}
 		
 		public override Delegate GetDelegateByType(Type type)
 		{

@@ -120,50 +120,50 @@ local generic_arg_list, type_constraints = GenericArgumentList(type)
 %>
 namespace XLua
 {
-    public partial class ObjectTranslator
+    public static partial class ObjectTranslator_Gen
     {
-        public void __Register<%=v_type_name%><%=generic_arg_list%>(RealStatePtr L) <%=type_constraints%>
+        public static void __Register<%=v_type_name%><%=generic_arg_list%>(this ObjectTranslator thiz, RealStatePtr L) <%=type_constraints%>
         {
 		    System.Type type = typeof(<%=CsFullTypeName(type)%>);
-			Utils.BeginObjectRegister(type, L, this, <%=meta_func_count%>, <%=obj_method_count%>, <%=obj_getter_count%>, <%=obj_setter_count%>);
-			<%ForEachCsList(operators, function(operator)%>Utils.RegisterFunc(L, Utils.OBJ_META_IDX, "<%=(OpNameMap[operator.Name]):gsub('Meta', ''):lower()%>", <%=v_type_name%><%=OpNameMap[operator.Name]%><%=generic_arg_list%>);
+			Utils.BeginObjectRegister(type, L, thiz, <%=meta_func_count%>, <%=obj_method_count%>, <%=obj_getter_count%>, <%=obj_setter_count%>);
+			<%ForEachCsList(operators, function(operator)%>Utils.RegisterFunc(L, Utils.OBJ_META_IDX, "<%=(OpNameMap[operator.Name]):gsub('Meta', ''):lower()%>", thiz.<%=v_type_name%><%=OpNameMap[operator.Name]%><%=generic_arg_list%>);
             <%end)%>
-			<%ForEachCsList(methods, function(method) if not method.IsStatic then %>Utils.RegisterFunc(L, Utils.METHOD_IDX, "<%=method.Name%>", <%=v_type_name%>_m_<%=method.Name%><%=generic_arg_list%>);
+			<%ForEachCsList(methods, function(method) if not method.IsStatic then %>Utils.RegisterFunc(L, Utils.METHOD_IDX, "<%=method.Name%>", thiz.<%=v_type_name%>_m_<%=method.Name%><%=generic_arg_list%>);
 			<% end end)%>
-			<%ForEachCsList(events, function(event) if not event.IsStatic then %>Utils.RegisterFunc(L, Utils.METHOD_IDX, "<%=event.Name%>", <%=v_type_name%>_e_<%=event.Name%><%=generic_arg_list%>);
+			<%ForEachCsList(events, function(event) if not event.IsStatic then %>Utils.RegisterFunc(L, Utils.METHOD_IDX, "<%=event.Name%>", thiz.<%=v_type_name%>_e_<%=event.Name%><%=generic_arg_list%>);
 			<% end end)%>
-			<%ForEachCsList(getters, function(getter) if not getter.IsStatic then %>Utils.RegisterFunc(L, Utils.GETTER_IDX, "<%=getter.Name%>", <%=v_type_name%>_g_get_<%=getter.Name%><%=generic_arg_list%>);
+			<%ForEachCsList(getters, function(getter) if not getter.IsStatic then %>Utils.RegisterFunc(L, Utils.GETTER_IDX, "<%=getter.Name%>", thiz.<%=v_type_name%>_g_get_<%=getter.Name%><%=generic_arg_list%>);
             <%end end)%>
-			<%ForEachCsList(setters, function(setter) if not setter.IsStatic then %>Utils.RegisterFunc(L, Utils.SETTER_IDX, "<%=setter.Name%>", <%=v_type_name%>_s_set_<%=setter.Name%><%=generic_arg_list%>);
+			<%ForEachCsList(setters, function(setter) if not setter.IsStatic then %>Utils.RegisterFunc(L, Utils.SETTER_IDX, "<%=setter.Name%>", thiz.<%=v_type_name%>_s_set_<%=setter.Name%><%=generic_arg_list%>);
             <%end end)%>
 			<%ForEachCsList(lazymembers, function(lazymember) if lazymember.IsStatic == 'false' then %>Utils.RegisterLazyFunc(L, Utils.<%=lazymember.Index%>, "<%=lazymember.Name%>", type, <%=lazymember.MemberType%>, <%=lazymember.IsStatic%>);
             <%end end)%>
-			Utils.EndObjectRegister(type, L, this, <% if type.IsArray or ((indexers.Count or 0) > 0) then %>__CSIndexer<%=v_type_name%><%=generic_arg_list%><%else%>null<%end%>, <%if type.IsArray or ((newindexers.Count or 0) > 0) then%>__NewIndexer<%=v_type_name%><%=generic_arg_list%><%else%>null<%end%>,
+			Utils.EndObjectRegister(type, L, thiz, <% if type.IsArray or ((indexers.Count or 0) > 0) then %>thiz.__CSIndexer<%=v_type_name%><%=generic_arg_list%><%else%>null<%end%>, <%if type.IsArray or ((newindexers.Count or 0) > 0) then%>thiz.__NewIndexer<%=v_type_name%><%=generic_arg_list%><%else%>null<%end%>,
 			    null, null, null);
 
-		    Utils.BeginClassRegister(type, L, __CreateInstance<%=v_type_name%><%=generic_arg_list%>, <%=cls_field_count%>, <%=cls_getter_count%>, <%=cls_setter_count%>);
-			<%ForEachCsList(methods, function(method) if method.IsStatic then %>Utils.RegisterFunc(L, Utils.CLS_IDX, "<%=method.Overloads[0].Name%>", <%=v_type_name%>_m_<%=method.Name%><%=generic_arg_list%>);
+		    Utils.BeginClassRegister(type, L, thiz.__CreateInstance<%=v_type_name%><%=generic_arg_list%>, <%=cls_field_count%>, <%=cls_getter_count%>, <%=cls_setter_count%>);
+			<%ForEachCsList(methods, function(method) if method.IsStatic then %>Utils.RegisterFunc(L, Utils.CLS_IDX, "<%=method.Overloads[0].Name%>", thiz.<%=v_type_name%>_m_<%=method.Name%><%=generic_arg_list%>);
             <% end end)%>
-			<%ForEachCsList(events, function(event) if event.IsStatic then %>Utils.RegisterFunc(L, Utils.CLS_IDX, "<%=event.Name%>", <%=v_type_name%>_e_<%=event.Name%><%=generic_arg_list%>);
+			<%ForEachCsList(events, function(event) if event.IsStatic then %>Utils.RegisterFunc(L, Utils.CLS_IDX, "<%=event.Name%>", thiz.<%=v_type_name%>_e_<%=event.Name%><%=generic_arg_list%>);
 			<% end end)%>
-            <%ForEachCsList(getters, function(getter) if getter.IsStatic and getter.ReadOnly then %>Utils.RegisterObject(L, this, Utils.CLS_IDX, "<%=getter.Name%>", <%=CsFullTypeName(type).."."..getter.Name%>);
+            <%ForEachCsList(getters, function(getter) if getter.IsStatic and getter.ReadOnly then %>Utils.RegisterObject(L, thiz, Utils.CLS_IDX, "<%=getter.Name%>", <%=CsFullTypeName(type).."."..getter.Name%>);
             <%end end)%>
-			<%ForEachCsList(getters, function(getter) if getter.IsStatic and (not getter.ReadOnly) then %>Utils.RegisterFunc(L, Utils.CLS_GETTER_IDX, "<%=getter.Name%>", <%=v_type_name%>_g_get_<%=getter.Name%><%=generic_arg_list%>);
+			<%ForEachCsList(getters, function(getter) if getter.IsStatic and (not getter.ReadOnly) then %>Utils.RegisterFunc(L, Utils.CLS_GETTER_IDX, "<%=getter.Name%>", thiz.<%=v_type_name%>_g_get_<%=getter.Name%><%=generic_arg_list%>);
             <%end end)%>
-			<%ForEachCsList(setters, function(setter) if setter.IsStatic then %>Utils.RegisterFunc(L, Utils.CLS_SETTER_IDX, "<%=setter.Name%>", <%=v_type_name%>_s_set_<%=setter.Name%><%=generic_arg_list%>);
+			<%ForEachCsList(setters, function(setter) if setter.IsStatic then %>Utils.RegisterFunc(L, Utils.CLS_SETTER_IDX, "<%=setter.Name%>", thiz.<%=v_type_name%>_s_set_<%=setter.Name%><%=generic_arg_list%>);
             <%end end)%>
 			<%ForEachCsList(lazymembers, function(lazymember) if lazymember.IsStatic == 'true' then %>Utils.RegisterLazyFunc(L, Utils.<%=lazymember.Index%>, "<%=lazymember.Name%>", type, <%=lazymember.MemberType%>, <%=lazymember.IsStatic%>);
             <%end end)%>
-			Utils.EndClassRegister(type, L, this);
+			Utils.EndClassRegister(type, L, thiz);
         }
         
-        int __CreateInstance<%=v_type_name%><%=generic_arg_list%>(RealStatePtr L, int gen_param_count) <%=type_constraints%>
+        static int __CreateInstance<%=v_type_name%><%=generic_arg_list%>(this ObjectTranslator thiz, RealStatePtr L, int gen_param_count) <%=type_constraints%>
         {
             <% 
             if constructors.Count == 0 and (not type.IsValueType)  then 
             %>return LuaAPI.luaL_error(L, "<%=CsFullTypeName(type)%> does not have a constructor!");<% 
             else %>
-            ObjectTranslator translator = this;
+            ObjectTranslator translator = thiz;
 			<% 
 			local hasZeroParamsCtor = false
 			ForEachCsList(constructors, function(constructor, ci)
@@ -225,10 +225,10 @@ namespace XLua
         }
         
 		<% if type.IsArray or ((indexers.Count or 0) > 0) then %>
-        int __CSIndexer<%=v_type_name%><%=generic_arg_list%>(RealStatePtr L, int gen_param_count) <%=type_constraints%>
+        static int __CSIndexer<%=v_type_name%><%=generic_arg_list%>(this ObjectTranslator thiz, RealStatePtr L, int gen_param_count) <%=type_constraints%>
         {
 			<%if type.IsArray then %>
-			ObjectTranslator translator = this;
+			ObjectTranslator translator = thiz;
 			if (<%=GetCheckStatement(type, 1)%> && LuaAPI.lua_isnumber(L, 2))
 			{
 				int index = (int)LuaAPI.lua_tonumber(L, 2);
@@ -238,7 +238,7 @@ namespace XLua
 				return 2;
 			}
 			<%elseif indexers.Count > 0 then
-			%>ObjectTranslator translator = this;
+			%>ObjectTranslator translator = thiz;
 			<%
 				ForEachCsList(indexers, function(indexer)
 					local paramter = indexer:GetParameters()[0]
@@ -260,9 +260,9 @@ namespace XLua
 		<% end %>
         
 		<%if type.IsArray or ((newindexers.Count or 0) > 0) then%>
-        int __NewIndexer<%=v_type_name%><%=generic_arg_list%>(RealStatePtr L, int gen_param_count) <%=type_constraints%>
+        static int __NewIndexer<%=v_type_name%><%=generic_arg_list%>(this ObjectTranslator thiz, RealStatePtr L, int gen_param_count) <%=type_constraints%>
         {
-			<%if type.IsArray or newindexers.Count > 0 then %>ObjectTranslator translator = this;<%end%>
+			<%if type.IsArray or newindexers.Count > 0 then %>ObjectTranslator translator = thiz;<%end%>
 			<%if type.IsArray then 
 				local elementType = type:GetElementType()
 			%>
@@ -298,9 +298,9 @@ namespace XLua
 		<% end %>
         
         <%ForEachCsList(operators, function(operator) %>
-        int <%=v_type_name%><%=OpNameMap[operator.Name]%><%=generic_arg_list%>(RealStatePtr L, int gen_param_count) <%=type_constraints%>
+        static int <%=v_type_name%><%=OpNameMap[operator.Name]%><%=generic_arg_list%>(this ObjectTranslator thiz, RealStatePtr L, int gen_param_count) <%=type_constraints%>
         {
-            ObjectTranslator translator = this;
+            ObjectTranslator translator = thiz;
             <% if operator.Name ~= "op_UnaryNegation" and operator.Name ~= "op_OnesComplement"  then 
                 ForEachCsList(operator.Overloads, function(overload)
                 local left_param = overload:GetParameters()[0]
@@ -326,13 +326,13 @@ namespace XLua
         <%end)%>
         
         <%ForEachCsList(methods, function(method)%>
-        int <%=v_type_name%>_m_<%=method.Name%><%=generic_arg_list%>(RealStatePtr L, int gen_param_count) <%=type_constraints%>
+        static int <%=v_type_name%>_m_<%=method.Name%><%=generic_arg_list%>(this ObjectTranslator thiz, RealStatePtr L, int gen_param_count) <%=type_constraints%>
         {
             <%
             local need_obj = not method.IsStatic
             if MethodCallNeedTranslator(method) then
             %>
-            ObjectTranslator translator = this;
+            ObjectTranslator translator = thiz;
             <%end%>
             <%if need_obj then%>
             <%=GetSelfStatement(type)%>;
@@ -426,9 +426,9 @@ namespace XLua
         <%ForEachCsList(getters, function(getter) 
         if getter.IsStatic and getter.ReadOnly then return end --readonly static
         %>
-        int <%=v_type_name%>_g_get_<%=getter.Name%><%=generic_arg_list%>(RealStatePtr L, int gen_param_count) <%=type_constraints%>
+        static int <%=v_type_name%>_g_get_<%=getter.Name%><%=generic_arg_list%>(this ObjectTranslator thiz, RealStatePtr L, int gen_param_count) <%=type_constraints%>
         {
-            <%if AccessorNeedTranslator(getter) then %>ObjectTranslator translator = this;<%end%>
+            <%if AccessorNeedTranslator(getter) then %>ObjectTranslator translator = thiz;<%end%>
 			<%if not getter.IsStatic then%>
 			<%=GetSelfStatement(type)%>;
 			<%=GetPushStatement(getter.Type, "gen_to_be_invoked."..UnK(getter.Name))%>;<% else %>    <%=GetPushStatement(getter.Type, CsFullTypeName(type).."."..UnK(getter.Name))%>;<% end%>
@@ -439,9 +439,9 @@ namespace XLua
         <%ForEachCsList(setters, function(setter)
         local is_struct = IsStruct(setter.Type)
         %>
-        int <%=v_type_name%>_s_set_<%=setter.Name%><%=generic_arg_list%>(RealStatePtr L, int gen_param_count) <%=type_constraints%>
+        static int <%=v_type_name%>_s_set_<%=setter.Name%><%=generic_arg_list%>(this ObjectTranslator thiz, RealStatePtr L, int gen_param_count) <%=type_constraints%>
         {
-            <%if AccessorNeedTranslator(setter) then %>ObjectTranslator translator = this;<%end%>
+            <%if AccessorNeedTranslator(setter) then %>ObjectTranslator translator = thiz;<%end%>
 			<%if not setter.IsStatic then %>
             <%=GetSelfStatement(type)%>;
             <%if is_struct then %><%=GetCasterStatement(setter.Type, 2, "gen_value", true)%>;
@@ -460,9 +460,9 @@ namespace XLua
         <%end)%>
 		
 		<%ForEachCsList(events, function(event) if not event.IsStatic then %>
-        int <%=v_type_name%>_e_<%=event.Name%><%=generic_arg_list%>(RealStatePtr L, int gen_param_count) <%=type_constraints%>
+        static int <%=v_type_name%>_e_<%=event.Name%><%=generic_arg_list%>(this ObjectTranslator thiz, RealStatePtr L, int gen_param_count) <%=type_constraints%>
         {
-            ObjectTranslator translator = this;
+            ObjectTranslator translator = thiz;
 			<%=GetSelfStatement(type)%>;
 			<%=GetCasterStatement(event.Type, 3, "gen_delegate", true)%>;
 			if (gen_delegate == null) {
@@ -490,9 +490,9 @@ namespace XLua
         <%end end)%>
 		
 		<%ForEachCsList(events, function(event) if event.IsStatic then %>
-        int <%=v_type_name%>_e_<%=event.Name%><%=generic_arg_list%>(RealStatePtr L, int gen_param_count) <%=type_constraints%>
+        static int <%=v_type_name%>_e_<%=event.Name%><%=generic_arg_list%>(this ObjectTranslator thiz, RealStatePtr L, int gen_param_count) <%=type_constraints%>
         {
-            ObjectTranslator translator = this;
+            ObjectTranslator translator = thiz;
 			<%=GetCasterStatement(event.Type, 2, "gen_delegate", true)%>;
 			if (gen_delegate == null) {
 				return LuaAPI.luaL_error(L, "#2 need <%=CsFullTypeName(event.Type)%>!");

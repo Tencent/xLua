@@ -10,12 +10,12 @@ namespace XLua
     {
         public static void Useage()
         {
-            Console.WriteLine("XLuaHotfixInject assmbly_path id_map_file_path [cfg_assmbly2_path] [search_path1, search_path2 ...]");
+            Console.WriteLine("XLuaHotfixInject assmbly_path xlua_assembly_path gencode_assembly_path id_map_file_path [cfg_assmbly2_path] [search_path1, search_path2 ...]");
         }
 
         public static void Main(string[] args)
         {
-            if (args.Length < 2)
+            if (args.Length < 4)
             {
                 Useage();
                 return;
@@ -25,17 +25,18 @@ namespace XLua
             {
                 var injectAssmblyPath = Path.GetFullPath(args[0]);
                 var xluaAssmblyPath = Path.GetFullPath(args[1]);
+                var genAssemblyPath = Path.GetFullPath(args[2]);
                 string cfg_append = null;
-                if (args.Length > 3)
+                if (args.Length > 4)
                 {
-                    cfg_append = Path.GetFullPath(args[3]);
+                    cfg_append = Path.GetFullPath(args[4]);
                     if (!cfg_append.EndsWith(".data"))
                     {
                         cfg_append = null;
                     }
                 }
                 AppDomain currentDomain = AppDomain.CurrentDomain;
-                List<string> search_paths = args.Skip(cfg_append == null ? 3 : 4).ToList();
+                List<string> search_paths = args.Skip(cfg_append == null ? 4 : 5).ToList();
                 currentDomain.AssemblyResolve += new ResolveEventHandler((object sender, ResolveEventArgs rea) =>
                 {
                     foreach (var search_path in search_paths)
@@ -67,7 +68,7 @@ namespace XLua
                         }
                     }
                 }
-                Hotfix.HotfixInject(injectAssmblyPath, xluaAssmblyPath, args.Skip(cfg_append == null ? 3 : 3), args[2], hotfixCfg);
+                Hotfix.HotfixInject(injectAssmblyPath, xluaAssmblyPath, genAssemblyPath, args.Skip(cfg_append == null ? 4 : 5), args[3], hotfixCfg);
             }
             catch(Exception e)
             {
