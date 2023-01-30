@@ -1233,7 +1233,13 @@ namespace XLua
                 LuaAPI.lua_pushnil(L);
                 return;
             }
-
+#if UNITY_EDITOR
+            if (o is UnityEngine.Object && ((o as UnityEngine.Object) == null))
+            {
+                LuaAPI.lua_pushnil(L);
+                return;
+            }
+#endif
             int index = -1;
             Type type = o.GetType();
 #if !UNITY_WSA || UNITY_EDITOR
