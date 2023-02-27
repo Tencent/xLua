@@ -54,7 +54,7 @@ namespace XLua
 			LuaTypes lua_type = LuaAPI.lua_type(L, 1);
             if (lua_type == LuaTypes.LUA_TNUMBER)
             {
-                Push<%=v_type_name%>(L, (<%=CsFullTypeName(type)%>)LuaAPI.xlua_tointeger(L, 1));
+                thiz.Push<%=v_type_name%>(L, (<%=CsFullTypeName(type)%>)LuaAPI.xlua_tointeger(L, 1));
             }
 			<%if #fields_to_gen > 0 then%>
             else if(lua_type == LuaTypes.LUA_TSTRING)

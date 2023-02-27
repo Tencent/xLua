@@ -26,7 +26,7 @@ namespace XLua
 		end)%>
 		<%ForEachCsList(tableoptimzetypes, function(type_info)
 		local full_type_name = CsFullTypeName(type_info.Type)%>
-			translator.RegisterCaster<<%=full_type_name%>>(translator.Get);<%
+			translator.RegisterCaster<<%=full_type_name%>>(translator.Get<%=full_type_name%>);<%
 		end)%>
 		}
         
@@ -147,7 +147,7 @@ namespace XLua
 		<%ForEachCsList(tableoptimzetypes, function(type_info)
 		local full_type_name = CsFullTypeName(type_info.Type)
 		%>
-		public static void Get(this ObjectTranslator thiz, RealStatePtr L, int index, out <%=full_type_name%> val)
+		public static void Get<%=CSVariableName(type_info.Type)%>(this ObjectTranslator thiz, RealStatePtr L, int index, out <%=full_type_name%> val)
         {
 		    LuaTypes type = LuaAPI.lua_type(L, index);
             if (type == LuaTypes.LUA_TUSERDATA )
