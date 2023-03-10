@@ -23,8 +23,6 @@ jobs:
           cd build
           ./make_android_lua54.sh
           ./make_android_lua53.sh
-          sudo apt install gcc-multilib
-          ./make_android_luajit_arm64.sh
       - name: Upload
         uses: actions/upload-artifact@v2
         with:
@@ -34,12 +32,30 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           path: ./build/plugin_lua53/**/*
-          name: plugin_lua53   
+          name: plugin_lua53 
+
+  android_luajit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install NDK
+        run: |
+          cd ~
+          wget -O NDK -q https://dl.google.com/android/repository/android-ndk-r15c-linux-x86_64.zip
+          sudo apt install unzip -y
+          unzip -q NDK
+          ANDROID_NDK_HOME=$(pwd)/android-ndk-r15c
+      - name: Build
+        run: |
+          cd build
+          sudo apt install gcc-multilib
+          ./make_android_luajit_arm64.sh  
       - name: UploadJit
         uses: actions/upload-artifact@v2
         with:
           path: ./build/plugin_luajit/**/*
           name: plugin_luajit
+
   linux:
     runs-on: ubuntu-latest
     steps:
@@ -120,7 +136,7 @@ jobs:
           path: ./build/plugin_luajit/**/*
           name: plugin_luajit  
   windows:
-    runs-on: windows-2016
+    runs-on: windows-2019
 
     steps:
       - uses: actions/checkout@v2
@@ -158,7 +174,7 @@ jobs:
           name: plugin_luajit
           
   windows-luajit-32:
-    runs-on: windows-2016
+    runs-on: windows-2019
 
     steps:
       - uses: actions/checkout@v2
