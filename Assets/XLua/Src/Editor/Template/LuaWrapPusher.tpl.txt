@@ -20,6 +20,15 @@ namespace XLua
 		public static void Init(LuaEnv luaenv, ObjectTranslator translator)
 		{
 		<%ForEachCsList(purevaluetypes, function(type_info)
+		local type_id_var_name = CSVariableName(type_info.Type) .. '_TypeID'
+		local enum_ref_var_name = CSVariableName(type_info.Type)..'_EnumRef'
+		local full_type_name = CsFullTypeName(type_info.Type)
+		local is_enum = type_info.Type.IsEnum%>
+			<%=type_id_var_name%> = -1;<%if is_enum then%>
+			<%=enum_ref_var_name%> = -1;<%end%>
+		<%end)%>
+
+		<%ForEachCsList(purevaluetypes, function(type_info)
 		if not type_info.Type.IsValueType then return end
 		local full_type_name = CsFullTypeName(type_info.Type)%>
 			translator.RegisterPushAndGetAndUpdate<<%=full_type_name%>>(translator.Push<%=CSVariableName(type_info.Type)%>, translator.Get<%=CSVariableName(type_info.Type)%>, translator.Update<%=CSVariableName(type_info.Type)%>);<%
