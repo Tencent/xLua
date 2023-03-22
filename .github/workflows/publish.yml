@@ -19,7 +19,6 @@ jobs:
           cd build
           wget https://github.com/starwing/lua-protobuf/blob/master/pb.c
           wget https://github.com/starwing/lua-protobuf/blob/master/pb.h
-      - uses: actions/checkout@v2
       - name: Install NDK
         run: |
           cd ~
@@ -52,7 +51,6 @@ jobs:
           cd build
           wget https://github.com/starwing/lua-protobuf/blob/master/pb.c
           wget https://github.com/starwing/lua-protobuf/blob/master/pb.h
-      - uses: actions/checkout@v2
       - name: Install NDK
         run: |
           cd ~
@@ -80,7 +78,6 @@ jobs:
           cd build
           wget https://github.com/starwing/lua-protobuf/blob/master/pb.c
           wget https://github.com/starwing/lua-protobuf/blob/master/pb.h
-      - uses: actions/checkout@v2
       - name: Build
         run: |
           cd build
@@ -112,7 +109,6 @@ jobs:
           cd build
           wget https://github.com/starwing/lua-protobuf/blob/master/pb.c
           wget https://github.com/starwing/lua-protobuf/blob/master/pb.h
-      - uses: actions/checkout@v2
       - name: Build
         run: |
           cd build
@@ -144,7 +140,6 @@ jobs:
           cd build
           wget https://github.com/starwing/lua-protobuf/blob/master/pb.c
           wget https://github.com/starwing/lua-protobuf/blob/master/pb.h
-      - uses: actions/checkout@v2
       - name: Build
         run: |
           cd build
