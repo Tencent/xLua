@@ -8,6 +8,15 @@ on:
         required: true
 
 jobs:
+  get-luapb:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Get Lua PB
+        run: |
+         cd build
+         wget https://github.com/starwing/lua-protobuf/blob/master/pb.c
+         wget https://github.com/starwing/lua-protobuf/blob/master/pb.h
   android:
     runs-on: ubuntu-latest
     steps:
