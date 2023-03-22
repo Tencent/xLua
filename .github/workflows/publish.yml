@@ -169,8 +169,8 @@ jobs:
       - name: Get Lua PB
         run: |
           cd build
-          wget https://raw.githubusercontent.com/starwing/lua-protobuf/master/pb.c
-          wget https://raw.githubusercontent.com/starwing/lua-protobuf/master/pb.h
+          curl https://raw.githubusercontent.com/starwing/lua-protobuf/master/pb.c
+          curl https://raw.githubusercontent.com/starwing/lua-protobuf/master/pb.h
       - uses: actions/checkout@v2
       
       - name: Insatll MSVC
@@ -213,8 +213,8 @@ jobs:
       - name: Get Lua PB
         run: |
           cd build
-          wget https://raw.githubusercontent.com/starwing/lua-protobuf/master/pb.c
-          wget https://raw.githubusercontent.com/starwing/lua-protobuf/master/pb.h
+          curl https://raw.githubusercontent.com/starwing/lua-protobuf/master/pb.c
+          curl https://raw.githubusercontent.com/starwing/lua-protobuf/master/pb.h
       - uses: actions/checkout@v2
       
       - name: Insatll MSVC
