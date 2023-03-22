@@ -115,6 +115,7 @@ endif ( )
 set ( XLUA_CORE
     i64lib.c
     xlua.c
+    pb.c
 )
 
 if (NOT USING_LUAJIT)
