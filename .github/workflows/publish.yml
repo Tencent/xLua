@@ -8,8 +8,6 @@ on:
         required: true
 
 jobs:
-  get-luapb:
-    runs-on: ubuntu-latest
   android:
     runs-on: ubuntu-latest
     steps:
