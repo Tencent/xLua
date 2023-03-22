@@ -10,16 +10,15 @@ on:
 jobs:
   get-luapb:
     runs-on: ubuntu-latest
+  android:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - name: Get Lua PB
         run: |
-         cd build
-         wget https://github.com/starwing/lua-protobuf/blob/master/pb.c
-         wget https://github.com/starwing/lua-protobuf/blob/master/pb.h
-  android:
-    runs-on: ubuntu-latest
-    steps:
+          cd build
+          wget https://github.com/starwing/lua-protobuf/blob/master/pb.c
+          wget https://github.com/starwing/lua-protobuf/blob/master/pb.h
       - uses: actions/checkout@v2
       - name: Install NDK
         run: |
@@ -48,6 +47,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - name: Get Lua PB
+        run: |
+          cd build
+          wget https://github.com/starwing/lua-protobuf/blob/master/pb.c
+          wget https://github.com/starwing/lua-protobuf/blob/master/pb.h
+      - uses: actions/checkout@v2
       - name: Install NDK
         run: |
           cd ~
@@ -69,6 +74,12 @@ jobs:
   linux:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v2
+      - name: Get Lua PB
+        run: |
+          cd build
+          wget https://github.com/starwing/lua-protobuf/blob/master/pb.c
+          wget https://github.com/starwing/lua-protobuf/blob/master/pb.h
       - uses: actions/checkout@v2
       - name: Build
         run: |
@@ -96,6 +107,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+      - name: Get Lua PB
+        run: |
+          cd build
+          wget https://github.com/starwing/lua-protobuf/blob/master/pb.c
+          wget https://github.com/starwing/lua-protobuf/blob/master/pb.h
+      - uses: actions/checkout@v2
       - name: Build
         run: |
           cd build
@@ -121,6 +138,12 @@ jobs:
     runs-on: macos-11
 
     steps:
+      - uses: actions/checkout@v2
+      - name: Get Lua PB
+        run: |
+          cd build
+          wget https://github.com/starwing/lua-protobuf/blob/master/pb.c
+          wget https://github.com/starwing/lua-protobuf/blob/master/pb.h
       - uses: actions/checkout@v2
       - name: Build
         run: |
@@ -149,6 +172,12 @@ jobs:
     runs-on: windows-2019
 
     steps:
+      - uses: actions/checkout@v2
+      - name: Get Lua PB
+        run: |
+          cd build
+          wget https://github.com/starwing/lua-protobuf/blob/master/pb.c
+          wget https://github.com/starwing/lua-protobuf/blob/master/pb.h
       - uses: actions/checkout@v2
       
       - name: Insatll MSVC
@@ -187,6 +216,12 @@ jobs:
     runs-on: windows-2019
 
     steps:
+      - uses: actions/checkout@v2
+      - name: Get Lua PB
+        run: |
+          cd build
+          wget https://github.com/starwing/lua-protobuf/blob/master/pb.c
+          wget https://github.com/starwing/lua-protobuf/blob/master/pb.h
       - uses: actions/checkout@v2
       
       - name: Insatll MSVC
