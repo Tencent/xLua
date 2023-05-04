@@ -583,10 +583,16 @@ namespace XLua
 
         static bool hasGenericParameter(MethodDefinition method)
         {
-            if (method.HasGenericParameters) return true;
             if (!method.IsStatic && hasGenericParameter(method.DeclaringType)) return true;
+            return hasGenericParameterSkipDelaringType(method);
+        }
+
+        static bool hasGenericParameterSkipDelaringType(MethodDefinition method)
+        {
+            if (method.HasGenericParameters) return true;
+            //if (!method.IsStatic && hasGenericParameter(method.DeclaringType)) return true;
             if (hasGenericParameter(method.ReturnType)) return true;
-            foreach(var paramInfo in method.Parameters)
+            foreach (var paramInfo in method.Parameters)
             {
                 if (hasGenericParameter(paramInfo.ParameterType)) return true;
             }
@@ -1071,7 +1077,7 @@ namespace XLua
                     return m;
                 }
             }
-            return _findBase(td.BaseType, method);
+            return _findBase(getBaseType(type), method);
         }
 
         static MethodReference findBase(TypeDefinition type, MethodDefinition method)
@@ -1084,13 +1090,31 @@ namespace XLua
                     var b = _findBase(type.BaseType, method);
                     try
                     {
-                        if (hasGenericParameter(b.Resolve())) return null;
+                        if (hasGenericParameterSkipDelaringType(b.Resolve())) return null;
                     }catch { }
                     return b;
                 }
                 catch { }
             }
             return null;
+        }
+
+        static TypeReference getBaseType(TypeReference typeReference)
+        {
+            var typeDefinition = typeReference.Resolve();
+            var baseType = typeDefinition.BaseType;
+            if (typeReference.IsGenericInstance && baseType.IsGenericInstance)
+            {
+                var genericType = typeReference as GenericInstanceType;
+                var baseGenericType = baseType as GenericInstanceType;
+                var genericInstanceType = new GenericInstanceType(tryImport(typeReference, baseGenericType.ElementType));
+                foreach (var genericArgument in genericType.GenericArguments)
+                {
+                    genericInstanceType.GenericArguments.Add(genericArgument);
+                }
+                baseType = genericInstanceType;
+            }
+            return baseType;
         }
 
         const string BASE_RPOXY_PERFIX = "<>xLuaBaseProxy_";
