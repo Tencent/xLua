@@ -13,13 +13,13 @@ xLua adds Lua scripting capability to Unity, .Net, Mono, and other C# environmen
 
 xLua has many breakthroughs in function, performance, and ease of use. The most significant features are:
 
-* You can inplace C# implementations (methods, operators, properties, events, etc...) by Lua's during runtime.
-* Outstanding GC optimization, customized struct, no C# gc alloc when passing the enumerated objects between C# and lua;
+* You can use C# implementations (methods, operators, properties, events, etc...) in Lua.
+* Outstanding GC optimization, customized struct, no C# gc alloc when passing the enumerated objects between C# and Lua;
 * Lightweight development with no needs to generate code in editor mode;
 
 ## Installation
 
-Unpack the zip package and you will see an Assets directory, which corresponds to the Unity project's Assets directory. Keep the directory structure in your Unity project.
+Unpack the ZIP package and you will see an Assets directory, which corresponds to the Unity project's Assets directory. Keep the directory structure in your Unity project.
 
 If you want to install it to another directory, please see the [FAQs](Assets/XLua/Doc/Faq_EN.md).
 
