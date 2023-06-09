@@ -260,6 +260,7 @@ namespace XLua
     {
         private TypeReference objType = null;
         private TypeReference delegateBridgeType = null;
+        private TypeReference delegateBridgeWrapType = null;
         private AssemblyDefinition injectAssembly = null;
 
         private MethodReference delegateBridgeGetter = null;
@@ -293,6 +294,7 @@ namespace XLua
             var delegateBridgeTypeDef = xluaAssembly.MainModule.Types.Single(t => t.FullName == "XLua.DelegateBridge");
             var delegateBridgeTypeWrapDef = genAssembly.MainModule.Types.SingleOrDefault(t => t.FullName == "XLua.DelegateBridge_Wrap");
             delegateBridgeType = injectModule.TryImport(delegateBridgeTypeDef);
+            delegateBridgeWrapType = injectModule.TryImport(delegateBridgeTypeWrapDef);
             delegateBridgeGetter = injectModule.TryImport(xluaAssembly.MainModule.Types.Single(t => t.FullName == "XLua.HotfixDelegateBridge")
                 .Methods.Single(m => m.Name == "Get"));
             hotfixFlagGetter = injectModule.TryImport(xluaAssembly.MainModule.Types.Single(t => t.FullName == "XLua.HotfixDelegateBridge")
@@ -1256,6 +1258,7 @@ namespace XLua
                 {
                     processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldc_I4, bridgeIndexByKey.Count));
                     processor.InsertBefore(insertPoint, processor.Create(OpCodes.Call, delegateBridgeGetter));
+                    processor.InsertBefore(insertPoint, processor.Create(OpCodes.Castclass, delegateBridgeWrapType));
                 }
                 else
                 {
@@ -1398,6 +1401,7 @@ namespace XLua
                     processor.InsertBefore(insertPoint, jmpInstruction);
                     processor.InsertBefore(insertPoint, processor.Create(OpCodes.Ldc_I4, bridgeIndexByKey.Count));
                     processor.InsertBefore(insertPoint, processor.Create(OpCodes.Call, delegateBridgeGetter));
+                    processor.InsertBefore(insertPoint, processor.Create(OpCodes.Castclass, delegateBridgeWrapType));
                     processor.InsertBefore(insertPoint, processor.Create(OpCodes.Stloc, injection));
                 }
                 else
