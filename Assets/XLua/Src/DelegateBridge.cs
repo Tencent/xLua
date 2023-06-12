@@ -32,9 +32,12 @@ namespace XLua
 
         protected int errorFuncRef;
 
+        protected RealStatePtr rawL;
+
         public DelegateBridgeBase(int reference, LuaEnv luaenv) : base(reference, luaenv)
         {
             errorFuncRef = luaenv.errorFuncRef;
+            rawL = luaenv.rawL;
         }
 
         public bool TryGetDelegate(Type key, out Delegate value)
