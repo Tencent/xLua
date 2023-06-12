@@ -29,7 +29,7 @@ namespace XLua
 
         internal RealStatePtr rawL;
 
-        public RealStatePtr L
+        internal RealStatePtr L
         {
             get
             {
@@ -43,14 +43,14 @@ namespace XLua
 
         private LuaTable _G;
 
-        public ObjectTranslator translator;
+        internal ObjectTranslator translator;
 
-        public int errorFuncRef = -1;
+        internal int errorFuncRef = -1;
 
 #if THREAD_SAFE || HOTFIX_ENABLE
         internal /*static*/ object luaLock = new object();
 
-        public object luaEnvLock
+        internal object luaEnvLock
         {
             get
             {
@@ -73,7 +73,6 @@ namespace XLua
             lock(luaEnvLock)
 #endif
             {
-                InternalGlobals.Init();
                 LuaIndexes.LUA_REGISTRYINDEX = LuaAPI.xlua_get_registry_index();
 #if GEN_CODE_MINIMIZE
                 LuaAPI.xlua_set_csharp_wrapper_caller(InternalGlobals.CSharpWrapperCallerPtr);
@@ -358,7 +357,7 @@ namespace XLua
 #endif
         }
 
-        //å…¼å®¹API
+        //¼æÈİAPI
         public void GC()
         {
             Tick();
@@ -599,8 +598,8 @@ namespace XLua
 
         internal List<CustomLoader> customLoaders = new List<CustomLoader>();
 
-        //loader : CustomLoaderï¼Œ filepathå‚æ•°ï¼šï¼ˆrefç±»å‹ï¼‰è¾“å…¥æ˜¯requireçš„å‚æ•°ï¼Œå¦‚æœéœ€è¦æ”¯æŒè°ƒè¯•ï¼Œéœ€è¦è¾“å‡ºçœŸå®è·¯å¾„ã€‚
-        //                        è¿”å›å€¼ï¼šå¦‚æœè¿”å›nullï¼Œä»£è¡¨åŠ è½½è¯¥æºä¸‹æ— åˆé€‚çš„æ–‡ä»¶ï¼Œå¦åˆ™è¿”å›UTF8ç¼–ç çš„byte[]
+        //loader : CustomLoader£¬ filepath²ÎÊı£º£¨refÀàĞÍ£©ÊäÈëÊÇrequireµÄ²ÎÊı£¬Èç¹ûĞèÒªÖ§³Öµ÷ÊÔ£¬ĞèÒªÊä³öÕæÊµÂ·¾¶¡£
+        //                        ·µ»ØÖµ£ºÈç¹û·µ»Ønull£¬´ú±í¼ÓÔØ¸ÃÔ´ÏÂÎŞºÏÊÊµÄÎÄ¼ş£¬·ñÔò·µ»ØUTF8±àÂëµÄbyte[]
         public void AddLoader(CustomLoader loader)
         {
             customLoaders.Add(loader);

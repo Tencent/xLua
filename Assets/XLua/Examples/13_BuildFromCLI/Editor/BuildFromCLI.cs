@@ -32,6 +32,7 @@ namespace XLuaTest
         private static void build(string outputDir, string packageName)
         {
             Debug.Log("构建开始：输出目录 " + outputDir);
+            DelegateBridge.Gen_Flag = true;
             Generator.ClearAll();
             Generator.GenAll();
 

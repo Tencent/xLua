@@ -19,7 +19,6 @@ namespace XLua.CSObjectWrap
 {
     public class <%=CSVariableName(type)%>Bridge : LuaBase, <%=CsFullTypeName(type)%>
     {
-    	RealStatePtr rawL;
 	    public static LuaBase __Create(int reference, LuaEnv luaenv)
 		{
 		    return new <%=CSVariableName(type)%>Bridge(reference, luaenv);
@@ -27,7 +26,6 @@ namespace XLua.CSObjectWrap
 		
 		public <%=CSVariableName(type)%>Bridge(int reference, LuaEnv luaenv) : base(reference, luaenv)
         {
-        	rawL = luaenv.L;
         }
 		
         <%
@@ -57,7 +55,7 @@ namespace XLua.CSObjectWrap
             lock (luaEnv.luaEnvLock)
             {
 #endif
-				RealStatePtr L = this.rawL;
+				RealStatePtr L = luaEnv.L;
 				int err_func = LuaAPI.load_error_func(L, luaEnv.errorFuncRef);
 				<%if CallNeedTranslator(method, "") then %>ObjectTranslator translator = luaEnv.translator;<%end%>
 				
@@ -116,7 +114,7 @@ namespace XLua.CSObjectWrap
                 lock (luaEnv.luaEnvLock)
                 {
 #endif
-					RealStatePtr L = this.rawL;
+					RealStatePtr L = luaEnv.L;
 					int oldTop = LuaAPI.lua_gettop(L);
 					<%if not JustLuaType(property.PropertyType) then %>ObjectTranslator translator = luaEnv.translator;<%end%>
 					LuaAPI.lua_getref(L, luaReference);
@@ -140,7 +138,7 @@ namespace XLua.CSObjectWrap
                 lock (luaEnv.luaEnvLock)
                 {
 #endif
-					RealStatePtr L = this.rawL;
+					RealStatePtr L = luaEnv.L;
 					int oldTop = LuaAPI.lua_gettop(L);
 					<%if not JustLuaType(property.PropertyType) then %>ObjectTranslator translator = luaEnv.translator;<%end%>
 					LuaAPI.lua_getref(L, luaReference);
@@ -168,7 +166,7 @@ namespace XLua.CSObjectWrap
 				lock (luaEnv.luaEnvLock)
 				{
 #endif
-					RealStatePtr L = this.rawL;
+					RealStatePtr L = luaEnv.L;
 					int err_func = LuaAPI.load_error_func(L, luaEnv.errorFuncRef);
 					<%if CallNeedTranslator(event:GetAddMethod(), "") then %>ObjectTranslator translator = luaEnv.translator;<%end%>
 				
@@ -211,7 +209,7 @@ namespace XLua.CSObjectWrap
 				lock (luaEnv.luaEnvLock)
 				{
 #endif
-					RealStatePtr L = this.rawL;
+					RealStatePtr L = luaEnv.L;
 					int err_func = LuaAPI.load_error_func(L, luaEnv.errorFuncRef);
 					<%if CallNeedTranslator(event:GetRemoveMethod(), "") then %>ObjectTranslator translator = luaEnv.translator;<%end%>
 				
@@ -272,7 +270,7 @@ namespace XLua.CSObjectWrap
 				lock (luaEnv.luaEnvLock)
 				{
 #endif
-					RealStatePtr L = this.rawL;
+					RealStatePtr L = luaEnv.L;
 					int err_func = LuaAPI.load_error_func(L, luaEnv.errorFuncRef);
 					<%if CallNeedTranslator(method, "") then %>ObjectTranslator translator = luaEnv.translator;<%end%>
 				
@@ -335,7 +333,7 @@ namespace XLua.CSObjectWrap
 				lock (luaEnv.luaEnvLock)
 				{
 #endif
-					RealStatePtr L = this.rawL;
+					RealStatePtr L = luaEnv.L;
 					int err_func = LuaAPI.load_error_func(L, luaEnv.errorFuncRef);
 					<%if CallNeedTranslator(method, "") then %>ObjectTranslator translator = luaEnv.translator;<%end%>
 				

@@ -1,4 +1,4 @@
-﻿#if USE_UNI_LUA
+#if USE_UNI_LUA
 using LuaAPI = UniLua.Lua;
 using RealStatePtr = UniLua.ILuaState;
 using LuaCSFunction = UniLua.CSharpFunctionDelegate;
@@ -15,44 +15,50 @@ require "TemplateCommon"
 
 namespace XLua
 {
-    public static partial class ObjectTranslator_Gen
+    public partial class ObjectTranslator
     {
-		public static void Init(LuaEnv luaenv, ObjectTranslator translator)
-		{
-		<%ForEachCsList(purevaluetypes, function(type_info)
-		local type_id_var_name = CSVariableName(type_info.Type) .. '_TypeID'
-		local enum_ref_var_name = CSVariableName(type_info.Type)..'_EnumRef'
-		local full_type_name = CsFullTypeName(type_info.Type)
-		local is_enum = type_info.Type.IsEnum%>
-			<%=type_id_var_name%> = -1;<%if is_enum then%>
-			<%=enum_ref_var_name%> = -1;<%end%>
-		<%end)%>
-
-		<%ForEachCsList(purevaluetypes, function(type_info)
-		if not type_info.Type.IsValueType then return end
-		local full_type_name = CsFullTypeName(type_info.Type)%>
-			translator.RegisterPushAndGetAndUpdate<<%=full_type_name%>>(translator.Push<%=CSVariableName(type_info.Type)%>, translator.Get<%=CSVariableName(type_info.Type)%>, translator.Update<%=CSVariableName(type_info.Type)%>);<%
-		end)%>
-		<%ForEachCsList(tableoptimzetypes, function(type_info)
-		local full_type_name = CsFullTypeName(type_info.Type)%>
-			translator.RegisterCaster<<%=full_type_name%>>(translator.Get<%=full_type_name%>);<%
-		end)%>
-		}
+        <%if purevaluetypes.Count > 0 then
+        local init_class_name = "IniterAdder" .. CSVariableName(purevaluetypes[0].Type)
+        %>
+        class <%=init_class_name%>
+        {
+            static <%=init_class_name%>()
+            {
+                LuaEnv.AddIniter(Init);
+            }
+			
+			static void Init(LuaEnv luaenv, ObjectTranslator translator)
+			{
+			<%ForEachCsList(purevaluetypes, function(type_info)
+            if not type_info.Type.IsValueType then return end
+            local full_type_name = CsFullTypeName(type_info.Type)%>
+				translator.RegisterPushAndGetAndUpdate<<%=full_type_name%>>(translator.Push<%=CSVariableName(type_info.Type)%>, translator.Get, translator.Update<%=CSVariableName(type_info.Type)%>);<%
+			end)%>
+			<%ForEachCsList(tableoptimzetypes, function(type_info)
+            local full_type_name = CsFullTypeName(type_info.Type)%>
+				translator.RegisterCaster<<%=full_type_name%>>(translator.Get);<%
+			end)%>
+			}
+        }
+        
+        static <%=init_class_name%> s_<%=init_class_name%>_dumb_obj = new <%=init_class_name%>();
+        static <%=init_class_name%> <%=init_class_name%>_dumb_obj {get{return s_<%=init_class_name%>_dumb_obj;}}
+        <%end%>
         
         <%ForEachCsList(purevaluetypes, function(type_info)
         local type_id_var_name = CSVariableName(type_info.Type) .. '_TypeID'
 		local enum_ref_var_name = CSVariableName(type_info.Type)..'_EnumRef'
         local full_type_name = CsFullTypeName(type_info.Type)
 		local is_enum = type_info.Type.IsEnum
-        %>static int <%=type_id_var_name%> = -1;<%if is_enum then%>
-		static int <%=enum_ref_var_name%> = -1;
+        %>int <%=type_id_var_name%> = -1;<%if is_enum then%>
+		int <%=enum_ref_var_name%> = -1;
         <%end%>
-        public static void Push<%=CSVariableName(type_info.Type)%>(this ObjectTranslator thiz, RealStatePtr L, <%=full_type_name%> val)
+        public void Push<%=CSVariableName(type_info.Type)%>(RealStatePtr L, <%=full_type_name%> val)
         {
             if (<%=type_id_var_name%> == -1)
             {
 			    bool is_first;
-                <%=type_id_var_name%> = thiz.getTypeId(L, typeof(<%=full_type_name%>), out is_first);
+                <%=type_id_var_name%> = getTypeId(L, typeof(<%=full_type_name%>), out is_first);
 				<%if is_enum then%>
 				if (<%=enum_ref_var_name%> == -1)
 				{
@@ -79,7 +85,7 @@ namespace XLua
 			<%end)%>
 			<%else%>
             IntPtr buff = LuaAPI.xlua_pushstruct(L, <%=is_enum and 4 or type_info.Size%>, <%=type_id_var_name%>);
-            if (!CopyByValue_Gen.Pack(buff, 0, <%=is_enum and "(int)" or ""%>val))
+            if (!CopyByValue.Pack(buff, 0, <%=is_enum and "(int)" or ""%>val))
             {
                 throw new Exception("pack fail fail for <%=full_type_name%> ,value="+val);
             }
@@ -94,7 +100,7 @@ namespace XLua
 			<%end%>
         }
 		
-        public static void Get<%=CSVariableName(type_info.Type)%>(this ObjectTranslator thiz, RealStatePtr L, int index, out <%=full_type_name%> val)
+        public void Get(RealStatePtr L, int index, out <%=full_type_name%> val)
         {
 		    LuaTypes type = LuaAPI.lua_type(L, index);
             if (type == LuaTypes.LUA_TUSERDATA )
@@ -106,7 +112,7 @@ namespace XLua
 				
                 IntPtr buff = LuaAPI.lua_touserdata(L, index);<%if is_enum then%>
 				int e;
-                <%end%>if (!CopyByValue_Gen.UnPack(buff, 0, out <%=is_enum and "e" or "val"%>))
+                <%end%>if (!CopyByValue.UnPack(buff, 0, out <%=is_enum and "e" or "val"%>))
                 {
                     throw new Exception("unpack fail for <%=full_type_name%>");
                 }<%if is_enum then%>
@@ -115,15 +121,15 @@ namespace XLua
             }<%if not is_enum then%>
 			else if (type ==LuaTypes.LUA_TTABLE)
 			{
-			    CopyByValue_Gen.UnPack(thiz, L, index, out val);
+			    CopyByValue.UnPack(this, L, index, out val);
 			}<%end%>
             else
             {
-                val = (<%=full_type_name%>)thiz.objectCasters.GetCaster(typeof(<%=full_type_name%>))(L, index, null);
+                val = (<%=full_type_name%>)objectCasters.GetCaster(typeof(<%=full_type_name%>))(L, index, null);
             }
         }
 		
-        public static void Update<%=CSVariableName(type_info.Type)%>(this ObjectTranslator thiz, RealStatePtr L, int index, <%=full_type_name%> val)
+        public void Update<%=CSVariableName(type_info.Type)%>(RealStatePtr L, int index, <%=full_type_name%> val)
         {
 		    <%if type_info.Flag == CS.XLua.OptimizeFlag.PackAsTable then%>
 			if (LuaAPI.lua_type(L, index) == LuaTypes.LUA_TTABLE)
@@ -139,7 +145,7 @@ namespace XLua
 				}
 				
                 IntPtr buff = LuaAPI.lua_touserdata(L, index);
-                if (!CopyByValue_Gen.Pack(buff, 0,  <%=is_enum and "(int)" or ""%>val))
+                if (!CopyByValue.Pack(buff, 0,  <%=is_enum and "(int)" or ""%>val))
                 {
                     throw new Exception("pack fail for <%=full_type_name%> ,value="+val);
                 }
@@ -156,12 +162,12 @@ namespace XLua
 		<%ForEachCsList(tableoptimzetypes, function(type_info)
 		local full_type_name = CsFullTypeName(type_info.Type)
 		%>
-		public static void Get<%=CSVariableName(type_info.Type)%>(this ObjectTranslator thiz, RealStatePtr L, int index, out <%=full_type_name%> val)
+		public void Get(RealStatePtr L, int index, out <%=full_type_name%> val)
         {
 		    LuaTypes type = LuaAPI.lua_type(L, index);
             if (type == LuaTypes.LUA_TUSERDATA )
             {
-			    val = (<%=full_type_name%>)thiz.FastGetCSObj(L, index);
+			    val = (<%=full_type_name%>)FastGetCSObj(L, index);
             }
 			else if (type == LuaTypes.LUA_TTABLE)
 			{
@@ -170,7 +176,7 @@ namespace XLua
 				<%ForEachCsList(type_info.Fields, function(fieldInfo)%>
 				if (Utils.LoadField(L, index, "<%=fieldInfo.Name%>"))
 				{
-					thiz.Get(L, top + 1, out val.<%=fieldInfo.Name%>);
+					Get(L, top + 1, out val.<%=fieldInfo.Name%>);
 				}
 				LuaAPI.lua_pop(L, 1);
 				<%end)%>
@@ -188,7 +194,7 @@ namespace XLua
         
     }
 	
-	public partial class StaticLuaCallbacks_Wrap
+	public partial class StaticLuaCallbacks
     {
 	    internal static bool __tryArrayGet(Type type, RealStatePtr L, ObjectTranslator translator, object obj, int index)
 		{
