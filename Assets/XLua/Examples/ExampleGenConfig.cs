@@ -96,4 +96,34 @@ public static class ExampleGenConfig
                 new List<string>(){"System.IO.DirectoryInfo", "Create", "System.Security.AccessControl.DirectorySecurity"},
                 new List<string>(){"UnityEngine.MonoBehaviour", "runInEditMode"},
             };
+    
+    public static List<Type> BlackGenerateTypeList = new List<Type>()
+    {
+        typeof(Span<>),
+        typeof(ReadOnlySpan<>),
+    };
+
+    private static bool IsBlacklistedType(Type type)
+    {
+        if (!type.IsGenericType) return false;
+        return BlackGenerateTypeList.Contains(type.GetGenericTypeDefinition());
+    }
+
+    [BlackList] public static Func<MemberInfo, bool> GenerateFilter = (memberInfo) =>
+    {
+        switch (memberInfo)
+        {
+            case PropertyInfo propertyInfo:
+                return IsBlacklistedType(propertyInfo.PropertyType);
+
+            case ConstructorInfo constructorInfo:
+                return constructorInfo.GetParameters().Any(p => IsBlacklistedType(p.ParameterType));
+
+            case MethodInfo methodInfo:
+                return methodInfo.GetParameters().Any(p => IsBlacklistedType(p.ParameterType));
+
+            default:
+                return false;
+        }
+    };
 }
