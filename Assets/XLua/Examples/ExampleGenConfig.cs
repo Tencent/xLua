@@ -97,30 +97,30 @@ public static class ExampleGenConfig
                 new List<string>(){"UnityEngine.MonoBehaviour", "runInEditMode"},
             };
     
-    public static List<Type> BlackGenerateTypeList = new List<Type>()
+    public static List<Type> BlackGenericTypeList = new List<Type>()
     {
         typeof(Span<>),
         typeof(ReadOnlySpan<>),
     };
 
-    private static bool IsBlacklistedType(Type type)
+    private static bool IsBlacklistedGenericType(Type type)
     {
         if (!type.IsGenericType) return false;
-        return BlackGenerateTypeList.Contains(type.GetGenericTypeDefinition());
+        return BlackGenericTypeList.Contains(type.GetGenericTypeDefinition());
     }
 
-    [BlackList] public static Func<MemberInfo, bool> GenerateFilter = (memberInfo) =>
+    [BlackList] public static Func<MemberInfo, bool> GenericTypeFilter = (memberInfo) =>
     {
         switch (memberInfo)
         {
             case PropertyInfo propertyInfo:
-                return IsBlacklistedType(propertyInfo.PropertyType);
+                return IsBlacklistedGenericType(propertyInfo.PropertyType);
 
             case ConstructorInfo constructorInfo:
-                return constructorInfo.GetParameters().Any(p => IsBlacklistedType(p.ParameterType));
+                return constructorInfo.GetParameters().Any(p => IsBlacklistedGenericType(p.ParameterType));
 
             case MethodInfo methodInfo:
-                return methodInfo.GetParameters().Any(p => IsBlacklistedType(p.ParameterType));
+                return methodInfo.GetParameters().Any(p => IsBlacklistedGenericType(p.ParameterType));
 
             default:
                 return false;
