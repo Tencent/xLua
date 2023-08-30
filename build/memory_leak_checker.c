@@ -150,7 +150,11 @@ LUA_API void xlua_report_object_relationship(lua_State *L, ObjectRelationshipRep
 		{
 			LClosure *cl = gco2lcl(p);
 			lua_lock(L);
+#if LUA_VERSION_NUM >= 504 && LUA_VERSION_RELEASE_NUM >= 50406
+			setclLvalue2s(L, L->top.p, cl);
+#else
 			setclLvalue(L, L->top, cl);
+#endif
 			api_incr_top(L);
 			lua_unlock(L);
 			
