@@ -279,14 +279,20 @@ namespace XLua
             var L = luaEnv.L;
             var translator = luaEnv.translator;
             int oldTop = LuaAPI.lua_gettop(L);
-            LuaAPI.lua_getref(L, luaReference);
-            LuaAPI.lua_pushnil(L);
-            while (LuaAPI.lua_next(L, -2) != 0)
+            try
             {
-                yield return translator.GetObject(L, -2);
-                LuaAPI.lua_pop(L, 1);
+                LuaAPI.lua_getref(L, luaReference);
+                LuaAPI.lua_pushnil(L);
+                while (LuaAPI.lua_next(L, -2) != 0)
+                {
+                    yield return translator.GetObject(L, -2);
+                    LuaAPI.lua_pop(L, 1);
+                }
             }
-            LuaAPI.lua_settop(L, oldTop);
+            finally
+            {
+                LuaAPI.lua_settop(L, oldTop);
+            }
         }
 
 #if THREAD_SAFE || HOTFIX_ENABLE
@@ -297,19 +303,25 @@ namespace XLua
             var L = luaEnv.L;
             var translator = luaEnv.translator;
             int oldTop = LuaAPI.lua_gettop(L);
-            LuaAPI.lua_getref(L, luaReference);
-            LuaAPI.lua_pushnil(L);
-            while (LuaAPI.lua_next(L, -2) != 0)
+            try
             {
-                if (translator.Assignable<T>(L, -2))
+                LuaAPI.lua_getref(L, luaReference);
+                LuaAPI.lua_pushnil(L);
+                while (LuaAPI.lua_next(L, -2) != 0)
                 {
-                    T v;
-                    translator.Get(L, -2, out v);
-                    yield return v;
+                    if (translator.Assignable<T>(L, -2))
+                    {
+                        T v;
+                        translator.Get(L, -2, out v);
+                        yield return v;
+                    }
+                    LuaAPI.lua_pop(L, 1);
                 }
-                LuaAPI.lua_pop(L, 1);
             }
-            LuaAPI.lua_settop(L, oldTop);
+            finally
+            {
+                LuaAPI.lua_settop(L, oldTop);
+            }
         }
 
         [Obsolete("use no boxing version: Get<TKey, TValue> !")]
