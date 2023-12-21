@@ -35,30 +35,39 @@ namespace XLuaTest
         private Action luaUpdate;
         private Action luaOnDestroy;
 
-        private LuaTable scriptEnv;
+        private LuaTable scriptScopeTable;
 
         void Awake()
         {
-            scriptEnv = luaEnv.NewTable();
+            // 为每个脚本设置一个独立的脚本域，可一定程度上防止脚本间全局变量、函数冲突
+            scriptScopeTable = luaEnv.NewTable();
 
-            // 为每个脚本设置一个独立的环境，可一定程度上防止脚本间全局变量、函数冲突
-            LuaTable meta = luaEnv.NewTable();
-            meta.Set("__index", luaEnv.Global);
-            scriptEnv.SetMetaTable(meta);
-            meta.Dispose();
-
-            scriptEnv.Set("self", this);
-            foreach (var injection in injections)
+            // 设置其元表的 __index, 使其能够访问全局变量
+            using (LuaTable meta = luaEnv.NewTable())
             {
-                scriptEnv.Set(injection.name, injection.value);
+                meta.Set("__index", luaEnv.Global);
+                scriptScopeTable.SetMetaTable(meta);
             }
 
-            luaEnv.DoString(luaScript.text, "LuaTestScript", scriptEnv);
+            // 将所需值注入到 Lua 脚本域中
+            scriptScopeTable.Set("self", this);
+            foreach (var injection in injections)
+            {
+                scriptScopeTable.Set(injection.name, injection.value);
+            }
 
-            Action luaAwake = scriptEnv.Get<Action>("awake");
-            scriptEnv.Get("start", out luaStart);
-            scriptEnv.Get("update", out luaUpdate);
-            scriptEnv.Get("ondestroy", out luaOnDestroy);
+            // 如果你希望在脚本内能够设置全局变量, 也可以直接将全局脚本域注入到当前脚本的脚本域中
+            // 这样, 你就可以在 Lua 脚本中通过 Global.XXX 来访问全局变量
+            // scriptScopeTable.Set("Global", luaEnv.Global);
+
+            // 执行脚本
+            luaEnv.DoString(luaScript.text, luaScript.name, scriptScopeTable);
+
+            // 从 Lua 脚本域中获取定义的函数
+            Action luaAwake = scriptScopeTable.Get<Action>("awake");
+            scriptScopeTable.Get("start", out luaStart);
+            scriptScopeTable.Get("update", out luaUpdate);
+            scriptScopeTable.Get("ondestroy", out luaOnDestroy);
 
             if (luaAwake != null)
             {
@@ -82,6 +91,7 @@ namespace XLuaTest
             {
                 luaUpdate();
             }
+
             if (Time.time - LuaBehaviour.lastGCTime > GCInterval)
             {
                 luaEnv.Tick();
@@ -95,10 +105,11 @@ namespace XLuaTest
             {
                 luaOnDestroy();
             }
+
+            scriptScopeTable.Dispose();
             luaOnDestroy = null;
             luaUpdate = null;
             luaStart = null;
-            scriptEnv.Dispose();
             injections = null;
         }
     }
