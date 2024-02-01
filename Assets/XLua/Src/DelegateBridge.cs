@@ -127,7 +127,7 @@ namespace XLua
     {
         internal static DelegateBridge[] DelegateBridgeList = new DelegateBridge[0];
 
-        public static bool Gen_Flag { get { return InternalGlobals.Gen_Flag; } }
+        public static bool Gen_Flag = false;
 
         public DelegateBridge(int reference, LuaEnv luaenv) : base(reference, luaenv)
         {
