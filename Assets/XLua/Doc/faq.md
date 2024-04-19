@@ -200,6 +200,7 @@ end)
 ```
 
 3、如果xlua版本大于2.1.12的话，新增反射调用泛型方法的支持（有一定的限制，看后面的说明），比如对于这么个C#类型：
+
 ```csharp
 public class GetGenericMethodTest
 {
@@ -222,7 +223,9 @@ public class GetGenericMethodTest
     }
 }
 ```
+
 在lua那这么调用：
+
 ```lua
 local foo_generic = xlua.get_generic_method(CS.GetGenericMethodTest, 'Foo')
 local bar_generic = xlua.get_generic_method(CS.GetGenericMethodTest, 'Bar')
@@ -260,12 +263,12 @@ bar(2, nil)
 
 如果你的版本大于2.1.11，可以用get_Item来获取值，用set_Item来设置值。要注意只有this[string field]或者this[object field]才有这两个替代api，其它类型的key是没有的。
 
-~~~lua
+```lua
 dic:set_Item('a', 1)
 dic:set_Item('b', 2)
 print(dic:get_Item('a'))
 print(dic:get_Item('b'))
-~~~
+```
 
 如果你的版本小于或等于2.1.11，建议直接方法该操作符的等效方法，比如Dictionary的TryGetValue，如果该方法没有提供，可以在C#那通过Extension method封装一个使用。
 
@@ -275,7 +278,7 @@ print(dic:get_Item('b'))
 
 对应这种情况，可以为UnityEngine.Object写一个扩展方法：
 
-~~~csharp
+```csharp
 [LuaCallCSharp]
 [ReflectionUse]
 public static class UnityEngineObjectExtention
@@ -285,35 +288,35 @@ public static class UnityEngineObjectExtention
         return o == null;
     }
 }
-~~~
+```
 
 然后在lua那你对所有UnityEngine.Object实例都使用IsNull判断
 
-~~~lua
+```lua
 print(go:GetComponent('Animator'):IsNull())
-~~~
+```
 
 ## 泛型实例怎么构造
 
 涉及的类型都在mscorlib，Assembly-CSharp程序集的话，泛型实例的构造和普通类型是一样的，都是CS.namespace.typename()，可能比较特殊的是typename的表达，泛型实例的typename的表达包含了标识符非法符号，最后一部分要换成["typename"]，以List<string>为例
 
-~~~lua
+```lua
 local lst = CS.System.Collections.Generic["List`1[System.String]"]()
-~~~
+```
 
 如果某个泛型实例的typename不确定，可以在C#测打印下typeof(不确定的类型).ToString()
 
 如果涉及mscorlib，Assembly-CSharp程序集之外的类型的话，可以用C#的反射来做：
 
-~~~lua
+```lua
 local dic = CS.System.Activator.CreateInstance(CS.System.Type.GetType('System.Collections.Generic.Dictionary`2[[System.String, mscorlib],[UnityEngine.Vector3, UnityEngine]],mscorlib'))
 dic:Add('a', CS.UnityEngine.Vector3(1, 2, 3))
 print(dic:TryGetValue('a'))
-~~~
+```
 
 如果你的xLua版本大于v2.1.12，将会有更漂亮的表达方式
 
-~~~lua
+```lua
 -- local List_String = CS.System.Collections.Generic['List<>'](CS.System.String) -- another way
 local List_String = CS.System.Collections.Generic.List(CS.System.String)
 local lst = List_String()
@@ -322,7 +325,7 @@ local Dictionary_String_Vector3 = CS.System.Collections.Generic.Dictionary(CS.Sy
 local dic = Dictionary_String_Vector3()
 dic:Add('a', CS.UnityEngine.Vector3(1, 2, 3))
 print(dic:TryGetValue('a'))
-~~~
+```
 
 
 ## 调用LuaEnv.Dispose时，报“try to dispose a LuaEnv with C# callback!”错是什么原因？
@@ -341,17 +344,17 @@ print(dic:TryGetValue('a'))
 
 xlua提供了一个工具函数来帮助你找到被C#引用着的lua函数，util.print_func_ref_by_csharp，使用很简单，执行如下lua代码：
 
-~~~lua
+```lua
 local util = require 'xlua.util'
 util.print_func_ref_by_csharp()
-~~~
+```
 
 可以看到控制台有类似这样的输出，下面第一行表示有一个在main.lua的第2行定义的函数被C#引用着
 
-~~~bash
+```bash
 LUA: main.lua:2
 LUA: main.lua:13
-~~~
+```
 
 ## 调用LuaEnv.Dispose崩溃
 
@@ -366,14 +369,14 @@ LUA: main.lua:13
 
 用util.hotfix_ex，可以调用原先的C#逻辑
 
-~~~lua
+```lua
 local util = require 'xlua.util'
 util.hotfix_ex(CS.HotfixTest, 'Add', function(self, a, b)
    local org_sum = self:Add(a, b)
    print('org_sum', org_sum)
    return a + b
 end)
-~~~
+```
 
 ## 怎么把C#的函数赋值给一个委托字段
 
@@ -383,7 +386,7 @@ end)
 
 比如如下C#代码
 
-~~~csharp
+```csharp
 public class TestClass
 {
     public void Foo(int a)
@@ -395,10 +398,10 @@ public class TestClass
     }
 ｝
 public delegate void TestDelegate(int a);
-~~~
+```
 
 你可以指明用Foo函数创建一个TestDelegate实例
-~~~lua
+```lua
 local util = require 'xlua.util'
 
 local d1 = util.createdelegate(CS.TestDelegate, obj, CS.TestClass, 'Foo', {typeof(CS.System.Int32)}) --由于Foo是实例方法，所以参数2需要传TestClass实例
@@ -406,7 +409,7 @@ local d2 = util.createdelegate(CS.TestDelegate, nil, CS.TestClass, 'SFoo', {type
 
 obj_has_TestDelegate.field = d1 + d2 --到时调用field的时候将会触发Foo和SFoo，这不会经过Lua适配
 
-~~~
+```
 
 ## 为什么有时Lua错误直接中断了而没错误信息？
 
@@ -416,15 +419,15 @@ obj_has_TestDelegate.field = d1 + d2 --到时调用field的时候将会触发Foo
 
 把类似下面的代码：
 
-~~~lua
+```lua
 coroutine.resume(co, ...)
-~~~
+```
 
 改为：
 
-~~~lua
+```lua
 assert(coroutine.resume(co, ...))
-~~~
+```
 
 2、上层catch后，不打印
 
@@ -440,7 +443,7 @@ assert(coroutine.resume(co, ...))
 
 可以通过xlua.tofunction结合反射来处理，xlua.tofunction输入一个MethodBase对象，返回一个lua函数。比如下面的C#代码：
 
-~~~csharp
+```csharp
 class TestOverload
 {
     public int Add(int a, int b)
@@ -455,11 +458,11 @@ class TestOverload
         return (short)(a + b);
     }
 }
-~~~
+```
 
 我们可以这么调用指定重载：
 
-~~~lua
+```lua
 local m1 = typeof(CS.TestOverload):GetMethod('Add', {typeof(CS.System.Int16), typeof(CS.System.Int16)})
 local m2 = typeof(CS.TestOverload):GetMethod('Add', {typeof(CS.System.Int32), typeof(CS.System.Int32)})
 local f1 = xlua.tofunction(m1) --切记对于同一个MethodBase，只tofunction一次，然后重复使用
@@ -469,7 +472,7 @@ local obj = CS.TestOverload()
 
 f1(obj, 1, 2) --调用short版本，成员方法，所以要传对象，静态方法则不需要
 f2(obj, 1, 2) --调用int版本
-~~~
+```
 
 注意：xlua.tofunction由于使用不太方便，以及使用了反射，所以建议做作为临时方案，尽量用封装的方法来解决。
 
@@ -523,6 +526,6 @@ f2(obj, 1, 2) --调用int版本
 
 执行
 
-~~~bash
+```bash
 sudo xattr -r -d com.apple.quarantine xlua.bundle
-~~~
+```

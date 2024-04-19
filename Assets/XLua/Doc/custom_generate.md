@@ -16,7 +16,7 @@ xLua的生成引擎支持二次开发，你可以利用它来生成一些文本�
 
 示例：
 
-~~~xml
+```xml
 <%
 require "TemplateCommon"
 %>
@@ -30,47 +30,47 @@ require "TemplateCommon"
 	</assembly>
 <%end)%>
 </linker>
-~~~
+```
 
 TemplateCommon有一些预定义的函数可以使用，比如ForEachCsList，可以搜索下工程的TemplateCommon.lua.txt看下有那些函数可以用，就普通的lua而已，你自己写一套也可以。
 
 ## API
 
-~~~csharp
+```csharp
 public static void CSObjectWrapEditor.Generator.CustomGen(string template_src, GetTasks get_tasks)
-~~~
+```
 
 * template_src ： 模版的源码；
 * get_tasks    ： 回调函数，类型是GetTasks，用来接受用户的配置，返回需要注入到模版的数据以及文件的输出流；
 
-~~~csharp
+```csharp
 public delegate IEnumerable<CustomGenTask> GetTasks(LuaEnv lua_env, UserConfig user_cfg);
-~~~
+```
 
 * lua_env      ： LuaEnv对象，因为返回的模版数据需要放到LuaTable，需要用到LuaEnv.NewTable；
 * user_cfg     ： 用户的配置；
 * return       ： 返回值中，CustomGenTask代表的是一个生成文件，而IEnumerable类型表示同一个模版可以生成多个文件；
 
-~~~csharp
+```csharp
 public struct UserConfig
 {
     public IEnumerable<Type> LuaCallCSharp;
     public IEnumerable<Type> CSharpCallLua;
     public IEnumerable<Type> ReflectionUse;
 }
-~~~
+```
 
-~~~csharp
+```csharp
 public struct CustomGenTask
 {
     public LuaTable Data;
     public TextWriter Output;
 }
-~~~
+```
 
 示例：
 
-~~~csharp
+```csharp
 public static IEnumerable<CustomGenTask> GetTasks(LuaEnv lua_env, UserConfig user_cfg)
 {
     LuaTable data = lua_env.NewTable();
@@ -86,7 +86,7 @@ public static IEnumerable<CustomGenTask> GetTasks(LuaEnv lua_env, UserConfig use
         false, Encoding.UTF8)
     };
 }
-~~~
+```
 
 * 这里只生成一个文件，故只返回一个CustomGenTask；
 * data就是模版要使用的数据，这里塞了一个assembly_infos字段，这个字段如何使用可以回头看看模版部分；
@@ -97,13 +97,13 @@ public static IEnumerable<CustomGenTask> GetTasks(LuaEnv lua_env, UserConfig use
 
 示例：
 
-~~~csharp
+```csharp
 [GenCodeMenu]//加到Generate Code菜单里头
 public static void GenLinkXml()
 {
     Generator.CustomGen(ScriptableObject.CreateInstance<LinkXmlGen>().Template.text, GetTasks);
 }
-~~~
+```
 
 
 ps：以上所有相关代码都在XLua\Src\Editor\LinkXmlGen目录下，也正是文章开头说的link.xml的生成功能的实现。
