@@ -1,6 +1,9 @@
 ## C# API
+
 ### LuaEnv类
+
 #### object[] DoString(string chunk, string chunkName = "chuck", LuaTable env = null)
+
 描述：
 
     执行一个代码块。
@@ -14,7 +17,7 @@
 
     代码块里return语句的返回值;
     比如：return 1, “hello”，DoString返回将包含两个object的数组， 一个是double类型的1， 一个是string类型的“hello”
-    
+
 例如：
 
     LuaEnv luaenv = new LuaEnv();
@@ -38,7 +41,7 @@
 
     代表该代码块的delegate或者LuaFunction类；
 
-#### LuaTable Global;
+#### LuaTable Global
 
 描述：
 
@@ -64,45 +67,44 @@
 #### void Dispose()
 
 描述：
-    
+
     Dispose该LuaEnv。
 
 > LuaEnv的使用建议：全局就一个实例，并在Update中调用GC方法，完全不需要时调用Dispose
 
 ### LuaTable类
 
-#### T Get<T>(string key)
+#### `T Get<T>(string key)`
 
 描述：
 
     获取在key下，类型为T的value，如果不存在或者类型不匹配，返回null；
 
-
-#### T GetInPath<T>(string path)
+#### `T GetInPath<T>(string path)`
 
 描述：
 
     和Get的区别是，这个函数会识别path里头的“.”，比如var i = tbl.GetInPath<int>(“a.b.c”)相当于在lua里头执行i = tbl.a.b.c，避免仅为了获取中间变量而多次调用Get，执行效率更高。
 
-#### void SetInPath<T>(string path, T val)
+#### `void SetInPath<T>(string path, T val)`
 
 描述：
 
     和GetInPaht<T>对应的setter；
 
-#### void Get<TKey, TValue>(TKey key, out TValue value)
+#### `void Get<TKey, TValue>(TKey key, out TValue value)`
 
 描述：
 
      上面的API的Key都只能是string，而这个API无此限制；
 
-#### void Set<TKey, TValue>(TKey key, TValue value)
+#### `void Set<TKey, TValue>(TKey key, TValue value)`
 
 描述：
 
      对应Get<TKey, TValue>的setter；
 
-#### T Cast<T>()
+#### `T Cast<T>()`
 
 描述：
 
@@ -111,12 +113,12 @@
 #### void SetMetaTable(LuaTable metaTable)
 
 描述：
-    
+
     设置metaTable为table的metatable
 
-### LuaFunction类
+### LuaFunction 类
 
-> 注意：用该类访问Lua函数会有boxing，unboxing的开销，为了性能考虑，需要频繁调用的地方不要用该类。建议通过table.Get<ABCDelegate>获取一个delegate再调用（假设ABCDelegate是C#的一个delegate）。在使用使用table.Get<ABCDelegate>之前，请先把ABCDelegate加到代码生成列表。
+> 注意：用该类访问Lua函数会有boxing，unboxing的开销，为了性能考虑，需要频繁调用的地方不要用该类。建议通过 `table.Get<ABCDelegate>` 获取一个 delegate 再调用（假设 `ABCDelegate` 是 C# 的一个 delegate）。在使用使用 `table.Get<ABCDelegate>` 之前，请先把ABCDelegate加到代码生成列表。
 
 #### object[] Call(params object[] args)
 
@@ -155,28 +157,26 @@
 描述：
 
     访问一个C#静态成员
-    
+
 例如：
 
     Print(CS.UnityEngine.Vector3.one)
 
-
 #### CS.namespace.enum.field
 
 描述：
-    
+
     访问一个枚举值
 
 #### typeof函数
 
 描述：
-    
+
     类似C#里头的typeof关键字，返回一个Type对象，比如GameObject.AddComponent其中一个重载需要一个Type参数
 
 例如：
 
     newGameObj:AddComponent(typeof(CS.UnityEngine.ParticleSystem))
-
 
 #### 无符号64位支持
 
@@ -201,9 +201,9 @@
 ##### uint64.remainder
 
 描述：
-    
+
     无符号数取模。
-    
+
 ##### uint64.parse
 
 描述：
@@ -212,24 +212,26 @@
 #### xlua.structclone
 
 描述：
-    
+
     克隆一个c#结构体
-	
-#### xlua.private_accessible(class)		
+
+#### xlua.private_accessible(class)
+
 描述：
-    
+
     让一个类的私有字段，属性，方法等可用
 例子：
 
-    xlua.private_accessible(CS.UnityEngine.GameObject)	
+    xlua.private_accessible(CS.UnityEngine.GameObject)
 
 #### xlua.get_generic_method
+
 描述：
-    
+
     获取一个泛型方法
 例子：
 
-~~~lua
+```lua
 local foo_generic = xlua.get_generic_method(CS.GetGenericMethodTest, 'Foo')
 local bar_generic = xlua.get_generic_method(CS.GetGenericMethodTest, 'Bar')
 
@@ -243,16 +245,16 @@ print(ret)
 
 -- call static method
 bar(2, nil)
-~~~
+```
 
 #### cast函数
 
 描述：
-    
+
     指明以特定的接口访问对象，这在实现类无法访问的时候（比如internal修饰）很有用，这时可以这么来（假设下面的calc对象实现了C#的PerformentTest.ICalc接口）
 
 例子：
-    
+
     cast(calc, typeof(CS.PerformentTest.ICalc))
 
 然后就木有其它API了
@@ -272,7 +274,6 @@ bar(2, nil)
 
 ### 基本数据类型
 
-
 |C#类型|Lua类型|
 |-|-|
 |sbyte，byte，short，ushort，int，uint，double，char，float|number|
@@ -291,24 +292,24 @@ bar(2, nil)
 |class或者 struct的实例|userdata，table|
 |method，delegate|function|
 
-#### LuaTable：
+#### LuaTable
 
 C#侧指明从Lua侧输入（包括C#方法的输入参数或者Lua方法的返回值）LuaTable类型，则要求Lua侧为table。或者Lua侧的table，在C#侧未指明类型的情况下转换成LuaTable。
 
-#### LuaFunction：
+#### LuaFunction
 
 C#侧指明从Lua侧输入（包括C#方法的输入参数或者Lua方法的返回值）LuaFunction类型，则要求Lua侧为function。或者Lua侧的function，在C#侧未指明类型的情况下转换成LuaFunction。
 
-#### LuaUserData：
+#### LuaUserData
 
-对应非C# Managered对象的lua userdata。
+对应非 C# Managered 对象的lua userdata。
 
-#### class或者 struct的实例:
+#### class 或者 struct 的实例
 
 从C#传一个class或者struct的实例，将映射到Lua的userdata，并通过__index访问该userdata的成员
 C#侧指明从Lua侧输入指定类型对象，Lua侧为该类型实例的userdata可以直接使用；如果该指明类型有默认构造函数，Lua侧是table则会自动转换，转换规则是：调用构造函数构造实例，并用table对应字段转换到c#对应值后赋值各成员。
 
-#### method， delegate：
+#### method， delegate
 
 成员方法以及delegate都是对应lua侧的函数。
 C#侧的普通参数以及引用参数，对应lua侧函数参数；C#侧的返回值对应于Lua的第一个返回值；引用参数和out参数则按序对应于Lua的第2到第N个参数。
