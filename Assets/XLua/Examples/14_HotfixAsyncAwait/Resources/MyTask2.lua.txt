@@ -1,0 +1,15 @@
+﻿require 'await'
+local Task = CS.System.Threading.Tasks.Task
+local FromResult = xlua.get_generic_method(Task, 'FromResult')
+local FromIntResult = FromResult(CS.System.Int32)
+
+local function MyTask2(self)
+    CS.UnityEngine.Debug.Log("MyTask2 in lua!    001")
+    return FromIntResult(1000);
+end
+
+xlua.hotfix(CS.XLuaTest.HotfixAsyncAwaitTest, 'MyTask2', MyTask2)
+
+-- await(MyTask2(nil),function (result)
+--     print(result)
+-- end)
