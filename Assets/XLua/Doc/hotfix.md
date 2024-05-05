@@ -171,6 +171,10 @@ xlua.hotfix(CS.HotfixTest, 'Update', function(self)
 
 前提是 `hotfix_id_map.lua.txt` 放到可以通过 `require 'hotfix_id_map'` 引用到的地方。
 
+## 忽略特定方法
+在方法上添加[Hotfix(HotfixFlag.IgnoreThisMethod)]特性标记，则不会为该方法生成委托，也不会hotfix inject该方法。  
+通常用于一些会导致xlua生成造成编译错误的函数。例如签名中含有Span参数的方法。  
+
 ## 使用建议
 
 * 对所有较大可能变动的类型加上 `Hotfix` 标识；
