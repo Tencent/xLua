@@ -50,8 +50,9 @@ jobs:
       - name: Build
         run: |
           cd build
-          ./make_ohos_lua54.sh
-          ./make_ohos_lua53.sh
+          chmod +x make_ohos_lua5*.sh
+          OHOS_NDK_HOME=~/ohos-sdk/linux/native ./make_ohos_lua54.sh
+          OHOS_NDK_HOME=~/ohos-sdk/linux/native ./make_ohos_lua53.sh
       - name: Upload
         uses: actions/upload-artifact@v2
         with:
