@@ -227,7 +227,7 @@ jobs:
 
   publish:
     runs-on: ubuntu-latest
-    needs: [windows,osx,ios,android,windows-luajit-32]
+    needs: [windows,osx,ios,android,windows-luajit-32,ohos,android_luajit,linux]
     steps:
       - uses: actions/download-artifact@v1
         with:
