@@ -1,0 +1,13 @@
+﻿require 'await'
+local Task = CS.System.Threading.Tasks.Task
+
+local function AsyncMethod2(self)
+    CS.UnityEngine.Debug.Log("AsyncMethod2 in lua!    001")
+    await(Task.Delay(1000), function ()
+        CS.UnityEngine.Debug.Log("AsyncMethod2 in lua!    002")
+    end)
+end
+
+xlua.hotfix(CS.XLuaTest.HotfixAsyncAwaitTest, 'AsyncMethod2', AsyncMethod2)
+
+

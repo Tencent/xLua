@@ -1,0 +1,20 @@
+﻿require 'await'
+local Task = CS.System.Threading.Tasks.Task
+local TaskSource = CS.System.Threading.Tasks.TaskCompletionSource(CS.System.Int32)
+
+local function MyTask1(self)
+    --使用TaskCompletionSource来模拟C#中async关键字
+    local source = TaskSource()
+
+    CS.UnityEngine.Debug.Log("MyTask1 in lua!    001")
+    await(Task.Delay(1000), function ()
+        CS.UnityEngine.Debug.Log("MyTask1 in lua!    002")
+        source:SetResult(9999)
+    end)
+
+    return source.Task
+end
+
+xlua.hotfix(CS.XLuaTest.HotfixAsyncAwaitTest, 'MyTask1', MyTask1)
+
+

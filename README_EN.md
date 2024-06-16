@@ -94,6 +94,7 @@ It is recommended that you bind once and reuse it. If code is generated, no gc a
 * [10_SignatureLoader](Assets/XLua/Examples/10_SignatureLoader/): This example shows how to read the Lua script with a digital signature. See the [Digital Signature](Assets/XLua/Doc/signature.md) document for details.
 * [11_RawObject](Assets/XLua/Examples/11_RawObject/): This example shows how to specify transferring a Lua number in the int after boxing when the C# parameter is an object.
 * [12_ReImplementInLua](Assets/XLua/Examples/12_ReImplementInLua/): This shows how to change complex value types to Lua implementations.
+* [14_HotfixAsyncAwait](Assets/XLua/Examples/14_HotfixAsyncAwait/): This shows how to change asynchronous functions and await keyword to Lua implementation.
 
 ## Technical support
 

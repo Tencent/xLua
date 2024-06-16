@@ -1,0 +1,6 @@
+﻿xlua.hotfix(CS.XLuaTest.HotfixAsyncAwaitTest, 'AsyncMethod1', function(self)
+        CS.UnityEngine.Debug.Log("AsyncMethod1 in lua!")
+    end
+)
+
+
