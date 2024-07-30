@@ -12,7 +12,7 @@ using UnityEngine;
 using XLua;
 using System.Reflection;
 using UnityEditor;
-//using System.Linq;
+using System.Linq;
 
 //配置的详细介绍请看Doc下《XLua的配置.doc》
 public static class ExampleGenConfig
@@ -76,6 +76,11 @@ public static class ExampleGenConfig
                 new List<string>(){"UnityEngine.CanvasRenderer", "onRequestRebuild"},
                 new List<string>(){"UnityEngine.Light", "areaSize"},
                 new List<string>(){"UnityEngine.Light", "lightmapBakeType"},
+    #if UNITY_ANDROID
+                new List<string>(){"UnityEngine.Light", "SetLightDirty"},
+                new List<string>(){"UnityEngine.Light", "shadowRadius"},
+                new List<string>(){"UnityEngine.Light", "shadowAngle"},
+    #endif
                 new List<string>(){"UnityEngine.WWW", "MovieTexture"},
                 new List<string>(){"UnityEngine.WWW", "GetMovieTexture"},
                 new List<string>(){"UnityEngine.AnimatorOverrideController", "PerformOverrideClipListCleanup"},
@@ -93,7 +98,6 @@ public static class ExampleGenConfig
                 new List<string>(){"UnityEngine.MonoBehaviour", "runInEditMode"},
             };
 
-
     [Hotfix]
     public static List<Type> by_testHotfix
     {
@@ -105,4 +109,34 @@ public static class ExampleGenConfig
             return list;
         }
     }
+    
+    public static List<Type> BlackGenericTypeList = new List<Type>()
+    {
+        typeof(Span<>),
+        typeof(ReadOnlySpan<>),
+    };
+
+    private static bool IsBlacklistedGenericType(Type type)
+    {
+        if (!type.IsGenericType) return false;
+        return BlackGenericTypeList.Contains(type.GetGenericTypeDefinition());
+    }
+
+    [BlackList] public static Func<MemberInfo, bool> GenericTypeFilter = (memberInfo) =>
+    {
+        switch (memberInfo)
+        {
+            case PropertyInfo propertyInfo:
+                return IsBlacklistedGenericType(propertyInfo.PropertyType);
+
+            case ConstructorInfo constructorInfo:
+                return constructorInfo.GetParameters().Any(p => IsBlacklistedGenericType(p.ParameterType));
+
+            case MethodInfo methodInfo:
+                return methodInfo.GetParameters().Any(p => IsBlacklistedGenericType(p.ParameterType));
+
+            default:
+                return false;
+        }
+    };
 }

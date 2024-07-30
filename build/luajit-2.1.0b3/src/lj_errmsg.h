@@ -1,6 +1,6 @@
 /*
 ** VM error messages.
-** Copyright (C) 2005-2017 Mike Pall. See Copyright Notice in luajit.h
+** Copyright (C) 2005-2021 Mike Pall. See Copyright Notice in luajit.h
 */
 
 /* This file may be included multiple times with different ERRDEF macros. */
@@ -67,6 +67,7 @@ ERRDEF(PROTMT,	"cannot change a protected metatable")
 ERRDEF(UNPACK,	"too many results to unpack")
 ERRDEF(RDRSTR,	"reader function must return a string")
 ERRDEF(PRTOSTR,	LUA_QL("tostring") " must return a string to " LUA_QL("print"))
+ERRDEF(NUMRNG,	"number out of range")
 ERRDEF(IDXRNG,	"index out of range")
 ERRDEF(BASERNG,	"base out of range")
 ERRDEF(LVLRNG,	"level out of range")
@@ -101,11 +102,7 @@ ERRDEF(STRGSRV,	"invalid replacement value (a %s)")
 ERRDEF(BADMODN,	"name conflict for module " LUA_QS)
 #if LJ_HASJIT
 ERRDEF(JITPROT,	"runtime code generation failed, restricted kernel?")
-#if LJ_TARGET_X86ORX64
-ERRDEF(NOJIT,	"JIT compiler disabled, CPU does not support SSE2")
-#else
 ERRDEF(NOJIT,	"JIT compiler disabled")
-#endif
 #elif defined(LJ_ARCH_NOJIT)
 ERRDEF(NOJIT,	"no JIT compiler for this architecture (yet)")
 #else
@@ -181,6 +178,19 @@ ERRDEF(FFI_CBACKOV,	"too many callbacks")
 #endif
 ERRDEF(FFI_NYIPACKBIT,	"NYI: packed bit fields")
 ERRDEF(FFI_NYICALL,	"NYI: cannot call this C function (yet)")
+#endif
+
+#if LJ_HASBUFFER
+/* String buffer errors. */
+ERRDEF(BUFFER_SELF,	"cannot put buffer into itself")
+ERRDEF(BUFFER_BADOPT,	"bad options table")
+ERRDEF(BUFFER_BADENC,	"cannot serialize " LUA_QS)
+ERRDEF(BUFFER_BADDEC,	"cannot deserialize tag 0x%02x")
+ERRDEF(BUFFER_BADDICTX,	"cannot deserialize dictionary index %d")
+ERRDEF(BUFFER_DEPTH,	"too deep to serialize")
+ERRDEF(BUFFER_DUPKEY,	"duplicate table key")
+ERRDEF(BUFFER_EOB,	"unexpected end of buffer")
+ERRDEF(BUFFER_LEFTOV,	"left-over data in buffer")
 #endif
 
 #undef ERRDEF

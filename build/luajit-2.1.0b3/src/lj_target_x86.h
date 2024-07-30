@@ -1,6 +1,6 @@
 /*
 ** Definitions for x86 and x64 CPUs.
-** Copyright (C) 2005-2017 Mike Pall. See Copyright Notice in luajit.h
+** Copyright (C) 2005-2021 Mike Pall. See Copyright Notice in luajit.h
 */
 
 #ifndef _LJ_TARGET_X86_H
@@ -38,10 +38,9 @@ enum {
   RID_RET = RID_EAX,
 #if LJ_64
   RID_FPRET = RID_XMM0,
-#else
+#endif
   RID_RETLO = RID_EAX,
   RID_RETHI = RID_EDX,
-#endif
 
   /* These definitions must match with the *.dasc file(s): */
   RID_BASE = RID_EDX,		/* Interpreter BASE. */
@@ -165,6 +164,8 @@ typedef struct {
 #define EXITSTUB_SPACING	(2+2)
 #define EXITSTUBS_PER_GROUP	32
 
+#define EXITTRACE_VMSTATE	1	/* g->vmstate has traceno on exit. */
+
 /* -- x86 ModRM operand encoding ------------------------------------------ */
 
 typedef enum {
@@ -228,16 +229,10 @@ typedef enum {
   /* Note: little-endian byte-order! */
   XI_FLDZ =	0xeed9,
   XI_FLD1 =	0xe8d9,
-  XI_FLDLG2 =	0xecd9,
-  XI_FLDLN2 =	0xedd9,
   XI_FDUP =	0xc0d9,  /* Really fld st0. */
   XI_FPOP =	0xd8dd,  /* Really fstp st0. */
   XI_FPOP1 =	0xd9dd,  /* Really fstp st1. */
   XI_FRNDINT =	0xfcd9,
-  XI_FSIN =	0xfed9,
-  XI_FCOS =	0xffd9,
-  XI_FPTAN =	0xf2d9,
-  XI_FPATAN =	0xf3d9,
   XI_FSCALE =	0xfdd9,
   XI_FYL2X =	0xf1d9,
 

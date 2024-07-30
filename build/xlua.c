@@ -96,7 +96,7 @@ LUA_API void xlua_pushuint (lua_State *L, uint32_t n) {
 }
 #endif
 
-#if LUA_VERSION_NUM ==503
+#if LUA_VERSION_NUM >= 503
 LUA_API int lua_setfenv(lua_State *L, int idx)
 {
     int type = lua_type(L, idx);
@@ -1235,7 +1235,7 @@ static const luaL_Reg xlualib[] = {
 LUA_API void luaopen_xlua(lua_State *L) {
 	luaL_openlibs(L);
 	
-#if LUA_VERSION_NUM == 503
+#if LUA_VERSION_NUM >= 503
 	luaL_newlib(L, xlualib);
 	lua_setglobal(L, "xlua");
 #else

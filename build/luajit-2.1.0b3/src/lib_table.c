@@ -1,6 +1,6 @@
 /*
 ** Table library.
-** Copyright (C) 2005-2017 Mike Pall. See Copyright Notice in luajit.h
+** Copyright (C) 2005-2021 Mike Pall. See Copyright Notice in luajit.h
 **
 ** Major portions taken verbatim or adapted from the Lua interpreter.
 ** Copyright (C) 1994-2008 Lua.org, PUC-Rio. See Copyright Notice in lua.h
@@ -159,7 +159,7 @@ LJLIB_CF(table_concat)		LJLIB_REC(.)
   SBuf *sb = lj_buf_tmp_(L);
   SBuf *sbx = lj_buf_puttab(sb, t, sep, i, e);
   if (LJ_UNLIKELY(!sbx)) {  /* Error: bad element type. */
-    int32_t idx = (int32_t)(intptr_t)sbufP(sb);
+    int32_t idx = (int32_t)(intptr_t)sb->w;
     cTValue *o = lj_tab_getint(t, idx);
     lj_err_callerv(L, LJ_ERR_TABCAT,
 		   lj_obj_itypename[o ? itypemap(o) : ~LJ_TNIL], idx);

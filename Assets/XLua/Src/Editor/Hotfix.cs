@@ -24,7 +24,7 @@ using UnityEngine;
 using UnityEditor;
 using UnityEditor.Callbacks;
 using System.Diagnostics;
-#if UNITY_2019
+#if UNITY_2019_1_OR_NEWER
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
 #endif
@@ -605,10 +605,16 @@ namespace XLua
 
         static bool hasGenericParameter(MethodDefinition method)
         {
-            if (method.HasGenericParameters) return true;
             if (!method.IsStatic && hasGenericParameter(method.DeclaringType)) return true;
+            return hasGenericParameterSkipDelaringType(method);
+        }
+
+        static bool hasGenericParameterSkipDelaringType(MethodDefinition method)
+        {
+            if (method.HasGenericParameters) return true;
+            //if (!method.IsStatic && hasGenericParameter(method.DeclaringType)) return true;
             if (hasGenericParameter(method.ReturnType)) return true;
-            foreach(var paramInfo in method.Parameters)
+            foreach (var paramInfo in method.Parameters)
             {
                 if (hasGenericParameter(paramInfo.ParameterType)) return true;
             }
@@ -751,6 +757,10 @@ namespace XLua
                 {
                     continue;
                 }
+                if (method.Parameters.Any(pd => pd.ParameterType.IsPointer) || method.ReturnType.IsPointer)
+                {
+                    continue;
+                }
                 if (method.Name != ".cctor" && !method.IsAbstract && !method.IsPInvokeImpl && method.Body != null && !method.Name.Contains("<"))
                 {
                     //Debug.Log(method);
@@ -777,6 +787,10 @@ namespace XLua
                         continue;
                     }
                     if (ignoreCompilerGenerated && method.CustomAttributes.Any(ca => ca.AttributeType.FullName == "System.Runtime.CompilerServices.CompilerGeneratedAttribute"))
+                    {
+                        continue;
+                    }
+                    if (method.Parameters.Any(pd => pd.ParameterType.IsPointer) || method.ReturnType.IsPointer)
                     {
                         continue;
                     }
@@ -1082,7 +1096,7 @@ namespace XLua
                     return m;
                 }
             }
-            return _findBase(td.BaseType, method);
+            return _findBase(getBaseType(type), method);
         }
 
         static MethodReference findBase(TypeDefinition type, MethodDefinition method)
@@ -1095,13 +1109,31 @@ namespace XLua
                     var b = _findBase(type.BaseType, method);
                     try
                     {
-                        if (hasGenericParameter(b.Resolve())) return null;
+                        if (hasGenericParameterSkipDelaringType(b.Resolve())) return null;
                     }catch { }
                     return b;
                 }
                 catch { }
             }
             return null;
+        }
+
+        static TypeReference getBaseType(TypeReference typeReference)
+        {
+            var typeDefinition = typeReference.Resolve();
+            var baseType = typeDefinition.BaseType;
+            if (typeReference.IsGenericInstance && baseType.IsGenericInstance)
+            {
+                var genericType = typeReference as GenericInstanceType;
+                var baseGenericType = baseType as GenericInstanceType;
+                var genericInstanceType = new GenericInstanceType(tryImport(typeReference, baseGenericType.ElementType));
+                foreach (var genericArgument in genericType.GenericArguments)
+                {
+                    genericInstanceType.GenericArguments.Add(genericArgument);
+                }
+                baseType = genericInstanceType;
+            }
+            return baseType;
         }
 
         const string BASE_RPOXY_PERFIX = "<>xLuaBaseProxy_";
@@ -1603,7 +1635,7 @@ namespace XLua
 
 namespace XLua
 {
-#if UNITY_2019
+#if UNITY_2019_1_OR_NEWER
     class MyCustomBuildProcessor : IPostBuildPlayerScriptDLLs
     {
         public int callbackOrder { get { return 0; } }
@@ -1629,7 +1661,7 @@ namespace XLua
             return false;
         }
 
-#if !UNITY_2019
+#if !UNITY_2019_1_OR_NEWER
         [PostProcessScene]
 #endif
         [MenuItem("XLua/Hotfix Inject In Editor", false, 3)]
@@ -1697,7 +1729,11 @@ namespace XLua
                 }
             }
 
+#if UNITY_2019_1_OR_NEWER
+            List<string> args = new List<string>() { assembly_csharp_path, assembly_csharp_path, id_map_file_path, hotfix_cfg_in_editor };
+#else
             List<string> args = new List<string>() { assembly_csharp_path, typeof(LuaEnv).Module.FullyQualifiedName, id_map_file_path, hotfix_cfg_in_editor };
+#endif
 
             foreach (var path in
                 (from asm in AppDomain.CurrentDomain.GetAssemblies() select asm.ManifestModule.FullyQualifiedName)

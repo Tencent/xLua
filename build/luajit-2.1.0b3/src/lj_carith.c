@@ -1,6 +1,6 @@
 /*
 ** C data arithmetic.
-** Copyright (C) 2005-2017 Mike Pall. See Copyright Notice in luajit.h
+** Copyright (C) 2005-2021 Mike Pall. See Copyright Notice in luajit.h
 */
 
 #include "lj_obj.h"
@@ -122,7 +122,7 @@ static int carith_ptr(lua_State *L, CTState *cts, CDArith *ca, MMS mm)
 	setboolV(L->top-1, ((uintptr_t)pp < (uintptr_t)pp2));
 	return 1;
       } else {
-	lua_assert(mm == MM_le);
+	lj_assertL(mm == MM_le, "bad metamethod %d", mm);
 	setboolV(L->top-1, ((uintptr_t)pp <= (uintptr_t)pp2));
 	return 1;
       }
@@ -208,7 +208,9 @@ static int carith_int64(lua_State *L, CTState *cts, CDArith *ca, MMS mm)
 	*up = lj_carith_powu64(u0, u1);
       break;
     case MM_unm: *up = (uint64_t)-(int64_t)u0; break;
-    default: lua_assert(0); break;
+    default:
+      lj_assertL(0, "bad metamethod %d", mm);
+      break;
     }
     lj_gc_check(L);
     return 1;
@@ -265,7 +267,7 @@ int lj_carith_op(lua_State *L, MMS mm)
 {
   CTState *cts = ctype_cts(L);
   CDArith ca;
-  if (carith_checkarg(L, cts, &ca)) {
+  if (carith_checkarg(L, cts, &ca) && mm != MM_len && mm != MM_concat) {
     if (carith_int64(L, cts, &ca, mm) || carith_ptr(L, cts, &ca, mm)) {
       copyTV(L, &G(L)->tmptv2, L->top-1);  /* Remember for trace recorder. */
       return 1;
@@ -301,7 +303,9 @@ uint64_t lj_carith_shift64(uint64_t x, int32_t sh, int op)
   case IR_BSAR-IR_BSHL: x = lj_carith_sar64(x, sh); break;
   case IR_BROL-IR_BSHL: x = lj_carith_rol64(x, sh); break;
   case IR_BROR-IR_BSHL: x = lj_carith_ror64(x, sh); break;
-  default: lua_assert(0); break;
+  default:
+    lj_assertX(0, "bad shift op %d", op);
+    break;
   }
   return x;
 }
@@ -346,7 +350,6 @@ uint64_t lj_carith_check64(lua_State *L, int narg, CTypeID *id)
     return (uint32_t)i;
   }
 }
-
 
 /* -- 64 bit integer arithmetic helpers ----------------------------------- */
 

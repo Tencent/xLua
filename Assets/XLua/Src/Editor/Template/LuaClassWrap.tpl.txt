@@ -194,7 +194,7 @@ namespace XLua.CSObjectWrap
                     if pi >= real_param_count then return end 
                     %><%=GetCasterStatement(parameter.ParameterType, pi+2, LocalName(parameter.Name), true, has_v_params and pi == param_count - 1)%>;
 					<%end)%>
-					var gen_ret = new <%=CsFullTypeName(type)%>(<%ForEachCsList(parameters, function(parameter, pi) if pi >= real_param_count then return end; if pi ~=0 then %><%=', '%><% end ;if parameter.IsOut and parameter.ParameterType.IsByRef then %>out <% elseif parameter.ParameterType.IsByRef then %>ref <% end %><%=LocalName(parameter.Name)%><% end)%>);
+					var gen_ret = new <%=CsFullTypeName(type)%>(<%ForEachCsList(parameters, function(parameter, pi) if pi >= real_param_count then return end; if pi ~=0 then %><%=', '%><% end ;if parameter.IsOut and parameter.ParameterType.IsByRef then %>out <% elseif parameter.ParameterType.IsByRef and not parameter.IsIn then %>ref <% end %><%=LocalName(parameter.Name)%><% end)%>);
 					<%=GetPushStatement(type, "gen_ret")%>;
                     <%local in_pos = 0
                     ForEachCsList(parameters, function(parameter, pi)
@@ -434,7 +434,7 @@ namespace XLua.CSObjectWrap
                     %>gen_to_be_invoked.<%=UnK(overload.Name)%><%
                     end%>( <%ForEachCsList(parameters, function(parameter, pi) 
                         if pi >= real_param_count then return end
-                        if pi ~= 0 then %>, <% end; if parameter.IsOut and parameter.ParameterType.IsByRef then %>out <% elseif parameter.ParameterType.IsByRef then %>ref <% end %><%=LocalName(parameter.Name)%><% end) %> );
+                        if pi ~= 0 then %>, <% end; if parameter.IsOut and parameter.ParameterType.IsByRef then %>out <% elseif parameter.ParameterType.IsByRef and not parameter.IsIn then %>ref <% end %><%=LocalName(parameter.Name)%><% end) %> );
                     <%
                     if has_return then
                     %>    <%=GetPushStatement(overload.ReturnType, "gen_ret")%>;

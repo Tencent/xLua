@@ -1,6 +1,6 @@
 |// Low-level VM code for MIPS CPUs.
 |// Bytecode interpreter, fast functions and helper functions.
-|// Copyright (C) 2005-2017 Mike Pall. See Copyright Notice in luajit.h
+|// Copyright (C) 2005-2021 Mike Pall. See Copyright Notice in luajit.h
 |//
 |// MIPS soft-float support contributed by Djordje Kovacevic and
 |// Stefan Pejic from RT-RK.com, sponsored by Cisco Systems, Inc.
@@ -190,7 +190,7 @@
 |//-----------------------------------------------------------------------
 |
 |// Trap for not-yet-implemented parts.
-|.macro NYI; .long 0xf0f0f0f0; .endmacro
+|.macro NYI; .long 0xec1cf0f0; .endmacro
 |
 |// Macros to mark delay slots.
 |.macro ., a; a; .endmacro
@@ -399,7 +399,7 @@ static void build_subroutines(BuildCtx *ctx)
   |  xori AT, TMP0, FRAME_C
   |   and TMP2, PC, TMP2
   |  bnez AT, ->vm_returnp
-  |   subu TMP2, BASE, TMP2		// TMP2 = previous base.
+  |.  subu TMP2, BASE, TMP2		// TMP2 = previous base.
   |
   |  addiu TMP1, RD, -8
   |   sw TMP2, L->base
@@ -500,6 +500,10 @@ static void build_subroutines(BuildCtx *ctx)
   |    st_vmstate
   |  b ->vm_returnc
   |.  li RD, 16				// 2 results: false + error message.
+  |
+  |->vm_unwind_stub:			// Jump to exit stub from unwinder.
+  |  jr CARG1
+  |.  move ra, CARG2
   |
   |//-----------------------------------------------------------------------
   |//-- Grow stack for calls -----------------------------------------------
@@ -669,11 +673,11 @@ static void build_subroutines(BuildCtx *ctx)
   |.endif
   |     lw PC, -16+HI(RB)		// Restore PC from [cont|PC].
   |   addu TMP2, RA, RD
-  |    lw TMP1, LFUNC:TMP1->pc
   |.if FFI
   |  bnez AT, >1
   |.endif
   |.  sw TISNIL, -8+HI(TMP2)		// Ensure one valid arg.
+  |    lw TMP1, LFUNC:TMP1->pc
   |  // BASE = base, RA = resultptr, RB = meta base
   |  jr TMP0				// Jump to continuation.
   |.  lw KBASE, PC2PROTO(k)(TMP1)
@@ -1152,9 +1156,9 @@ static void build_subroutines(BuildCtx *ctx)
   |.  li SFARG1HI, LJ_TNIL
   |  lw TMP0, TAB:SFARG1LO->hmask
   |   li SFARG1HI, LJ_TTAB		// Use metatable as default result.
-  |  lw TMP1, STR:RC->hash
+  |  lw TMP1, STR:RC->sid
   |  lw NODE:TMP2, TAB:SFARG1LO->node
-  |  and TMP1, TMP1, TMP0		// idx = str->hash & tab->hmask
+  |  and TMP1, TMP1, TMP0		// idx = str->sid & tab->hmask
   |  sll TMP0, TMP1, 5
   |  sll TMP1, TMP1, 3
   |  subu TMP1, TMP0, TMP1
@@ -1258,35 +1262,27 @@ static void build_subroutines(BuildCtx *ctx)
   |//-- Base library: iterators -------------------------------------------
   |
   |.ffunc next
-  |  lw CARG1, HI(BASE)
-  |   lw TAB:CARG2, LO(BASE)
+  |  lw CARG2, HI(BASE)
+  |   lw TAB:CARG1, LO(BASE)
   |  beqz NARGS8:RC, ->fff_fallback
   |.  addu TMP2, BASE, NARGS8:RC
   |  li AT, LJ_TTAB
   |   sw TISNIL, HI(TMP2)		// Set missing 2nd arg to nil.
-  |  bne CARG1, AT, ->fff_fallback
+  |  bne CARG2, AT, ->fff_fallback
   |.  lw PC, FRAME_PC(BASE)
   |  load_got lj_tab_next
-  |   sw BASE, L->base			// Add frame since C call can throw.
-  |   sw BASE, L->top			// Dummy frame length is ok.
-  |  addiu CARG3, BASE, 8
-  |   sw PC, SAVE_PC
-  |  call_intern lj_tab_next		// (lua_State *L, GCtab *t, TValue *key)
-  |.  move CARG1, L
-  |  // Returns 0 at end of traversal.
+  |  addiu CARG2, BASE, 8
+  |  call_intern lj_tab_next		// (GCtab *t, cTValue *key, TValue *o)
+  |.  addiu CARG3, BASE, -8
+  |  // Returns 1=found, 0=end, -1=error.
+  |   addiu RA, BASE, -8
+  |  bgtz CRET1, ->fff_res		// Found key/value.
+  |.  li RD, (2+1)*8
   |  beqz CRET1, ->fff_restv		// End of traversal: return nil.
   |.  li SFARG1HI, LJ_TNIL
-  |  lw TMP0, 8+HI(BASE)
-  |   lw TMP1, 8+LO(BASE)
-  |    addiu RA, BASE, -8
-  |  lw TMP2, 16+HI(BASE)
-  |   lw TMP3, 16+LO(BASE)
-  |  sw TMP0, HI(RA)
-  |   sw TMP1, LO(RA)
-  |  sw TMP2, 8+HI(RA)
-  |   sw TMP3, 8+LO(RA)
-  |  b ->fff_res
-  |.  li RD, (2+1)*8
+  |   lw CFUNC:RB, FRAME_FUNC(BASE)
+  |  b ->fff_fallback			// Invalid key.
+  |.  li RC, 2*8
   |
   |.ffunc_1 pairs
   |  li AT, LJ_TTAB
@@ -1768,7 +1764,7 @@ static void build_subroutines(BuildCtx *ctx)
   |  b ->fff_res
   |.  li RD, (2+1)*8
   |
-  |.macro math_minmax, name, intins, fpins
+  |.macro math_minmax, name, intins, ismax
   |  .ffunc_1 name
   |  addu TMP3, BASE, NARGS8:RC
   |  bne SFARG1HI, TISNUM, >5
@@ -1822,13 +1818,21 @@ static void build_subroutines(BuildCtx *ctx)
   |.endif
   |7:
   |.if FPU
+  |.if ismax
+  |  c.olt.d FARG1, FRET1
+  |.else
   |  c.olt.d FRET1, FARG1
-  |  fpins FRET1, FARG1
+  |.endif
+  |  movf.d FRET1, FARG1
+  |.else
+  |.if ismax
+  |  bal ->vm_sfcmpogt
   |.else
   |  bal ->vm_sfcmpolt
+  |.endif
   |.  nop
-  |  intins SFARG1LO, SFARG2LO, CRET1
-  |  intins SFARG1HI, SFARG2HI, CRET1
+  |  movz SFARG1LO, SFARG2LO, CRET1
+  |  movz SFARG1HI, SFARG2HI, CRET1
   |.endif
   |  b <6
   |.  addiu TMP2, TMP2, 8
@@ -1849,8 +1853,8 @@ static void build_subroutines(BuildCtx *ctx)
   |
   |.endmacro
   |
-  |  math_minmax math_min, movz, movf.d
-  |  math_minmax math_max, movn, movt.d
+  |  math_minmax math_min, movz, 0
+  |  math_minmax math_max, movn, 1
   |
   |//-- String library -----------------------------------------------------
   |
@@ -1959,7 +1963,7 @@ static void build_subroutines(BuildCtx *ctx)
   |  lw TMP0, SBUF:CARG1->b
   |   sw L, SBUF:CARG1->L
   |   sw BASE, L->base
-  |  sw TMP0, SBUF:CARG1->p
+  |  sw TMP0, SBUF:CARG1->w
   |  call_intern extern lj_buf_putstr_ .. name
   |.  sw PC, SAVE_PC
   |  load_got lj_buf_tostr
@@ -2512,9 +2516,9 @@ static void build_subroutines(BuildCtx *ctx)
   |.  addu RA, RA, BASE
   |
   |9:  // Rethrow error from the right C frame.
-  |  load_got lj_err_throw
-  |  negu CARG2, CRET1
-  |  call_intern lj_err_throw		// (lua_State *L, int errcode)
+  |  load_got lj_err_trace
+  |  sub CARG2, r0, CRET1
+  |  call_intern lj_err_trace		// (lua_State *L, int errcode)
   |.  move CARG1, L
   |.endif
   |
@@ -2692,6 +2696,43 @@ static void build_subroutines(BuildCtx *ctx)
   |.  move CRET1, CRET2
   |.endif
   |
+  |->vm_sfcmpogt:
+  |.if not FPU
+  |  sll AT, SFARG2HI, 1
+  |  sll TMP0, SFARG1HI, 1
+  |  or CRET1, SFARG2LO, SFARG1LO
+  |  or TMP1, AT, TMP0
+  |  or TMP1, TMP1, CRET1
+  |  beqz TMP1, >8			// Both args +-0: return 0.
+  |.  sltu CRET1, r0, SFARG2LO
+  |  lui TMP1, 0xffe0
+  |  addu AT, AT, CRET1
+  |   sltu CRET1, r0, SFARG1LO
+  |  sltu AT, TMP1, AT
+  |   addu TMP0, TMP0, CRET1
+  |   sltu TMP0, TMP1, TMP0
+  |  or TMP1, AT, TMP0
+  |  bnez TMP1, >9			// Either arg is NaN: return 0 or 1;
+  |.  and AT, SFARG2HI, SFARG1HI
+  |  bltz AT, >5			// Both args negative?
+  |.  nop
+  |  beq SFARG2HI, SFARG1HI, >8
+  |.  sltu CRET1, SFARG2LO, SFARG1LO
+  |  jr ra
+  |.  slt CRET1, SFARG2HI, SFARG1HI
+  |5:  // Swap conditions if both operands are negative.
+  |  beq SFARG2HI, SFARG1HI, >8
+  |.  sltu CRET1, SFARG1LO, SFARG2LO
+  |  jr ra
+  |.  slt CRET1, SFARG1HI, SFARG2HI
+  |8:
+  |  jr ra
+  |.  nop
+  |9:
+  |  jr ra
+  |.  li CRET1, 0
+  |.endif
+  |
   |// Soft-float comparison. Equivalent to c.ole.d a, b or c.ole.d b, a.
   |// Input: SFARG*, TMP3. Output: CRET1. Temporaries: AT, TMP0, TMP1.
   |->vm_sfcmpolex:
@@ -2734,28 +2775,95 @@ static void build_subroutines(BuildCtx *ctx)
   |.  li CRET1, 0
   |.endif
   |
-  |.macro sfmin_max, name, intins
+  |.macro sfmin_max, name, fpcall
   |->vm_sf .. name:
   |.if JIT and not FPU
   |  move TMP2, ra
-  |  bal ->vm_sfcmpolt
+  |  bal ->fpcall
   |.  nop
   |  move TMP0, CRET1
   |  move SFRETHI, SFARG1HI
   |   move SFRETLO, SFARG1LO
   |  move ra, TMP2
-  |  intins SFRETHI, SFARG2HI, TMP0
+  |  movz SFRETHI, SFARG2HI, TMP0
   |  jr ra
-  |.  intins SFRETLO, SFARG2LO, TMP0
+  |.  movz SFRETLO, SFARG2LO, TMP0
   |.endif
   |.endmacro
   |
-  |  sfmin_max min, movz
-  |  sfmin_max max, movn
+  |  sfmin_max min, vm_sfcmpolt
+  |  sfmin_max max, vm_sfcmpogt
   |
   |//-----------------------------------------------------------------------
   |//-- Miscellaneous functions --------------------------------------------
   |//-----------------------------------------------------------------------
+  |
+  |.define NEXT_TAB,		TAB:CARG1
+  |.define NEXT_IDX,		CARG2
+  |.define NEXT_ASIZE,		CARG3
+  |.define NEXT_NIL,		CARG4
+  |.define NEXT_TMP0,		r12
+  |.define NEXT_TMP1,		r13
+  |.define NEXT_TMP2,		r14
+  |.define NEXT_RES_VK,		CRET1
+  |.define NEXT_RES_IDX,	CRET2
+  |.define NEXT_RES_PTR,	sp
+  |.define NEXT_RES_VAL_I,	0(sp)
+  |.define NEXT_RES_VAL_IT,	4(sp)
+  |.define NEXT_RES_KEY_I,	8(sp)
+  |.define NEXT_RES_KEY_IT,	12(sp)
+  |
+  |// TValue *lj_vm_next(GCtab *t, uint32_t idx)
+  |// Next idx returned in CRET2.
+  |->vm_next:
+  |.if JIT and ENDIAN_LE
+  |   lw NEXT_ASIZE, NEXT_TAB->asize
+  |  lw NEXT_TMP0, NEXT_TAB->array
+  |    li NEXT_NIL, LJ_TNIL
+  |1:  // Traverse array part.
+  |   sltu AT, NEXT_IDX, NEXT_ASIZE
+  |    sll NEXT_TMP1, NEXT_IDX, 3
+  |   beqz AT, >5
+  |.   addu NEXT_TMP1, NEXT_TMP0, NEXT_TMP1
+  |  lw NEXT_TMP2, 4(NEXT_TMP1)
+  |   sw NEXT_IDX, NEXT_RES_KEY_I
+  |  beq NEXT_TMP2, NEXT_NIL, <1
+  |.  addiu NEXT_IDX, NEXT_IDX, 1
+  |    lw NEXT_TMP0, 0(NEXT_TMP1)
+  |   li AT, LJ_TISNUM
+  |  sw NEXT_TMP2, NEXT_RES_VAL_IT
+  |   sw AT, NEXT_RES_KEY_IT
+  |    sw NEXT_TMP0, NEXT_RES_VAL_I
+  |  move NEXT_RES_VK, NEXT_RES_PTR
+  |  jr ra
+  |.  move NEXT_RES_IDX, NEXT_IDX
+  |
+  |5:  // Traverse hash part.
+  |  subu NEXT_RES_IDX, NEXT_IDX, NEXT_ASIZE
+  |   lw NODE:NEXT_RES_VK, NEXT_TAB->node
+  |    sll NEXT_TMP2, NEXT_RES_IDX, 5
+  |  lw NEXT_TMP0, NEXT_TAB->hmask
+  |    sll AT, NEXT_RES_IDX, 3
+  |    subu AT, NEXT_TMP2, AT
+  |   addu NODE:NEXT_RES_VK, NODE:NEXT_RES_VK, AT
+  |6:
+  |  sltu AT, NEXT_TMP0, NEXT_RES_IDX
+  |  bnez AT, >8
+  |.  nop
+  |  lw NEXT_TMP2, NODE:NEXT_RES_VK->val.it
+  |  bne NEXT_TMP2, NEXT_NIL, >9
+  |.  addiu NEXT_RES_IDX, NEXT_RES_IDX, 1
+  |  // Skip holes in hash part.
+  |  b <6
+  |.  addiu NODE:NEXT_RES_VK, NODE:NEXT_RES_VK, sizeof(Node)
+  |
+  |8:  // End of iteration. Set the key to nil (not the value).
+  |  sw NEXT_NIL, NEXT_RES_KEY_IT
+  |  move NEXT_RES_VK, NEXT_RES_PTR
+  |9:
+  |  jr ra
+  |.  addu NEXT_RES_IDX, NEXT_RES_IDX, NEXT_ASIZE
+  |.endif
   |
   |//-----------------------------------------------------------------------
   |//-- FFI helper functions -----------------------------------------------
@@ -3984,9 +4092,9 @@ static void build_ins(BuildCtx *ctx, BCOp op, int defop)
     |->BC_TGETS_Z:
     |  // TAB:RB = GCtab *, STR:RC = GCstr *, RA = dst*8
     |  lw TMP0, TAB:RB->hmask
-    |  lw TMP1, STR:RC->hash
+    |  lw TMP1, STR:RC->sid
     |  lw NODE:TMP2, TAB:RB->node
-    |  and TMP1, TMP1, TMP0		// idx = str->hash & tab->hmask
+    |  and TMP1, TMP1, TMP0		// idx = str->sid & tab->hmask
     |  sll TMP0, TMP1, 5
     |  sll TMP1, TMP1, 3
     |  subu TMP1, TMP0, TMP1
@@ -4158,10 +4266,10 @@ static void build_ins(BuildCtx *ctx, BCOp op, int defop)
     |->BC_TSETS_Z:
     |  // TAB:RB = GCtab *, STR:RC = GCstr *, RA = BASE+src*8
     |  lw TMP0, TAB:RB->hmask
-    |  lw TMP1, STR:RC->hash
+    |  lw TMP1, STR:RC->sid
     |  lw NODE:TMP2, TAB:RB->node
     |   sb r0, TAB:RB->nomm		// Clear metamethod cache.
-    |  and TMP1, TMP1, TMP0		// idx = str->hash & tab->hmask
+    |  and TMP1, TMP1, TMP0		// idx = str->sid & tab->hmask
     |  sll TMP0, TMP1, 5
     |  sll TMP1, TMP1, 3
     |  subu TMP1, TMP0, TMP1
@@ -4317,7 +4425,7 @@ static void build_ins(BuildCtx *ctx, BCOp op, int defop)
     |  ins_next2
     |
     |7:  // Possible table write barrier for the value. Skip valiswhite check.
-    |  barrierback TAB:CARG2, TMP3, TMP0, <2
+    |  barrierback TAB:CARG2, TMP3, CRET1, <2
     break;
 
   case BC_TSETM:
@@ -4480,10 +4588,11 @@ static void build_ins(BuildCtx *ctx, BCOp op, int defop)
     break;
 
   case BC_ITERN:
-    |  // RA = base*8, (RB = (nresults+1)*8, RC = (nargs+1)*8 (2+1)*8)
-    |.if JIT
-    |  // NYI: add hotloop, record BC_ITERN.
+    |.if JIT and ENDIAN_LE
+    |  hotloop
     |.endif
+    |->vm_IITERN:
+    |  // RA = base*8, (RB = (nresults+1)*8, RC = (nargs+1)*8 (2+1)*8)
     |  addu RA, BASE, RA
     |  lw TAB:RB, -16+LO(RA)
     |  lw RC, -8+LO(RA)			// Get index from control var.
@@ -4562,9 +4671,9 @@ static void build_ins(BuildCtx *ctx, BCOp op, int defop)
     |  addiu CARG2, CARG2, -FF_next_N
     |  or CARG2, CARG2, CARG3
     |  bnez CARG2, >5
-    |.  lui TMP1, 0xfffe
+    |.  lui TMP1, (LJ_KEYINDEX >> 16)
     |  addu PC, TMP0, TMP2
-    |  ori TMP1, TMP1, 0x7fff
+    |  ori TMP1, TMP1, (LJ_KEYINDEX & 0xffff)
     |  sw r0, -8+LO(RA)			// Initialize control var.
     |  sw TMP1, -8+HI(RA)
     |1:
@@ -4573,9 +4682,28 @@ static void build_ins(BuildCtx *ctx, BCOp op, int defop)
     |  li TMP3, BC_JMP
     |   li TMP1, BC_ITERC
     |  sb TMP3, -4+OFS_OP(PC)
-    |    addu PC, TMP0, TMP2
+    |  addu PC, TMP0, TMP2
+    |.if JIT
+    |  lb TMP0, OFS_OP(PC)
+    |  li AT, BC_ITERN
+    |  bne TMP0, AT, >6
+    |.  lhu TMP2, OFS_RD(PC)
+    |.endif
     |  b <1
     |.  sb TMP1, OFS_OP(PC)
+    |.if JIT
+    |6:  // Unpatch JLOOP.
+    |  lw TMP0, DISPATCH_J(trace)(DISPATCH)
+    |   sll TMP2, TMP2, 2
+    |  addu TMP0, TMP0, TMP2
+    |  lw TRACE:TMP2, 0(TMP0)
+    |  lw TMP0, TRACE:TMP2->startins
+    |   li AT, -256
+    |  and TMP0, TMP0, AT
+    |  or TMP0, TMP0, TMP1
+    |  b <1
+    |.  sw TMP0, 0(PC)
+    |.endif
     break;
 
   case BC_VARG:

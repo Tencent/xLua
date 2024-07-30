@@ -1,6 +1,6 @@
 |// Low-level VM code for x64 CPUs in LJ_GC64 mode.
 |// Bytecode interpreter, fast functions and helper functions.
-|// Copyright (C) 2005-2017 Mike Pall. See Copyright Notice in luajit.h
+|// Copyright (C) 2005-2021 Mike Pall. See Copyright Notice in luajit.h
 |
 |.arch x64
 |.section code_op, code_sub
@@ -1230,7 +1230,7 @@ static void build_subroutines(BuildCtx *ctx)
   |  mov [BASE-16], TAB:RC		// Store metatable as default result.
   |  mov STR:RC, [DISPATCH+DISPATCH_GL(gcroot)+8*(GCROOT_MMNAME+MM_metatable)]
   |  mov RAd, TAB:RB->hmask
-  |  and RAd, STR:RC->hash
+  |  and RAd, STR:RC->sid
   |  settp STR:RC, LJ_TSTR
   |  imul RAd, #NODE
   |  add NODE:RA, TAB:RB->node
@@ -1346,44 +1346,28 @@ static void build_subroutines(BuildCtx *ctx)
   |.ffunc_1 next
   |  je >2				// Missing 2nd arg?
   |1:
-  |.if X64WIN
-  |  mov RA, [BASE]
-  |  checktab RA, ->fff_fallback
-  |.else
-  |  mov CARG2, [BASE]
-  |  checktab CARG2, ->fff_fallback
-  |.endif
-  |  mov L:RB, SAVE_L
-  |  mov L:RB->base, BASE		// Add frame since C call can throw.
-  |  mov L:RB->top, BASE		// Dummy frame length is ok.
+  |  mov CARG1, [BASE]
   |  mov PC, [BASE-8]
+  |  checktab CARG1, ->fff_fallback
+  |  mov RB, BASE			// Save BASE.
   |.if X64WIN
-  |  lea CARG3, [BASE+8]
-  |  mov CARG2, RA			// Caveat: CARG2 == BASE.
-  |  mov CARG1, L:RB
+  |  lea CARG3, [BASE-16]
+  |  lea CARG2, [BASE+8]		// Caveat: CARG2 == BASE.
   |.else
-  |  lea CARG3, [BASE+8]		// Caveat: CARG3 == BASE.
-  |  mov CARG1, L:RB
+  |  lea CARG2, [BASE+8]
+  |  lea CARG3, [BASE-16]		// Caveat: CARG3 == BASE.
   |.endif
-  |  mov SAVE_PC, PC			// Needed for ITERN fallback.
-  |  call extern lj_tab_next	// (lua_State *L, GCtab *t, TValue *key)
-  |  // Flag returned in eax (RD).
-  |  mov BASE, L:RB->base
-  |  test RDd, RDd;  jz >3		// End of traversal?
-  |  // Copy key and value to results.
-  |  mov RB, [BASE+8]
-  |  mov RD, [BASE+16]
-  |  mov [BASE-16], RB
-  |  mov [BASE-8], RD
-  |->fff_res2:
-  |  mov RDd, 1+2
-  |  jmp ->fff_res
+  |  call extern lj_tab_next		// (GCtab *t, cTValue *key, TValue *o)
+  |  // 1=found, 0=end, -1=error returned in eax (RD).
+  |  mov BASE, RB			// Restore BASE.
+  |  test RDd, RDd;  jg ->fff_res2	// Found key/value.
+  |  js ->fff_fallback_2		// Invalid key.
+  |  // End of traversal: return nil.
+  |  mov aword [BASE-16], LJ_TNIL
+  |  jmp ->fff_res1
   |2:  // Set missing 2nd arg to nil.
   |  mov aword [BASE+8], LJ_TNIL
   |  jmp <1
-  |3:  // End of traversal: return nil.
-  |  mov aword [BASE-16], LJ_TNIL
-  |  jmp ->fff_res1
   |
   |.ffunc_1 pairs
   |  mov TAB:RB, [BASE]
@@ -1432,7 +1416,9 @@ static void build_subroutines(BuildCtx *ctx)
   |  // Copy array slot.
   |  mov RB, [RD]
   |  mov [BASE-8], RB
-  |  jmp ->fff_res2
+  |->fff_res2:
+  |  mov RDd, 1+2
+  |  jmp ->fff_res
   |2:  // Check for empty hash part first. Otherwise call C function.
   |  cmp dword TAB:RB->hmask, 0; je ->fff_res0
   |.if X64WIN
@@ -1840,7 +1826,7 @@ static void build_subroutines(BuildCtx *ctx)
   |  jmp ->fff_res
   |
   |.macro math_minmax, name, cmovop, sseop
-  |  .ffunc name
+  |  .ffunc_1 name
   |  mov RAd, 2
   |.if DUALNUM
   |  mov RB, [BASE]
@@ -2011,7 +1997,7 @@ static void build_subroutines(BuildCtx *ctx)
   |.endif
   |   mov RC, SBUF:CARG1->b
   |   mov SBUF:CARG1->L, L:RB
-  |   mov SBUF:CARG1->p, RC
+  |   mov SBUF:CARG1->w, RC
   |  mov SAVE_PC, PC
   |  call extern lj_buf_putstr_ .. name
   |  mov CARG1, rax
@@ -2509,10 +2495,10 @@ static void build_subroutines(BuildCtx *ctx)
   |  jmp <2
   |
   |9:  // Rethrow error from the right C frame.
-  |  neg RD
+  |  mov CARG2d, RDd
   |  mov CARG1, L:RB
-  |  mov CARG2, RD
-  |  call extern lj_err_throw		// (lua_State *L, int errcode)
+  |  neg CARG2d
+  |  call extern lj_err_trace		// (lua_State *L, int errcode)
   |.endif
   |
   |//-----------------------------------------------------------------------
@@ -2646,6 +2632,67 @@ static void build_subroutines(BuildCtx *ctx)
   |  pop rbx
   |  .if X64WIN; pop rsi; .endif
   |  ret
+  |
+  |.define NEXT_TAB,		TAB:CARG1
+  |.define NEXT_IDX,		CARG2d
+  |.define NEXT_IDXa,		CARG2
+  |.define NEXT_PTR,		RC
+  |.define NEXT_PTRd,		RCd
+  |.define NEXT_TMP,		CARG3
+  |.define NEXT_ASIZE,		CARG4d
+  |.macro NEXT_RES_IDXL, op2;	lea edx, [NEXT_IDX+op2]; .endmacro
+  |.if X64WIN
+  |.define NEXT_RES_PTR,	[rsp+aword*5]
+  |.macro NEXT_RES_IDX, op2;	add NEXT_IDX, op2; .endmacro
+  |.else
+  |.define NEXT_RES_PTR,	[rsp+aword*1]
+  |.macro NEXT_RES_IDX, op2;	lea edx, [NEXT_IDX+op2]; .endmacro
+  |.endif
+  |
+  |// TValue *lj_vm_next(GCtab *t, uint32_t idx)
+  |// Next idx returned in edx.
+  |->vm_next:
+  |.if JIT
+  |  mov NEXT_ASIZE, NEXT_TAB->asize
+  |1:  // Traverse array part.
+  |  cmp NEXT_IDX, NEXT_ASIZE;  jae >5
+  |  mov NEXT_TMP, NEXT_TAB->array
+  |  mov NEXT_TMP, qword [NEXT_TMP+NEXT_IDX*8]
+  |  cmp NEXT_TMP, LJ_TNIL;  je >2
+  |  lea NEXT_PTR, NEXT_RES_PTR
+  |  mov qword [NEXT_PTR], NEXT_TMP
+  |.if DUALNUM
+  |  setint NEXT_TMP, NEXT_IDXa
+  |  mov qword [NEXT_PTR+qword*1], NEXT_TMP
+  |.else
+  |  cvtsi2sd xmm0, NEXT_IDX
+  |  movsd qword [NEXT_PTR+qword*1], xmm0
+  |.endif
+  |  NEXT_RES_IDX 1
+  |  ret
+  |2:  // Skip holes in array part.
+  |  add NEXT_IDX, 1
+  |  jmp <1
+  |
+  |5:  // Traverse hash part.
+  |  sub NEXT_IDX, NEXT_ASIZE
+  |6:
+  |  cmp NEXT_IDX, NEXT_TAB->hmask; ja >9
+  |  imul NEXT_PTRd, NEXT_IDX, #NODE
+  |  add NODE:NEXT_PTR, NEXT_TAB->node
+  |  cmp qword NODE:NEXT_PTR->val, LJ_TNIL; je >7
+  |  NEXT_RES_IDXL NEXT_ASIZE+1
+  |  ret
+  |7:  // Skip holes in hash part.
+  |  add NEXT_IDX, 1
+  |  jmp <6
+  |
+  |9:  // End of iteration. Set the key to nil (not the value).
+  |  NEXT_RES_IDX NEXT_ASIZE
+  |  lea NEXT_PTR, NEXT_RES_PTR
+  |  mov qword [NEXT_PTR+qword*1], LJ_TNIL
+  |  ret
+  |.endif
   |
   |//-----------------------------------------------------------------------
   |//-- Assertions ---------------------------------------------------------
@@ -3674,7 +3721,7 @@ static void build_ins(BuildCtx *ctx, BCOp op, int defop)
     |  checktab TAB:RB, ->vmeta_tgets
     |->BC_TGETS_Z:	// RB = GCtab *, RC = GCstr *
     |  mov TMPRd, TAB:RB->hmask
-    |  and TMPRd, STR:RC->hash
+    |  and TMPRd, STR:RC->sid
     |  imul TMPRd, #NODE
     |  add NODE:TMPR, TAB:RB->node
     |  settp ITYPE, STR:RC, LJ_TSTR
@@ -3806,7 +3853,7 @@ static void build_ins(BuildCtx *ctx, BCOp op, int defop)
     |  checktab TAB:RB, ->vmeta_tsets
     |->BC_TSETS_Z:	// RB = GCtab *, RC = GCstr *
     |  mov TMPRd, TAB:RB->hmask
-    |  and TMPRd, STR:RC->hash
+    |  and TMPRd, STR:RC->sid
     |  imul TMPRd, #NODE
     |  mov byte TAB:RB->nomm, 0		// Clear metamethod cache.
     |  add NODE:TMPR, TAB:RB->node
@@ -4058,10 +4105,11 @@ static void build_ins(BuildCtx *ctx, BCOp op, int defop)
     break;
 
   case BC_ITERN:
-    |  ins_A	// RA = base, (RB = nresults+1, RC = nargs+1 (2+1))
     |.if JIT
-    |  // NYI: add hotloop, record BC_ITERN.
+    |  hotloop RBd
     |.endif
+    |->vm_IITERN:
+    |  ins_A	// RA = base, (RB = nresults+1, RC = nargs+1 (2+1))
     |  mov TAB:RB, [BASE+RA*8-16]
     |  cleartp TAB:RB
     |  mov RCd, [BASE+RA*8-8]		// Get index from control var.
@@ -4125,15 +4173,29 @@ static void build_ins(BuildCtx *ctx, BCOp op, int defop)
     |  cmp aword [BASE+RA*8-8], LJ_TNIL; jne >5
     |  cmp byte CFUNC:RB->ffid, FF_next_N; jne >5
     |  branchPC RD
-    |  mov64 TMPR, U64x(fffe7fff, 00000000)
+    |  mov64 TMPR, ((uint64_t)LJ_KEYINDEX << 32)
     |  mov [BASE+RA*8-8], TMPR		// Initialize control var.
     |1:
     |  ins_next
     |5:  // Despecialize bytecode if any of the checks fail.
     |  mov PC_OP, BC_JMP
     |  branchPC RD
+    |.if JIT
+    |  cmp byte [PC], BC_ITERN
+    |  jne >6
+    |.endif
     |  mov byte [PC], BC_ITERC
     |  jmp <1
+    |.if JIT
+    |6:  // Unpatch JLOOP.
+    |  mov RA, [DISPATCH+DISPATCH_J(trace)]
+    |  movzx RCd, word [PC+2]
+    |  mov TRACE:RA, [RA+RC*8]
+    |  mov eax, TRACE:RA->startins
+    |  mov al, BC_ITERC
+    |  mov dword [PC], eax
+    |  jmp <1
+    |.endif
     break;
 
   case BC_VARG:
@@ -4734,7 +4796,7 @@ static void emit_asm_debug(BuildCtx *ctx)
 	".LEFDE1:\n\n", (int)ctx->codesz - fcofs);
 #endif
 #if !LJ_NO_UNWIND
-#if (defined(__sun__) && defined(__svr4__))
+#if LJ_TARGET_SOLARIS
     fprintf(ctx->fp, "\t.section .eh_frame,\"a\",@unwind\n");
 #else
     fprintf(ctx->fp, "\t.section .eh_frame,\"a\",@progbits\n");

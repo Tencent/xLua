@@ -26,13 +26,13 @@
 @set LJMT=mt /nologo
 @set DASMDIR=..\dynasm
 @set DASM=%DASMDIR%\dynasm.lua
-@set ALL_LIB=lib_base.c lib_math.c lib_bit.c lib_string.c lib_table.c lib_io.c lib_os.c lib_package.c lib_debug.c lib_jit.c lib_ffi.c
-@set GC64=-DLUAJIT_ENABLE_GC64
+@set ALL_LIB=lib_base.c lib_math.c lib_bit.c lib_string.c lib_table.c lib_io.c lib_os.c lib_package.c lib_debug.c lib_jit.c lib_ffi.c lib_buffer.c
+@set GC64=
 @set DASC=vm_x64.dasc
 
 @if "%1" neq "gc32" goto :NOGC32
 @shift
-@set GC64=
+@set GC64=-DLUAJIT_DISABLE_GC64
 @set DASC=vm_x86.dasc
 :NOGC32
 

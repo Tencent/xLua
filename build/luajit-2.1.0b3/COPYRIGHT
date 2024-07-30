@@ -1,7 +1,7 @@
 ===============================================================================
-LuaJIT -- a Just-In-Time Compiler for Lua. http://luajit.org/
+LuaJIT -- a Just-In-Time Compiler for Lua. https://luajit.org/
 
-Copyright (C) 2005-2017 Mike Pall. All rights reserved.
+Copyright (C) 2005-2021 Mike Pall. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -21,7 +21,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
-[ MIT license: http://www.opensource.org/licenses/mit-license.php ]
+[ MIT license: https://www.opensource.org/licenses/mit-license.php ]
 
 ===============================================================================
 [ LuaJIT includes code from Lua 5.1/5.2, which has this license statement: ]
@@ -51,6 +51,6 @@ THE SOFTWARE.
 
 This is a version (aka dlmalloc) of malloc/free/realloc written by
 Doug Lea and released to the public domain, as explained at
-http://creativecommons.org/licenses/publicdomain
+https://creativecommons.org/licenses/publicdomain
 
 ===============================================================================

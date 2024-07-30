@@ -1,16 +1,6 @@
 /*
 ** LuaJIT core and libraries amalgamation.
-** Copyright (C) 2005-2017 Mike Pall. See Copyright Notice in luajit.h
-*/
-
-/*
-+--------------------------------------------------------------------------+
-| WARNING: Compiling the amalgamation needs a lot of virtual memory        |
-| (around 300 MB with GCC 4.x)! If you don't have enough physical memory   |
-| your machine will start swapping to disk and the compile will not finish |
-| within a reasonable amount of time.                                      |
-| So either compile on a bigger machine or use the non-amalgamated build.  |
-+--------------------------------------------------------------------------+
+** Copyright (C) 2005-2021 Mike Pall. See Copyright Notice in luajit.h
 */
 
 #define ljamalg_c
@@ -28,6 +18,7 @@
 #include "lua.h"
 #include "lauxlib.h"
 
+#include "lj_assert.c"
 #include "lj_gc.c"
 #include "lj_err.c"
 #include "lj_char.c"
@@ -40,6 +31,7 @@
 #include "lj_udata.c"
 #include "lj_meta.c"
 #include "lj_debug.c"
+#include "lj_prng.c"
 #include "lj_state.c"
 #include "lj_dispatch.c"
 #include "lj_vmevent.c"
@@ -47,6 +39,7 @@
 #include "lj_strscan.c"
 #include "lj_strfmt.c"
 #include "lj_strfmt_num.c"
+#include "lj_serialize.c"
 #include "lj_api.c"
 #include "lj_profile.c"
 #include "lj_lex.c"
@@ -93,5 +86,6 @@
 #include "lib_bit.c"
 #include "lib_jit.c"
 #include "lib_ffi.c"
+#include "lib_buffer.c"
 #include "lib_init.c"
 

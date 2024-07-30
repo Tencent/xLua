@@ -1,6 +1,6 @@
 /*
 ** Base and coroutine library.
-** Copyright (C) 2005-2017 Mike Pall. See Copyright Notice in luajit.h
+** Copyright (C) 2005-2021 Mike Pall. See Copyright Notice in luajit.h
 **
 ** Major portions taken verbatim or adapted from the Lua interpreter.
 ** Copyright (C) 1994-2011 Lua.org, PUC-Rio. See Copyright Notice in lua.h
@@ -19,6 +19,7 @@
 #include "lj_gc.h"
 #include "lj_err.h"
 #include "lj_debug.h"
+#include "lj_buf.h"
 #include "lj_str.h"
 #include "lj_tab.h"
 #include "lj_meta.h"
@@ -42,13 +43,13 @@
 
 LJLIB_ASM(assert)		LJLIB_REC(.)
 {
-  GCstr *s;
   lj_lib_checkany(L, 1);
-  s = lj_lib_optstr(L, 2);
-  if (s)
-    lj_err_callermsg(L, strdata(s));
-  else
+  if (L->top == L->base+1)
     lj_err_caller(L, LJ_ERR_ASSERT);
+  else if (tvisstr(L->base+1) || tvisnumber(L->base+1))
+    lj_err_callermsg(L, strdata(lj_lib_checkstr(L, 2)));
+  else
+    lj_err_run(L);
   return FFH_UNREACHABLE;
 }
 
@@ -75,9 +76,10 @@ LJLIB_ASM_(type)		LJLIB_REC(.)
 /* This solves a circular dependency problem -- change FF_next_N as needed. */
 LJ_STATIC_ASSERT((int)FF_next == FF_next_N);
 
-LJLIB_ASM(next)
+LJLIB_ASM(next)			LJLIB_REC(.)
 {
   lj_lib_checktab(L, 1);
+  lj_err_msg(L, LJ_ERR_NEXTIDX);
   return FFH_UNREACHABLE;
 }
 
@@ -224,9 +226,11 @@ LJLIB_CF(unpack)
   int32_t n, i = lj_lib_optint(L, 2, 1);
   int32_t e = (L->base+3-1 < L->top && !tvisnil(L->base+3-1)) ?
 	      lj_lib_checkint(L, 3) : (int32_t)lj_tab_len(t);
+  uint32_t nu;
   if (i > e) return 0;
-  n = e - i + 1;
-  if (n <= 0 || !lua_checkstack(L, n))
+  nu = (uint32_t)e - (uint32_t)i;
+  n = (int32_t)(nu+1);
+  if (nu >= LUAI_MAXCSTACK || !lua_checkstack(L, n))
     lj_err_caller(L, LJ_ERR_UNPACK);
   do {
     cTValue *tv = lj_tab_getint(t, i);
@@ -287,18 +291,27 @@ LJLIB_ASM(tonumber)		LJLIB_REC(.)
   } else {
     const char *p = strdata(lj_lib_checkstr(L, 1));
     char *ep;
+    unsigned int neg = 0;
     unsigned long ul;
     if (base < 2 || base > 36)
       lj_err_arg(L, 2, LJ_ERR_BASERNG);
-    ul = strtoul(p, &ep, base);
-    if (p != ep) {
-      while (lj_char_isspace((unsigned char)(*ep))) ep++;
-      if (*ep == '\0') {
-	if (LJ_DUALNUM && LJ_LIKELY(ul < 0x80000000u))
-	  setintV(L->base-1-LJ_FR2, (int32_t)ul);
-	else
-	  setnumV(L->base-1-LJ_FR2, (lua_Number)ul);
-	return FFH_RES(1);
+    while (lj_char_isspace((unsigned char)(*p))) p++;
+    if (*p == '-') { p++; neg = 1; } else if (*p == '+') { p++; }
+    if (lj_char_isalnum((unsigned char)(*p))) {
+      ul = strtoul(p, &ep, base);
+      if (p != ep) {
+	while (lj_char_isspace((unsigned char)(*ep))) ep++;
+	if (*ep == '\0') {
+	  if (LJ_DUALNUM && LJ_LIKELY(ul < 0x80000000u+neg)) {
+	    if (neg) ul = (unsigned long)-(long)ul;
+	    setintV(L->base-1-LJ_FR2, (int32_t)ul);
+	  } else {
+	    lua_Number n = (lua_Number)ul;
+	    if (neg) n = -n;
+	    setnumV(L->base-1-LJ_FR2, n);
+	  }
+	  return FFH_RES(1);
+	}
       }
     }
   }
@@ -395,10 +408,22 @@ LJLIB_CF(load)
   GCstr *name = lj_lib_optstr(L, 2);
   GCstr *mode = lj_lib_optstr(L, 3);
   int status;
-  if (L->base < L->top && (tvisstr(L->base) || tvisnumber(L->base))) {
-    GCstr *s = lj_lib_checkstr(L, 1);
+  if (L->base < L->top &&
+      (tvisstr(L->base) || tvisnumber(L->base) || tvisbuf(L->base))) {
+    const char *s;
+    MSize len;
+    if (tvisbuf(L->base)) {
+      SBufExt *sbx = bufV(L->base);
+      s = sbx->r;
+      len = sbufxlen(sbx);
+      if (!name) name = &G(L)->strempty;  /* Buffers are not NUL-terminated. */
+    } else {
+      GCstr *str = lj_lib_checkstr(L, 1);
+      s = strdata(str);
+      len = str->len;
+    }
     lua_settop(L, 4);  /* Ensure env arg exists. */
-    status = luaL_loadbufferx(L, strdata(s), s->len, strdata(name ? name : s),
+    status = luaL_loadbufferx(L, s, len, name ? strdata(name) : s,
 			      mode ? strdata(mode) : NULL);
   } else {
     lj_lib_checkfunc(L, 1);
@@ -493,7 +518,8 @@ LJLIB_CF(print)
     lua_gettable(L, LUA_GLOBALSINDEX);
     tv = L->top-1;
   }
-  shortcut = (tvisfunc(tv) && funcV(tv)->c.ffid == FF_tostring);
+  shortcut = (tvisfunc(tv) && funcV(tv)->c.ffid == FF_tostring) &&
+	     !gcrefu(basemt_it(G(L), LJ_TNUMX));
   for (i = 0; i < nargs; i++) {
     cTValue *o = &L->base[i];
     const char *str;

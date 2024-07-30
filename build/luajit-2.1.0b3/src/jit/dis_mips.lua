@@ -1,7 +1,7 @@
 ----------------------------------------------------------------------------
 -- LuaJIT MIPS disassembler module.
 --
--- Copyright (C) 2005-2017 Mike Pall. All rights reserved.
+-- Copyright (C) 2005-2021 Mike Pall. All rights reserved.
 -- Released under the MIT/X license. See Copyright Notice in luajit.h
 ----------------------------------------------------------------------------
 -- This is a helper module used by the LuaJIT machine code dumper module.
@@ -19,12 +19,33 @@ local band, bor, tohex = bit.band, bit.bor, bit.tohex
 local lshift, rshift, arshift = bit.lshift, bit.rshift, bit.arshift
 
 ------------------------------------------------------------------------------
--- Primary and extended opcode maps
+-- Extended opcode maps common to all MIPS releases
+------------------------------------------------------------------------------
+
+local map_srl = { shift = 21, mask = 1, [0] = "srlDTA", "rotrDTA", }
+local map_srlv = { shift = 6, mask = 1, [0] = "srlvDTS", "rotrvDTS", }
+
+local map_cop0 = {
+  shift = 25, mask = 1,
+  [0] = {
+    shift = 21, mask = 15,
+    [0] = "mfc0TDW", [4] = "mtc0TDW",
+    [10] = "rdpgprDT",
+    [11] = { shift = 5, mask = 1, [0] = "diT0", "eiT0", },
+    [14] = "wrpgprDT",
+  }, {
+    shift = 0, mask = 63,
+    [1] = "tlbr", [2] = "tlbwi", [6] = "tlbwr", [8] = "tlbp",
+    [24] = "eret", [31] = "deret",
+    [32] = "wait",
+  },
+}
+
+------------------------------------------------------------------------------
+-- Primary and extended opcode maps for MIPS R1-R5
 ------------------------------------------------------------------------------
 
 local map_movci = { shift = 16, mask = 1, [0] = "movfDSC", "movtDSC", }
-local map_srl = { shift = 21, mask = 1, [0] = "srlDTA", "rotrDTA", }
-local map_srlv = { shift = 6, mask = 1, [0] = "srlvDTS", "rotrvDTS", }
 
 local map_special = {
   shift = 0, mask = 63,
@@ -85,22 +106,6 @@ local map_regimm = {
   false,	false,		false,		false,
   false,	false,		false,		false,
   false,	false,		false,		"synciSO",
-}
-
-local map_cop0 = {
-  shift = 25, mask = 1,
-  [0] = {
-    shift = 21, mask = 15,
-    [0] = "mfc0TDW", [4] = "mtc0TDW",
-    [10] = "rdpgprDT",
-    [11] = { shift = 5, mask = 1, [0] = "diT0", "eiT0", },
-    [14] = "wrpgprDT",
-  }, {
-    shift = 0, mask = 63,
-    [1] = "tlbr", [2] = "tlbwi", [6] = "tlbwr", [8] = "tlbp",
-    [24] = "eret", [31] = "deret",
-    [32] = "wait",
-  },
 }
 
 local map_cop1s = {
@@ -234,6 +239,208 @@ local map_pri = {
 }
 
 ------------------------------------------------------------------------------
+-- Primary and extended opcode maps for MIPS R6
+------------------------------------------------------------------------------
+
+local map_mul_r6 =   { shift = 6, mask = 3, [2] = "mulDST",   [3] = "muhDST" }
+local map_mulu_r6 =  { shift = 6, mask = 3, [2] = "muluDST",  [3] = "muhuDST" }
+local map_div_r6 =   { shift = 6, mask = 3, [2] = "divDST",   [3] = "modDST" }
+local map_divu_r6 =  { shift = 6, mask = 3, [2] = "divuDST",  [3] = "moduDST" }
+local map_dmul_r6 =  { shift = 6, mask = 3, [2] = "dmulDST",  [3] = "dmuhDST" }
+local map_dmulu_r6 = { shift = 6, mask = 3, [2] = "dmuluDST", [3] = "dmuhuDST" }
+local map_ddiv_r6 =  { shift = 6, mask = 3, [2] = "ddivDST",  [3] = "dmodDST" }
+local map_ddivu_r6 = { shift = 6, mask = 3, [2] = "ddivuDST", [3] = "dmoduDST" }
+
+local map_special_r6 = {
+  shift = 0, mask = 63,
+  [0] = { shift = 0, mask = -1, [0] = "nop", _ = "sllDTA" },
+  false,	map_srl,	"sraDTA",
+  "sllvDTS",	false,		map_srlv,	"sravDTS",
+  "jrS",	"jalrD1S",	false,		false,
+  "syscallY",	"breakY",	false,		"sync",
+  "clzDS",	"cloDS",	"dclzDS",	"dcloDS",
+  "dsllvDST",	"dlsaDSTA",	"dsrlvDST",	"dsravDST",
+  map_mul_r6,	map_mulu_r6,	map_div_r6,	map_divu_r6,
+  map_dmul_r6,	map_dmulu_r6,	map_ddiv_r6,	map_ddivu_r6,
+  "addDST",	"addu|moveDST0", "subDST",	"subu|neguDS0T",
+  "andDST",	"or|moveDST0",	"xorDST",	"nor|notDST0",
+  false,	false,		"sltDST",	"sltuDST",
+  "daddDST",	"dadduDST",	"dsubDST",	"dsubuDST",
+  "tgeSTZ",	"tgeuSTZ",	"tltSTZ",	"tltuSTZ",
+  "teqSTZ",	"seleqzDST",	"tneSTZ",	"selnezDST",
+  "dsllDTA",	false,		"dsrlDTA",	"dsraDTA",
+  "dsll32DTA",	false,		"dsrl32DTA",	"dsra32DTA",
+}
+
+local map_bshfl_r6 = {
+  shift = 9, mask = 3,
+  [1] = "alignDSTa",
+  _ = {
+    shift = 6, mask = 31,
+    [0] = "bitswapDT",
+    [2] = "wsbhDT",
+    [16] = "sebDT",
+    [24] = "sehDT",
+  }
+}
+
+local map_dbshfl_r6 = {
+  shift = 9, mask = 3,
+  [1] = "dalignDSTa",
+  _ = {
+    shift = 6, mask = 31,
+    [0] = "dbitswapDT",
+    [2] = "dsbhDT",
+    [5] = "dshdDT",
+  }
+}
+
+local map_special3_r6 = {
+  shift = 0, mask = 63,
+  [0]  = "extTSAK", [1]  = "dextmTSAP", [3]  = "dextTSAK",
+  [4]  = "insTSAL", [6]  = "dinsuTSEQ", [7]  = "dinsTSAL",
+  [32] = map_bshfl_r6, [36] = map_dbshfl_r6,  [59] = "rdhwrTD",
+}
+
+local map_regimm_r6 = {
+  shift = 16, mask = 31,
+  [0] = "bltzSB", [1] = "bgezSB",
+  [6] = "dahiSI", [30] = "datiSI",
+  [23] = "sigrieI", [31] = "synciSO",
+}
+
+local map_pcrel_r6 = {
+  shift = 19, mask = 3,
+  [0] = "addiupcS2", "lwpcS2", "lwupcS2", {
+    shift = 18, mask = 1,
+    [0] = "ldpcS3", { shift = 16, mask = 3, [2] = "auipcSI", [3] = "aluipcSI" }
+  }
+}
+
+local map_cop1s_r6 = {
+  shift = 0, mask = 63,
+  [0] = "add.sFGH",	"sub.sFGH",	"mul.sFGH",	"div.sFGH",
+  "sqrt.sFG",		"abs.sFG",	"mov.sFG",	"neg.sFG",
+  "round.l.sFG",	"trunc.l.sFG",	"ceil.l.sFG",	"floor.l.sFG",
+  "round.w.sFG",	"trunc.w.sFG",	"ceil.w.sFG",	"floor.w.sFG",
+  "sel.sFGH",		false,		false,		false,
+  "seleqz.sFGH",	"recip.sFG",	"rsqrt.sFG",	"selnez.sFGH",
+  "maddf.sFGH",		"msubf.sFGH",	"rint.sFG",	"class.sFG",
+  "min.sFGH",		"mina.sFGH",	"max.sFGH",	"maxa.sFGH",
+  false,		"cvt.d.sFG",	false,		false,
+  "cvt.w.sFG",		"cvt.l.sFG",
+}
+
+local map_cop1d_r6 = {
+  shift = 0, mask = 63,
+  [0] = "add.dFGH",	"sub.dFGH",	"mul.dFGH",	"div.dFGH",
+  "sqrt.dFG",		"abs.dFG",	"mov.dFG",	"neg.dFG",
+  "round.l.dFG",	"trunc.l.dFG",	"ceil.l.dFG",	"floor.l.dFG",
+  "round.w.dFG",	"trunc.w.dFG",	"ceil.w.dFG",	"floor.w.dFG",
+  "sel.dFGH",		false,		false,		false,
+  "seleqz.dFGH",	"recip.dFG",	"rsqrt.dFG",	"selnez.dFGH",
+  "maddf.dFGH",		"msubf.dFGH",	"rint.dFG",	"class.dFG",
+  "min.dFGH",		"mina.dFGH",	"max.dFGH",	"maxa.dFGH",
+  "cvt.s.dFG",		false,		false,		false,
+  "cvt.w.dFG",		"cvt.l.dFG",
+}
+
+local map_cop1w_r6 = {
+  shift = 0, mask = 63,
+  [0] = "cmp.af.sFGH",	"cmp.un.sFGH",	"cmp.eq.sFGH",	"cmp.ueq.sFGH",
+  "cmp.lt.sFGH",	"cmp.ult.sFGH",	"cmp.le.sFGH",	"cmp.ule.sFGH",
+  "cmp.saf.sFGH",	"cmp.sun.sFGH",	"cmp.seq.sFGH",	"cmp.sueq.sFGH",
+  "cmp.slt.sFGH",	"cmp.sult.sFGH",	"cmp.sle.sFGH",	"cmp.sule.sFGH",
+  false,		"cmp.or.sFGH",	"cmp.une.sFGH",	"cmp.ne.sFGH",
+  false,		false,		false,		false,
+  false,		"cmp.sor.sFGH",	"cmp.sune.sFGH",	"cmp.sne.sFGH",
+  false,		false,		false,		false,
+  "cvt.s.wFG", "cvt.d.wFG",
+}
+
+local map_cop1l_r6 = {
+  shift = 0, mask = 63,
+  [0] = "cmp.af.dFGH",	"cmp.un.dFGH",	"cmp.eq.dFGH",	"cmp.ueq.dFGH",
+  "cmp.lt.dFGH",	"cmp.ult.dFGH",	"cmp.le.dFGH",	"cmp.ule.dFGH",
+  "cmp.saf.dFGH",	"cmp.sun.dFGH",	"cmp.seq.dFGH",	"cmp.sueq.dFGH",
+  "cmp.slt.dFGH",	"cmp.sult.dFGH",	"cmp.sle.dFGH",	"cmp.sule.dFGH",
+  false,		"cmp.or.dFGH",	"cmp.une.dFGH",	"cmp.ne.dFGH",
+  false,		false,		false,		false,
+  false,		"cmp.sor.dFGH",	"cmp.sune.dFGH",	"cmp.sne.dFGH",
+  false,		false,		false,		false,
+  "cvt.s.lFG", "cvt.d.lFG",
+}
+
+local map_cop1_r6 = {
+  shift = 21, mask = 31,
+  [0] = "mfc1TG", "dmfc1TG",	"cfc1TG",	"mfhc1TG",
+  "mtc1TG",	"dmtc1TG",	"ctc1TG",	"mthc1TG",
+  false,	"bc1eqzHB",	false,		false,
+  false,	"bc1nezHB",	false,		false,
+  map_cop1s_r6,	map_cop1d_r6,	false,		false,
+  map_cop1w_r6,	map_cop1l_r6,
+}
+
+local function maprs_popTS(rs, rt)
+  if rt == 0 then return 0 elseif rs == 0 then return 1
+  elseif rs == rt then return 2 else return 3 end
+end
+
+local map_pop06_r6 = {
+  maprs = maprs_popTS, [0] = "blezSB", "blezalcTB", "bgezalcTB", "bgeucSTB"
+}
+local map_pop07_r6 = {
+  maprs = maprs_popTS, [0] = "bgtzSB", "bgtzalcTB", "bltzalcTB", "bltucSTB"
+}
+local map_pop26_r6 = {
+  maprs = maprs_popTS, "blezcTB", "bgezcTB", "bgecSTB"
+}
+local map_pop27_r6 = {
+  maprs = maprs_popTS, "bgtzcTB", "bltzcTB", "bltcSTB"
+}
+
+local function maprs_popS(rs, rt)
+  if rs == 0 then return 0 else return 1 end
+end
+
+local map_pop66_r6 = {
+  maprs = maprs_popS, [0] = "jicTI", "beqzcSb"
+}
+local map_pop76_r6 = {
+  maprs = maprs_popS, [0] = "jialcTI", "bnezcSb"
+}
+
+local function maprs_popST(rs, rt)
+  if rs >= rt then return 0 elseif rs == 0 then return 1 else return 2 end
+end
+
+local map_pop10_r6 = {
+  maprs = maprs_popST, [0] = "bovcSTB", "beqzalcTB", "beqcSTB"
+}
+local map_pop30_r6 = {
+  maprs = maprs_popST, [0] = "bnvcSTB", "bnezalcTB", "bnecSTB"
+}
+
+local map_pri_r6 = {
+  [0] = map_special_r6,	map_regimm_r6,	"jJ",	"jalJ",
+  "beq|beqz|bST00B",	"bne|bnezST0B",		map_pop06_r6,	map_pop07_r6,
+  map_pop10_r6,	"addiu|liTS0I",	"sltiTSI",	"sltiuTSI",
+  "andiTSU",	"ori|liTS0U",	"xoriTSU",	"aui|luiTS0U",
+  map_cop0,	map_cop1_r6,	false,		false,
+  false,	false,		map_pop26_r6,	map_pop27_r6,
+  map_pop30_r6,	"daddiuTSI",	false,		false,
+  false,	"dauiTSI",	false,		map_special3_r6,
+  "lbTSO",	"lhTSO",	false,		"lwTSO",
+  "lbuTSO",	"lhuTSO",	false,		false,
+  "sbTSO",	"shTSO",	false,		"swTSO",
+  false,	false,		false,		false,
+  false,	"lwc1HSO",	"bc#",		false,
+  false,	"ldc1HSO",	map_pop66_r6,	"ldTSO",
+  false,	"swc1HSO",	"balc#",	map_pcrel_r6,
+  false,	"sdc1HSO",	map_pop76_r6,	"sdTSO",
+}
+
+------------------------------------------------------------------------------
 
 local map_gpr = {
   [0] = "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7",
@@ -287,10 +494,14 @@ local function disass_ins(ctx)
   ctx.op = op
   ctx.rel = nil
 
-  local opat = map_pri[rshift(op, 26)]
+  local opat = ctx.map_pri[rshift(op, 26)]
   while type(opat) ~= "string" do
     if not opat then return unknown(ctx) end
-    opat = opat[band(rshift(op, opat.shift), opat.mask)] or opat._
+    if opat.maprs then
+      opat = opat[opat.maprs(band(rshift(op,21),31), band(rshift(op,16),31))]
+    else
+      opat = opat[band(rshift(op, opat.shift), opat.mask)] or opat._
+    end
   end
   local name, pat = match(opat, "^([a-z0-9_.]*)(.*)")
   local altname, pat2 = match(pat, "|([a-z0-9_.|]*)(.*)")
@@ -314,6 +525,8 @@ local function disass_ins(ctx)
       x = "f"..band(rshift(op, 21), 31)
     elseif p == "A" then
       x = band(rshift(op, 6), 31)
+    elseif p == "a" then
+      x = band(rshift(op, 6), 7)
     elseif p == "E" then
       x = band(rshift(op, 6), 31) + 32
     elseif p == "M" then
@@ -333,6 +546,10 @@ local function disass_ins(ctx)
       x = band(rshift(op, 11), 31) - last + 33
     elseif p == "I" then
       x = arshift(lshift(op, 16), 16)
+    elseif p == "2" then
+      x = arshift(lshift(op, 13), 11)
+    elseif p == "3" then
+      x = arshift(lshift(op, 14), 11)
     elseif p == "U" then
       x = band(op, 0xffff)
     elseif p == "O" then
@@ -342,7 +559,15 @@ local function disass_ins(ctx)
       local index = map_gpr[band(rshift(op, 16), 31)]
       operands[#operands] = format("%s(%s)", index, last)
     elseif p == "B" then
-      x = ctx.addr + ctx.pos + arshift(lshift(op, 16), 16)*4 + 4
+      x = ctx.addr + ctx.pos + arshift(lshift(op, 16), 14) + 4
+      ctx.rel = x
+      x = format("0x%08x", x)
+    elseif p == "b" then
+      x = ctx.addr + ctx.pos + arshift(lshift(op, 11), 9) + 4
+      ctx.rel = x
+      x = format("0x%08x", x)
+    elseif p == "#" then
+      x = ctx.addr + ctx.pos + arshift(lshift(op, 6), 4) + 4
       ctx.rel = x
       x = format("0x%08x", x)
     elseif p == "J" then
@@ -408,12 +633,26 @@ local function create(code, addr, out)
   ctx.disass = disass_block
   ctx.hexdump = 8
   ctx.get = get_be
+  ctx.map_pri = map_pri
   return ctx
 end
 
 local function create_el(code, addr, out)
   local ctx = create(code, addr, out)
   ctx.get = get_le
+  return ctx
+end
+
+local function create_r6(code, addr, out)
+  local ctx = create(code, addr, out)
+  ctx.map_pri = map_pri_r6
+  return ctx
+end
+
+local function create_r6_el(code, addr, out)
+  local ctx = create(code, addr, out)
+  ctx.get = get_le
+  ctx.map_pri = map_pri_r6
   return ctx
 end
 
@@ -426,6 +665,14 @@ local function disass_el(code, addr, out)
   create_el(code, addr, out):disass()
 end
 
+local function disass_r6(code, addr, out)
+  create_r6(code, addr, out):disass()
+end
+
+local function disass_r6_el(code, addr, out)
+  create_r6_el(code, addr, out):disass()
+end
+
 -- Return register name for RID.
 local function regname(r)
   if r < 32 then return map_gpr[r] end
@@ -436,8 +683,12 @@ end
 return {
   create = create,
   create_el = create_el,
+  create_r6 = create_r6,
+  create_r6_el = create_r6_el,
   disass = disass,
   disass_el = disass_el,
+  disass_r6 = disass_r6,
+  disass_r6_el = disass_r6_el,
   regname = regname
 }
 

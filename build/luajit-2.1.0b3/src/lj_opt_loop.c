@@ -1,6 +1,6 @@
 /*
 ** LOOP: Loop Optimizations.
-** Copyright (C) 2005-2017 Mike Pall. See Copyright Notice in luajit.h
+** Copyright (C) 2005-2021 Mike Pall. See Copyright Notice in luajit.h
 */
 
 #define lj_opt_loop_c
@@ -223,8 +223,9 @@ static void loop_subst_snap(jit_State *J, SnapShot *osnap,
   }
   J->guardemit.irt = 0;
   /* Setup new snapshot. */
-  snap->mapofs = (uint16_t)nmapofs;
+  snap->mapofs = (uint32_t)nmapofs;
   snap->ref = (IRRef1)J->cur.nins;
+  snap->mcofs = 0;
   snap->nslots = nslots;
   snap->topslot = osnap->topslot;
   snap->count = 0;
@@ -251,7 +252,7 @@ static void loop_subst_snap(jit_State *J, SnapShot *osnap,
   nmap += nn;
   while (omap < nextmap)  /* Copy PC + frame links. */
     *nmap++ = *omap++;
-  J->cur.nsnapmap = (uint16_t)(nmap - J->cur.snapmap);
+  J->cur.nsnapmap = (uint32_t)(nmap - J->cur.snapmap);
 }
 
 typedef struct LoopState {
@@ -299,7 +300,8 @@ static void loop_unroll(LoopState *lps)
   loopmap = &J->cur.snapmap[loopsnap->mapofs];
   /* The PC of snapshot #0 and the loop snapshot must match. */
   psentinel = &loopmap[loopsnap->nent];
-  lua_assert(*psentinel == J->cur.snapmap[J->cur.snap[0].nent]);
+  lj_assertJ(*psentinel == J->cur.snapmap[J->cur.snap[0].nent],
+	     "mismatched PC for loop snapshot");
   *psentinel = SNAP(255, 0, 0);  /* Replace PC with temporary sentinel. */
 
   /* Start substitution with snapshot #1 (#0 is empty for root traces). */
@@ -352,10 +354,12 @@ static void loop_unroll(LoopState *lps)
 	    irr = IR(ref);
 	    goto phiconv;
 	  }
-	} else if (ref != REF_DROP && irr->o == IR_CONV &&
-		   ref > invar && irr->op1 < invar) {
-	  /* May need an extra PHI for a CONV. */
-	  ref = irr->op1;
+	} else if (ref != REF_DROP && ref > invar &&
+		   ((irr->o == IR_CONV && irr->op1 < invar) ||
+		    (irr->o == IR_ALEN && irr->op2 < invar &&
+					  irr->op2 != REF_NIL))) {
+	  /* May need an extra PHI for a CONV or ALEN hint. */
+	  ref = irr->o == IR_CONV ? irr->op1 : irr->op2;
 	  irr = IR(ref);
 	phiconv:
 	  if (ref < invar && !irref_isk(ref) && !irt_isphi(irr->t)) {
@@ -369,8 +373,8 @@ static void loop_unroll(LoopState *lps)
     }
   }
   if (!irt_isguard(J->guardemit))  /* Drop redundant snapshot. */
-    J->cur.nsnapmap = (uint16_t)J->cur.snap[--J->cur.nsnap].mapofs;
-  lua_assert(J->cur.nsnapmap <= J->sizesnapmap);
+    J->cur.nsnapmap = (uint32_t)J->cur.snap[--J->cur.nsnap].mapofs;
+  lj_assertJ(J->cur.nsnapmap <= J->sizesnapmap, "bad snapshot map index");
   *psentinel = J->cur.snapmap[J->cur.snap[0].nent];  /* Restore PC. */
 
   loop_emit_phi(J, subst, phi, nphi, onsnap);
@@ -383,7 +387,7 @@ static void loop_undo(jit_State *J, IRRef ins, SnapNo nsnap, MSize nsnapmap)
   SnapShot *snap = &J->cur.snap[nsnap-1];
   SnapEntry *map = J->cur.snapmap;
   map[snap->mapofs + snap->nent] = map[J->cur.snap[0].nent];  /* Restore PC. */
-  J->cur.nsnapmap = (uint16_t)nsnapmap;
+  J->cur.nsnapmap = (uint32_t)nsnapmap;
   J->cur.nsnap = nsnap;
   J->guardemit.irt = 0;
   lj_ir_rollback(J, ins);
