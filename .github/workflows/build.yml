@@ -55,6 +55,35 @@ jobs:
         with:
           path: ./build/plugin_luajit/**/*
           name: plugin_luajit
+  
+  ohos:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install NDK
+        run: |
+          cd ~
+          cd ~
+          curl -O https://repo.huaweicloud.com/harmonyos/os/4.1-Release/ohos-sdk-windows_linux-public.tar.gz
+          tar xvfz ohos-sdk-windows_linux-public.tar.gz
+          cd ohos-sdk/linux
+          unzip -o -d ./ native-linux-x64-4.1.7.5-Release.zip
+      - name: Build
+        run: |
+          cd build
+          chmod +x make_ohos_lua5*.sh
+          OHOS_NDK_HOME=~/ohos-sdk/linux/native ./make_ohos_lua54.sh
+          OHOS_NDK_HOME=~/ohos-sdk/linux/native ./make_ohos_lua53.sh
+      - name: Upload
+        uses: actions/upload-artifact@v2
+        with:
+          path: ./build/plugin_lua54/**/*
+          name: plugin_lua54
+      - name: Upload53
+        uses: actions/upload-artifact@v2
+        with:
+          path: ./build/plugin_lua53/**/*
+          name: plugin_lua53
 
   linux:
     runs-on: ubuntu-latest
