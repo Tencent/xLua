@@ -1051,6 +1051,8 @@ namespace XLua
 #endif
 		{
 			int top = LuaAPI.lua_gettop(L);
+			// Ensure that the stack has enough space for incoming pushes...
+			LuaAPI.lua_checkstack(L, 18);
 			int meta_idx = abs_idx(top, OBJ_META_IDX);
 			int method_idx = abs_idx(top, METHOD_IDX);
 			int getter_idx = abs_idx(top, GETTER_IDX);
