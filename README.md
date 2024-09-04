@@ -116,6 +116,7 @@ C#主动调用 Lua 也很简单，比如要调用 Lua 的系统函数，推荐�
 * [10_SignatureLoader](Assets/XLua/Examples/10_SignatureLoader/): 展示如何读取经数字签名的lua脚本，参见[数字签名](Assets/XLua/Doc/signature.md)的文档介绍。
 * [11_RawObject](Assets/XLua/Examples/11_RawObject/): 当 C# 参数是object时，如何把一个lua number指定以boxing后的int传递过去。
 * [12_ReImplementInLua](Assets/XLua/Examples/12_ReImplementInLua/): 展示如何将复杂值类型改为 Lua 实现。
+* [14_HotfixAsyncAwait](Assets/XLua/Examples/14_HotfixAsyncAwait/): 展示如何将异步函数和await关键字改为 Lua 实现。
 
 <br/>
 

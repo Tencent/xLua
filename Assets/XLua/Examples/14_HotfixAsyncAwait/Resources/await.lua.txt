@@ -1,0 +1,25 @@
+--如果通过require加载，文件格式不能是UTF-8 with BOM，需要保存为UTF-8
+--或者将await方法复制到util中
+
+---
+--- 模拟C# [await](https://learn.microsoft.com/dotnet/csharp/language-reference/operators/await) 关键字
+---
+---@param awaitable any 异步任务实例，或者含有GetAwaiter方法的对象，查看C#可等待对象文档 [查看文档](https://learn.microsoft.com/dotnet/csharp/asynchronous-programming/async-return-types#generalized-async-return-types-and-valuetasktresult)
+---@param continuation function 异步延续函数。将C#代码中await关键字下面的代码封装为一个函数，作为异步任务完成时，要执行的回调函数。 [查看文档](https://learn.microsoft.com/dotnet/api/system.runtime.compilerservices.taskawaiter-1.unsafeoncompleted)
+function await(awaitable, continuation)
+    local awaiter = awaitable:GetAwaiter()
+    if awaiter.IsCompleted then
+        --如果同步完成，直接调用异步延续函数
+        local result = awaiter:GetResult()
+        continuation(result)
+    else
+        --如果异步挂起，将异步延续函数注册到异步任务中
+        awaiter:UnsafeOnCompleted(function ()
+            local result = awaiter:GetResult()
+            continuation(result)
+        end)
+    end
+end
+
+
+
