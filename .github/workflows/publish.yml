@@ -229,17 +229,17 @@ jobs:
     runs-on: ubuntu-latest
     needs: [windows,osx,ios,android,windows-luajit-32,ohos,android_luajit,linux]
     steps:
-      - uses: actions/download-artifact@v1
+      - uses: actions/download-artifact@v4.1.7
         with:
           name: plugin_luajit
           path: plugin_luajit/
           
-      - uses: actions/download-artifact@v1
+      - uses: actions/download-artifact@v4.1.7
         with:
           name: plugin_lua53
           path: plugin_lua53/
           
-      - uses: actions/download-artifact@v1
+      - uses: actions/download-artifact@v4.1.7
         with:
           name: plugin_lua54
           path: plugin_lua54/
