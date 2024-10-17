@@ -103,6 +103,18 @@ namespace XLua
         AdaptByDelegate = 64,
         IgnoreCompilerGenerated = 128,
         NoBaseProxy = 256,
+        /// <summary>
+        /// 仅标记在方法上有效。忽略此方法生成委托。
+        /// </summary>
+        IgnoreGenDelegateBridge = 512,
+        /// <summary>
+        /// 仅标记在方法上有效。忽略此方法注入。
+        /// </summary>
+        IgnoreHotfixInject = 1024,
+        /// <summary>
+        /// 仅标记在方法上有效。忽略此方法生成委托和注入。
+        /// </summary>
+        IgnoreThisMethod = IgnoreGenDelegateBridge | IgnoreHotfixInject,
     }
 
     public class HotfixAttribute : Attribute
