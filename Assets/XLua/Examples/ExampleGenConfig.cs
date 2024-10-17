@@ -11,7 +11,7 @@ using System;
 using UnityEngine;
 using XLua;
 using System.Linq;
-//using System.Reflection;
+using System.Reflection;
 
 //配置的详细介绍请看Doc下《XLua的配置.doc》
 public static class ExampleGenConfig
