@@ -116,10 +116,21 @@ namespace XLua
                 }
                 DelegateBridge.DelegateBridgeList = newList;
             }
+
+#if (UNITY_IPHONE || UNITY_TVOS) && !UNITY_EDITOR
+            if (val == null)
+            {
+                xlua_set_hotfix_flag(idx, false);
+            }
+#endif
             DelegateBridge.DelegateBridgeList[idx] = val;
 #if (UNITY_IPHONE || UNITY_TVOS) && !UNITY_EDITOR
-            xlua_set_hotfix_flag(idx, val != null);
+            if (val != null)
+            {
+                xlua_set_hotfix_flag(idx, true);
+            }
 #endif
+
         }
     }
 
