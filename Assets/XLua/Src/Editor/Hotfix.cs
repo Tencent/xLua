@@ -170,6 +170,18 @@ namespace XLua
         AdaptByDelegate = 64,
         IgnoreCompilerGenerated = 128,
         NoBaseProxy = 256,
+        /// <summary>
+        /// 仅标记在方法上有效。忽略此方法生成委托。
+        /// </summary>
+        IgnoreGenDelegateBridge = 512,
+        /// <summary>
+        /// 仅标记在方法上有效。忽略此方法注入。
+        /// </summary>
+        IgnoreHotfixInject = 1024,
+        /// <summary>
+        /// 仅标记在方法上有效。忽略此方法生成委托和注入。
+        /// </summary>
+        IgnoreThisMethod = IgnoreGenDelegateBridge | IgnoreHotfixInject,
     }
 
     static class ExtentionMethods
@@ -685,6 +697,25 @@ namespace XLua
             return false;
         }
 
+        /// <summary>
+        /// 方法是否由特性标记为忽略注入
+        /// </summary>
+        /// <param name="hotfixAttributeType"></param>
+        /// <param name="method"></param>
+        /// <returns></returns>
+        public bool isIgnoreInjectMethodByAttribute(TypeReference hotfixAttributeType, MethodDefinition method)
+        {
+            CustomAttribute hotfixAttr = method.CustomAttributes.FirstOrDefault(ca => ca.AttributeType == hotfixAttributeType);
+            HotfixFlagInTool hotfixType = default;
+            if (hotfixAttr != null)
+            {
+                hotfixType = (HotfixFlagInTool)(int)hotfixAttr.ConstructorArguments[0].Value;
+            }
+
+            bool ignore = hotfixType.HasFlag(HotfixFlagInTool.IgnoreHotfixInject);
+            return ignore;
+        }
+
         public bool InjectType(TypeReference hotfixAttributeType, TypeDefinition type)
         {
             foreach(var nestedTypes in type.NestedTypes)
@@ -744,6 +775,10 @@ namespace XLua
                     continue;
                 }
                 if (method.Parameters.Any(pd => pd.ParameterType.IsPointer) || method.ReturnType.IsPointer)
+                {
+                    continue;
+                }
+                if (isIgnoreInjectMethodByAttribute(hotfixAttributeType,method))
                 {
                     continue;
                 }

@@ -900,6 +900,28 @@ namespace CSObjectWrapEditor
             return (toCheck != HotfixFlag.Stateless) && ((toCheck & flag) == flag);
         }
 
+        /// <summary>
+        /// 方法是否由特性标记为忽略生成委托
+        /// </summary>
+        /// <param name="member"></param>
+        /// <returns></returns>
+        static bool isIgnoreGenDelegateBridgeByAttribute(MemberInfo member)
+        {
+            var ca = GetCustomAttribute(member, typeof(HotfixAttribute));
+            if (ca == null)
+            {
+                return false;
+            }
+
+#if XLUA_GENERAL
+            var hotfixType = (HotfixFlag)Convert.ToInt32(ca.GetType().GetProperty("Flag").GetValue(ca, null));
+#else
+            var hotfixType = (ca as HotfixAttribute).Flag;
+#endif
+
+            return hotfixType.HasFlag(HotfixFlag.IgnoreGenDelegateBridge);
+        }
+
         static void GenDelegateBridge(IEnumerable<Type> types, string save_path, IEnumerable<Type> hotfix_check_types)
         {
             string filePath = save_path + "DelegatesGensBridge.cs";
@@ -945,6 +967,7 @@ namespace CSObjectWrapEditor
                     .Cast<MethodBase>()
                     .Concat(kv.Key.GetConstructors(bindingAttrOfConstructor).Cast<MethodBase>())
                     .Where(method => !injectByGeneric(method, kv.Value))
+                    .Where(method => !isIgnoreGenDelegateBridgeByAttribute(method))
                     .Select(method => makeHotfixMethodInfoSimulation(method, kv.Value)));
             }
             hotfxDelegates = hotfxDelegates.Distinct(comparer).ToList();
