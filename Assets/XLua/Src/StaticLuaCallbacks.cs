@@ -694,17 +694,16 @@ namespace XLua
                 {
                     LuaAPI.lua_pushstring(L, string.Format(
                         "\n\tno such resource '{0}'", filename));
-                }
-                else
-                {
-                    if (LuaAPI.xluaL_loadbuffer(L, file.bytes, file.bytes.Length, "@" + filename) != 0)
-                    {
-                        return LuaAPI.luaL_error(L, String.Format("error loading module {0} from resource, {1}",
-                            LuaAPI.lua_tostring(L, 1), LuaAPI.lua_tostring(L, -1)));
-                    }
+                    return 1;
                 }
 
-                return 1;
+                if (LuaAPI.xluaL_loadbuffer(L, file.bytes, file.bytes.Length, "@" + filename) != 0)
+                {
+                    return LuaAPI.luaL_error(L, String.Format("error loading module {0} from resource, {1}",
+                        LuaAPI.lua_tostring(L, 1), LuaAPI.lua_tostring(L, -1)));
+                }
+                LuaAPI.lua_pushstring(L, filename);
+                return 2;
             }
             catch (System.Exception e)
             {
@@ -717,6 +716,7 @@ namespace XLua
         {
             try
             {
+                int ret = 1;
                 string filename = LuaAPI.lua_tostring(L, 1).Replace('.', '/') + ".lua";
                 var filepath = UnityEngine.Application.streamingAssetsPath + "/" + filename;
 #if UNITY_ANDROID && !UNITY_EDITOR
@@ -739,6 +739,8 @@ namespace XLua
                                 return LuaAPI.luaL_error(L, String.Format("error loading module {0} from streamingAssetsPath, {1}",
                                     LuaAPI.lua_tostring(L, 1), LuaAPI.lua_tostring(L, -1)));
                             }
+                            LuaAPI.lua_pushstring(L, filename);
+                            ret++;
                         }
                         break;
                     }
@@ -755,6 +757,8 @@ namespace XLua
                         return LuaAPI.luaL_error(L, String.Format("error loading module {0} from streamingAssetsPath, {1}",
                             LuaAPI.lua_tostring(L, 1), LuaAPI.lua_tostring(L, -1)));
                     }
+                    LuaAPI.lua_pushstring(L, filename);
+                    ret++;
                 }
                 else
                 {
@@ -762,7 +766,7 @@ namespace XLua
                         "\n\tno such file '{0}' in streamingAssetsPath!", filename));
                 }
 #endif
-                return 1;
+                return ret;
             }
             catch (System.Exception e)
             {
@@ -791,7 +795,8 @@ namespace XLua
                             return LuaAPI.luaL_error(L, String.Format("error loading module {0} from CustomLoader, {1}",
                                 LuaAPI.lua_tostring(L, 1), LuaAPI.lua_tostring(L, -1)));
                         }
-                        return 1;
+                        LuaAPI.lua_pushstring(L, real_file_path);
+                        return 2;
                     }
                 }
                 LuaAPI.lua_pushstring(L, string.Format(
