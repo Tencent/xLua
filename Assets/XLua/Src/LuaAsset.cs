@@ -5,6 +5,9 @@ namespace XLua
 {
     public partial class LuaAsset : ScriptableObject
     {
+        [SerializeField]
+        private string Guid;
+
         [SerializeField, HideInInspector]
         private string _code;
 
@@ -14,14 +17,15 @@ namespace XLua
          * 保留 “text” 属性兼容以往 TextAsset 的写法
          * Retain the 'text' property for compatibility with the previous TextAsset usage.
          **/
-        public string text => _code;
+        public string text => Code;
 
-        public override string ToString() => _code;
+        public override string ToString() => Code;
         
-        public static LuaAsset Create(string code)
+        public static LuaAsset Create(string code, string guid)
         {
             var asset = CreateInstance<LuaAsset>();
             asset._code = code;
+            asset.Guid = guid;
             return asset;
         }
         

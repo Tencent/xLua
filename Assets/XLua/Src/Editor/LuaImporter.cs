@@ -21,8 +21,9 @@ namespace XLua
 
         public override void OnImportAsset(AssetImportContext ctx)
         {
+            var id = AssetDatabase.AssetPathToGUID(ctx.assetPath);
             var asset = LuaAsset.Create(File.ReadAllText(ctx.assetPath));
-            ctx.AddObjectToAsset("LuaCode", asset, LoadIconTexture());
+            ctx.AddObjectToAsset("LuaCode", asset, LoadIconTexture(), id);
             ctx.SetMainObject(asset);
         }
 
