@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace XLua
 {
-    public class LuaAsset : ScriptableObject
+    public partial class LuaAsset : ScriptableObject
     {
         [SerializeField, HideInInspector]
         private string _code;
