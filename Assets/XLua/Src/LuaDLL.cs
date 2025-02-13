@@ -301,16 +301,14 @@ namespace XLua.LuaDLL
             else
             {
 #if !THREAD_SAFE && !HOTFIX_ENABLE
-                if (Encoding.UTF8.GetByteCount(str) > InternalGlobals.strBuff.Length)
+                int str_len = str.Length;
+                if (InternalGlobals.strBuff.Length < str_len)
                 {
-                    byte[] bytes = Encoding.UTF8.GetBytes(str);
-                    xlua_pushlstring(L, bytes, bytes.Length);
+                    InternalGlobals.strBuff = new byte[str_len];
                 }
-                else
-                {
-                    int bytes_len = Encoding.UTF8.GetBytes(str, 0, str.Length, InternalGlobals.strBuff, 0);
-                    xlua_pushlstring(L, InternalGlobals.strBuff, bytes_len);
-                }
+
+                int bytes_len = Encoding.UTF8.GetBytes(str, 0, str_len, InternalGlobals.strBuff, 0);
+                xlua_pushlstring(L, InternalGlobals.strBuff, bytes_len);
 #else
                 var bytes = Encoding.UTF8.GetBytes(str);
                 xlua_pushlstring(L, bytes, bytes.Length);
