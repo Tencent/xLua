@@ -1524,6 +1524,7 @@ namespace CSObjectWrapEditor
 
         static Dictionary<Type, int> type_size = new Dictionary<Type, int>()
         {
+            { typeof(bool), 1 },
             { typeof(byte), 1 },
             { typeof(sbyte), 1 },
             { typeof(short), 2 },
