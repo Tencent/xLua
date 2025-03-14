@@ -566,6 +566,8 @@ namespace CSObjectWrapEditor
             {
                 if (mb.DeclaringType.ToString() == exclude[0] && mb.Name == exclude[1])
                 {
+                    if(exclude.Count == 3 && string.Equals(exclude[2], "All")
+                        return true; // Blacklist all methods with this name;
                     var parameters = mb.GetParameters();
                     if (parameters.Length != exclude.Count - 2)
                     {
