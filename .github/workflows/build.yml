@@ -35,7 +35,7 @@ jobs:
           name: plugin_lua53_android
 
   android_luajit:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.4
     steps:
       - uses: actions/checkout@v4
       - name: Install NDK
