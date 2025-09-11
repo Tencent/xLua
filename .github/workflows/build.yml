@@ -48,7 +48,8 @@ jobs:
       - name: Build
         run: |
           cd build
-          sudo apt install gcc-multilib libncurses5 -y
+	  sudo apt udpate
+          sudo apt install gcc-multilib lib32ncurses5-dev -y
           ./make_android_luajit_arm64.sh  
       - name: UploadJit
         uses: actions/upload-artifact@v4
