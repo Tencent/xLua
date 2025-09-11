@@ -48,7 +48,7 @@ jobs:
       - name: Build
         run: |
           cd build
-	  sudo apt udpate
+          sudo apt udpate
           sudo apt install gcc-multilib lib32ncurses5-dev -y
           ./make_android_luajit_arm64.sh  
       - name: UploadJit
