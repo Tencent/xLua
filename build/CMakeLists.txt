@@ -249,3 +249,7 @@ else ( )
         )
     endif()
 endif ( )
+
+if ( ANDROID )
+    target_link_options(xlua PRIVATE -Wl,-z,max-page-size=16384 -Wl,-z,common-page-size=16384) # android 16K Pagesize
+endif ( )
