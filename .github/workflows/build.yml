@@ -32,7 +32,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           path: ./build/plugin_lua53/**/*
-          name: plugin_lua53 
+          name: plugin_lua53_android 
 
   android_luajit:
     runs-on: ubuntu-latest
@@ -54,7 +54,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           path: ./build/plugin_luajit/**/*
-          name: plugin_luajit
+          name: plugin_luajit_android
   
   ohos:
     runs-on: ubuntu-latest
@@ -83,7 +83,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           path: ./build/plugin_lua53/**/*
-          name: plugin_lua53
+          name: plugin_lua53_ohos
 
   linux:
     runs-on: ubuntu-latest
@@ -109,7 +109,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           path: ./build/plugin_luajit/**/*
-          name: plugin_luajit  
+          name: plugin_luajit_linux  
   ios:
     runs-on: macos-latest
 
@@ -135,7 +135,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           path: ./build/plugin_luajit/**/*
-          name: plugin_luajit
+          name: plugin_luajit_ios
   osx:
     runs-on: macos-latest
 
@@ -163,7 +163,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           path: ./build/plugin_luajit/**/*
-          name: plugin_luajit  
+          name: plugin_luajit_osx  
   windows:
     runs-on: windows-2022
 
@@ -200,7 +200,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           path: ./build/plugin_luajit/**/*
-          name: plugin_luajit
+          name: plugin_luajit_window
           
   windows-luajit-32:
     runs-on: windows-2022
@@ -222,7 +222,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           path: ./build/plugin_luajit/**/*
-          name: plugin_luajit
+          name: plugin_luajit_window32
     
 
    

@@ -33,8 +33,30 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           path: ./build/plugin_lua53/**/*
-          name: plugin_lua53 
-          
+          name: plugin_lua53_android 
+
+  android_luajit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install NDK
+        run: |
+          cd ~
+          wget -O NDK -q https://dl.google.com/android/repository/android-ndk-r15c-linux-x86_64.zip
+          sudo apt install unzip -y
+          unzip -q NDK
+          ANDROID_NDK_HOME=$(pwd)/android-ndk-r15c
+      - name: Build
+        run: |
+          cd build
+          sudo apt install gcc-multilib libncurses5 -y
+          ./make_android_luajit_arm64.sh  
+      - name: UploadJit
+        uses: actions/upload-artifact@v4
+        with:
+          path: ./build/plugin_luajit/**/*
+          name: plugin_luajit_android
+  
   ohos:
     runs-on: ubuntu-latest
     steps:
@@ -62,30 +84,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           path: ./build/plugin_lua53/**/*
-          name: plugin_lua53
+          name: plugin_lua53_ohos
 
-  android_luajit:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Install NDK
-        run: |
-          cd ~
-          wget -O NDK -q https://dl.google.com/android/repository/android-ndk-r15c-linux-x86_64.zip
-          sudo apt install unzip -y
-          unzip -q NDK
-          ANDROID_NDK_HOME=$(pwd)/android-ndk-r15c
-      - name: Build
-        run: |
-          cd build
-          sudo apt install gcc-multilib libncurses5 -y
-          ./make_android_luajit_arm64.sh  
-      - name: UploadJit
-        uses: actions/upload-artifact@v4
-        with:
-          path: ./build/plugin_luajit/**/*
-          name: plugin_luajit
-          
   linux:
     runs-on: ubuntu-latest
     steps:
@@ -110,7 +110,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           path: ./build/plugin_luajit/**/*
-          name: plugin_luajit  
+          name: plugin_luajit_linux  
   ios:
     runs-on: macos-latest
 
@@ -136,7 +136,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           path: ./build/plugin_luajit/**/*
-          name: plugin_luajit
+          name: plugin_luajit_ios
   osx:
     runs-on: macos-latest
 
@@ -164,7 +164,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           path: ./build/plugin_luajit/**/*
-          name: plugin_luajit  
+          name: plugin_luajit_osx  
   windows:
     runs-on: windows-2022
 
@@ -201,7 +201,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           path: ./build/plugin_luajit/**/*
-          name: plugin_luajit
+          name: plugin_luajit_window
           
   windows-luajit-32:
     runs-on: windows-2022
@@ -223,26 +223,29 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           path: ./build/plugin_luajit/**/*
-          name: plugin_luajit
+          name: plugin_luajit_window32
 
   publish:
     runs-on: ubuntu-latest
     needs: [windows,osx,ios,android,windows-luajit-32,ohos,android_luajit,linux]
     steps:
-      - uses: actions/download-artifact@v4.1.7
+      - uses: actions/download-artifact@v4
         with:
-          name: plugin_luajit
+          pattern: plugin_luajit_*
           path: plugin_luajit/
+          merge-multiple: true
           
-      - uses: actions/download-artifact@v4.1.7
+      - uses: actions/download-artifact@v4
         with:
-          name: plugin_lua53
+          pattern: plugin_lua53_*
           path: plugin_lua53/
+          merge-multiple: true
           
-      - uses: actions/download-artifact@v4.1.7
+      - uses: actions/download-artifact@v4
         with:
-          name: plugin_lua54
+          pattern: plugin_lua54_*
           path: plugin_lua54/
+          merge-multiple: true
           
       - name: Create Release Asset
         run: |
