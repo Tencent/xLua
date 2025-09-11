@@ -28,7 +28,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           path: ./build/plugin_lua54/**/*
-          name: plugin_lua54
+          name: plugin_lua54_android
       - name: Upload53
         uses: actions/upload-artifact@v4
         with:
@@ -79,7 +79,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           path: ./build/plugin_lua54/**/*
-          name: plugin_lua54
+          name: plugin_lua54_ohos
       - name: Upload53
         uses: actions/upload-artifact@v4
         with:
@@ -100,12 +100,12 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           path: ./build/plugin_lua54/**/*
-          name: plugin_lua54
+          name: plugin_lua54_linux  
       - name: Upload53
         uses: actions/upload-artifact@v4
         with:
           path: ./build/plugin_lua53/**/*
-          name: plugin_lua53   
+          name: plugin_lua53_linux     
       - name: UploadJit
         uses: actions/upload-artifact@v4
         with:
@@ -126,12 +126,12 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           path: ./build/plugin_lua54/**/*
-          name: plugin_lua54
+          name: plugin_lua54_ios
       - name: Upload53
         uses: actions/upload-artifact@v4
         with:
           path: ./build/plugin_lua53/**/*
-          name: plugin_lua53   
+          name: plugin_lua53_ios   
       - name: UploadJit
         uses: actions/upload-artifact@v4
         with:
@@ -154,12 +154,12 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           path: ./build/plugin_lua54/**/*
-          name: plugin_lua54
+          name: plugin_lua54_osx  
       - name: Upload53
         uses: actions/upload-artifact@v4
         with:
           path: ./build/plugin_lua53/**/*
-          name: plugin_lua53   
+          name: plugin_lua53_osx     
       - name: UploadJit
         uses: actions/upload-artifact@v4
         with:
@@ -191,12 +191,12 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           path: ./build/plugin_lua54/**/*
-          name: plugin_lua54
+          name: plugin_lua54_window
       - name: Upload53
         uses: actions/upload-artifact@v4
         with:
           path: ./build/plugin_lua53/**/*
-          name: plugin_lua53   
+          name: plugin_lua53_window   
       - name: UploadJit
         uses: actions/upload-artifact@v4
         with:
