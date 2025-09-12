@@ -189,6 +189,14 @@ elseif ("${CMAKE_SYSTEM_NAME}" STREQUAL "Switch")
         ${THIRDPART_SRC}
     )
     target_compile_options(xlua PRIVATE -m64 -mcpu=cortex-a57+fp+simd+crypto+crc -fno-common -fno-short-enums -ffunction-sections -fdata-sections -fPIC -fms-extensions)
+elseif ("${CMAKE_SYSTEM_NAME}" STREQUAL "Ounce")
+    add_library(xlua STATIC
+        ${LUA_CORE}
+        ${LUA_LIB}
+        ${XLUA_CORE}
+        ${THIRDPART_SRC}
+    )
+    target_compile_options(xlua PRIVATE -m64 -mcpu=cortex-a78c+fp+simd+crypto+crc+pauth --target=aarch64-nintendo-nn-elf -fno-common -fno-short-enums -ffunction-sections -fdata-sections -fPIC -fms-extensions -mexecute-only -mbranch-protection=pac-ret+b-key)
 else ( )
     add_library(xlua SHARED
         ${LUA_CORE}
