@@ -31,6 +31,16 @@ namespace XLua
         {
             return LuaAPI.xlua_unpack_int8_t(buff, offset, out field);
         }
+        public static bool Pack(IntPtr buff, int offset, bool field)
+        {
+            return LuaAPI.xlua_pack_int8_t(buff, offset, field ? (byte)1 : (byte)0);
+        }
+        public static bool UnPack(IntPtr buff, int offset, out bool field)
+        {
+            bool ret = LuaAPI.xlua_unpack_int8_t(buff, offset, out byte tfield);
+            field = tfield != 0;
+            return ret;
+        }
         public static bool Pack(IntPtr buff, int offset, sbyte field)
         {
             return LuaAPI.xlua_pack_int8_t(buff, offset, (byte)field);
