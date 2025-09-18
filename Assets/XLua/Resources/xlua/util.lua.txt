@@ -37,6 +37,21 @@ local function coroutine_call(func)
     end
 end
 
+local function coroutine_wrap(func)
+    local thread = coroutine.create(func)
+    return function(...)
+        _GlobalCorThread_ = thread --for outside code,usage: _GlobalCorThread_ and debug.traceback(_GlobalCorThread_) or debug.traceback()
+        local results = table.pack(coroutine.resume(thread, ...)) --{true/false, data1/errormsg, data2...}
+        _GlobalCorThread_ = nil
+        if not results[1] then
+            local errStr = string.format('%s\n%s',results[2], debug.traceback(thread))
+            error(errStr, 2) --skip 1 stack level
+            -- print("====!!!!!!!!!!!!!!!!!!") //never run
+        end
+        return table.unpack(results, 2) --, results.n) --drop true
+    end
+end
+
 local move_end = {}
 
 local generator_mt = {
@@ -51,7 +66,7 @@ local generator_mt = {
             end
         end;
         Reset = function(self)
-            self.co = coroutine.wrap(self.w_func)
+            self.co = coroutine_wrap(self.w_func)
         end
     }
 }
