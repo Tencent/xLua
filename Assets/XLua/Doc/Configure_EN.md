@@ -120,6 +120,9 @@ public static List<List<string>> BlackList = new List<List<string>>()  {
     //new List<string>(){ typeof(UnityEngine.GameObject).FullName, "networkView"},
     new List<string>(){"System.IO.FileInfo", "GetAccessControl", "System.Security.AccessControl.AccessControlSections"},
     //new List<string>(){ typeof(System.IO.FileInfo).FullName, "GetAccessControl",typeof(System.Security.AccessControl.AccessControlSections).FullName },
+
+    // If you want to blacklist all methods with specific name, use "All" as first parameter type:
+    new List<string>() { "UnityEngine.Debug", "Log",  "All" },
 };
 ~~~
 
