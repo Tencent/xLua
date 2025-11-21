@@ -156,6 +156,10 @@ xlua.hotfix(CS.HotfixTest, 'Update', function(self)
 
 The premise is that hotfix_id_map.lua.txt is in a directory that can be referenced by require 'hotfix_id_map'.
 
+## Ignore Method
+Adding [Hotfix(HotfixFlag.IgnoreThisMethod)] attribute to a method will not GenDelegateBridge for that method and will not hotfix inject that method.  
+Typically used for methods that cause xlua generation to cause compilation errors. For example methods with Span parameters in the signature.  
+
 ## Usage suggestions
 
 * Add the Hotfix flag to all types that are most likely to be modified.
