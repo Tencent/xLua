@@ -487,7 +487,7 @@ namespace XLua
 				//indexer
 				if (method.IsSpecialName && ((method.Name == "get_Item" && method.GetParameters().Length == 1) || (method.Name == "set_Item" && method.GetParameters().Length == 2)))
 				{
-					if (!method.GetParameters()[0].ParameterType.IsAssignableFrom(typeof(string)))
+					if (!method.GetParameters()[0].ParameterType.IsAssignableFrom(typeof(string)) || type.GetCustomAttribute<LuaIndexerAttribute>() != null)
 					{
 						continue;
 					}

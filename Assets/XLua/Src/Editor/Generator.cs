@@ -309,7 +309,7 @@ namespace CSObjectWrapEditor
                 .Where(method => !method.IsSpecialName 
                     || (
                          ((method.Name == "get_Item" && method.GetParameters().Length == 1) || (method.Name == "set_Item" && method.GetParameters().Length == 2)) 
-                         && method.GetParameters()[0].ParameterType.IsAssignableFrom(typeof(string))
+                         && method.GetParameters()[0].ParameterType.IsAssignableFrom(typeof(string)) && type.GetCustomAttribute<LuaIndexerAttribute>() == null
                        )
                  ) 
                 .Concat(extension_methods)
@@ -380,12 +380,14 @@ namespace CSObjectWrapEditor
             var indexers = type.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly).Where(prop => prop.GetIndexParameters().Length > 0);
 
             parameters.Set("indexers", indexers.Where(prop => prop.CanRead && (prop.GetGetMethod() != null)).Select(prop => prop.GetGetMethod())
-                .Where(method => method.GetParameters().Length == 1 && !method.GetParameters()[0].ParameterType.IsAssignableFrom(typeof(string)))
-                .ToList());
+                .Where(method => method.GetParameters().Length == 1 && (!method.GetParameters()[0].ParameterType.IsAssignableFrom(typeof(string))
+                || type.GetCustomAttribute<LuaIndexerAttribute>() != null))
+                .OrderBy(t => t.Name).ToList());
 
             parameters.Set("newindexers", indexers.Where(prop => prop.CanWrite && (prop.GetSetMethod() != null)).Select(prop => prop.GetSetMethod())
-                .Where(method => method.GetParameters().Length == 2 && !method.GetParameters()[0].ParameterType.IsAssignableFrom(typeof(string)))
-                .ToList());
+                .Where(method => method.GetParameters().Length == 2 && (!method.GetParameters()[0].ParameterType.IsAssignableFrom(typeof(string))
+                || type.GetCustomAttribute<LuaIndexerAttribute>() != null))
+                .OrderBy(t => t.Name).ToList());
 
             parameters.Set("events", type.GetEvents(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.IgnoreCase | BindingFlags.DeclaredOnly).Where(e => !isObsolete(e) && !isMemberInBlackList(e))
                 .Where(ev=> ev.GetAddMethod() != null || ev.GetRemoveMethod() != null)

@@ -127,6 +127,11 @@ namespace XLua
     {
     }
 
+    public class LuaIndexerAttribute : Attribute
+    {
+        
+    }
+
 #if !XLUA_GENERAL
     public static class SysGenConfig
     {
