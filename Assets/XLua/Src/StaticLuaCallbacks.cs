@@ -725,7 +725,7 @@ namespace XLua
                 {
                     if (www.isDone || !string.IsNullOrEmpty(www.error))
                     {
-                        System.Threading.Thread.Sleep(50); //�Ƚ�hacker������
+                        System.Threading.Thread.Sleep(50); //比较hacker的做法
                         if (!string.IsNullOrEmpty(www.error))
                         {
                             LuaAPI.lua_pushstring(L, string.Format(
