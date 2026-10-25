@@ -12,6 +12,7 @@ namespace XLua
             if (File.Exists("key_ras") || File.Exists("key_ras.pub"))
             {
                 Console.WriteLine("key pairs existed!");
+                return;
             }
             var rsa = new RSACryptoServiceProvider();
             File.WriteAllText("key_ras", rsa.ToXmlString(true));

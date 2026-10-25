@@ -38,9 +38,9 @@ namespace XLua
 
         public static void Main(string[] args)
         {
-            if (!File.Exists("key_rsa"))
+            if (!File.Exists("key_ras"))
             {
-                Console.WriteLine("No key_rsa file found!");
+                Console.WriteLine("No key_ras file found!");
                 return;
             }
 
@@ -52,7 +52,7 @@ namespace XLua
 
             SHA1 sha = new SHA1CryptoServiceProvider();
             RSACryptoServiceProvider rsa = new RSACryptoServiceProvider();
-            rsa.FromXmlString(File.ReadAllText("key_rsa"));
+            rsa.FromXmlString(File.ReadAllText("key_ras"));
             doSignature(args[0], args[1], sha, rsa);
         }
     }
