@@ -83,7 +83,7 @@ It is recommended that you bind once and reuse it. If code is generated, no gc a
 ## More Examples
 
 * [01_Helloworld](Assets/XLua/Examples/01_Helloworld/): Quick Start Examples
-* [02_U3DScripting](Assets/XLua/Examples/02_U3DScripting/): This example shows how to use Mono to write MonoBehaviour.
+* [02_U3DScripting](Assets/XLua/Examples/02_U3DScripting/): This example shows how to use Lua to write MonoBehaviour.
 * [03_UIEvent](Assets/XLua/Examples/03_UIEvent/): This example shows how to use Lua to write UI logic.
 * [04_LuaObjectOrented](Assets/XLua/Examples/04_LuaObjectOrented/): This example shows the cooperation between Lua's object-oriented programming and C#.
 * [05_NoGc](Assets/XLua/Examples/05_NoGc/): This example shows how to avoid the value type GC.

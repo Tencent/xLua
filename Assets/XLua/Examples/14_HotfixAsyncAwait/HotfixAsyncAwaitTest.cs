@@ -157,8 +157,8 @@ namespace XLuaTest
         {
             Vector2 size = new Vector2(200, 40);
             Vector2 position = new Vector2(600, 100);
-            Vector2 rightPposition = position + new Vector2(240, 0);
-            int inteval = 50;
+            Vector2 rightPosition = position + new Vector2(240, 0);
+            int interval = 50;
 
 
             if (GUI.Button(new Rect(position, size), nameof(Method1)))
@@ -166,98 +166,98 @@ namespace XLuaTest
                 Method1();
             }
 
-            if (GUI.Button(new Rect(rightPposition, size), nameof(DoHotfixMethod1)))
+            if (GUI.Button(new Rect(rightPosition, size), nameof(DoHotfixMethod1)))
             {
                 DoHotfixMethod1();
             }
 
-            position.y += inteval;
-            rightPposition.y += inteval;
+            position.y += interval;
+            rightPosition.y += interval;
 
             if (GUI.Button(new Rect(position, size), nameof(AsyncMethod1)))
             {
                 AsyncMethod1();
             }
 
-            if (GUI.Button(new Rect(rightPposition, size), nameof(DoHotfixAsyncMethod1)))
+            if (GUI.Button(new Rect(rightPosition, size), nameof(DoHotfixAsyncMethod1)))
             {
                 DoHotfixAsyncMethod1();
             }
 
-            position.y += inteval;
-            rightPposition.y += inteval;
+            position.y += interval;
+            rightPosition.y += interval;
 
             if (GUI.Button(new Rect(position, size), nameof(AsyncMethod2)))
             {
                 AsyncMethod2();
             }
 
-            if (GUI.Button(new Rect(rightPposition, size), nameof(DoHotfixAsyncMethod2)))
+            if (GUI.Button(new Rect(rightPosition, size), nameof(DoHotfixAsyncMethod2)))
             {
                 DoHotfixAsyncMethod2();
             }
 
-            position.y += inteval;
-            rightPposition.y += inteval;
+            position.y += interval;
+            rightPosition.y += interval;
 
             if (GUI.Button(new Rect(position, size), nameof(AsyncMethod3)))
             {
                 AsyncMethod3();
             }
 
-            if (GUI.Button(new Rect(rightPposition, size), nameof(DoHotfixAsyncMethod3)))
+            if (GUI.Button(new Rect(rightPosition, size), nameof(DoHotfixAsyncMethod3)))
             {
                 DoHotfixAsyncMethod3();
             }
 
-            position.y += inteval;
-            rightPposition.y += inteval;
+            position.y += interval;
+            rightPosition.y += interval;
 
             if (GUI.Button(new Rect(position, size), nameof(AsyncMethod4)))
             {
                 AsyncMethod4();
             }
 
-            if (GUI.Button(new Rect(rightPposition, size), nameof(DoHotfixAsyncMethod4)))
+            if (GUI.Button(new Rect(rightPosition, size), nameof(DoHotfixAsyncMethod4)))
             {
                 DoHotfixAsyncMethod4();
             }
 
-            position.y += inteval;
-            rightPposition.y += inteval;
+            position.y += interval;
+            rightPosition.y += interval;
 
             if (GUI.Button(new Rect(position, size), nameof(MyTask)))
             {
                 MyTask();
             }
 
-            if (GUI.Button(new Rect(rightPposition, size), nameof(DoHotfixMyTask)))
+            if (GUI.Button(new Rect(rightPosition, size), nameof(DoHotfixMyTask)))
             {
                 DoHotfixMyTask();
             }
 
-            position.y += inteval;
-            rightPposition.y += inteval;
+            position.y += interval;
+            rightPosition.y += interval;
 
             if (GUI.Button(new Rect(position, size), nameof(MyTask1)))
             {
                 MyTask1();
             }
 
-            if (GUI.Button(new Rect(rightPposition, size), nameof(DoHotfixMyTask1)))
+            if (GUI.Button(new Rect(rightPosition, size), nameof(DoHotfixMyTask1)))
             {
                 DoHotfixMyTask1();
             }
 
-            position.y += inteval;
-            rightPposition.y += inteval;
+            position.y += interval;
+            rightPosition.y += interval;
 
             if (GUI.Button(new Rect(position, size), nameof(MyTask2)))
             {
                 MyTask2();
             }
 
-            if (GUI.Button(new Rect(rightPposition, size), nameof(DoHotfixMyTask2)))
+            if (GUI.Button(new Rect(rightPosition, size), nameof(DoHotfixMyTask2)))
             {
                 DoHotfixMyTask2();
             }

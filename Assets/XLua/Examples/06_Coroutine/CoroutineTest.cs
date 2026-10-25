@@ -10,7 +10,7 @@ namespace XLuaTest
         void Start()
         {
             luaenv = new LuaEnv();
-            luaenv.DoString("require 'coruntine_test'");
+            luaenv.DoString("require 'coroutine_test'");
         }
 
         // Update is called once per frame
